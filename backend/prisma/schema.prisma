@@ -1,0 +1,254 @@
+/**
+ * ============================================================================
+ * CeekayX Hospital Management System (HMS)
+ * ============================================================================
+ * Prisma Schema
+ *
+ * Database: MySQL
+ *
+ * This schema contains the security foundation of the application.
+ *
+ * Modules:
+ *  - Users
+ *  - Roles
+ *  - Permissions
+ *  - Refresh Tokens
+ *  - Audit Logs
+ *
+ * Future modules:
+ *  - Hospitals
+ *  - Patients
+ *  - Doctors
+ *  - Pharmacy
+ *  - Billing
+ *  - Laboratory
+ *  - Inventory
+ *  - Appointments
+ * ============================================================================
+ */
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ENUMS
+///////////////////////////////////////////////////////////////////////////////
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// USER
+///////////////////////////////////////////////////////////////////////////////
+
+model User {
+  /// Primary Key
+  id String @id @default(uuid()) @db.Char(36)
+
+  /// Login
+  email    String @unique @db.VarChar(150)
+  username String @unique @db.VarChar(100)
+
+  passwordHash String @db.VarChar(255)
+
+  /// Personal Information
+  firstName String @db.VarChar(100)
+  lastName  String @db.VarChar(100)
+
+  phone String? @db.VarChar(30)
+
+  /// Account Status
+  isActive        Boolean @default(true)
+  isEmailVerified Boolean @default(false)
+
+  /// Security
+  failedLoginAttempts Int @default(0)
+
+  lockedUntil DateTime?
+
+  lastLogin DateTime?
+
+  passwordChangedAt DateTime?
+
+  /// Offline Sync Version
+  version Int @default(1)
+
+  /// Audit Fields
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  deletedAt DateTime?
+
+  /// Relationships
+  roles UserRole[]
+
+  refreshTokens RefreshToken[]
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ROLE
+///////////////////////////////////////////////////////////////////////////////
+
+model Role {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name String @unique @db.VarChar(100)
+
+  description String? @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  permissions RolePermission[]
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PERMISSION
+///////////////////////////////////////////////////////////////////////////////
+
+model Permission {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name String @unique @db.VarChar(150)
+
+  description String? @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// USER ROLE (Many-to-Many)
+///////////////////////////////////////////////////////////////////////////////
+
+model UserRole {
+  id String @id @default(uuid()) @db.Char(36)
+
+  userId String @db.Char(36)
+
+  roleId String @db.Char(36)
+
+  assignedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+
+  @@index([userId])
+
+  @@index([roleId])
+
+  @@map("user_roles")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ROLE PERMISSION (Many-to-Many)
+///////////////////////////////////////////////////////////////////////////////
+
+model RolePermission {
+  id String @id @default(uuid()) @db.Char(36)
+
+  roleId String @db.Char(36)
+
+  permissionId String @db.Char(36)
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+
+  @@index([roleId])
+
+  @@index([permissionId])
+
+  @@map("role_permissions")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// REFRESH TOKENS
+///////////////////////////////////////////////////////////////////////////////
+
+model RefreshToken {
+  id String @id @default(uuid()) @db.Char(36)
+
+  token String @unique @db.VarChar(500)
+
+  userId String @db.Char(36)
+
+  expiresAt DateTime
+
+  revoked Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+
+  @@map("refresh_tokens")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// AUDIT LOG
+///////////////////////////////////////////////////////////////////////////////
+
+model AuditLog {
+  id String @id @default(uuid()) @db.Char(36)
+
+  action AuditAction
+
+  entity String @db.VarChar(100)
+
+  entityId String? @db.Char(36)
+
+  oldValues Json?
+
+  newValues Json?
+
+  ipAddress String? @db.VarChar(45)
+
+  userAgent String? @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+
+  userId String? @db.Char(36)
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+
+  @@index([entity])
+
+  @@index([action])
+
+  @@map("audit_logs")
+}
