@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { ApiResponse } from "../utils/ApiResponse";
+import { ApiResponse } from "../shared/responses/ApiResponce";
 
 export abstract class BaseController {
 

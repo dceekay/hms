@@ -11,7 +11,7 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../shared/errors/ApiError";
 import { env } from "../config/env";
 
 export function errorMiddleware(
