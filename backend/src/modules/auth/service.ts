@@ -54,13 +54,42 @@ export class AuthService {
       []
     );
 
+    const roles: string[] = [];
+    const permissions: string[] = [];
+
+    const accessToken = signAccessToken({
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+      roles,
+      permissions,
+    });
+
+    const refreshToken = signRefreshToken({
+      sub: user.id,
+      email: user.email,
+      username: user.username,
+      roles,
+      permissions,
+    });
+
+    await this.refreshTokenRepository.create({
+      token: refreshToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
     return {
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
+        roles,
+        permissions,
       },
     };
   }

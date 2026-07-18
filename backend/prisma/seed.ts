@@ -23,103 +23,178 @@ async function main() {
     });
 
     const permissions = [
-
         "users.read",
         "users.create",
         "users.update",
         "users.delete",
-
         "roles.read",
         "roles.create",
         "roles.update",
-        "roles.delete"
-
+        "roles.delete",
+        "appointments.read",
+        "appointments.create",
+        "patients.read",
+        "patients.create",
     ];
 
-    for(const permission of permissions){
+    const roles = [
+        { name: "Super Admin", description: "System Administrator" },
+        { name: "Administrator", description: "Hospital Administrator" },
+        { name: "Doctor", description: "Medical Doctor" },
+        { name: "Nurse", description: "Nursing Staff" },
+        { name: "Receptionist", description: "Front Desk Receptionist" },
+    ];
 
-        const p=await prisma.permission.upsert({
+    const roleMap: Record<string, string> = {};
 
-            where:{name:permission},
-
-            update:{},
-
-            create:{
-
-                name:permission
-
-            }
-
-        });
-
-        await prisma.rolePermission.upsert({
-
-            where:{
-                roleId_permissionId:{
-                    roleId:adminRole.id,
-                    permissionId:p.id
-                }
+    for (const roleData of roles) {
+        const role = await prisma.role.upsert({
+            where: { name: roleData.name },
+            update: {},
+            create: {
+                name: roleData.name,
+                description: roleData.description,
             },
-
-            update:{},
-
-            create:{
-
-                roleId:adminRole.id,
-
-                permissionId:p.id
-
-            }
-
         });
 
+        roleMap[roleData.name] = role.id;
     }
 
-    const passwordHash=await bcrypt.hash("Admin@123",12);
+    const permissionMap: Record<string, string> = {};
 
-    const admin=await prisma.user.upsert({
+    for (const permission of permissions) {
+        const permissionRecord = await prisma.permission.upsert({
+            where: { name: permission },
+            update: {},
+            create: { name: permission },
+        });
 
-        where:{
-            email:"admin@ceekayx.com"
-        },
+        permissionMap[permission] = permissionRecord.id;
+    }
 
-        update:{},
+    const rolePermissions: Record<string, string[]> = {
+        "Super Admin": permissions,
+        Administrator: [
+            "users.read",
+            "users.create",
+            "users.update",
+            "users.delete",
+            "roles.read",
+            "roles.create",
+            "roles.update",
+            "roles.delete",
+            "appointments.read",
+            "appointments.create",
+            "patients.read",
+            "patients.create",
+        ],
+        Doctor: ["appointments.read", "patients.read"],
+        Nurse: ["patients.read"],
+        Receptionist: ["appointments.read", "patients.create"],
+    };
 
-        create:{
+    for (const [roleName, permissionNames] of Object.entries(rolePermissions)) {
+        const roleId = roleMap[roleName];
 
-            email:"admin@ceekayx.com",
+        for (const permissionName of permissionNames) {
+            const permissionId = permissionMap[permissionName];
 
-            username:"admin",
-
-            passwordHash,
-
-            firstName:"System",
-
-            lastName:"Administrator"
-
+            await prisma.rolePermission.upsert({
+                where: {
+                    roleId_permissionId: {
+                        roleId,
+                        permissionId,
+                    },
+                },
+                update: {},
+                create: {
+                    roleId,
+                    permissionId,
+                },
+            });
         }
+    }
 
+    const passwordHash = await bcrypt.hash("Admin@123", 12);
+
+    const admin = await prisma.user.upsert({
+        where: { email: "admin@ceekayx.com" },
+        update: {},
+        create: {
+            email: "admin@ceekayx.com",
+            username: "admin",
+            passwordHash,
+            firstName: "System",
+            lastName: "Administrator",
+        },
     });
 
     await prisma.userRole.upsert({
-
-        where:{
-            userId_roleId:{
-                userId:admin.id,
-                roleId:adminRole.id
-            }
+        where: {
+            userId_roleId: {
+                userId: admin.id,
+                roleId: adminRole.id,
+            },
         },
+        update: {},
+        create: {
+            userId: admin.id,
+            roleId: adminRole.id,
+        },
+    });
 
-        update:{},
+    const doctor = await prisma.user.upsert({
+        where: { email: "doctor@ceekayx.com" },
+        update: {},
+        create: {
+            email: "doctor@ceekayx.com",
+            username: "drjohn",
+            passwordHash: await bcrypt.hash("Doctor@123", 12),
+            firstName: "John",
+            lastName: "Doe",
+            phone: "+2348012345678",
+        },
+    });
 
-        create:{
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: doctor.id,
+                roleId: roleMap["Doctor"],
+            },
+        },
+        update: {},
+        create: {
+            userId: doctor.id,
+            roleId: roleMap["Doctor"],
+        },
+    });
 
-            userId:admin.id,
+    const receptionist = await prisma.user.upsert({
+        where: { email: "reception@ceekayx.com" },
+        update: {},
+        create: {
+            email: "reception@ceekayx.com",
+            username: "reception",
+            passwordHash: await bcrypt.hash("Reception@123", 12),
+            firstName: "Jane",
+            lastName: "Smith",
+            phone: "+2348098765432",
+        },
+    });
 
-            roleId:adminRole.id
-
-        }
-
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: receptionist.id,
+                roleId: roleMap["Receptionist"],
+            },
+        },
+        update: {},
+        create: {
+            userId: receptionist.id,
+            roleId: roleMap["Receptionist"],
+        },
     });
 
     console.log("Database Seeded Successfully");
