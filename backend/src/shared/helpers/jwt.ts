@@ -1,30 +1,57 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
+import { randomUUID } from "crypto";
+
 import { env } from "../../config/env";
-import { JwtPayload, JwtPayloadInput } from "../types/JwtPayload";
+import { JwtPayload, JwtPayloadInput, RefreshTokenPayloadInput } from "../types/JwtPayload";
 
-const ACCESS_TOKEN_SECRET = env.JWT_SECRET || "development-access-secret";
-const REFRESH_TOKEN_SECRET = env.JWT_REFRESH_SECRET || "development-refresh-secret";
+const ACCESS_SECRET =
+  env.JWT_SECRET || "development-access-secret";
 
-function getSecret(type: JwtPayload["type"]): string {
-  return type === "access" ? ACCESS_TOKEN_SECRET : REFRESH_TOKEN_SECRET;
+const REFRESH_SECRET =
+  env.JWT_REFRESH_SECRET || "development-refresh-secret";
+
+export function signAccessToken(
+  payload: JwtPayloadInput
+): string {
+  return jwt.sign(
+    {
+      ...payload,
+      type: "access",
+      jti: randomUUID(),
+    },
+    ACCESS_SECRET,
+    {
+      algorithm: "HS256",
+      expiresIn: env.ACCESS_TOKEN_EXPIRES,
+    } as SignOptions
+  );
 }
 
-export function signAccessToken(payload: JwtPayloadInput): string {
-  return jwt.sign({ ...payload, type: "access" }, getSecret("access"), {
-    expiresIn: env.ACCESS_TOKEN_EXPIRES,
-  } as jwt.SignOptions);
+export function signRefreshToken(
+  payload: RefreshTokenPayloadInput
+): string {
+  return jwt.sign(
+    {
+      ...payload,
+      type: "refresh",
+      jti: randomUUID(),
+    },
+    REFRESH_SECRET,
+    {
+      algorithm: "HS256",
+      expiresIn: env.REFRESH_TOKEN_EXPIRES,
+    } as SignOptions
+  );
 }
 
-export function signRefreshToken(payload: JwtPayloadInput): string {
-  return jwt.sign({ ...payload, type: "refresh" }, getSecret("refresh"), {
-    expiresIn: env.REFRESH_TOKEN_EXPIRES,
-  } as jwt.SignOptions);
+export function verifyAccessToken(
+  token: string
+): JwtPayload {
+  return jwt.verify(token, ACCESS_SECRET) as JwtPayload;
 }
 
-export function verifyAccessToken(token: string): JwtPayload {
-  return jwt.verify(token, getSecret("access")) as JwtPayload;
-}
-
-export function verifyRefreshToken(token: string): JwtPayload {
-  return jwt.verify(token, getSecret("refresh")) as JwtPayload;
+export function verifyRefreshToken(
+  token: string
+): JwtPayload {
+  return jwt.verify(token, REFRESH_SECRET) as JwtPayload;
 }

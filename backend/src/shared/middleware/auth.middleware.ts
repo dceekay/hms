@@ -44,7 +44,7 @@ export function authorizeRoles(requiredRoles: string[]) {
       return next();
     }
 
-    const hasRole = user.roles.some((role) => requiredRoles.includes(role));
+    const hasRole = (user.roles ?? []).some((role) => requiredRoles.includes(role));
 
     if (!hasRole) {
       return next(new ApiError(HttpStatus.FORBIDDEN, "Insufficient role"));
@@ -67,7 +67,7 @@ export function authorizePermissions(requiredPermissions: string[]) {
     }
 
     const hasPermission = requiredPermissions.every((permission) =>
-      user.permissions.includes(permission)
+      (user.permissions ?? []).includes(permission)
     );
 
     if (!hasPermission) {

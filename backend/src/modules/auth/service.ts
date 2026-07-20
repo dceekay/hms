@@ -5,6 +5,7 @@ import { RegisterDto, LoginDto } from "../../shared/dto/auth.dto";
 import { UserRepository, RefreshTokenRepository } from "./repository";
 import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
+import { Prisma } from "@prisma/client";
 
 function extractRolesAndPermissions(user: any): { roles: string[]; permissions: string[] } {
   const roles =
@@ -30,6 +31,57 @@ export class AuthService {
     private readonly userRepository = new UserRepository(),
     private readonly refreshTokenRepository = new RefreshTokenRepository()
   ) {}
+
+  private async createRefreshToken(user: { id: string }) {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const refreshToken = signRefreshToken({
+        sub: user.id,
+      });
+
+      try {
+        await this.refreshTokenRepository.create({
+          token: refreshToken,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        });
+
+        return refreshToken;
+      } catch (error) {
+        const target = error instanceof Prisma.PrismaClientKnownRequestError
+          ? error.meta?.target
+          : null;
+        const isDuplicateToken =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          ((Array.isArray(target) && target.includes("token")) ||
+            (typeof target === "string" && target.includes("token")));
+
+        if (!isDuplicateToken) {
+          throw error;
+        }
+
+        const existingToken = await this.refreshTokenRepository.findByToken(refreshToken);
+
+        if (existingToken?.userId === user.id) {
+          await prisma.refreshToken.update({
+            where: { id: existingToken.id },
+            data: {
+              revoked: false,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            },
+          });
+
+          return refreshToken;
+        }
+
+        if (attempt === 3) {
+          throw error;
+        }
+      }
+    }
+
+    throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Could not create refresh token");
+  }
 
   async register(payload: RegisterDto) {
     const existingUser =
@@ -65,19 +117,7 @@ export class AuthService {
       permissions,
     });
 
-    const refreshToken = signRefreshToken({
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-      roles,
-      permissions,
-    });
-
-    await this.refreshTokenRepository.create({
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    const refreshToken = await this.createRefreshToken(user);
 
     return {
       accessToken,
@@ -103,9 +143,9 @@ export class AuthService {
       throw new ApiError(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
-    const isValidPassword = await comparePassword(payload.password, user.passwordHash);
+    const validPassword = await comparePassword(payload.password, user.passwordHash);
 
-    if (!isValidPassword) {
+    if (!validPassword) {
       throw new ApiError(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
@@ -123,19 +163,22 @@ export class AuthService {
       permissions,
     });
 
-    const refreshToken = signRefreshToken({
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-      roles,
-      permissions,
+    console.log("==================================");
+    console.log("LOGIN SUCCESS");
+    console.log("User:", user.email);
+    console.log("==================================");
+
+    await prisma.refreshToken.updateMany({
+      where: {
+        userId: user.id,
+        revoked: false,
+      },
+      data: {
+        revoked: true,
+      },
     });
 
-    await this.refreshTokenRepository.create({
-      token: refreshToken,
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    const refreshToken = await this.createRefreshToken(user);
 
     return {
       accessToken,
