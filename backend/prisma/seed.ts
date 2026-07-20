@@ -119,7 +119,13 @@ async function main() {
 
     const admin = await prisma.user.upsert({
         where: { email: "admin@ceekayx.com" },
-        update: {},
+        update: {
+            username: "admin",
+            passwordHash,
+            firstName: "System",
+            lastName: "Administrator",
+            isActive: true,
+        },
         create: {
             email: "admin@ceekayx.com",
             username: "admin",
@@ -145,7 +151,14 @@ async function main() {
 
     const doctor = await prisma.user.upsert({
         where: { email: "doctor@ceekayx.com" },
-        update: {},
+        update: {
+            username: "drjohn",
+            passwordHash: await bcrypt.hash("Doctor@123", 12),
+            firstName: "John",
+            lastName: "Doe",
+            phone: "+2348012345678",
+            isActive: true,
+        },
         create: {
             email: "doctor@ceekayx.com",
             username: "drjohn",
@@ -172,7 +185,14 @@ async function main() {
 
     const receptionist = await prisma.user.upsert({
         where: { email: "reception@ceekayx.com" },
-        update: {},
+        update: {
+            username: "reception",
+            passwordHash: await bcrypt.hash("Reception@123", 12),
+            firstName: "Jane",
+            lastName: "Smith",
+            phone: "+2348098765432",
+            isActive: true,
+        },
         create: {
             email: "reception@ceekayx.com",
             username: "reception",
@@ -194,6 +214,19 @@ async function main() {
         create: {
             userId: receptionist.id,
             roleId: roleMap["Receptionist"],
+        },
+    });
+
+    await prisma.patient.upsert({
+        where: { email: "patient@example.com" },
+        update: {},
+        create: {
+            firstName: "Grace",
+            lastName: "Adeyemi",
+            email: "patient@example.com",
+            phone: "+2348090001111",
+            dateOfBirth: new Date("1988-07-23"),
+            gender: "female",
         },
     });
 

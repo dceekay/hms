@@ -16,6 +16,10 @@
 import { Router } from "express";
 import { ApiResponse } from "../shared/responses/ApiResponce";
 import authRoutes from "../modules/auth/routes";
+import patientRoutes from "../modules/patients/routes";
+import dashboardRoutes from "../modules/dashboard/routes";
+import departmentRoutes from "../modules/departments/routes";
+import hospitalProfileRoutes from "../modules/hospital/routes";
 
 const router = Router();
 
@@ -32,5 +36,9 @@ router.get("/health", (req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/patients", patientRoutes);
+router.use("/dashboard", dashboardRoutes);
+router.use("/departments", departmentRoutes);
+router.use("/hospital-profile", hospitalProfileRoutes);
 
 export default router;

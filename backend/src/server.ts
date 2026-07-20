@@ -9,7 +9,7 @@
  *
  * Responsibilities:
  * ✔ Load application configuration
- * ✔ Connect to PostgreSQL
+ * ✔ Connect to MySQL via Prisma
  * ✔ Start Express Server
  * ✔ Handle graceful shutdown
  * ✔ Handle unexpected application errors
@@ -38,7 +38,7 @@ async function bootstrap(): Promise<void> {
     logger.info("====================================");
 
     /**
-     * Connect to PostgreSQL
+     * Connect to MySQL
      */
     await connectDatabase();
 
