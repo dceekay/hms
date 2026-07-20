@@ -11,6 +11,7 @@ export function LoginPage() {
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
   const [isRegister, setIsRegister] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const formSchema = isRegister ? registerSchema : loginSchema;
 
@@ -22,14 +23,23 @@ export function LoginPage() {
     resolver: zodResolver(formSchema),
   });
 
+  const getFieldError = (field: string) => {
+    const typedErrors = errors as Record<string, { message?: string }>;
+    return typedErrors[field];
+  };
+
   async function onSubmit(values: LoginFormValues | RegisterFormValues) {
+    setSubmitError(null);
     const result = isRegister ? await registerUser(values as RegisterFormValues) : await login(values as LoginFormValues);
 
     if (result?.accessToken) {
       setToken(result.accessToken);
       setUser(result.user ?? null);
       navigate("/");
+      return;
     }
+
+    setSubmitError(isRegister ? "Registration failed. Please check your details." : "Login failed. Check your username and password.");
   }
 
   return (
@@ -42,31 +52,31 @@ export function LoginPage() {
               <label>
                 Email
                 <input type="email" {...register("email")} />
-                {errors.email && <span className="error-text">{errors.email.message}</span>}
+                {getFieldError("email") && <span className="error-text">{getFieldError("email")?.message}</span>}
               </label>
 
               <label>
                 Username
                 <input type="text" {...register("username")} />
-                {errors.username && <span className="error-text">{errors.username.message}</span>}
+                {getFieldError("username") && <span className="error-text">{getFieldError("username")?.message}</span>}
               </label>
 
               <label>
                 First Name
                 <input type="text" {...register("firstName")} />
-                {errors.firstName && <span className="error-text">{errors.firstName.message}</span>}
+                {getFieldError("firstName") && <span className="error-text">{getFieldError("firstName")?.message}</span>}
               </label>
 
               <label>
                 Last Name
                 <input type="text" {...register("lastName")} />
-                {errors.lastName && <span className="error-text">{errors.lastName.message}</span>}
+                {getFieldError("lastName") && <span className="error-text">{getFieldError("lastName")?.message}</span>}
               </label>
 
               <label>
                 Phone
                 <input type="text" {...register("phone")} />
-                {errors.phone && <span className="error-text">{errors.phone.message}</span>}
+                {getFieldError("phone") && <span className="error-text">{getFieldError("phone")?.message}</span>}
               </label>
             </>
           )}
@@ -75,8 +85,8 @@ export function LoginPage() {
             <label>
               Email or Username
               <input type="text" {...register("emailOrUsername")} />
-              {errors.emailOrUsername && (
-                <span className="error-text">{errors.emailOrUsername.message}</span>
+              {getFieldError("emailOrUsername") && (
+                <span className="error-text">{getFieldError("emailOrUsername")?.message}</span>
               )}
             </label>
           )}
@@ -84,12 +94,14 @@ export function LoginPage() {
           <label>
             Password
             <input type="password" {...register("password")} />
-            {errors.password && <span className="error-text">{errors.password.message}</span>}
+            {getFieldError("password") && <span className="error-text">{getFieldError("password")?.message}</span>}
           </label>
 
           <button type="submit" className="button" disabled={isSubmitting}>
             {isSubmitting ? (isRegister ? "Registering..." : "Logging in...") : isRegister ? "Register" : "Login"}
           </button>
+
+          {submitError && <p className="error-text">{submitError}</p>}
         </form>
 
         <button type="button" className="button button-secondary" onClick={() => setIsRegister((state) => !state)}>
