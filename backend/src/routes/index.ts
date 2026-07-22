@@ -20,6 +20,9 @@ import patientRoutes from "../modules/patients/routes";
 import dashboardRoutes from "../modules/dashboard/routes";
 import departmentRoutes from "../modules/departments/routes";
 import hospitalProfileRoutes from "../modules/hospital/routes";
+import userRoutes from "../modules/users/routes";
+import roleRoutes from "../modules/roles/routes";
+import permissionRoutes from "../modules/permissions/routes";
 
 const router = Router();
 
@@ -40,5 +43,8 @@ router.use("/patients", patientRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/departments", departmentRoutes);
 router.use("/hospital-profile", hospitalProfileRoutes);
+router.use("/users", userRoutes);
+router.use("/roles", roleRoutes);
+router.use("/permissions", permissionRoutes);
 
 export default router;

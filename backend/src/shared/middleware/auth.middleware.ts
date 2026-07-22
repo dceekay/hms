@@ -20,6 +20,11 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     }
 
     const payload = verifyAccessToken(token);
+
+    if (payload.type !== "access") {
+      throw new ApiError(HttpStatus.UNAUTHORIZED, "Invalid token type");
+    }
+
     req.user = payload;
 
     next();

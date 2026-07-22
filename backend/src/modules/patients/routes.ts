@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { PatientController } from "./controller";
-import { authenticate, authorizeRoles } from "../../shared/middleware/auth.middleware";
+import { authenticate, authorizePermissions } from "../../shared/middleware/auth.middleware";
 import { validateBody } from "../../shared/middleware/validation.middleware";
 import { patientCreateSchema } from "./validators";
 
@@ -9,13 +9,13 @@ const controller = new PatientController();
 
 router.use(authenticate);
 
-router.get("/", controller.list);
+router.get("/", authorizePermissions(["patients.read"]), controller.list);
 router.post(
   "/",
   validateBody(patientCreateSchema),
-  authorizeRoles(["Super Admin", "Administrator", "Receptionist"]),
+  authorizePermissions(["patients.create"]),
   controller.create
 );
-router.get("/:id", controller.getById);
+router.get("/:id", authorizePermissions(["patients.read"]), controller.getById);
 
 export default router;
