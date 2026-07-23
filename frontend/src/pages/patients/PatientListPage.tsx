@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavBar } from "../../components/NavBar";
+import AdminLayout from "../../layouts/AdminLayout";
 import { fetchPatients } from "../../services/patients/patientService";
 import { Patient } from "../../types/patient";
 
@@ -24,8 +24,7 @@ export function PatientListPage() {
   }, []);
 
   return (
-    <>
-      <NavBar />
+    <AdminLayout>
       <main className="page-container">
         <div className="card">
           <div className="page-header">
@@ -70,6 +69,6 @@ export function PatientListPage() {
           )}
         </div>
       </main>
-    </>
+    </AdminLayout>
   );
 }

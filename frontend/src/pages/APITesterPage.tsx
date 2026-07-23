@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import axios from "axios";
-import { NavBar } from "../components/NavBar";
+import AdminLayout from "../layouts/AdminLayout";
 import { useAuthStore } from "../store/authStore";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -130,8 +130,7 @@ export default function APITesterPage() {
   };
 
   return (
-    <>
-      <NavBar />
+    <AdminLayout>
       <main className="page-container">
         <div className="card">
           <div className="page-header">
@@ -295,6 +294,6 @@ export default function APITesterPage() {
           </form>
         </div>
       </main>
-    </>
+    </AdminLayout>
   );
 }
