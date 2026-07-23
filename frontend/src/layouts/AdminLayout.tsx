@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 
 import { Sidebar } from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
+import MobileBottomNav from "../components/layout/MobileBottomNav";
 
 import "../styles/sidebar.css";
 import "../styles/topbar.css";
@@ -35,6 +36,8 @@ export default function AdminLayout({
           {children}
         </section>
       </main>
+
+      <MobileBottomNav />
     </div>
   );
 }

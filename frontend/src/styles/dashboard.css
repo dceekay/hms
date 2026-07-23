@@ -338,14 +338,68 @@
 }
 
 @media (max-width: 720px) {
+  .dashboard-page {
+    gap: 14px;
+  }
+
   .dashboard-command {
     align-items: flex-start;
     flex-direction: column;
-    padding: 22px;
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .dashboard-command h1 {
+    font-size: 2.15rem;
+  }
+
+  .dashboard-command p:not(.eyebrow) {
+    font-size: 0.94rem;
+  }
+
+  .command-actions,
+  .command-btn {
+    width: 100%;
   }
 
   .stats-grid,
   .role-strip {
     grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    min-height: 124px;
+  }
+
+  .stat-top h2 {
+    font-size: 1.7rem;
+  }
+
+  .dashboard-panel {
+    padding: 16px;
+  }
+
+  .activity-item {
+    grid-template-columns: 10px minmax(0, 1fr);
+  }
+
+  .activity-item small {
+    grid-column: 2;
+  }
+
+  .role-tile {
+    min-height: 78px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    justify-items: start;
+    text-align: left;
+  }
+
+  .coming-soon {
+    min-height: calc(100dvh - 176px);
+    padding: 28px 18px;
+  }
+
+  .coming-soon h1 {
+    font-size: 2rem;
   }
 }

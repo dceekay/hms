@@ -523,4 +523,49 @@ pre {
   .dashboard-layout {
     padding: 18px;
   }
+
+  .page-container {
+    width: 100%;
+    margin: 0;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-header h1,
+  .card h1 {
+    font-size: 1.45rem;
+  }
+
+  .tester-grid {
+    gap: 16px;
+  }
+
+  .tester-actions {
+    flex-direction: column;
+  }
+
+  .preset-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .preset-button,
+  .tester-actions .button,
+  .tester-actions .button-secondary {
+    min-height: 44px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 10px;
+    white-space: nowrap;
+  }
 }
