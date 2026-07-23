@@ -252,6 +252,26 @@ Target endpoints:
 | GET | `/patients/:id/summary` | `patients.read` | Patient overview |
 | GET | `/patients/:id/insurance` | `patients.read` | Insurance details |
 | POST | `/patients/:id/insurance` | `patients.update` | Add/update insurance |
+| GET | `/patients/:id/qr` | `patients.read` | Return QR payload/image data |
+| GET | `/patients/lookup/:qrCode` | `patients.read` | Resolve QR code to safe patient summary |
+| GET | `/patients/:id/visits` | `patients.read` | Patient visit history |
+
+Patient QR rules:
+- QR codes must not contain private medical details directly.
+- QR payload should be a stable opaque lookup code or URL.
+- QR lookup must still require authorized HMS access.
+- Patient card printing/export can be frontend-only after the QR endpoint is ready.
+
+Patient profile target:
+- demographics
+- emergency contact
+- QR identity
+- insurance provider and policy details
+- doctor visits/encounters
+- lab requests/results
+- prescriptions
+- billing summary
+- audit history for sensitive changes
 
 ## Dashboard Endpoint
 

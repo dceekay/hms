@@ -90,6 +90,16 @@ Data model expansion:
 - Patient identifiers:
   - national ID, hospital card number, external references
 - Optional patient photo/document upload later.
+- QR code identity:
+  - generate a stable patient QR value after registration
+  - QR should resolve to a patient lookup route, not expose private details directly
+  - store QR payload/version on the patient record or a related identifier table
+  - support printing/exporting patient card later
+- Offline sync readiness:
+  - support client-created temporary IDs for offline registrations
+  - queue create/update operations locally
+  - sync when backend health returns online
+  - resolve conflicts using record `version` and `updatedAt`
 
 API endpoints:
 - `GET /patients`
@@ -99,12 +109,19 @@ API endpoints:
 - `DELETE /patients/:id` or soft-delete
 - `GET /patients/:id/summary`
 - `GET /patients/search?q=...`
+- `GET /patients/:id/qr`
+- `GET /patients/lookup/:qrCode`
+- `GET /patients/:id/visits`
+- `GET /patients/:id/insurance`
 
 Success gate:
 - Reception/Admin can register patients.
 - Doctor/Nurse can read patients if granted permission.
 - Duplicate phone/email/MRN handling is predictable.
 - API Tester can create and fetch a patient before the wizard is fully connected.
+- Each patient receives a unique QR value.
+- QR lookup returns safe patient summary data.
+- Patient profile has room for insurance, visits, doctors, and clinical history.
 
 ## Phase 4: Staff And Doctors
 
