@@ -1,133 +1,195 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { NavBar } from "../components/NavBar";
-import { fetchDashboardOverview, DashboardOverview } from "../services/dashboardService";
-import { useAuthStore } from "../store/authStore";
+import AdminLayout from "../layouts/AdminLayout";
+import StatCard from "../components/dashboard/StatCard";
 
 export function DashboardPage() {
-  const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const user = useAuthStore((state) => state.user);
-
-  useEffect(() => {
-    async function loadOverview() {
-      setLoading(true);
-      setError(null);
-
-      const data = await fetchDashboardOverview();
-      if (!data) {
-        setError("Failed to load dashboard overview.");
-      }
-
-      setOverview(data);
-      setLoading(false);
-    }
-
-    loadOverview();
-  }, []);
-
   return (
-    <>
-      <NavBar />
-      <main className="page-container dashboard-page">
-        <section className="dashboard-hero">
+    <AdminLayout>
+      <div className="dashboard">
+
+        <div className="dashboard-header">
           <div>
-            <p className="eyebrow">CeekayX Hospital Management System</p>
-            <h1>Dashboard</h1>
-            <p>
-              Good day{user?.firstName ? `, ${user.firstName}` : ""}. Monitor your core hospital workflows from one protected workspace.
-            </p>
-          </div>
-          <div className="system-status" aria-label="System status">
-            <span>System status</span>
-            <strong>99.9%</strong>
-            <small>Operational</small>
-          </div>
-        </section>
-
-        <section className="dashboard-layout">
-          <div className="dashboard-main">
-            <div className="panel-title">
-              <h2>Operations Overview</h2>
-              <p>Live testing values from your dashboard endpoint.</p>
-            </div>
-
-            {loading && <p>Loading overview...</p>}
-            {error && <p className="error-text">{error}</p>}
-
-            {overview && (
-              <div className="dashboard-grid">
-                <div className="stat-card">
-                  <span className="stat-label">Total Patients</span>
-                  <strong>{overview.patientsToday.toLocaleString()}</strong>
-                  <small>Patients today</small>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-label">Appointments</span>
-                  <strong>320</strong>
-                  <small>Scheduled visits</small>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-label">Revenue</span>
-                  <strong>NGN {overview.revenue.toLocaleString()}</strong>
-                  <small>Today</small>
-                </div>
-                <div className="stat-card warning">
-                  <span className="stat-label">Pending Bills</span>
-                  <strong>{overview.pendingBills}</strong>
-                  <small>Need review</small>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-label">Admissions</span>
-                  <strong>{overview.admissions}</strong>
-                  <small>Active admissions</small>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-label">Doctors Available</span>
-                  <strong>{overview.doctorsAvailable}</strong>
-                  <small>On duty</small>
-                </div>
-              </div>
-            )}
-
-            <div className="feature-panel">
-              <div className="panel-title">
-                <h2>Functional Areas</h2>
-                <p>Core modules we will keep wiring into the frontend.</p>
-              </div>
-              <div className="role-grid">
-                {["Patients", "Doctors", "Nurses", "Admin", "Laboratory", "Pharmacy", "Accounts"].map((role) => (
-                  <div className="role-tile" key={role}>
-                    <span aria-hidden="true">{role.slice(0, 2).toUpperCase()}</span>
-                    <strong>{role}</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h1>Hospital Dashboard</h1>
+            <p>Real-time overview of your hospital operations.</p>
           </div>
 
-          <aside className="quick-panel">
-            <div>
-              <h2>Quick Actions</h2>
-              <p>Use these to test the backend from the UI.</p>
+          <button className="primary-btn">
+            + Register Patient
+          </button>
+        </div>
+
+        {/* Statistics */}
+
+        <div className="stats-grid">
+
+          <StatCard
+            title="Total Patients"
+            value="12,548"
+            change="+8.3%"
+            icon="🧑‍⚕️"
+            color="#3B82F6"
+          />
+
+          <StatCard
+            title="Appointments"
+            value="184"
+            change="+12%"
+            icon="📅"
+            color="#10B981"
+          />
+
+          <StatCard
+            title="Revenue"
+            value="$48,240"
+            change="+18%"
+            icon="💰"
+            color="#F59E0B"
+          />
+
+          <StatCard
+            title="Available Beds"
+            value="42"
+            change="-4%"
+            icon="🛏️"
+            color="#EF4444"
+          />
+
+        </div>
+
+        {/* Middle */}
+
+        <div className="dashboard-middle">
+
+          <div className="dashboard-card chart-card">
+
+            <h2>Hospital Analytics</h2>
+
+            <div className="chart-placeholder">
+
+              <div className="fake-chart">
+
+                <div style={{height:"70%"}}></div>
+                <div style={{height:"40%"}}></div>
+                <div style={{height:"95%"}}></div>
+                <div style={{height:"60%"}}></div>
+                <div style={{height:"80%"}}></div>
+                <div style={{height:"45%"}}></div>
+                <div style={{height:"100%"}}></div>
+
+              </div>
+
             </div>
-            <div className="quick-actions">
-              <Link to="/register-patient">Add Patient</Link>
-              <Link to="/patients">View Patients</Link>
-              <Link to="/api-tester">Open API Tester</Link>
+
+          </div>
+
+          <div className="dashboard-card activity-card">
+
+            <h2>Recent Activities</h2>
+
+            <ul>
+
+              <li>🟢 New patient registered</li>
+
+              <li>💊 Pharmacy order completed</li>
+
+              <li>🧪 Lab report uploaded</li>
+
+              <li>💰 Billing payment received</li>
+
+              <li>📅 Appointment scheduled</li>
+
+            </ul>
+
+          </div>
+
+        </div>
+
+        {/* Bottom */}
+
+        <div className="dashboard-bottom">
+
+          <div className="dashboard-card">
+
+            <h2>Recent Patients</h2>
+
+            <table className="dashboard-table">
+
+              <thead>
+
+                <tr>
+
+                  <th>Name</th>
+
+                  <th>Gender</th>
+
+                  <th>Status</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                <tr>
+
+                  <td>John Doe</td>
+
+                  <td>Male</td>
+
+                  <td><span className="badge success">Admitted</span></td>
+
+                </tr>
+
+                <tr>
+
+                  <td>Mary Smith</td>
+
+                  <td>Female</td>
+
+                  <td><span className="badge warning">Waiting</span></td>
+
+                </tr>
+
+                <tr>
+
+                  <td>David Johnson</td>
+
+                  <td>Male</td>
+
+                  <td><span className="badge info">Consultation</span></td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <div className="dashboard-card">
+
+            <h2>Quick Actions</h2>
+
+            <div className="quick-grid">
+
+              <button>➕ Patient</button>
+
+              <button>📅 Appointment</button>
+
+              <button>💊 Pharmacy</button>
+
+              <button>🧪 Laboratory</button>
+
+              <button>💰 Billing</button>
+
+              <button>📊 Reports</button>
+
             </div>
-            <div className="mini-status">
-              <span>Occupied Beds</span>
-              <strong>{overview?.occupiedBeds ?? "--"}</strong>
-            </div>
-            <div className="mini-status">
-              <span>Current Role</span>
-              <strong>{user?.roles?.[0] ?? "Staff"}</strong>
-            </div>
-          </aside>
-        </section>
-      </main>
-    </>
+
+          </div>
+
+        </div>
+
+      </div>
+    </AdminLayout>
   );
 }

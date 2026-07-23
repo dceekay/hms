@@ -1,0 +1,41 @@
+.stat-card{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#162032;
+    border-radius:18px;
+    padding:25px;
+    transition:.35s;
+    box-shadow:0 12px 35px rgba(0,0,0,.25);
+}
+
+.stat-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 45px rgba(37,99,235,.35);
+}
+
+.stat-left p{
+    color:#94a3b8;
+    margin:0;
+}
+
+.stat-left h2{
+    margin:12px 0;
+    font-size:34px;
+}
+
+.stat-change{
+    color:#22c55e;
+    font-weight:600;
+}
+
+.stat-icon{
+    width:70px;
+    height:70px;
+    border-radius:18px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    color:white;
+}
