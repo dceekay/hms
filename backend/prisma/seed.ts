@@ -42,6 +42,10 @@ async function main() {
         "departments.delete",
         "hospital_profile.read",
         "hospital_profile.update",
+        "setup.read",
+        "setup.create",
+        "setup.update",
+        "setup.delete",
         "appointments.read",
         "appointments.create",
         "patients.read",
@@ -249,6 +253,84 @@ async function main() {
             phone: "+2348090001111",
             dateOfBirth: new Date("1988-07-23"),
             gender: "female",
+        },
+    });
+
+    await prisma.specialty.upsert({
+        where: { name: "General Medicine" },
+        update: { isActive: true },
+        create: {
+            name: "General Medicine",
+            description: "Primary medical care and general consultations",
+        },
+    });
+
+    const ward = await prisma.ward.upsert({
+        where: { name: "General Ward" },
+        update: { isActive: true },
+        create: {
+            name: "General Ward",
+            description: "General inpatient ward",
+        },
+    });
+
+    const room = await prisma.room.upsert({
+        where: { roomNumber: "GW-101" },
+        update: {
+            name: "General Ward Room 101",
+            wardId: ward.id,
+            isActive: true,
+        },
+        create: {
+            name: "General Ward Room 101",
+            roomNumber: "GW-101",
+            roomType: "Inpatient",
+            wardId: ward.id,
+        },
+    });
+
+    await prisma.bed.upsert({
+        where: { bedNumber: "GW-101-A" },
+        update: {
+            wardId: ward.id,
+            roomId: room.id,
+            status: "available",
+            isActive: true,
+        },
+        create: {
+            bedNumber: "GW-101-A",
+            wardId: ward.id,
+            roomId: room.id,
+            status: "available",
+        },
+    });
+
+    await prisma.hospitalService.upsert({
+        where: { name: "General Consultation" },
+        update: {
+            code: "CONS-GEN",
+            price: 5000,
+            isActive: true,
+        },
+        create: {
+            name: "General Consultation",
+            code: "CONS-GEN",
+            description: "Standard outpatient consultation",
+            price: 5000,
+        },
+    });
+
+    await prisma.insuranceProvider.upsert({
+        where: { name: "CeekayX Health Plan" },
+        update: {
+            code: "CXHP",
+            isActive: true,
+        },
+        create: {
+            name: "CeekayX Health Plan",
+            code: "CXHP",
+            email: "claims@ceekayx-health.example",
+            phone: "+2348000000000",
         },
     });
 

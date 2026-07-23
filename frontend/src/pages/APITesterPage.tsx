@@ -22,7 +22,27 @@ const defaultBody = JSON.stringify(
   2
 );
 
-export function APITesterPage() {
+const wardBody = JSON.stringify(
+  {
+    name: "Pediatric Ward",
+    description: "Ward for child admissions",
+  },
+  null,
+  2
+);
+
+const serviceBody = JSON.stringify(
+  {
+    name: "Emergency Consultation",
+    code: "CONS-ER",
+    description: "Emergency room consultation",
+    price: 12000,
+  },
+  null,
+  2
+);
+
+export default function APITesterPage() {
   const authToken = useAuthStore((state) => state.token);
   const [baseUrl, setBaseUrl] = useState(
     (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1"
@@ -211,6 +231,47 @@ export function APITesterPage() {
                   </button>
                   <button type="button" className="preset-button" onClick={() => setEndpoint("/patients")}>
                     Patients
+                  </button>
+                  <button type="button" className="preset-button" onClick={() => setEndpoint("/setup/wards")}>
+                    Wards
+                  </button>
+                  <button type="button" className="preset-button" onClick={() => setEndpoint("/setup/rooms")}>
+                    Rooms
+                  </button>
+                  <button type="button" className="preset-button" onClick={() => setEndpoint("/setup/beds")}>
+                    Beds
+                  </button>
+                  <button type="button" className="preset-button" onClick={() => setEndpoint("/setup/services")}>
+                    Services
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => setEndpoint("/setup/insurance-providers")}
+                  >
+                    Insurance
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/setup/wards");
+                      setMethod("POST");
+                      setBody(wardBody);
+                    }}
+                  >
+                    Create Ward
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/setup/services");
+                      setMethod("POST");
+                      setBody(serviceBody);
+                    }}
+                  >
+                    Create Service
                   </button>
                 </div>
               </div>

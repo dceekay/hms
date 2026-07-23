@@ -54,6 +54,13 @@ enum PatientGender {
   other
 }
 
+enum BedStatus {
+  available
+  occupied
+  maintenance
+  reserved
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////////////////////////
@@ -144,6 +151,115 @@ model Department {
   deletedAt DateTime?
 
   @@map("departments")
+}
+
+model Specialty {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @unique @db.VarChar(150)
+  description String? @db.VarChar(500)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("specialties")
+}
+
+model Ward {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @unique @db.VarChar(150)
+  description String? @db.VarChar(500)
+  isActive    Boolean @default(true)
+
+  rooms Room[]
+  beds  Bed[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("wards")
+}
+
+model Room {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @db.VarChar(150)
+  roomNumber  String  @unique @db.VarChar(50)
+  roomType    String? @db.VarChar(100)
+  description String? @db.VarChar(500)
+  isActive    Boolean @default(true)
+
+  wardId String? @db.Char(36)
+  ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: SetNull)
+
+  beds Bed[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([wardId])
+  @@map("rooms")
+}
+
+model Bed {
+  id String @id @default(uuid()) @db.Char(36)
+
+  bedNumber String    @unique @db.VarChar(50)
+  status    BedStatus @default(available)
+  isActive  Boolean   @default(true)
+
+  wardId String? @db.Char(36)
+  ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: SetNull)
+
+  roomId String? @db.Char(36)
+  room   Room?   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([wardId])
+  @@index([roomId])
+  @@map("beds")
+}
+
+model HospitalService {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @unique @db.VarChar(150)
+  code        String? @unique @db.VarChar(50)
+  description String? @db.VarChar(500)
+  price       Decimal @default(0) @db.Decimal(12, 2)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("hospital_services")
+}
+
+model InsuranceProvider {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @unique @db.VarChar(150)
+  code        String? @unique @db.VarChar(50)
+  email       String? @db.VarChar(150)
+  phone       String? @db.VarChar(30)
+  address     String? @db.VarChar(255)
+  description String? @db.VarChar(500)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("insurance_providers")
 }
 
 model HospitalProfile {

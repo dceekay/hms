@@ -1,113 +1,76 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginSchema, LoginFormValues, registerSchema, RegisterFormValues } from "../types/auth";
-import { login, register as registerUser } from "../services/authService";
+import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 
-export function LoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
-  const [isRegister, setIsRegister] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [emailOrUsername, setEmailOrUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const formSchema = isRegister ? registerSchema : loginSchema;
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues | RegisterFormValues>({
-    resolver: zodResolver(formSchema),
-  });
+    const result = await login({ emailOrUsername, password });
+    setLoading(false);
 
-  const getFieldError = (field: string) => {
-    const typedErrors = errors as Record<string, { message?: string }>;
-    return typedErrors[field];
-  };
-
-  async function onSubmit(values: LoginFormValues | RegisterFormValues) {
-    setSubmitError(null);
-    const result = isRegister ? await registerUser(values as RegisterFormValues) : await login(values as LoginFormValues);
-
-    if (result?.accessToken) {
-      setToken(result.accessToken);
-      setUser(result.user ?? null);
-      navigate("/");
+    if (!result?.accessToken) {
+      setError("Login failed. Check your username and password.");
       return;
     }
 
-    setSubmitError(isRegister ? "Registration failed. Please check your details." : "Login failed. Check your username and password.");
+    setToken(result.accessToken);
+    setUser(result.user);
+    navigate("/");
   }
 
   return (
-    <main className="page-container">
-      <div className="card">
-        <h1>{isRegister ? "Register" : "Login"}</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          {isRegister && (
-            <>
-              <label>
-                Email
-                <input type="email" {...register("email")} />
-                {getFieldError("email") && <span className="error-text">{getFieldError("email")?.message}</span>}
-              </label>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        background: "#0f172a",
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          width: 420,
+          background: "#fff",
+          borderRadius: 16,
+          padding: 40,
+        }}
+      >
+        <h2>Hospital Login</h2>
 
-              <label>
-                Username
-                <input type="text" {...register("username")} />
-                {getFieldError("username") && <span className="error-text">{getFieldError("username")?.message}</span>}
-              </label>
+        <input
+          placeholder="Email or username"
+          value={emailOrUsername}
+          onChange={(event) => setEmailOrUsername(event.target.value)}
+          style={{ width: "100%", marginBottom: 15 }}
+        />
 
-              <label>
-                First Name
-                <input type="text" {...register("firstName")} />
-                {getFieldError("firstName") && <span className="error-text">{getFieldError("firstName")?.message}</span>}
-              </label>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          style={{ width: "100%", marginBottom: 20 }}
+        />
 
-              <label>
-                Last Name
-                <input type="text" {...register("lastName")} />
-                {getFieldError("lastName") && <span className="error-text">{getFieldError("lastName")?.message}</span>}
-              </label>
-
-              <label>
-                Phone
-                <input type="text" {...register("phone")} />
-                {getFieldError("phone") && <span className="error-text">{getFieldError("phone")?.message}</span>}
-              </label>
-            </>
-          )}
-
-          {!isRegister && (
-            <label>
-              Email or Username
-              <input type="text" {...register("emailOrUsername")} />
-              {getFieldError("emailOrUsername") && (
-                <span className="error-text">{getFieldError("emailOrUsername")?.message}</span>
-              )}
-            </label>
-          )}
-
-          <label>
-            Password
-            <input type="password" {...register("password")} />
-            {getFieldError("password") && <span className="error-text">{getFieldError("password")?.message}</span>}
-          </label>
-
-          <button type="submit" className="button" disabled={isSubmitting}>
-            {isSubmitting ? (isRegister ? "Registering..." : "Logging in...") : isRegister ? "Register" : "Login"}
-          </button>
-
-          {submitError && <p className="error-text">{submitError}</p>}
-        </form>
-
-        <button type="button" className="button button-secondary" onClick={() => setIsRegister((state) => !state)}>
-          {isRegister ? "Go to Login" : "Create Account"}
+        <button type="submit" disabled={loading} style={{ width: "100%" }}>
+          {loading ? "Logging in..." : "Login"}
         </button>
-      </div>
-    </main>
+
+        {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
+      </form>
+    </div>
   );
 }

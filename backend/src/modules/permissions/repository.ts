@@ -22,6 +22,9 @@ export class PermissionRepository extends BaseRepository<Permission> {
         skip,
         take,
         orderBy: { name: "asc" },
+        include: {
+          roles: true,
+        },
       }),
       prisma.permission.count({ where }),
     ]);

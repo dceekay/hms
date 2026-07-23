@@ -1,46 +1,28 @@
-import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 interface Props {
   title: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color: string;
+  value: string;
+  icon: ReactNode;
   change?: string;
+  color?: string;
 }
 
-export default function StatCard({
-  title,
-  value,
-  icon,
-  color,
-  change,
-}: Props) {
+export default function StatCard({ title, value, icon, change, color = "#2563eb" }: Props) {
   return (
-    <motion.div
-      whileHover={{
-        y: -8,
-        scale: 1.02,
-      }}
-      className="stat-card"
-    >
-      <div className="stat-info">
-        <span>{title}</span>
+    <div className="stat-card">
+      <div className="stat-top">
+        <div>
+          <p>{title}</p>
+          <h2>{value}</h2>
+        </div>
 
-        <h2>{value}</h2>
-
-        {change && (
-          <small>{change}</small>
-        )}
+        <div className="stat-icon" style={{ backgroundColor: color }}>
+          {icon}
+        </div>
       </div>
 
-      <div
-        className="stat-icon"
-        style={{
-          background: color,
-        }}
-      >
-        {icon}
-      </div>
-    </motion.div>
+      {change && <div className="stat-change">{change} this month</div>}
+    </div>
   );
 }
