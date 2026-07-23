@@ -1,15 +1,23 @@
-import { FiBell, FiMoon, FiSearch, FiSun, FiWifi, FiWifiOff } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { FiBell, FiLogOut, FiMoon, FiSearch, FiSun, FiWifi, FiWifiOff } from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
 
 export default function Topbar() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const { status, latencyMs, isOnline } = useBackendHealth();
   const { isDark, toggleTheme } = useThemeMode();
 
   const initials = `${user?.firstName?.charAt(0) ?? "A"}${user?.lastName?.charAt(0) ?? ""}`;
   const roleLabel = user?.roles?.join(", ") || "Administrator";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="topbar">
@@ -54,6 +62,11 @@ export default function Topbar() {
             <small>{roleLabel}</small>
           </div>
         </div>
+
+        <button className="logout-btn" type="button" onClick={handleLogout}>
+          <FiLogOut />
+          <span>Logout</span>
+        </button>
       </div>
     </header>
   );
