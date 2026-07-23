@@ -50,6 +50,11 @@ async function main() {
         "appointments.create",
         "patients.read",
         "patients.create",
+        "laboratory.read",
+        "pharmacy.read",
+        "billing.read",
+        "inventory.read",
+        "reports.read",
     ];
 
     const roles = [
@@ -58,6 +63,9 @@ async function main() {
         { name: "Doctor", description: "Medical Doctor" },
         { name: "Nurse", description: "Nursing Staff" },
         { name: "Receptionist", description: "Front Desk Receptionist" },
+        { name: "Laboratory", description: "Laboratory Staff" },
+        { name: "Pharmacist", description: "Pharmacy Staff" },
+        { name: "Billing Officer", description: "Billing and Accounts Staff" },
     ];
 
     const roleMap: Record<string, string> = {};
@@ -117,6 +125,9 @@ async function main() {
         Doctor: ["appointments.read", "patients.read"],
         Nurse: ["patients.read"],
         Receptionist: ["appointments.read", "patients.create"],
+        Laboratory: ["laboratory.read", "patients.read"],
+        Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
+        "Billing Officer": ["billing.read", "reports.read", "patients.read"],
     };
 
     for (const [roleName, permissionNames] of Object.entries(rolePermissions)) {
@@ -240,6 +251,142 @@ async function main() {
         create: {
             userId: receptionist.id,
             roleId: roleMap["Receptionist"],
+        },
+    });
+
+    const nurse = await prisma.user.upsert({
+        where: { email: "nurse@ceekayx.com" },
+        update: {
+            username: "nurseama",
+            passwordHash: await bcrypt.hash("Nurse@123", 12),
+            firstName: "Amina",
+            lastName: "Bello",
+            phone: "+2348070001001",
+            isActive: true,
+        },
+        create: {
+            email: "nurse@ceekayx.com",
+            username: "nurseama",
+            passwordHash: await bcrypt.hash("Nurse@123", 12),
+            firstName: "Amina",
+            lastName: "Bello",
+            phone: "+2348070001001",
+        },
+    });
+
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: nurse.id,
+                roleId: roleMap["Nurse"],
+            },
+        },
+        update: {},
+        create: {
+            userId: nurse.id,
+            roleId: roleMap["Nurse"],
+        },
+    });
+
+    const labStaff = await prisma.user.upsert({
+        where: { email: "lab@ceekayx.com" },
+        update: {
+            username: "labtech",
+            passwordHash: await bcrypt.hash("Lab@12345", 12),
+            firstName: "Samuel",
+            lastName: "Okoro",
+            phone: "+2348070001002",
+            isActive: true,
+        },
+        create: {
+            email: "lab@ceekayx.com",
+            username: "labtech",
+            passwordHash: await bcrypt.hash("Lab@12345", 12),
+            firstName: "Samuel",
+            lastName: "Okoro",
+            phone: "+2348070001002",
+        },
+    });
+
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: labStaff.id,
+                roleId: roleMap["Laboratory"],
+            },
+        },
+        update: {},
+        create: {
+            userId: labStaff.id,
+            roleId: roleMap["Laboratory"],
+        },
+    });
+
+    const pharmacist = await prisma.user.upsert({
+        where: { email: "pharmacy@ceekayx.com" },
+        update: {
+            username: "pharm",
+            passwordHash: await bcrypt.hash("Pharm@123", 12),
+            firstName: "Fatima",
+            lastName: "Musa",
+            phone: "+2348070001003",
+            isActive: true,
+        },
+        create: {
+            email: "pharmacy@ceekayx.com",
+            username: "pharm",
+            passwordHash: await bcrypt.hash("Pharm@123", 12),
+            firstName: "Fatima",
+            lastName: "Musa",
+            phone: "+2348070001003",
+        },
+    });
+
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: pharmacist.id,
+                roleId: roleMap["Pharmacist"],
+            },
+        },
+        update: {},
+        create: {
+            userId: pharmacist.id,
+            roleId: roleMap["Pharmacist"],
+        },
+    });
+
+    const billingOfficer = await prisma.user.upsert({
+        where: { email: "billing@ceekayx.com" },
+        update: {
+            username: "billing",
+            passwordHash: await bcrypt.hash("Billing@123", 12),
+            firstName: "David",
+            lastName: "Ibrahim",
+            phone: "+2348070001004",
+            isActive: true,
+        },
+        create: {
+            email: "billing@ceekayx.com",
+            username: "billing",
+            passwordHash: await bcrypt.hash("Billing@123", 12),
+            firstName: "David",
+            lastName: "Ibrahim",
+            phone: "+2348070001004",
+        },
+    });
+
+    await prisma.userRole.upsert({
+        where: {
+            userId_roleId: {
+                userId: billingOfficer.id,
+                roleId: roleMap["Billing Officer"],
+            },
+        },
+        update: {},
+        create: {
+            userId: billingOfficer.id,
+            roleId: roleMap["Billing Officer"],
         },
     });
 

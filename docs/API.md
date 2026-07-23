@@ -89,6 +89,18 @@ Login response should include:
 - roles
 - permissions
 
+Development test accounts:
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Super Admin | `admin` | `Admin@123` |
+| Doctor | `drjohn` | `Doctor@123` |
+| Nurse | `nurseama` | `Nurse@123` |
+| Receptionist | `reception` | `Reception@123` |
+| Laboratory | `labtech` | `Lab@12345` |
+| Pharmacist | `pharm` | `Pharm@123` |
+| Billing Officer | `billing` | `Billing@123` |
+
 ## RBAC Endpoints
 
 ### Users
