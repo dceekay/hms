@@ -42,6 +42,31 @@ const serviceBody = JSON.stringify(
   2
 );
 
+const patientBody = JSON.stringify(
+  {
+    firstName: "Mariam",
+    lastName: "Yusuf",
+    email: "mariam.yusuf@example.com",
+    phone: "+2348090003333",
+    dateOfBirth: "1992-04-12",
+    gender: "female",
+    address: "8 Wellness Street",
+    city: "Lagos",
+    state: "Lagos",
+    country: "Nigeria",
+    emergencyContactName: "Kabir Yusuf",
+    emergencyContactPhone: "+2348090004444",
+    emergencyContactRelationship: "Brother",
+    bloodGroup: "A+",
+    genotype: "AS",
+    allergies: "Penicillin",
+    insurancePolicyNumber: "CXHP-0002",
+    insuranceCoverageStatus: "active",
+  },
+  null,
+  2
+);
+
 export default function APITesterPage() {
   const authToken = useAuthStore((state) => state.token);
   const [baseUrl, setBaseUrl] = useState(
@@ -231,6 +256,26 @@ export default function APITesterPage() {
                   <button type="button" className="preset-button" onClick={() => setEndpoint("/patients")}>
                     Patients
                   </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/patients?search=CXHMS");
+                      setMethod("GET");
+                    }}
+                  >
+                    Search MRN
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/patients/lookup/PAT-SEED-GRACE-ADEYEMI");
+                      setMethod("GET");
+                    }}
+                  >
+                    QR Lookup
+                  </button>
                   <button type="button" className="preset-button" onClick={() => setEndpoint("/setup/wards")}>
                     Wards
                   </button>
@@ -271,6 +316,17 @@ export default function APITesterPage() {
                     }}
                   >
                     Create Service
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/patients");
+                      setMethod("POST");
+                      setBody(patientBody);
+                    }}
+                  >
+                    Create Patient
                   </button>
                 </div>
               </div>

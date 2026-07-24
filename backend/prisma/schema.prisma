@@ -54,6 +54,12 @@ enum PatientGender {
   other
 }
 
+enum PatientStatus {
+  active
+  inactive
+  deceased
+}
+
 enum BedStatus {
   available
   occupied
@@ -121,20 +127,48 @@ model User {
 model Patient {
   id String @id @default(uuid()) @db.Char(36)
 
+  mrn    String? @unique @db.VarChar(50)
+  qrCode String? @unique @db.VarChar(120)
+
   firstName String @db.VarChar(100)
   lastName  String @db.VarChar(100)
 
-  email String @unique @db.VarChar(150)
+  email String? @unique @db.VarChar(150)
   phone String? @unique @db.VarChar(30)
 
   dateOfBirth DateTime
   gender      PatientGender
+  status      PatientStatus @default(active)
+
+  address String? @db.VarChar(255)
+  city    String? @db.VarChar(100)
+  state   String? @db.VarChar(100)
+  country String? @db.VarChar(100)
+
+  emergencyContactName         String? @db.VarChar(150)
+  emergencyContactPhone        String? @db.VarChar(30)
+  emergencyContactRelationship String? @db.VarChar(80)
+
+  bloodGroup String? @db.VarChar(10)
+  genotype   String? @db.VarChar(10)
+  allergies  String? @db.VarChar(500)
+
+  insuranceProviderId String?            @db.Char(36)
+  insuranceProvider   InsuranceProvider? @relation(fields: [insuranceProviderId], references: [id], onDelete: SetNull)
+  insurancePolicyNumber String?          @db.VarChar(100)
+  insuranceCoverageStatus String?        @db.VarChar(80)
+
+  version Int @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   deletedAt DateTime?
 
+  @@index([insuranceProviderId])
+  @@index([mrn])
+  @@index([qrCode])
+  @@index([status])
   @@map("patients")
 }
 
@@ -254,6 +288,8 @@ model InsuranceProvider {
   address     String? @db.VarChar(255)
   description String? @db.VarChar(500)
   isActive    Boolean @default(true)
+
+  patients Patient[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

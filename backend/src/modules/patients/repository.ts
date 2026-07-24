@@ -2,18 +2,22 @@ import { Prisma, Patient } from "@prisma/client";
 import { BaseRepository } from "../../core/BaseRepository";
 import { prisma } from "../../database/prisma";
 
+export type PatientWithDetails = Prisma.PatientGetPayload<{
+  include: { insuranceProvider: true };
+}>;
+
 export class PatientRepository extends BaseRepository<Patient> {
   constructor() {
     super(prisma.patient);
   }
 
-  async create(data: Partial<Patient>): Promise<Patient> {
-    const normalizedData: Prisma.PatientCreateInput = {
-      ...(data as Prisma.PatientCreateInput),
+  async createPatient(data: Prisma.PatientUncheckedCreateInput): Promise<Patient> {
+    const normalizedData: Prisma.PatientUncheckedCreateInput = {
+      ...data,
       dateOfBirth:
-        typeof (data as Prisma.PatientCreateInput).dateOfBirth === "string"
-          ? new Date((data as Prisma.PatientCreateInput).dateOfBirth as string)
-          : (data as Prisma.PatientCreateInput).dateOfBirth,
+        typeof data.dateOfBirth === "string"
+          ? new Date(data.dateOfBirth)
+          : data.dateOfBirth,
     };
 
     return this.model.create({ data: normalizedData });
@@ -27,27 +31,51 @@ export class PatientRepository extends BaseRepository<Patient> {
     return this.model.findUnique({ where: { phone } });
   }
 
+  async findByMrn(mrn: string): Promise<Patient | null> {
+    return this.model.findUnique({ where: { mrn } });
+  }
+
+  async findByQrCode(qrCode: string): Promise<PatientWithDetails | null> {
+    return this.model.findUnique({
+      where: { qrCode },
+      include: { insuranceProvider: true },
+    });
+  }
+
+  async findByIdWithDetails(id: string): Promise<PatientWithDetails | null> {
+    return this.model.findFirst({
+      where: { id, deletedAt: null },
+      include: { insuranceProvider: true },
+    });
+  }
+
   async findManyWithPagination(params: {
     skip?: number;
     take?: number;
     search?: string;
-  }): Promise<Patient[]> {
+  }): Promise<PatientWithDetails[]> {
     const where: Prisma.PatientWhereInput = params.search
       ? {
+          deletedAt: null,
           OR: [
+            { mrn: { contains: params.search } },
+            { qrCode: { contains: params.search } },
             { firstName: { contains: params.search } },
             { lastName: { contains: params.search } },
             { email: { contains: params.search } },
             { phone: { contains: params.search } },
+            { emergencyContactName: { contains: params.search } },
+            { insurancePolicyNumber: { contains: params.search } },
           ],
         }
-      : {};
+      : { deletedAt: null };
 
     return this.model.findMany({
       where,
       skip: params.skip,
       take: params.take,
       orderBy: { createdAt: "desc" },
+      include: { insuranceProvider: true },
     });
   }
 }

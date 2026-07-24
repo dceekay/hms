@@ -253,20 +253,45 @@ Current endpoints:
 | GET | `/patients` | `patients.read` | List patients |
 | POST | `/patients` | `patients.create` | Create patient |
 | GET | `/patients/:id` | `patients.read` | Get one patient |
+| PATCH | `/patients/:id` | `patients.update` | Update patient |
+| GET | `/patients/:id/summary` | `patients.read` | Patient overview |
+| GET | `/patients/:id/qr` | `patients.read` | Return QR payload data |
+| GET | `/patients/lookup/:qrCode` | `patients.read` | Resolve QR code to safe patient summary |
 
 Target endpoints:
 
 | Method | Path | Permission | Purpose |
 | --- | --- | --- | --- |
-| PATCH | `/patients/:id` | `patients.update` | Update patient |
 | DELETE | `/patients/:id` | `patients.delete` | Soft-delete patient |
 | GET | `/patients/search` | `patients.read` | Search by MRN/name/phone |
-| GET | `/patients/:id/summary` | `patients.read` | Patient overview |
 | GET | `/patients/:id/insurance` | `patients.read` | Insurance details |
 | POST | `/patients/:id/insurance` | `patients.update` | Add/update insurance |
-| GET | `/patients/:id/qr` | `patients.read` | Return QR payload/image data |
-| GET | `/patients/lookup/:qrCode` | `patients.read` | Resolve QR code to safe patient summary |
 | GET | `/patients/:id/visits` | `patients.read` | Patient visit history |
+
+Create patient example:
+
+```json
+{
+  "firstName": "Grace",
+  "lastName": "Adeyemi",
+  "email": "patient@example.com",
+  "phone": "+2348090001111",
+  "dateOfBirth": "1988-07-23",
+  "gender": "female",
+  "address": "12 Care Avenue",
+  "city": "Lagos",
+  "state": "Lagos",
+  "country": "Nigeria",
+  "emergencyContactName": "Tunde Adeyemi",
+  "emergencyContactPhone": "+2348090002222",
+  "emergencyContactRelationship": "Spouse",
+  "bloodGroup": "O+",
+  "genotype": "AA",
+  "allergies": "None reported",
+  "insurancePolicyNumber": "CXHP-0001",
+  "insuranceCoverageStatus": "active"
+}
+```
 
 Patient QR rules:
 - QR codes must not contain private medical details directly.
