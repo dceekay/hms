@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import AdminLayout from "../layouts/AdminLayout";
 import StatCard from "../components/dashboard/StatCard";
 import { useAuthStore } from "../store/authStore";
+import { fetchSemsasTransfers } from "../services/semsasService";
+import { SemsasTransfer } from "../types/semsas";
 import {
   FiActivity,
+  FiArchive,
   FiCalendar,
   FiCheckCircle,
   FiClock,
@@ -17,6 +20,7 @@ import {
   FiRefreshCw,
   FiShield,
   FiTrendingUp,
+  FiTruck,
   FiUserCheck,
   FiUserPlus,
   FiUsers,
@@ -64,6 +68,14 @@ const commonSyncItems = [
   "Conflict-safe record versioning",
   "Background sync when backend returns online",
 ];
+
+function currentMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function money(value: number) {
+  return `NGN ${value.toLocaleString()}`;
+}
 
 function hasRole(roles: string[], role: string) {
   return roles.some((item) => item.toLowerCase() === role.toLowerCase());
@@ -287,11 +299,11 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   }
 
   return {
-    roleLabel: hasRole(roles, "Super Admin") ? "Super Admin workspace" : "Administrator workspace",
-    eyebrow: "Hospital command dashboard",
-    title: "Smarter hospitals. Better care.",
+    roleLabel: hasRole(roles, "Super Admin") ? "Super Admin" : "Administrator",
+    eyebrow: "Operations",
+    title: "Command Center",
     description:
-      "Monitor operations, test backend APIs, manage access, and prepare each clinical module from one command center.",
+      "Manage access, patient flow, setup data, and monthly operations from one focused workspace.",
     stats: [
       { title: "Total Patients", value: "3,428", change: "+12.4%", color: "#2563eb", icon: <FiUsers /> },
       { title: "Appointments", value: "248", change: "+8.1%", color: "#7c3aed", icon: <FiCalendar /> },
@@ -304,6 +316,7 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
         ? [{ label: "Register Investigation", to: "/register-patient", icon: <FiUserPlus />, primary: true }]
         : []),
       ...(canReadPatients ? [{ label: "Patient List", to: "/patients", icon: <FiUsers /> }] : []),
+      ...(permissions.includes("semsas.read") ? [{ label: "SEMSAS", to: "/operations/semsas", icon: <FiTruck /> }] : []),
       ...(canTestApi ? [{ label: "Test API", to: "/api-tester", icon: <FiActivity /> }] : []),
     ],
     tasks: [
@@ -324,7 +337,41 @@ export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
+  const canReadSemsas = permissions.includes("semsas.read");
+  const [semsasTransfers, setSemsasTransfers] = useState<SemsasTransfer[]>([]);
+  const [semsasLoading, setSemsasLoading] = useState(false);
   const dashboard = buildDashboardProfile(roles, permissions);
+  const month = currentMonth();
+  const semsasSummary = useMemo(() => {
+    const unfiled = semsasTransfers.filter((transfer) => !transfer.filedAt);
+    const filed = semsasTransfers.filter((transfer) => transfer.filedAt);
+    const unfiledAmount = unfiled.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
+    const filedAmount = filed.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
+
+    return {
+      total: semsasTransfers.length,
+      unfiled: unfiled.length,
+      filedAmount,
+      unfiledAmount,
+    };
+  }, [semsasTransfers]);
+
+  useEffect(() => {
+    if (!canReadSemsas) return;
+
+    let mounted = true;
+    setSemsasLoading(true);
+    void fetchSemsasTransfers({ month, filingStatus: "" }).then(({ transfers }) => {
+      if (!mounted) return;
+
+      setSemsasTransfers(transfers ?? []);
+      setSemsasLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [canReadSemsas, month]);
 
   return (
     <AdminLayout>
@@ -374,6 +421,47 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </motion.div>
+
+        {canReadSemsas && (
+          <motion.section
+            className="dashboard-panel semsas-dashboard-summary"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <div className="panel-title">
+              <div>
+                <h2>SEMSAS Filing</h2>
+                <p>{month} ambulance service summary.</p>
+              </div>
+              <FiArchive />
+            </div>
+
+            <div className="semsas-summary-grid">
+              <span>
+                <small>Total records</small>
+                <strong>{semsasLoading ? "..." : semsasSummary.total}</strong>
+              </span>
+              <span>
+                <small>Unfiled</small>
+                <strong>{semsasLoading ? "..." : semsasSummary.unfiled}</strong>
+              </span>
+              <span>
+                <small>Filed amount</small>
+                <strong>{semsasLoading ? "..." : money(semsasSummary.filedAmount)}</strong>
+              </span>
+              <span>
+                <small>Unfiled amount</small>
+                <strong>{semsasLoading ? "..." : money(semsasSummary.unfiledAmount)}</strong>
+              </span>
+            </div>
+
+            <Link className="command-btn" to="/operations/semsas">
+              <FiTruck />
+              Open SEMSAS
+            </Link>
+          </motion.section>
+        )}
 
         <div className="dashboard-panels">
           <motion.section

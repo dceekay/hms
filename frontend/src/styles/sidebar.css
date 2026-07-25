@@ -7,6 +7,7 @@
 .main-content {
   min-height: 100vh;
   margin-left: 280px;
+  min-width: 0;
   transition: margin-left 0.28s ease;
 }
 
@@ -16,6 +17,8 @@
 
 .page-content {
   padding: 28px;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .mobile-bottom-nav {
@@ -234,12 +237,16 @@
   .main-content,
   .main-content.collapsed {
     margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
     min-height: 100dvh;
     padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
   .page-content {
     padding: 14px 14px 22px;
+    width: 100%;
+    max-width: 100vw;
   }
 
   .mobile-bottom-nav {

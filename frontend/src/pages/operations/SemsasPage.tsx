@@ -29,7 +29,7 @@ const emptyForm: SemsasTransferFormValues = {
 };
 
 function money(value?: string | number | null) {
-  return `₦${Number(value ?? 0).toLocaleString()}`;
+  return `NGN ${Number(value ?? 0).toLocaleString()}`;
 }
 
 function currentMonth() {
