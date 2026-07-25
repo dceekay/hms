@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import { PatientListPage } from "./pages/patients/PatientListPage";
 import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
 import SecurityEntryPage from "./pages/security/SecurityEntryPage";
+import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 
 import APITesterPage from "./pages/APITesterPage";
@@ -16,7 +17,7 @@ import UsersPage from "./pages/admin/UsersPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { FaBed, FaCapsules, FaFlask } from "react-icons/fa";
-import { FiActivity, FiCreditCard, FiDatabase, FiDroplet, FiPackage, FiPieChart, FiTool } from "react-icons/fi";
+import { FiActivity, FiCreditCard, FiDatabase, FiPackage, FiPieChart, FiTool } from "react-icons/fi";
 
 export default function App() {
   return (
@@ -198,11 +199,7 @@ export default function App() {
         path="/setup/insurance"
         element={
           <ProtectedRoute requiredPermissions={["setup.read"]}>
-            <ComingSoonPage
-              title="Insurance Providers"
-              description="Insurance provider setup is available through the setup API and will connect to patient profiles in the next backend phase."
-              icon={<FiDroplet />}
-            />
+            <InsuranceProvidersPage />
           </ProtectedRoute>
         }
       />

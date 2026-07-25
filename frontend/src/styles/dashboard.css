@@ -1155,6 +1155,184 @@
   cursor: pointer;
 }
 
+.setup-page {
+  display: grid;
+  gap: 18px;
+}
+
+.setup-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, transparent), transparent),
+    var(--surface-strong);
+}
+
+.setup-hero h1 {
+  margin: 4px 0 8px;
+  color: var(--text-strong);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.setup-hero p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.setup-summary {
+  width: 138px;
+  min-height: 118px;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.setup-summary svg {
+  color: var(--accent);
+  font-size: 1.35rem;
+}
+
+.setup-summary strong {
+  color: var(--text-strong);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.setup-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.setup-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.setup-form,
+.setup-list-panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.setup-form label {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.setup-form textarea {
+  resize: vertical;
+}
+
+.setup-toggle {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-strong);
+}
+
+.setup-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.setup-actions,
+.setup-list-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.setup-actions {
+  justify-content: flex-end;
+}
+
+.setup-list-header .patient-search-control {
+  flex: 1;
+}
+
+.setup-provider-list {
+  display: grid;
+  gap: 12px;
+}
+
+.setup-provider-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.setup-provider-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.setup-provider-title strong {
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.setup-provider-card p {
+  margin: 8px 0 10px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.setup-provider-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setup-provider-meta span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface-strong);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.muted-text {
+  margin: 0;
+  color: var(--muted);
+}
+
 .id-mrn {
   padding: 12px;
   border: 1px solid var(--border);
@@ -1376,5 +1554,51 @@
 
   .security-search button {
     grid-column: 1 / -1;
+  }
+
+  .setup-hero,
+  .setup-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .setup-summary {
+    width: 100%;
+    min-height: 96px;
+  }
+
+  .setup-form,
+  .setup-list-panel {
+    padding: 14px;
+  }
+
+  .setup-list-header,
+  .setup-provider-card {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-list-header,
+  .setup-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .setup-actions .icon-text-btn,
+  .setup-actions .registration-submit,
+  .setup-list-header .icon-text-btn {
+    width: 100%;
+  }
+
+  .setup-provider-card .patient-row-actions {
+    align-items: stretch;
+  }
+
+  .setup-provider-card .patient-row-actions .icon-text-btn {
+    flex: 1 1 130px;
   }
 }
