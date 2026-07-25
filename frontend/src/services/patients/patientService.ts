@@ -1,15 +1,28 @@
 import api from "../api";
+import axios from "axios";
 import { PatientFormValues, Patient, PatientQr } from "../../types/patient";
 
-export async function createPatient(values: PatientFormValues): Promise<Patient | null> {
+type ApiErrorBody = {
+  message?: string;
+};
+
+function getApiErrorMessage(error: unknown) {
+  if (axios.isAxiosError<ApiErrorBody>(error)) {
+    return error.response?.data?.message ?? error.message;
+  }
+
+  return "Something went wrong. Please try again.";
+}
+
+export async function createPatient(values: PatientFormValues): Promise<{ patient: Patient | null; error?: string }> {
   try {
     const endpoint =
       values.patientCategory === "investigation_patient" ? "/patients/investigations" : "/patients";
     const response = await api.post<{ data: Patient }>(endpoint, values);
-    return response.data.data;
+    return { patient: response.data.data };
   } catch (error) {
     console.error(error);
-    return null;
+    return { patient: null, error: getApiErrorMessage(error) };
   }
 }
 

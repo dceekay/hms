@@ -508,6 +508,13 @@
   font-weight: 700;
 }
 
+.optional-field {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .registration-submit,
 .generate-id-btn {
   min-height: 48px;

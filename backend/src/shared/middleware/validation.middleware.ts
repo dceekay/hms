@@ -8,14 +8,12 @@ export function validateBody(schema: ZodTypeAny) {
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
-      const issues = result.error.issues.map((issue: ZodIssue) => ({
-        path: issue.path.join("."),
-        message: issue.message,
-      }));
+      const issues = result.error.issues.map((issue: ZodIssue) => {
+        const path = issue.path.join(".");
+        return path ? `${path}: ${issue.message}` : issue.message;
+      });
 
-      return next(
-        new ApiError(HttpStatus.BAD_REQUEST, "Validation failed: " + JSON.stringify(issues))
-      );
+      return next(new ApiError(HttpStatus.BAD_REQUEST, `Validation failed: ${issues.join("; ")}`));
     }
 
     req.body = result.data;

@@ -34,6 +34,15 @@ function cleanPayload(values: PatientFormValues) {
   ) as PatientFormValues;
 }
 
+function isCategoryAllowed(
+  category: PatientFormValues["patientCategory"],
+  canCreateHospitalPatient: boolean,
+  canCreateInvestigationPatient: boolean
+) {
+  if (category === "investigation_patient") return canCreateInvestigationPatient;
+  return canCreateHospitalPatient;
+}
+
 export default function PatientRegistrationPage() {
   const permissions = useAuthStore((state) => state.user?.permissions ?? []);
   const canCreateHospitalPatient = permissions.includes("patients.create");
@@ -49,9 +58,15 @@ export default function PatientRegistrationPage() {
   useEffect(() => {
     setForm((current) => ({
       ...current,
-      patientCategory: current.patientCategory ?? defaultCategory,
+      patientCategory: isCategoryAllowed(
+        current.patientCategory,
+        canCreateHospitalPatient,
+        canCreateInvestigationPatient
+      )
+        ? current.patientCategory
+        : defaultCategory,
     }));
-  }, [defaultCategory]);
+  }, [canCreateHospitalPatient, canCreateInvestigationPatient, defaultCategory]);
 
   const update = (field: keyof PatientFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -75,11 +90,11 @@ export default function PatientRegistrationPage() {
       return;
     }
 
-    const patient = await createPatient(cleanPayload(form));
+    const { patient, error: registrationError } = await createPatient(cleanPayload(form));
     setLoading(false);
 
     if (!patient) {
-      setError("Unable to register patient. Check required fields and duplicate contact details.");
+      setError(registrationError ?? "Unable to register patient. Check required fields and duplicate contact details.");
       return;
     }
 
@@ -243,30 +258,37 @@ export default function PatientRegistrationPage() {
               <h2>Medical & Insurance</h2>
               <div className="form-grid">
                 <label>
-                  Blood group
+                  Blood group <span className="optional-field">optional</span>
                   <input value={form.bloodGroup ?? ""} onChange={(event) => update("bloodGroup", event.target.value)} />
                 </label>
                 <label>
-                  Genotype
+                  Genotype <span className="optional-field">optional</span>
                   <input value={form.genotype ?? ""} onChange={(event) => update("genotype", event.target.value)} />
                 </label>
                 <label>
-                  Allergies
+                  Allergies <span className="optional-field">optional</span>
                   <input value={form.allergies ?? ""} onChange={(event) => update("allergies", event.target.value)} />
                 </label>
                 <label>
-                  Insurance policy number
+                  Insurance policy number <span className="optional-field">optional</span>
                   <input
                     value={form.insurancePolicyNumber ?? ""}
                     onChange={(event) => update("insurancePolicyNumber", event.target.value)}
                   />
                 </label>
                 <label>
-                  Coverage status
-                  <input
+                  Coverage status <span className="optional-field">optional</span>
+                  <select
                     value={form.insuranceCoverageStatus ?? ""}
                     onChange={(event) => update("insuranceCoverageStatus", event.target.value)}
-                  />
+                  >
+                    <option value="">Not provided</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending verification</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="expired">Expired</option>
+                    <option value="self_pay">Self pay</option>
+                  </select>
                 </label>
               </div>
             </div>
