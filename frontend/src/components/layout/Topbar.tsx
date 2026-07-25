@@ -1,11 +1,31 @@
 import { useNavigate } from "react-router-dom";
-import { FiBell, FiLogOut, FiSettings } from "react-icons/fi";
+import {
+  FiBell,
+  FiClock,
+  FiLogOut,
+  FiMoon,
+  FiSearch,
+  FiSun,
+  FiWifi,
+  FiWifiOff,
+} from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
+import { useBackendHealth } from "../../hooks/useBackendHealth";
+import { useThemeMode } from "../../hooks/useThemeMode";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { status, latencyMs } = useBackendHealth();
+  const { isDark, toggleTheme } = useThemeMode();
+
+  const primaryRole = user?.roles?.[0] ?? "Care team";
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 
   const handleLogout = () => {
     logout();
@@ -15,25 +35,45 @@ export default function Topbar() {
   return (
     <header className="topbar">
       <div className="topbar-left">
+        <p className="topbar-kicker">{primaryRole}</p>
         <h2>
-          Welcome back,
-          <span> {user?.firstName || "Admin"}</span>
+          Welcome, <span>{user?.firstName || "Admin"}</span>
         </h2>
 
-        <p>Have a productive day managing your hospital.</p>
+        <p>
+          <FiClock />
+          {today}
+        </p>
       </div>
 
       <div className="topbar-right">
-        <div className="search-box">
+        <label className="topbar-search" aria-label="Search workspace">
+          <FiSearch />
           <input type="text" placeholder="Search patients, doctors..." />
+        </label>
+
+        <div className={`backend-status ${status}`} title={`Backend is ${status}`}>
+          {status === "online" ? <FiWifi /> : <FiWifiOff />}
+          <span className="status-pulse" />
+          <div>
+            <strong>{status === "checking" ? "Checking" : status}</strong>
+            <small>{latencyMs ? `${latencyMs} ms` : "API status"}</small>
+          </div>
         </div>
 
-        <button className="icon-btn" type="button" aria-label="Notifications">
-          <FiBell />
+        <button
+          className="icon-btn theme-toggle"
+          type="button"
+          onClick={toggleTheme}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          title={isDark ? "Light mode" : "Dark mode"}
+        >
+          {isDark ? <FiSun /> : <FiMoon />}
         </button>
 
-        <button className="icon-btn" type="button" aria-label="Settings">
-          <FiSettings />
+        <button className="icon-btn notification-action" type="button" aria-label="Notifications">
+          <FiBell />
+          <span />
         </button>
 
         <div className="profile">
