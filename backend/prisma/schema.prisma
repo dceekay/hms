@@ -86,6 +86,12 @@ enum SemsasTransferType {
   external_ambulance_to_this_hospital
 }
 
+enum DoctorType {
+  medical_doctor
+  visiting_consultant
+  visiting_specialist
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,6 +147,8 @@ model User {
   semsasTransfersRecorded SemsasTransfer[] @relation("SemsasRecordedBy")
 
   semsasTransfersFiled SemsasTransfer[] @relation("SemsasFiledBy")
+
+  doctorProfile DoctorProfile?
 
   @@map("users")
 }
@@ -379,6 +387,23 @@ model SemsasTransfer {
   @@index([recordedById])
   @@index([filedById])
   @@map("semsas_transfers")
+}
+
+model DoctorProfile {
+  id String @id @default(uuid()) @db.Char(36)
+
+  userId String @unique @db.Char(36)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  doctorType DoctorType
+  specialty  String? @db.VarChar(150)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([doctorType])
+  @@map("doctor_profiles")
 }
 
 model HospitalProfile {

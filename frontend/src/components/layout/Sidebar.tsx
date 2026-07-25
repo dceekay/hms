@@ -18,6 +18,7 @@ import {
   FiTool,
   FiTruck,
   FiUserCheck,
+  FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserInjured } from "react-icons/fa";
@@ -99,6 +100,7 @@ const menus: MenuItem[] = [
     icon: <FiShield />,
     children: [
       { title: "Users", path: "/admin/users", icon: <FiUsers /> },
+      { title: "Doctors", path: "/admin/doctors", icon: <FiUserPlus />, requiredRoles: ["Super Admin"] },
       { title: "Roles", path: "/admin/roles", icon: <FiShield /> },
       { title: "Permissions", path: "/admin/permissions", icon: <FiTool /> },
     ],

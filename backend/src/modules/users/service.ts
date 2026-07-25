@@ -1,8 +1,9 @@
 import { ApiError } from "../../shared/errors/ApiError";
 import { HttpStatus } from "../../core/HttpStatus";
+import { hashPassword } from "../../shared/helpers/bcrypt";
 import { UserRepository } from "./repository";
 import { RoleRepository } from "../roles/repository";
-import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto } from "./dto";
+import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto } from "./dto";
 
 function sanitizeUser(user: any) {
   if (!user) return user;
@@ -44,6 +45,37 @@ export class UserService {
     if (!user) {
       throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
     }
+
+    return sanitizeUser(user);
+  }
+
+  async createDoctor(payload: CreateDoctorDto) {
+    const existingUser =
+      (await this.userRepository.findByEmail(payload.email)) ||
+      (await this.userRepository.findByUsername(payload.username));
+
+    if (existingUser) {
+      throw new ApiError(HttpStatus.CONFLICT, "A user with this email or username already exists");
+    }
+
+    const doctorRole = await this.roleRepository.findByName("Doctor");
+
+    if (!doctorRole) {
+      throw new ApiError(HttpStatus.BAD_REQUEST, "Doctor role has not been seeded");
+    }
+
+    const passwordHash = await hashPassword(payload.password);
+    const user = await this.userRepository.createDoctorWithRole({
+      email: payload.email,
+      username: payload.username,
+      passwordHash,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      phone: payload.phone || null,
+      doctorType: payload.doctorType,
+      specialty: payload.specialty || null,
+      doctorRoleId: doctorRole.id,
+    });
 
     return sanitizeUser(user);
   }

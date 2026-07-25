@@ -11,6 +11,17 @@ export const assignRolesSchema = z.object({
   roleIds: z.array(z.string().uuid()),
 });
 
+export const createDoctorSchema = z.object({
+  firstName: z.string().trim().min(1).max(100),
+  lastName: z.string().trim().min(1).max(100),
+  email: z.string().email().max(150),
+  username: z.string().trim().min(3).max(100),
+  password: z.string().min(8).max(100),
+  phone: z.string().trim().min(7).max(30).optional().or(z.literal("")),
+  doctorType: z.enum(["medical_doctor", "visiting_consultant", "visiting_specialist"]),
+  specialty: z.string().trim().max(150).optional().or(z.literal("")),
+});
+
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
@@ -20,4 +31,5 @@ export const listUsersQuerySchema = z.object({
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 export type AssignRolesDto = z.infer<typeof assignRolesSchema>;
+export type CreateDoctorDto = z.infer<typeof createDoctorSchema>;
 export type ListUsersQueryDto = z.infer<typeof listUsersQuerySchema>;

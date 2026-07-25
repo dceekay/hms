@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { UserController } from "./controller";
 import { validateBody } from "../../shared/middleware/validation.middleware";
-import { updateUserSchema, assignRolesSchema } from "./dto";
-import { authenticate, authorizePermissions } from "../../shared/middleware/auth.middleware";
+import { updateUserSchema, assignRolesSchema, createDoctorSchema } from "./dto";
+import { authenticate, authorizePermissions, authorizeRoles } from "../../shared/middleware/auth.middleware";
 
 const router = Router();
 const userController = new UserController();
@@ -10,6 +10,13 @@ const userController = new UserController();
 router.use(authenticate);
 
 router.get("/", authorizePermissions(["users.read"]), userController.list);
+router.post(
+  "/doctors",
+  authorizeRoles(["Super Admin"]),
+  authorizePermissions(["users.create"]),
+  validateBody(createDoctorSchema),
+  userController.createDoctor
+);
 router.get("/:id", authorizePermissions(["users.read"]), userController.getById);
 
 router.patch(

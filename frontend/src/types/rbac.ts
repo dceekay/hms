@@ -19,6 +19,11 @@ export interface AppUser {
   lastName: string;
   isActive: boolean;
   roles?: { role: Role }[];
+  doctorProfile?: {
+    id: string;
+    doctorType: "medical_doctor" | "visiting_consultant" | "visiting_specialist";
+    specialty?: string | null;
+  } | null;
 }
 
 export interface PaginatedResult<T> {

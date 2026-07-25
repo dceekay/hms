@@ -33,12 +33,55 @@ export class UserRepository extends AuthUserRepository {
         orderBy: { createdAt: "desc" },
         include: {
           roles: { include: { role: true } },
+          doctorProfile: true,
         },
       }),
       prisma.user.count({ where }),
     ]);
 
     return { items, total };
+  }
+
+  async createDoctorWithRole(data: {
+    email: string;
+    username: string;
+    passwordHash: string;
+    firstName: string;
+    lastName: string;
+    phone?: string | null;
+    doctorType: "medical_doctor" | "visiting_consultant" | "visiting_specialist";
+    specialty?: string | null;
+    doctorRoleId: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: data.email,
+          username: data.username,
+          passwordHash: data.passwordHash,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone || null,
+          roles: {
+            create: {
+              roleId: data.doctorRoleId,
+            },
+          },
+          doctorProfile: {
+            create: {
+              doctorType: data.doctorType,
+              specialty: data.specialty || null,
+            },
+          },
+        },
+        include: {
+          roles: { include: { role: true } },
+          doctorProfile: true,
+        },
+      });
+
+      return user;
+    });
   }
 
   async setRoles(userId: string, roleIds: string[]) {

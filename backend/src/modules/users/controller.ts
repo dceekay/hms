@@ -32,6 +32,15 @@ export class UserController extends BaseController {
     }
   };
 
+  createDoctor = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.userService.createDoctor(req.body);
+      this.created(res, "Doctor account created successfully", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   update = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.update(getParamId(req), req.body);

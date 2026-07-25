@@ -1,10 +1,26 @@
 import api from "./api";
 import { AppUser, PaginatedResult } from "../types/rbac";
 
+export type DoctorType = "medical_doctor" | "visiting_consultant" | "visiting_specialist";
+
+export type CreateDoctorAccountValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  password: string;
+  phone?: string;
+  doctorType: DoctorType;
+  specialty?: string;
+};
+
 export async function getUsers(search?: string): Promise<AppUser[] | null> {
   try {
     const response = await api.get<{ data: PaginatedResult<AppUser> }>("/users", {
-      params: search ? { search } : undefined,
+      params: {
+        ...(search ? { search } : {}),
+        limit: 100,
+      },
     });
     return response.data.data.items;
   } catch (error) {
@@ -63,5 +79,18 @@ export async function deleteUser(id: string): Promise<boolean> {
   } catch (error) {
     console.error(error);
     return false;
+  }
+}
+
+export async function createDoctorAccount(values: CreateDoctorAccountValues): Promise<{ user: AppUser | null; error?: string }> {
+  try {
+    const response = await api.post<{ data: AppUser }>("/users/doctors", values);
+    return { user: response.data.data };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      user: null,
+      error: error?.response?.data?.message ?? "Unable to create doctor account.",
+    };
   }
 }

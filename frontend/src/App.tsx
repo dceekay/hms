@@ -15,6 +15,7 @@ import APITesterPage from "./pages/APITesterPage";
 import RolesPage from "./pages/admin/RolesPage";
 import PermissionsPage from "./pages/admin/PermissionsPage";
 import UsersPage from "./pages/admin/UsersPage";
+import DoctorsPage from "./pages/admin/DoctorsPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { FaBed, FaCapsules, FaFlask } from "react-icons/fa";
@@ -219,6 +220,15 @@ export default function App() {
         element={
           <ProtectedRoute requiredPermissions={["users.read"]}>
             <UsersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/doctors"
+        element={
+          <ProtectedRoute requiredPermissions={["users.create"]} requiredRoles={["Super Admin"]}>
+            <DoctorsPage />
           </ProtectedRoute>
         }
       />

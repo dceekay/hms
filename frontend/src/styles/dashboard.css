@@ -1640,6 +1640,93 @@
   color: #64748b;
 }
 
+.doctor-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+  gap: 18px;
+  align-items: start;
+}
+
+.doctor-type-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.doctor-type-selector .category-option {
+  min-height: 72px;
+}
+
+.credential-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.credential-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.credential-card span {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.credential-card small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.credential-card strong {
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.doctor-message-box {
+  min-height: 210px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.doctor-list {
+  display: grid;
+  gap: 10px;
+}
+
+.doctor-list-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.doctor-list-card strong,
+.doctor-list-card span,
+.doctor-list-card small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.doctor-list-card strong {
+  color: var(--text-strong);
+}
+
+.doctor-list-card span,
+.doctor-list-card small {
+  color: var(--muted);
+}
+
 .semsas-dashboard-summary {
   display: grid;
   gap: 14px;
@@ -1980,6 +2067,13 @@
   }
 
   .semsas-record-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-admin-layout,
+  .doctor-type-selector,
+  .credential-card,
+  .credential-input-row {
     grid-template-columns: 1fr;
   }
 }
