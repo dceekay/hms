@@ -32,10 +32,16 @@ type MenuItem = {
   title: string;
   icon: ReactNode;
   path?: string;
+  requiredRoles?: string[];
+  requiredPermissions?: string[];
+  anyPermissions?: string[];
   children?: Array<{
     title: string;
     path: string;
     icon: ReactNode;
+    requiredRoles?: string[];
+    requiredPermissions?: string[];
+    anyPermissions?: string[];
   }>;
 };
 
@@ -83,7 +89,7 @@ const menus: MenuItem[] = [
       { title: "Departments", path: "/departments", icon: <FiDatabase /> },
       { title: "Wards & Beds", path: "/setup/wards", icon: <FaBed /> },
       { title: "Services", path: "/setup/services", icon: <FiTool /> },
-      { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet /> },
+      { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
     ],
   },
   {
@@ -105,18 +111,41 @@ const menus: MenuItem[] = [
 export function Sidebar({ collapsed, toggle }: Props) {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
+  const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
+
+  const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
+    const hasRequiredRole = !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
+    const hasRequiredPermissions =
+      !item.requiredPermissions?.length || item.requiredPermissions.every((permission) => permissions.includes(permission));
+    const hasAnyPermission =
+      !item.anyPermissions?.length || item.anyPermissions.some((permission) => permissions.includes(permission));
+
+    return hasRequiredRole && hasRequiredPermissions && hasAnyPermission;
+  };
+
+  const visibleMenus = useMemo(
+    () =>
+      menus
+        .map((menu) => ({
+          ...menu,
+          children: menu.children?.filter(canAccess),
+        }))
+        .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0)),
+    [permissions, roles]
+  );
 
   const initiallyOpen = useMemo(() => {
     const openGroups = new Set<string>();
 
-    menus.forEach((menu) => {
+    visibleMenus.forEach((menu) => {
       if (menu.children?.some((child) => location.pathname === child.path)) {
         openGroups.add(menu.title);
       }
     });
 
     return openGroups;
-  }, [location.pathname]);
+  }, [location.pathname, visibleMenus]);
 
   const [openGroups, setOpenGroups] = useState(initiallyOpen);
 
@@ -161,7 +190,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
       </button>
 
       <nav>
-        {menus.map((item) => {
+        {visibleMenus.map((item) => {
           const groupOpen = openGroups.has(item.title);
           const activeGroup = isGroupActive(item);
 

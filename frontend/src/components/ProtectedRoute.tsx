@@ -6,12 +6,14 @@ type ProtectedRouteProps = {
   children: ReactElement;
   requiredPermissions?: string[];
   anyPermissions?: string[];
+  requiredRoles?: string[];
 };
 
 export function ProtectedRoute({
   children,
   requiredPermissions = [],
   anyPermissions = [],
+  requiredRoles = [],
 }: ProtectedRouteProps) {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
@@ -21,11 +23,13 @@ export function ProtectedRoute({
   }
 
   const permissions = user?.permissions ?? [];
+  const roles = user?.roles ?? [];
   const hasRequiredPermissions = requiredPermissions.every((permission) => permissions.includes(permission));
   const hasAnyPermission =
     anyPermissions.length === 0 || anyPermissions.some((permission) => permissions.includes(permission));
+  const hasRequiredRole = requiredRoles.length === 0 || requiredRoles.some((role) => roles.includes(role));
 
-  if (!hasRequiredPermissions || !hasAnyPermission) {
+  if (!hasRequiredPermissions || !hasAnyPermission || !hasRequiredRole) {
     return <Navigate to="/" replace />;
   }
 

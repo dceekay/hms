@@ -198,7 +198,7 @@ export default function App() {
       <Route
         path="/setup/insurance"
         element={
-          <ProtectedRoute requiredPermissions={["setup.read"]}>
+          <ProtectedRoute requiredPermissions={["setup.read"]} requiredRoles={["Super Admin"]}>
             <InsuranceProvidersPage />
           </ProtectedRoute>
         }
