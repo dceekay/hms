@@ -148,8 +148,8 @@ model Patient {
   firstName String @db.VarChar(100)
   lastName  String @db.VarChar(100)
 
-  email String? @unique @db.VarChar(150)
-  phone String? @unique @db.VarChar(30)
+  email String? @db.VarChar(150)
+  phone String? @db.VarChar(30)
 
   dateOfBirth DateTime
   gender      PatientGender

@@ -24,11 +24,11 @@ export class PatientRepository extends BaseRepository<Patient> {
   }
 
   async findByEmail(email: string): Promise<Patient | null> {
-    return this.model.findUnique({ where: { email } });
+    return this.model.findFirst({ where: { email, deletedAt: null } });
   }
 
   async findByPhone(phone: string): Promise<Patient | null> {
-    return this.model.findUnique({ where: { phone } });
+    return this.model.findFirst({ where: { phone, deletedAt: null } });
   }
 
   async findByMrn(mrn: string): Promise<Patient | null> {

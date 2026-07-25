@@ -26,7 +26,10 @@ function publicQrPayload(qrCode: string) {
 function handlePrismaError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {
-      throw new ApiError(HttpStatus.CONFLICT, "A patient with this unique value already exists.");
+      const target = Array.isArray(error.meta?.target)
+        ? error.meta.target.join(", ")
+        : String(error.meta?.target ?? "unique value");
+      throw new ApiError(HttpStatus.CONFLICT, `A patient with this ${target} already exists.`);
     }
 
     if (error.code === "P2025") {
