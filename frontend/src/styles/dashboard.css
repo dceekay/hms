@@ -1502,6 +1502,144 @@
   overflow-wrap: anywhere;
 }
 
+.semsas-record-meta {
+  display: grid;
+  grid-template-columns: minmax(132px, 0.8fr) minmax(0, 1.4fr) minmax(112px, 0.6fr);
+  gap: 8px;
+  align-items: stretch;
+}
+
+.semsas-record-meta span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.semsas-record-meta small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.semsas-record-meta strong {
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.semsas-print-template {
+  display: none;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.semsas-print-header {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #0f766e;
+}
+
+.semsas-print-header img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.semsas-print-header p,
+.semsas-print-header h2,
+.semsas-print-header span {
+  margin: 0;
+}
+
+.semsas-print-header p {
+  color: #0f766e;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.semsas-print-header h2 {
+  color: #0f172a;
+  font-size: 1.45rem;
+}
+
+.semsas-print-header span {
+  display: block;
+  margin-top: 5px;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.semsas-print-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.semsas-print-summary span {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.semsas-print-summary small {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.semsas-print-summary strong {
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.semsas-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.semsas-print-table th,
+.semsas-print-table td {
+  padding: 9px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+  vertical-align: top;
+}
+
+.semsas-print-table th {
+  color: #0f172a;
+  background: #e2e8f0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.semsas-print-table strong,
+.semsas-print-table small {
+  display: block;
+}
+
+.semsas-print-table small {
+  margin-top: 3px;
+  color: #64748b;
+}
+
 .semsas-dashboard-summary {
   display: grid;
   gap: 14px;
@@ -1839,5 +1977,47 @@
 
   .semsas-form {
     position: static;
+  }
+
+  .semsas-record-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .semsas-print-template,
+  .semsas-print-template * {
+    visibility: visible;
+  }
+
+  .semsas-print-template {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .semsas-print-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .semsas-print-table {
+    page-break-inside: auto;
+  }
+
+  .semsas-print-table tr {
+    page-break-inside: avoid;
   }
 }

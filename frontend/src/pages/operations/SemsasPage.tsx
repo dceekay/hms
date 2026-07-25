@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { FiArchive, FiFileText, FiRefreshCw, FiSave, FiSearch, FiTruck } from "react-icons/fi";
+import { FiArchive, FiFileText, FiPrinter, FiRefreshCw, FiSave, FiSearch, FiTruck } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
+import mdsLogo from "../../assets/logo.png";
 import { createSemsasTransfer, fetchSemsasTransfers, fileSemsasMonth } from "../../services/semsasService";
 import { useAuthStore } from "../../store/authStore";
 import { SemsasTransfer, SemsasTransferFormValues, SemsasTransferType } from "../../types/semsas";
@@ -32,6 +33,10 @@ function money(value?: string | number | null) {
   return `NGN ${Number(value ?? 0).toLocaleString()}`;
 }
 
+function formatDate(value: string) {
+  return new Date(value).toLocaleString();
+}
+
 function currentMonth() {
   return new Date().toISOString().slice(0, 7);
 }
@@ -44,8 +49,9 @@ export default function SemsasPage() {
   const [form, setForm] = useState<SemsasTransferFormValues>(emptyForm);
   const [transfers, setTransfers] = useState<SemsasTransfer[]>([]);
   const [search, setSearch] = useState("");
-  const [month, setMonth] = useState(currentMonth());
-  const [filingStatus, setFilingStatus] = useState("unfiled");
+  const [filterMonth, setFilterMonth] = useState("");
+  const [filingMonth, setFilingMonth] = useState(currentMonth());
+  const [filingStatus, setFilingStatus] = useState("");
   const [filingNotes, setFilingNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,7 +62,13 @@ export default function SemsasPage() {
   const totals = useMemo(() => {
     const amount = transfers.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
     const unfiled = transfers.filter((transfer) => !transfer.filedAt).length;
-    return { amount, unfiled };
+    const filed = transfers.length - unfiled;
+    const filedAmount = transfers
+      .filter((transfer) => transfer.filedAt)
+      .reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
+    const unfiledAmount = amount - filedAmount;
+
+    return { amount, filed, filedAmount, unfiled, unfiledAmount };
   }, [transfers]);
 
   const loadTransfers = async () => {
@@ -64,7 +76,7 @@ export default function SemsasPage() {
     setError(null);
     const { transfers: result, error: fetchError } = await fetchSemsasTransfers({
       search,
-      month,
+      month: filterMonth,
       filingStatus,
     });
     setLoading(false);
@@ -114,13 +126,22 @@ export default function SemsasPage() {
     await loadTransfers();
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleFileMonth = async () => {
-    if (!window.confirm(`File all unfiled SEMSAS records for ${month}?`)) return;
+    if (!filingMonth) {
+      setError("Select a filing month before filing SEMSAS records.");
+      return;
+    }
+
+    if (!window.confirm(`File all unfiled SEMSAS records for ${filingMonth}?`)) return;
 
     setFiling(true);
     setError(null);
     setSuccess(null);
-    const { filing: result, error: filingError } = await fileSemsasMonth(month, filingNotes);
+    const { filing: result, error: filingError } = await fileSemsasMonth(filingMonth, filingNotes);
     setFiling(false);
 
     if (!result) {
@@ -286,18 +307,22 @@ export default function SemsasPage() {
                 </div>
                 <div className="form-grid">
                   <label>
-                    Month
-                    <input type="month" value={month} onChange={(event) => setMonth(event.target.value)} />
+                    Filing month
+                    <input type="month" value={filingMonth} onChange={(event) => setFilingMonth(event.target.value)} />
                   </label>
                   <label>
-                    Status
-                    <select value={filingStatus} onChange={(event) => setFilingStatus(event.target.value)}>
-                      <option value="unfiled">Unfiled</option>
-                      <option value="filed">Filed</option>
-                      <option value="">All</option>
-                    </select>
+                    Filter month
+                    <input type="month" value={filterMonth} onChange={(event) => setFilterMonth(event.target.value)} />
                   </label>
                 </div>
+                <label>
+                  Filing status
+                  <select value={filingStatus} onChange={(event) => setFilingStatus(event.target.value)}>
+                    <option value="">All records</option>
+                    <option value="unfiled">Unfiled</option>
+                    <option value="filed">Filed</option>
+                  </select>
+                </label>
                 <label>
                   Filing notes
                   <input value={filingNotes} onChange={(event) => setFilingNotes(event.target.value)} />
@@ -324,10 +349,80 @@ export default function SemsasPage() {
                   <FiRefreshCw />
                   Refresh
                 </button>
+                <button type="button" className="icon-text-btn" onClick={handlePrint}>
+                  <FiPrinter />
+                  Print
+                </button>
               </div>
 
               {loading && <p className="muted-text">Loading SEMSAS records...</p>}
               {!loading && transfers.length === 0 && <p className="muted-text">No SEMSAS records found.</p>}
+
+              <section className="semsas-print-template" aria-label="Printable SEMSAS report">
+                <div className="semsas-print-header">
+                  <img src={mdsLogo} alt="MDS Hospital" />
+                  <div>
+                    <p>MDS Hospital</p>
+                    <h2>SEMSAS Monthly Filing Report</h2>
+                    <span>
+                      Month: {filterMonth || "All"} | Status: {filingStatus || "All"} | Records: {transfers.length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="semsas-print-summary">
+                  <span>
+                    <small>Total amount</small>
+                    <strong>{money(totals.amount)}</strong>
+                  </span>
+                  <span>
+                    <small>Filed</small>
+                    <strong>{totals.filed}</strong>
+                  </span>
+                  <span>
+                    <small>Unfiled</small>
+                    <strong>{totals.unfiled}</strong>
+                  </span>
+                  <span>
+                    <small>Unfiled amount</small>
+                    <strong>{money(totals.unfiledAmount)}</strong>
+                  </span>
+                </div>
+
+                <table className="semsas-print-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Patient</th>
+                      <th>Route</th>
+                      <th>Ambulance</th>
+                      <th>Status</th>
+                      <th>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transfers.map((transfer) => (
+                      <tr key={transfer.id}>
+                        <td>{formatDate(transfer.transferDate)}</td>
+                        <td>
+                          <strong>{transfer.patientName}</strong>
+                          <small>{transfer.patientPhone || "No phone"}</small>
+                        </td>
+                        <td>
+                          <strong>{transfer.fromFacility}</strong>
+                          <small>to {transfer.toFacility}</small>
+                        </td>
+                        <td>
+                          <strong>{transfer.ambulanceProvider || "Not provided"}</strong>
+                          <small>{transfer.ambulancePlateNumber || "No plate"}</small>
+                        </td>
+                        <td>{transfer.filedAt ? `Filed ${transfer.filedMonth}` : "Unfiled"}</td>
+                        <td>{money(transfer.feeAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
 
               <div className="semsas-record-list">
                 {transfers.map((transfer) => (
@@ -339,10 +434,19 @@ export default function SemsasPage() {
                       </span>
                     </div>
                     <p>{transferLabels[transfer.transferType]}</p>
-                    <div className="setup-provider-meta">
-                      <span>{new Date(transfer.transferDate).toLocaleString()}</span>
-                      <span>{transfer.fromFacility} to {transfer.toFacility}</span>
-                      <span>{money(transfer.feeAmount)}</span>
+                    <div className="semsas-record-meta">
+                      <span>
+                        <small>Date</small>
+                        <strong>{formatDate(transfer.transferDate)}</strong>
+                      </span>
+                      <span>
+                        <small>Route</small>
+                        <strong>{transfer.fromFacility} to {transfer.toFacility}</strong>
+                      </span>
+                      <span>
+                        <small>Amount</small>
+                        <strong>{money(transfer.feeAmount)}</strong>
+                      </span>
                     </div>
                   </article>
                 ))}
