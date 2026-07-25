@@ -26,6 +26,19 @@ export async function createPatient(values: PatientFormValues): Promise<{ patien
   }
 }
 
+export async function updatePatient(
+  patientId: string,
+  values: Partial<PatientFormValues>
+): Promise<{ patient: Patient | null; error?: string }> {
+  try {
+    const response = await api.patch<{ data: Patient }>(`/patients/${patientId}`, values);
+    return { patient: response.data.data };
+  } catch (error) {
+    console.error(error);
+    return { patient: null, error: getApiErrorMessage(error) };
+  }
+}
+
 type PatientListParams = {
   search?: string;
   status?: string;

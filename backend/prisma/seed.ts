@@ -99,10 +99,11 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "appointments.read",
     "patients.read",
     "patients.create",
+    "patients.update",
     "patients.convert",
     "patients.reactivate",
   ],
-  Laboratory: ["laboratory.read", "patients.read", "patients.investigation.create"],
+  Laboratory: ["laboratory.read", "patients.read", "patients.investigation.create", "patients.update"],
   Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
   "Billing Officer": ["billing.read", "reports.read", "patients.read"],
   Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
@@ -397,7 +398,7 @@ async function seedDemoPatient(insuranceProviderId: string) {
   };
 
   await prisma.patient.upsert({
-    where: { email: demoPatient.email },
+    where: { mrn: demoPatient.mrn },
     update: demoPatient,
     create: demoPatient,
   });

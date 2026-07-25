@@ -563,9 +563,59 @@ pre {
     font-size: 16px;
   }
 
-  .table th,
-  .table td {
-    padding: 12px 10px;
-    white-space: nowrap;
+  .patient-table-wrapper {
+    overflow: visible;
+  }
+
+  .patient-table,
+  .patient-table thead,
+  .patient-table tbody,
+  .patient-table tr,
+  .patient-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .patient-table thead {
+    display: none;
+  }
+
+  .patient-table tr {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    background: rgba(15, 31, 54, 0.68);
+  }
+
+  .patient-table td {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    white-space: normal;
+  }
+
+  .patient-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .patient-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .patient-table .patient-row-actions {
+    min-width: 0;
+  }
+
+  .patient-table .patient-row-actions .icon-text-btn {
+    flex: 1 1 112px;
+    min-width: 0;
   }
 }

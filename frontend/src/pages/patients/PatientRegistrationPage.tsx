@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { FiChevronDown, FiCreditCard, FiDownload, FiUserPlus } from "react-icons/fi";
 import { PatientIdPanel } from "../../components/patients/PatientIdCard";
+import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
 import { createPatient, fetchPatientQr } from "../../services/patients/patientService";
 import { useAuthStore } from "../../store/authStore";
@@ -236,7 +237,14 @@ export default function PatientRegistrationPage() {
                 </label>
                 <label>
                   State
-                  <input value={form.state ?? ""} onChange={(event) => update("state", event.target.value)} />
+                  <select value={form.state ?? ""} onChange={(event) => update("state", event.target.value)}>
+                    <option value="">Select state</option>
+                    {nigeriaStates.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   Country

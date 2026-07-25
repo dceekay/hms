@@ -691,6 +691,7 @@
 .mrn-pill {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 28px;
   padding: 4px 10px;
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
@@ -698,6 +699,8 @@
   color: var(--text-strong);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -868,6 +871,23 @@
   border-radius: 8px;
   background: var(--surface-strong);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+}
+
+.patient-edit-modal-panel {
+  width: min(100%, 860px);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.patient-edit-form {
+  display: grid;
+  gap: 16px;
+}
+
+.patient-edit-form .form-section h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1rem;
 }
 
 .modal-header {
