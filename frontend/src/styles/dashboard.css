@@ -1333,6 +1333,138 @@
   color: var(--muted);
 }
 
+.semsas-page {
+  display: grid;
+  gap: 18px;
+}
+
+.semsas-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #0f766e 20%, transparent), transparent),
+    var(--surface-strong);
+}
+
+.semsas-hero h1 {
+  margin: 4px 0 8px;
+  color: var(--text-strong);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.semsas-hero p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.semsas-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(104px, 1fr));
+  gap: 10px;
+}
+
+.semsas-stats span {
+  min-height: 104px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.semsas-stats svg {
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+.semsas-stats strong {
+  color: var(--text-strong);
+  font-size: 1.35rem;
+  line-height: 1;
+  text-transform: none;
+}
+
+.semsas-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.95fr) minmax(0, 1.25fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.semsas-form {
+  position: sticky;
+  top: 96px;
+}
+
+.semsas-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.semsas-type-grid .category-option {
+  min-height: 88px;
+}
+
+.semsas-filing-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.semsas-filing-panel h2 {
+  margin: 4px 0 0;
+  color: var(--text-strong);
+}
+
+.semsas-record-list {
+  display: grid;
+  gap: 10px;
+}
+
+.semsas-record-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.semsas-record-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.semsas-record-card strong {
+  color: var(--text-strong);
+}
+
+.semsas-record-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .id-mrn {
   padding: 12px;
   border: 1px solid var(--border);
@@ -1600,5 +1732,29 @@
 
   .setup-provider-card .patient-row-actions .icon-text-btn {
     flex: 1 1 130px;
+  }
+
+  .semsas-hero,
+  .semsas-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .semsas-stats,
+  .semsas-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-stats span {
+    min-height: 82px;
+  }
+
+  .semsas-form {
+    position: static;
   }
 }

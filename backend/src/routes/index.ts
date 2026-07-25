@@ -25,6 +25,7 @@ import roleRoutes from "../modules/roles/routes";
 import permissionRoutes from "../modules/permissions/routes";
 import setupRoutes from "../modules/setup/routes";
 import securityRoutes from "../modules/security/routes";
+import semsasRoutes from "../modules/semsas/routes";
 
 const router = Router();
 
@@ -50,5 +51,6 @@ router.use("/roles", roleRoutes);
 router.use("/permissions", permissionRoutes);
 router.use("/setup", setupRoutes);
 router.use("/security", securityRoutes);
+router.use("/semsas", semsasRoutes);
 
 export default router;

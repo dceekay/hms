@@ -44,6 +44,10 @@ const permissions = [
   "security.entry.read",
   "security.entry.create",
   "security.entry.update",
+  "semsas.read",
+  "semsas.create",
+  "semsas.update",
+  "semsas.file",
 ] as const;
 
 const roles = [
@@ -92,6 +96,10 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "patients.delete",
     "patients.convert",
     "patients.reactivate",
+    "semsas.read",
+    "semsas.create",
+    "semsas.update",
+    "semsas.file",
   ],
   Doctor: ["appointments.read", "patients.read"],
   Nurse: ["patients.read"],
@@ -102,10 +110,13 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "patients.update",
     "patients.convert",
     "patients.reactivate",
+    "semsas.read",
+    "semsas.create",
+    "semsas.update",
   ],
   Laboratory: ["laboratory.read", "patients.read", "patients.investigation.create", "patients.update"],
   Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
-  "Billing Officer": ["billing.read", "reports.read", "patients.read"],
+  "Billing Officer": ["billing.read", "reports.read", "patients.read", "semsas.read", "semsas.file"],
   Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
 };
 

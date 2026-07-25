@@ -80,6 +80,12 @@ enum EntryPersonType {
   guest
 }
 
+enum SemsasTransferType {
+  hospital_ambulance_to_other_hospital
+  hospital_ambulance_to_this_hospital
+  external_ambulance_to_this_hospital
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////////////////////////
@@ -132,6 +138,10 @@ model User {
 
   securityEntryLogs SecurityEntryLog[]
 
+  semsasTransfersRecorded SemsasTransfer[] @relation("SemsasRecordedBy")
+
+  semsasTransfersFiled SemsasTransfer[] @relation("SemsasFiledBy")
+
   @@map("users")
 }
 
@@ -173,6 +183,8 @@ model Patient {
   insuranceProvider   InsuranceProvider? @relation(fields: [insuranceProviderId], references: [id], onDelete: SetNull)
   insurancePolicyNumber String?          @db.VarChar(100)
   insuranceCoverageStatus String?        @db.VarChar(80)
+
+  semsasTransfers SemsasTransfer[]
 
   version Int @default(1)
   convertedToHospitalAt DateTime?
@@ -316,6 +328,57 @@ model InsuranceProvider {
   deletedAt DateTime?
 
   @@map("insurance_providers")
+}
+
+model SemsasTransfer {
+  id String @id @default(uuid()) @db.Char(36)
+
+  transferType SemsasTransferType
+
+  patientId String?  @db.Char(36)
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  patientName  String  @db.VarChar(150)
+  patientPhone String? @db.VarChar(30)
+
+  fromFacility String @db.VarChar(180)
+  toFacility   String @db.VarChar(180)
+
+  ambulanceProvider    String? @db.VarChar(150)
+  ambulancePlateNumber String? @db.VarChar(80)
+  driverName           String? @db.VarChar(150)
+  driverPhone          String? @db.VarChar(30)
+
+  pickupAddress      String? @db.VarChar(255)
+  destinationAddress String? @db.VarChar(255)
+
+  transferDate DateTime
+  feeAmount    Decimal  @default(0) @db.Decimal(12, 2)
+
+  notes String? @db.VarChar(500)
+
+  filedMonth String? @db.VarChar(7)
+  filedAt    DateTime?
+  filingNotes String? @db.VarChar(500)
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation("SemsasRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  filedById String? @db.Char(36)
+  filedBy   User?   @relation("SemsasFiledBy", fields: [filedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([transferType])
+  @@index([patientId])
+  @@index([transferDate])
+  @@index([filedMonth])
+  @@index([filedAt])
+  @@index([recordedById])
+  @@index([filedById])
+  @@map("semsas_transfers")
 }
 
 model HospitalProfile {

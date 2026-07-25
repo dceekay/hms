@@ -16,6 +16,7 @@ import {
   FiSettings,
   FiShield,
   FiTool,
+  FiTruck,
   FiUserCheck,
   FiUsers,
 } from "react-icons/fi";
@@ -77,6 +78,7 @@ const menus: MenuItem[] = [
     icon: <FiLayers />,
     children: [
       { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck /> },
+      { title: "SEMSAS", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
       { title: "Inventory", path: "/inventory", icon: <FiPackage /> },
       { title: "Billing", path: "/billing", icon: <FiCreditCard /> },
       { title: "Reports", path: "/reports", icon: <FiPieChart /> },
