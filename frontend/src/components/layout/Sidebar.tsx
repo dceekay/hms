@@ -16,6 +16,7 @@ import {
   FiSettings,
   FiShield,
   FiTool,
+  FiUserCheck,
   FiUsers,
 } from "react-icons/fi";
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserInjured } from "react-icons/fa";
@@ -68,6 +69,7 @@ const menus: MenuItem[] = [
     title: "Operations",
     icon: <FiLayers />,
     children: [
+      { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck /> },
       { title: "Inventory", path: "/inventory", icon: <FiPackage /> },
       { title: "Billing", path: "/billing", icon: <FiCreditCard /> },
       { title: "Reports", path: "/reports", icon: <FiPieChart /> },

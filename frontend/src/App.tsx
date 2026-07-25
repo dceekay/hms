@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import { PatientListPage } from "./pages/patients/PatientListPage";
 import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
+import SecurityEntryPage from "./pages/security/SecurityEntryPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 
 import APITesterPage from "./pages/APITesterPage";
@@ -54,6 +55,15 @@ export default function App() {
         element={
           <ProtectedRoute requiredPermissions={["patients.create"]}>
             <PatientRegistrationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/security/entry"
+        element={
+          <ProtectedRoute requiredPermissions={["security.entry.create"]}>
+            <SecurityEntryPage />
           </ProtectedRoute>
         }
       />

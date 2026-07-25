@@ -12,10 +12,12 @@ import {
   FiCreditCard,
   FiDatabase,
   FiFileText,
+  FiLogIn,
   FiPlusCircle,
   FiRefreshCw,
   FiShield,
   FiTrendingUp,
+  FiUserCheck,
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
@@ -71,6 +73,36 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   const canCreatePatients = permissions.includes("patients.create");
   const canReadPatients = permissions.includes("patients.read");
   const canTestApi = permissions.includes("setup.read") || permissions.includes("users.read");
+
+  if (hasRole(roles, "Security")) {
+    return {
+      roleLabel: "Security workspace",
+      eyebrow: "Entry point dashboard",
+      title: "Control entry flow with quick identity capture.",
+      description:
+        "Record patients, relatives, staff, and guests at the gate with optional photo capture and staff ID checks.",
+      stats: [
+        { title: "Inside Now", value: "18", change: "active log", color: "#2563eb", icon: <FiUserCheck /> },
+        { title: "Guests", value: "6", change: "anonymous allowed", color: "#0f766e", icon: <FiUsers /> },
+        { title: "Staff Entries", value: "9", change: "ID required", color: "#7c3aed", icon: <FiShield /> },
+        { title: "Checkouts Due", value: "3", change: "follow up", color: "#dc2626", icon: <FiLogIn /> },
+      ],
+      actions: [
+        { label: "Security Entry", to: "/security/entry", icon: <FiUserCheck />, primary: true },
+      ],
+      tasks: [
+        { label: "Entry capture", detail: "Record person type, name, phone, and optional photo", time: "Now" },
+        { label: "Staff ID check", detail: "Staff entries require an ID card number", time: "Always" },
+        { label: "Checkout log", detail: "Mark visitors out when they leave", time: "End visit" },
+      ],
+      load: [
+        { label: "Gate Desk", value: "68%" },
+        { label: "Guests", value: "42%" },
+        { label: "Staff", value: "55%" },
+        { label: "Checkout", value: "34%" },
+      ],
+    };
+  }
 
   if (hasRole(roles, "Doctor")) {
     return {

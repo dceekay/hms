@@ -67,6 +67,13 @@ enum BedStatus {
   reserved
 }
 
+enum EntryPersonType {
+  patient
+  patient_relative
+  staff
+  guest
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,6 +123,8 @@ model User {
   refreshTokens RefreshToken[]
 
   auditLogs AuditLog[]
+
+  securityEntryLogs SecurityEntryLog[]
 
   @@map("users")
 }
@@ -319,6 +328,51 @@ model HospitalProfile {
   updatedAt DateTime @updatedAt
 
   @@map("hospital_profiles")
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SECURITY ENTRY LOG
+///////////////////////////////////////////////////////////////////////////////
+
+model SecurityEntryLog {
+  id String @id @default(uuid()) @db.Char(36)
+
+  personType EntryPersonType
+
+  name  String? @db.VarChar(150)
+  phone String? @db.VarChar(30)
+
+  patientId String? @db.Char(36)
+  staffIdCardNumber String? @db.VarChar(80)
+
+  purpose     String? @db.VarChar(255)
+  destination String? @db.VarChar(150)
+  notes       String? @db.VarChar(500)
+
+  photoUrl       String? @db.VarChar(500)
+  photoDataUrl   String? @db.LongText
+  photoMimeType  String? @db.VarChar(50)
+  photoSizeBytes Int?
+  photoWidth     Int?
+  photoHeight    Int?
+
+  checkedInAt  DateTime  @default(now())
+  checkedOutAt DateTime?
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([personType])
+  @@index([phone])
+  @@index([patientId])
+  @@index([staffIdCardNumber])
+  @@index([recordedById])
+  @@index([checkedInAt])
+  @@map("security_entry_logs")
 }
 
 ///////////////////////////////////////////////////////////////////////////////

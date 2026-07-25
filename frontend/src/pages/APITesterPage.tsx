@@ -67,6 +67,23 @@ const patientBody = JSON.stringify(
   2
 );
 
+const securityEntryBody = JSON.stringify(
+  {
+    personType: "staff",
+    name: "Ada Staff",
+    phone: "+2348000001112",
+    staffIdCardNumber: "STAFF-001",
+    purpose: "Morning shift",
+    destination: "Main Ward",
+    photoMimeType: "image/webp",
+    photoSizeBytes: 42000,
+    photoWidth: 480,
+    photoHeight: 480,
+  },
+  null,
+  2
+);
+
 export default function APITesterPage() {
   const authToken = useAuthStore((state) => state.token);
   const [baseUrl, setBaseUrl] = useState(
@@ -327,6 +344,27 @@ export default function APITesterPage() {
                     }}
                   >
                     Create Patient
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/security/entry-logs?activeOnly=true");
+                      setMethod("GET");
+                    }}
+                  >
+                    Security Entries
+                  </button>
+                  <button
+                    type="button"
+                    className="preset-button"
+                    onClick={() => {
+                      setEndpoint("/security/entry-logs");
+                      setMethod("POST");
+                      setBody(securityEntryBody);
+                    }}
+                  >
+                    Create Security Entry
                   </button>
                 </div>
               </div>

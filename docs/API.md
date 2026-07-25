@@ -100,6 +100,7 @@ Development test accounts:
 | Laboratory | `labtech` | `Lab@12345` |
 | Pharmacist | `pharm` | `Pharm@123` |
 | Billing Officer | `billing` | `Billing@123` |
+| Security | `security` | `Security@123` |
 
 ## RBAC Endpoints
 
@@ -309,6 +310,67 @@ Patient profile target:
 - prescriptions
 - billing summary
 - audit history for sensitive changes
+
+## Security Entry Endpoints
+
+Mounted at `/security`.
+
+Current endpoints:
+
+| Method | Path | Permission | Purpose |
+| --- | --- | --- | --- |
+| GET | `/security/entry-logs` | `security.entry.read` | List entry records |
+| POST | `/security/entry-logs` | `security.entry.create` | Record an entry point visitor/person |
+| GET | `/security/entry-logs/:id` | `security.entry.read` | Get one entry record |
+| PATCH | `/security/entry-logs/:id` | `security.entry.update` | Update an entry record |
+| POST | `/security/entry-logs/:id/checkout` | `security.entry.update` | Mark a person as checked out |
+
+Person types:
+- `patient`
+- `patient_relative`
+- `staff`
+- `guest`
+
+Validation rules:
+- Patients, patient relatives, and staff require `name` and `phone`.
+- Staff entries require `staffIdCardNumber`.
+- Guests can be anonymous; `name`, `phone`, and photo are optional.
+- Photos should be compressed on the frontend before upload, preferably WebP.
+- Current backend stores photo reference/content and metadata: `photoUrl`, `photoDataUrl`, `photoMimeType`, `photoSizeBytes`, `photoWidth`, `photoHeight`.
+- For MVP testing, the frontend can send `photoDataUrl` as a compressed `data:image/webp;base64,...` value.
+- `photoSizeBytes` is capped at `750000` bytes in the request validator.
+
+Staff entry example:
+
+```json
+{
+  "personType": "staff",
+  "name": "Ada Staff",
+  "phone": "+2348000001112",
+  "staffIdCardNumber": "STAFF-001",
+  "purpose": "Morning shift",
+  "destination": "Main Ward",
+  "photoUrl": "/uploads/security/staff-001.webp",
+  "photoDataUrl": "data:image/webp;base64,...",
+  "photoMimeType": "image/webp",
+  "photoSizeBytes": 42000,
+  "photoWidth": 480,
+  "photoHeight": 480
+}
+```
+
+Guest entry example:
+
+```json
+{
+  "personType": "guest",
+  "purpose": "Facility tour",
+  "destination": "Reception",
+  "photoUrl": "/uploads/security/guest-visitor.webp",
+  "photoMimeType": "image/webp",
+  "photoSizeBytes": 38000
+}
+```
 
 ## Dashboard Endpoint
 

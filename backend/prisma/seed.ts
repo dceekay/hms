@@ -38,6 +38,9 @@ const permissions = [
   "billing.read",
   "inventory.read",
   "reports.read",
+  "security.entry.read",
+  "security.entry.create",
+  "security.entry.update",
 ] as const;
 
 const roles = [
@@ -49,6 +52,7 @@ const roles = [
   { name: "Laboratory", description: "Laboratory Staff" },
   { name: "Pharmacist", description: "Pharmacy Staff" },
   { name: "Billing Officer", description: "Billing and Accounts Staff" },
+  { name: "Security", description: "Entry Point Security Staff" },
 ] as const;
 
 type PermissionName = (typeof permissions)[number];
@@ -89,6 +93,7 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
   Laboratory: ["laboratory.read", "patients.read", "patients.create"],
   Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
   "Billing Officer": ["billing.read", "reports.read", "patients.read"],
+  Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
 };
 
 const testUsers = [
@@ -153,6 +158,15 @@ const testUsers = [
     firstName: "David",
     lastName: "Ibrahim",
     phone: "+2348070001004",
+  },
+  {
+    role: "Security",
+    email: "security@ceekayx.com",
+    username: "security",
+    password: "Security@123",
+    firstName: "Peter",
+    lastName: "Gate",
+    phone: "+2348070001005",
   },
 ] satisfies Array<{
   role: RoleName;
