@@ -715,24 +715,29 @@
   background: var(--surface-strong);
 }
 
-.patient-qr-pattern {
-  width: 156px;
-  height: 156px;
+.patient-qr-image,
+.patient-qr-loading {
+  width: 180px;
+  height: 180px;
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 3px;
+  place-items: center;
   padding: 10px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #ffffff;
 }
 
-.patient-qr-pattern span {
-  border-radius: 2px;
-  background: #e2e8f0;
+.patient-qr-image svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.patient-qr-pattern span.active {
-  background: #020617;
+.patient-qr-loading {
+  gap: 8px;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .id-empty-qr {
@@ -849,9 +854,10 @@
     position: static;
   }
 
-  .patient-qr-pattern {
-    width: 140px;
-    height: 140px;
+  .patient-qr-image,
+  .patient-qr-loading {
+    width: 150px;
+    height: 150px;
   }
 
   .patient-id-modal {

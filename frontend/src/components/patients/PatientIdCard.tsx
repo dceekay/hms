@@ -1,18 +1,73 @@
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { FiCreditCard, FiRefreshCw, FiShield } from "react-icons/fi";
 import { Patient, PatientQr } from "../../types/patient";
 
-function QrPattern({ value }: { value: string }) {
-  const cells = Array.from({ length: 81 }, (_, index) => {
-    const charCode = value.charCodeAt(index % value.length);
-    return (charCode + index * 7) % 3 !== 0;
-  });
+function getQrValue(patientQr: PatientQr) {
+  if (/^https?:\/\//i.test(patientQr.lookupPath)) {
+    return patientQr.lookupPath;
+  }
+
+  const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";
+  const origin =
+    /^https?:\/\//i.test(apiBaseUrl)
+      ? new URL(apiBaseUrl).origin
+      : typeof window !== "undefined"
+        ? window.location.origin
+        : "";
+
+  return `${origin}${patientQr.lookupPath.startsWith("/") ? patientQr.lookupPath : `/${patientQr.lookupPath}`}`;
+}
+
+function PatientQrImage({ patientQr }: { patientQr: PatientQr }) {
+  const [svg, setSvg] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    setSvg("");
+
+    QRCode.toString(getQrValue(patientQr), {
+      type: "svg",
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 180,
+      color: {
+        dark: "#020617",
+        light: "#ffffff",
+      },
+    })
+      .then((qrSvg) => {
+        if (active) {
+          setSvg(qrSvg);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSvg("");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [patientQr]);
+
+  if (!svg) {
+    return (
+      <div className="patient-qr-loading">
+        <FiRefreshCw />
+        <span>Preparing QR...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="patient-qr-pattern" aria-label={`QR lookup code ${value}`}>
-      {cells.map((active, index) => (
-        <span key={`${value}-${index}`} className={active ? "active" : ""} />
-      ))}
-    </div>
+    <div
+      className="patient-qr-image"
+      aria-label={`Scannable QR lookup code ${patientQr.qrCode}`}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   );
 }
 
@@ -42,7 +97,7 @@ export function PatientIdCard({
 
       {patientQr ? (
         <>
-          <QrPattern value={patientQr.qrCode} />
+          <PatientQrImage patientQr={patientQr} />
           <code>{patientQr.qrCode}</code>
           <small>{patientQr.lookupPath}</small>
         </>
