@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { FiDownload, FiUserPlus } from "react-icons/fi";
+import { FiChevronDown, FiCreditCard, FiDownload, FiUserPlus } from "react-icons/fi";
 import { PatientIdPanel } from "../../components/patients/PatientIdCard";
 import AdminLayout from "../../layouts/AdminLayout";
 import { createPatient, fetchPatientQr } from "../../services/patients/patientService";
@@ -54,6 +54,12 @@ export default function PatientRegistrationPage() {
   const [loading, setLoading] = useState(false);
   const [generatingId, setGeneratingId] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submitLabel =
+    form.patientCategory === "investigation_patient"
+      ? "Register Investigation Patient"
+      : form.patientCategory === "old_patient"
+        ? "Register Returning Patient"
+        : "Register New Patient";
 
   useEffect(() => {
     setForm((current) => ({
@@ -122,20 +128,26 @@ export default function PatientRegistrationPage() {
       <div className="patient-registration-page">
         <section className="registration-hero">
           <div>
-            <p className="eyebrow">Patient registry</p>
-            <h1>Register patient and generate hospital ID.</h1>
-            <p>
-              Capture demographics, emergency contact, medical identifiers, and insurance details.
-              The backend assigns a searchable MRN and QR lookup code after registration.
-            </p>
+            <p className="eyebrow">Reception desk</p>
+            <h1>Register patient</h1>
+            <p>Capture the details needed for front-desk intake and issue the patient ID.</p>
           </div>
-          <FiUserPlus />
+          <div className="registration-hero-actions">
+            <span>
+              <FiUserPlus />
+              Intake
+            </span>
+            <span>
+              <FiCreditCard />
+              Patient ID
+            </span>
+          </div>
         </section>
 
         <div className="registration-layout">
           <form className="registration-form" onSubmit={handleSubmit}>
             <div className="form-section">
-              <h2>Patient Category</h2>
+              <h2>Visit Type</h2>
               <div className="patient-category-selector">
                 {canCreateHospitalPatient && (
                   <>
@@ -144,20 +156,20 @@ export default function PatientRegistrationPage() {
                       className={form.patientCategory === "new_patient" ? "category-option active" : "category-option"}
                       onClick={() => update("patientCategory", "new_patient")}
                     >
-                      <strong>New Patient</strong>
-                      <span>Full hospital record at reception</span>
+                      <strong>New</strong>
+                      <span>First-time hospital registration</span>
                     </button>
                     <button
                       type="button"
                       className={form.patientCategory === "old_patient" ? "category-option active" : "category-option"}
                       onClick={() => update("patientCategory", "old_patient")}
                     >
-                      <strong>Old Patient</strong>
-                      <span>Returning or reactivated hospital record</span>
+                      <strong>Returning</strong>
+                      <span>Existing patient coming back</span>
                     </button>
                   </>
                 )}
-                {canCreateInvestigationPatient && (
+                {canCreateInvestigationPatient && !canCreateHospitalPatient && (
                   <button
                     type="button"
                     className={
@@ -165,15 +177,15 @@ export default function PatientRegistrationPage() {
                     }
                     onClick={() => update("patientCategory", "investigation_patient")}
                   >
-                    <strong>Investigation Patient</strong>
-                    <span>Lab-only visit before conversion</span>
+                    <strong>Investigation</strong>
+                    <span>Lab-only intake</span>
                   </button>
                 )}
               </div>
             </div>
 
             <div className="form-section">
-              <h2>Personal Details</h2>
+              <h2>Patient Details</h2>
               <div className="form-grid">
                 <label>
                   First name
@@ -204,7 +216,7 @@ export default function PatientRegistrationPage() {
             </div>
 
             <div className="form-section">
-              <h2>Contact & Emergency</h2>
+              <h2>Contact</h2>
               <div className="form-grid">
                 <label>
                   Email
@@ -230,77 +242,86 @@ export default function PatientRegistrationPage() {
                   Country
                   <input value={form.country ?? ""} onChange={(event) => update("country", event.target.value)} />
                 </label>
-                <label>
-                  Emergency contact
-                  <input
-                    value={form.emergencyContactName ?? ""}
-                    onChange={(event) => update("emergencyContactName", event.target.value)}
-                  />
-                </label>
-                <label>
-                  Emergency phone
-                  <input
-                    value={form.emergencyContactPhone ?? ""}
-                    onChange={(event) => update("emergencyContactPhone", event.target.value)}
-                  />
-                </label>
-                <label>
-                  Relationship
-                  <input
-                    value={form.emergencyContactRelationship ?? ""}
-                    onChange={(event) => update("emergencyContactRelationship", event.target.value)}
-                  />
-                </label>
               </div>
             </div>
 
-            <div className="form-section">
-              <h2>Medical & Insurance</h2>
-              <div className="form-grid">
-                <label>
-                  Blood group <span className="optional-field">optional</span>
-                  <input value={form.bloodGroup ?? ""} onChange={(event) => update("bloodGroup", event.target.value)} />
-                </label>
-                <label>
-                  Genotype <span className="optional-field">optional</span>
-                  <input value={form.genotype ?? ""} onChange={(event) => update("genotype", event.target.value)} />
-                </label>
-                <label>
-                  Allergies <span className="optional-field">optional</span>
-                  <input value={form.allergies ?? ""} onChange={(event) => update("allergies", event.target.value)} />
-                </label>
-                <label>
-                  Insurance policy number <span className="optional-field">optional</span>
-                  <input
-                    value={form.insurancePolicyNumber ?? ""}
-                    onChange={(event) => update("insurancePolicyNumber", event.target.value)}
-                  />
-                </label>
-                <label>
-                  Coverage status <span className="optional-field">optional</span>
-                  <select
-                    value={form.insuranceCoverageStatus ?? ""}
-                    onChange={(event) => update("insuranceCoverageStatus", event.target.value)}
-                  >
-                    <option value="">Not provided</option>
-                    <option value="active">Active</option>
-                    <option value="pending">Pending verification</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="expired">Expired</option>
-                    <option value="self_pay">Self pay</option>
-                  </select>
-                </label>
+            <details className="registration-details">
+              <summary>
+                Additional details
+                <FiChevronDown />
+              </summary>
+
+              <div className="form-section">
+                <h2>Emergency Contact</h2>
+                <div className="form-grid">
+                  <label>
+                    Contact name <span className="optional-field">optional</span>
+                    <input
+                      value={form.emergencyContactName ?? ""}
+                      onChange={(event) => update("emergencyContactName", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Contact phone <span className="optional-field">optional</span>
+                    <input
+                      value={form.emergencyContactPhone ?? ""}
+                      onChange={(event) => update("emergencyContactPhone", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Relationship <span className="optional-field">optional</span>
+                    <input
+                      value={form.emergencyContactRelationship ?? ""}
+                      onChange={(event) => update("emergencyContactRelationship", event.target.value)}
+                    />
+                  </label>
+                </div>
               </div>
-            </div>
+
+              <div className="form-section">
+                <h2>Medical & Insurance</h2>
+                <div className="form-grid">
+                  <label>
+                    Blood group <span className="optional-field">optional</span>
+                    <input value={form.bloodGroup ?? ""} onChange={(event) => update("bloodGroup", event.target.value)} />
+                  </label>
+                  <label>
+                    Genotype <span className="optional-field">optional</span>
+                    <input value={form.genotype ?? ""} onChange={(event) => update("genotype", event.target.value)} />
+                  </label>
+                  <label>
+                    Allergies <span className="optional-field">optional</span>
+                    <input value={form.allergies ?? ""} onChange={(event) => update("allergies", event.target.value)} />
+                  </label>
+                  <label>
+                    Insurance policy <span className="optional-field">optional</span>
+                    <input
+                      value={form.insurancePolicyNumber ?? ""}
+                      onChange={(event) => update("insurancePolicyNumber", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Coverage status <span className="optional-field">optional</span>
+                    <select
+                      value={form.insuranceCoverageStatus ?? ""}
+                      onChange={(event) => update("insuranceCoverageStatus", event.target.value)}
+                    >
+                      <option value="">Not provided</option>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending verification</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="expired">Expired</option>
+                      <option value="self_pay">Self pay</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </details>
 
             {error && <p className="registration-error">{error}</p>}
 
             <button className="registration-submit" type="submit" disabled={loading}>
-              {loading
-                ? "Registering patient..."
-                : form.patientCategory === "investigation_patient"
-                  ? "Register Investigation Patient"
-                  : "Register Patient"}
+              {loading ? "Registering..." : submitLabel}
               <FiUserPlus />
             </button>
           </form>

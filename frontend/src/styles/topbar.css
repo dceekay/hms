@@ -32,6 +32,12 @@
   line-height: 1.15;
 }
 
+.topbar-left p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .topbar-left span {
   color: var(--primary);
 }
@@ -44,7 +50,8 @@
   min-width: 0;
 }
 
-.topbar-search {
+.topbar-search,
+.search-box {
   width: min(340px, 28vw);
   height: 46px;
   display: flex;
@@ -57,7 +64,8 @@
   color: var(--muted);
 }
 
-.topbar-search input {
+.topbar-search input,
+.search-box input {
   width: 100%;
   padding: 0;
   border: 0;
@@ -216,7 +224,8 @@
     flex-wrap: wrap;
   }
 
-  .topbar-search {
+  .topbar-search,
+  .search-box {
     width: min(100%, 420px);
   }
 }
@@ -249,12 +258,17 @@
     font-size: 1rem;
   }
 
+  .topbar-left p {
+    display: none;
+  }
+
   .topbar-right {
     justify-content: flex-end;
     gap: 8px;
   }
 
   .topbar-search,
+  .search-box,
   .notification-action {
     display: none;
   }
