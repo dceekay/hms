@@ -34,6 +34,7 @@ function cleanProviderPayload(values: InsuranceProviderFormValues) {
     phone: values.phone.trim() || null,
     address: values.address.trim() || null,
     description: values.description.trim() || undefined,
+    patientPayPercentage: Number(values.patientPayPercentage || 0),
     isActive: values.isActive,
   };
 }

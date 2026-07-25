@@ -359,6 +359,7 @@ async function seedSetupData() {
     where: { name: "CeekayX Health Plan" },
     update: {
       code: "CXHP",
+      patientPayPercentage: 20,
       isActive: true,
     },
     create: {
@@ -366,6 +367,7 @@ async function seedSetupData() {
       code: "CXHP",
       email: "claims@ceekayx-health.example",
       phone: "+2348000000000",
+      patientPayPercentage: 20,
     },
   });
 }

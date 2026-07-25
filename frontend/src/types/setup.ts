@@ -6,6 +6,7 @@ export type InsuranceProvider = {
   phone?: string | null;
   address?: string | null;
   description?: string | null;
+  patientPayPercentage?: number | string | null;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -18,5 +19,6 @@ export type InsuranceProviderFormValues = {
   phone: string;
   address: string;
   description: string;
+  patientPayPercentage: string;
   isActive: boolean;
 };

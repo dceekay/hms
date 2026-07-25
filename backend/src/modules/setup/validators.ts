@@ -42,6 +42,7 @@ export const insuranceProviderSchema = commonNamedSchema.extend({
   email: z.string().email().optional().nullable(),
   phone: z.string().trim().max(30).optional().nullable(),
   address: z.string().trim().max(255).optional().nullable(),
+  patientPayPercentage: z.coerce.number().min(0).max(100).optional(),
 });
 
 export const setupSchemas = {

@@ -17,10 +17,16 @@ const emptyForm: InsuranceProviderFormValues = {
   phone: "",
   address: "",
   description: "",
+  patientPayPercentage: "0",
   isActive: true,
 };
 
 function providerToForm(provider: InsuranceProvider): InsuranceProviderFormValues {
+  const payPercentage =
+    provider.patientPayPercentage === null || provider.patientPayPercentage === undefined
+      ? "0"
+      : String(provider.patientPayPercentage);
+
   return {
     name: provider.name ?? "",
     code: provider.code ?? "",
@@ -28,6 +34,7 @@ function providerToForm(provider: InsuranceProvider): InsuranceProviderFormValue
     phone: provider.phone ?? "",
     address: provider.address ?? "",
     description: provider.description ?? "",
+    patientPayPercentage: payPercentage,
     isActive: provider.isActive,
   };
 }
@@ -186,6 +193,18 @@ export default function InsuranceProvidersPage() {
                     placeholder="+234..."
                   />
                 </label>
+                <label>
+                  Patient pays (%)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.patientPayPercentage}
+                    onChange={(event) => updateField("patientPayPercentage", event.target.value)}
+                    placeholder="20"
+                  />
+                </label>
               </div>
 
               <label>
@@ -273,6 +292,7 @@ export default function InsuranceProvidersPage() {
                       <p>{provider.description || "No notes added."}</p>
                       <div className="setup-provider-meta">
                         <span>{provider.code || "No code"}</span>
+                        <span>{Number(provider.patientPayPercentage ?? 0)}% patient pays</span>
                         <span>{provider.email || "No email"}</span>
                         <span>{provider.phone || "No phone"}</span>
                       </div>
