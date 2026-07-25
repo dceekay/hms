@@ -16,16 +16,30 @@ export class PatientController extends BaseController {
     }
   };
 
+  createInvestigation = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const patient = await this.patientService.createInvestigation(req.body);
+      return this.created(res, "Investigation patient created successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const page = Number(req.query.page) || 1;
       const take = Number(req.query.take) || 10;
       const search = typeof req.query.search === "string" ? req.query.search : undefined;
+      const status = typeof req.query.status === "string" ? req.query.status : undefined;
+      const patientCategory =
+        typeof req.query.patientCategory === "string" ? req.query.patientCategory : undefined;
 
       const patients = await this.patientService.list({
         page,
         take,
         search,
+        status,
+        patientCategory,
       });
 
       return this.ok(res, "Patient list retrieved successfully", patients);
@@ -79,6 +93,36 @@ export class PatientController extends BaseController {
       const qrCode = Array.isArray(req.params.qrCode) ? req.params.qrCode[0] : req.params.qrCode;
       const patient = await this.patientService.lookupByQrCode(qrCode);
       return this.ok(res, "Patient QR lookup completed successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  convertInvestigationToHospital = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const patient = await this.patientService.convertInvestigationToHospital(id);
+      return this.ok(res, "Investigation patient converted successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  reactivate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const patient = await this.patientService.reactivate(id);
+      return this.ok(res, "Patient reactivated successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deactivate = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const patient = await this.patientService.deactivate(id);
+      return this.ok(res, "Patient deactivated successfully", patient);
     } catch (error) {
       next(error);
     }

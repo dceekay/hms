@@ -60,6 +60,12 @@ enum PatientStatus {
   deceased
 }
 
+enum PatientCategory {
+  new_patient
+  investigation_patient
+  old_patient
+}
+
 enum BedStatus {
   available
   occupied
@@ -148,6 +154,7 @@ model Patient {
   dateOfBirth DateTime
   gender      PatientGender
   status      PatientStatus @default(active)
+  patientCategory PatientCategory @default(new_patient)
 
   address String? @db.VarChar(255)
   city    String? @db.VarChar(100)
@@ -168,6 +175,8 @@ model Patient {
   insuranceCoverageStatus String?        @db.VarChar(80)
 
   version Int @default(1)
+  convertedToHospitalAt DateTime?
+  reactivatedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -178,6 +187,7 @@ model Patient {
   @@index([mrn])
   @@index([qrCode])
   @@index([status])
+  @@index([patientCategory])
   @@map("patients")
 }
 

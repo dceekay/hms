@@ -1,13 +1,40 @@
 import { FormEvent, useEffect, useState } from "react";
-import { FiCreditCard, FiSearch, FiX } from "react-icons/fi";
+import { FiCreditCard, FiRefreshCw, FiSearch, FiSlash, FiUserCheck, FiX } from "react-icons/fi";
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import AdminLayout from "../../layouts/AdminLayout";
-import { fetchPatientQr, fetchPatients } from "../../services/patients/patientService";
+import {
+  convertInvestigationPatient,
+  deactivatePatient,
+  fetchPatientQr,
+  fetchPatients,
+  reactivatePatient,
+} from "../../services/patients/patientService";
+import { useAuthStore } from "../../store/authStore";
 import { Patient, PatientQr } from "../../types/patient";
 
+const categoryLabels: Record<string, string> = {
+  new_patient: "New patient",
+  investigation_patient: "Investigation",
+  old_patient: "Old patient",
+};
+
+function formatCategory(category?: string) {
+  return categoryLabels[category ?? "new_patient"] ?? "New patient";
+}
+
+function formatStatus(status?: string) {
+  return status ? status.charAt(0).toUpperCase() + status.slice(1) : "Active";
+}
+
 export function PatientListPage() {
+  const permissions = useAuthStore((state) => state.user?.permissions ?? []);
+  const canConvert = permissions.includes("patients.convert");
+  const canReactivate = permissions.includes("patients.reactivate");
+  const canUpdate = permissions.includes("patients.update");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedQr, setSelectedQr] = useState<PatientQr | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,10 +42,14 @@ export function PatientListPage() {
   const [error, setError] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
 
-  const loadPatients = async (searchTerm = search) => {
+  const loadPatients = async (filters = { searchTerm: search, status: statusFilter, category: categoryFilter }) => {
     setLoading(true);
     setError(null);
-    const response = await fetchPatients(searchTerm);
+    const response = await fetchPatients({
+      search: filters.searchTerm,
+      status: filters.status,
+      patientCategory: filters.category,
+    });
     if (!response) {
       setError("Unable to load patients. Please try again.");
     } else {
@@ -28,17 +59,43 @@ export function PatientListPage() {
   };
 
   useEffect(() => {
-    loadPatients("");
-  }, []);
+    loadPatients({ searchTerm: search, status: statusFilter, category: categoryFilter });
+  }, [statusFilter, categoryFilter]);
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    loadPatients(search);
+    loadPatients({ searchTerm: search, status: statusFilter, category: categoryFilter });
   };
 
   const clearSearch = () => {
     setSearch("");
-    loadPatients("");
+    setStatusFilter("");
+    setCategoryFilter("");
+    loadPatients({ searchTerm: "", status: "", category: "" });
+  };
+
+  const handlePatientAction = async (
+    patient: Patient,
+    action: "convert" | "reactivate" | "deactivate"
+  ) => {
+    setError(null);
+
+    const result =
+      action === "convert"
+        ? await convertInvestigationPatient(patient.id)
+        : action === "reactivate"
+          ? await reactivatePatient(patient.id)
+          : await deactivatePatient(patient.id);
+
+    if (!result) {
+      setError("Unable to update patient. Please confirm your permission and try again.");
+      return;
+    }
+
+    setPatients((current) => current.map((item) => (item.id === result.id ? result : item)));
+    if (selectedPatient?.id === result.id) {
+      setSelectedPatient(result);
+    }
   };
 
   const handleViewIdCard = async (patient: Patient) => {
@@ -81,11 +138,29 @@ export function PatientListPage() {
                 />
               </div>
             </label>
+            <label>
+              Category
+              <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                <option value="">All categories</option>
+                <option value="new_patient">New patients</option>
+                <option value="investigation_patient">Investigation</option>
+                <option value="old_patient">Old patients</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="">All status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="deceased">Deceased</option>
+              </select>
+            </label>
             <button type="submit" className="icon-text-btn">
               <FiSearch />
               Search
             </button>
-            {search && (
+            {(search || statusFilter || categoryFilter) && (
               <button type="button" className="icon-text-btn" onClick={clearSearch}>
                 <FiX />
                 Clear
@@ -107,6 +182,7 @@ export function PatientListPage() {
                   <tr>
                     <th>MRN</th>
                     <th>Name</th>
+                    <th>Category</th>
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Date of Birth</th>
@@ -122,20 +198,61 @@ export function PatientListPage() {
                         <span className="mrn-pill">{patient.mrn}</span>
                       </td>
                       <td>{patient.firstName} {patient.lastName}</td>
+                      <td>
+                        <span className={`patient-category-badge ${patient.patientCategory ?? "new_patient"}`}>
+                          {formatCategory(patient.patientCategory)}
+                        </span>
+                      </td>
                       <td>{patient.email || "Not set"}</td>
                       <td>{patient.phone || "Not set"}</td>
                       <td>{new Date(patient.dateOfBirth).toLocaleDateString()}</td>
                       <td>{patient.gender}</td>
-                      <td>{patient.status ?? "active"}</td>
                       <td>
-                        <button
-                          type="button"
-                          className="icon-text-btn"
-                          onClick={() => handleViewIdCard(patient)}
-                        >
-                          <FiCreditCard />
-                          View ID Card
-                        </button>
+                        <span className={`patient-status-badge ${patient.status ?? "active"}`}>
+                          {formatStatus(patient.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="patient-row-actions">
+                          <button
+                            type="button"
+                            className="icon-text-btn"
+                            onClick={() => handleViewIdCard(patient)}
+                          >
+                            <FiCreditCard />
+                            ID Card
+                          </button>
+                          {canConvert && patient.patientCategory === "investigation_patient" && (
+                            <button
+                              type="button"
+                              className="icon-text-btn success"
+                              onClick={() => handlePatientAction(patient, "convert")}
+                            >
+                              <FiUserCheck />
+                              Convert
+                            </button>
+                          )}
+                          {canReactivate && patient.status === "inactive" && (
+                            <button
+                              type="button"
+                              className="icon-text-btn success"
+                              onClick={() => handlePatientAction(patient, "reactivate")}
+                            >
+                              <FiRefreshCw />
+                              Reactivate
+                            </button>
+                          )}
+                          {canUpdate && (patient.status ?? "active") === "active" && (
+                            <button
+                              type="button"
+                              className="icon-text-btn danger"
+                              onClick={() => handlePatientAction(patient, "deactivate")}
+                            >
+                              <FiSlash />
+                              Inactive
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

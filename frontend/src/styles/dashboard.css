@@ -458,6 +458,44 @@
   font-size: 1.05rem;
 }
 
+.patient-category-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.category-option {
+  min-height: 92px;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.category-option strong {
+  color: var(--text-strong);
+}
+
+.category-option span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.category-option:hover,
+.category-option.active {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -633,6 +671,63 @@
   font: inherit;
 }
 
+.patient-list-toolbar select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-strong);
+  background: var(--surface);
+  font: inherit;
+}
+
+.patient-category-badge,
+.patient-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-strong);
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.patient-category-badge.new_patient {
+  border-color: color-mix(in srgb, #2563eb 42%, var(--border));
+  background: color-mix(in srgb, #2563eb 12%, transparent);
+}
+
+.patient-category-badge.investigation_patient {
+  border-color: color-mix(in srgb, #7c3aed 42%, var(--border));
+  background: color-mix(in srgb, #7c3aed 12%, transparent);
+}
+
+.patient-category-badge.old_patient {
+  border-color: color-mix(in srgb, #0f766e 42%, var(--border));
+  background: color-mix(in srgb, #0f766e 12%, transparent);
+}
+
+.patient-status-badge.active {
+  border-color: color-mix(in srgb, var(--success) 42%, var(--border));
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.patient-status-badge.inactive,
+.patient-status-badge.deceased {
+  border-color: color-mix(in srgb, var(--danger) 42%, var(--border));
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.patient-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .icon-text-btn,
 .icon-only-btn {
   display: inline-flex;
@@ -664,6 +759,16 @@
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.icon-text-btn.success {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+  color: var(--success);
+}
+
+.icon-text-btn.danger {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  color: var(--danger);
 }
 
 .patient-id-modal {
@@ -1099,6 +1204,10 @@
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-category-selector {
     grid-template-columns: 1fr;
   }
 

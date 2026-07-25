@@ -7,6 +7,7 @@ export const patientSchema = z.object({
   phone: z.string().min(7, "Phone number is required.").optional().or(z.literal("")),
   dateOfBirth: z.string().min(1, "Date of birth is required."),
   gender: z.enum(["male", "female", "other"]),
+  patientCategory: z.enum(["new_patient", "investigation_patient", "old_patient"]).optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -34,6 +35,9 @@ export type Patient = {
   dateOfBirth: string;
   gender: string;
   status?: string;
+  patientCategory?: string;
+  convertedToHospitalAt?: string | null;
+  reactivatedAt?: string | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;

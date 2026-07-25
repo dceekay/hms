@@ -71,6 +71,7 @@ function hasRole(roles: string[], role: string) {
 
 function buildDashboardProfile(roles: string[], permissions: string[]): DashboardProfile {
   const canCreatePatients = permissions.includes("patients.create");
+  const canCreateInvestigationPatients = permissions.includes("patients.investigation.create");
   const canReadPatients = permissions.includes("patients.read");
   const canTestApi = permissions.includes("setup.read") || permissions.includes("users.read");
 
@@ -211,7 +212,13 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
         { title: "Results", value: "8", change: "ready", color: "#0f766e", icon: <FiCheckCircle /> },
         { title: "Urgent", value: "3", change: "priority", color: "#dc2626", icon: <FiActivity /> },
       ],
-      actions: [{ label: "Lab Queue", to: "/laboratory", icon: <FaFlask />, primary: true }],
+      actions: [
+        ...(canCreateInvestigationPatients
+          ? [{ label: "Register Investigation", to: "/register-patient", icon: <FiUserPlus />, primary: true }]
+          : []),
+        { label: "Lab Queue", to: "/laboratory", icon: <FaFlask />, primary: !canCreateInvestigationPatients },
+        { label: "Patient List", to: "/patients", icon: <FiUsers /> },
+      ],
       tasks: [
         { label: "Specimen queue", detail: "Pending collections and processing", time: "Now" },
         { label: "Result entry", detail: "Record structured lab results", time: "Today" },
@@ -294,6 +301,9 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
     ],
     actions: [
       ...(canCreatePatients ? [{ label: "Register Patient", to: "/register-patient", icon: <FiUserPlus />, primary: true }] : []),
+      ...(canCreateInvestigationPatients && !canCreatePatients
+        ? [{ label: "Register Investigation", to: "/register-patient", icon: <FiUserPlus />, primary: true }]
+        : []),
       ...(canReadPatients ? [{ label: "Patient List", to: "/patients", icon: <FiUsers /> }] : []),
       ...(canTestApi ? [{ label: "Test API", to: "/api-tester", icon: <FiActivity /> }] : []),
     ],

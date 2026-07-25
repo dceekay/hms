@@ -1,8 +1,9 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { FiDownload, FiUserPlus } from "react-icons/fi";
 import { PatientIdPanel } from "../../components/patients/PatientIdCard";
 import AdminLayout from "../../layouts/AdminLayout";
 import { createPatient, fetchPatientQr } from "../../services/patients/patientService";
+import { useAuthStore } from "../../store/authStore";
 import { Patient, PatientFormValues, PatientQr } from "../../types/patient";
 
 const initialForm: PatientFormValues = {
@@ -12,6 +13,7 @@ const initialForm: PatientFormValues = {
   phone: "",
   dateOfBirth: "",
   gender: "female",
+  patientCategory: "new_patient",
   address: "",
   city: "",
   state: "",
@@ -33,12 +35,23 @@ function cleanPayload(values: PatientFormValues) {
 }
 
 export default function PatientRegistrationPage() {
+  const permissions = useAuthStore((state) => state.user?.permissions ?? []);
+  const canCreateHospitalPatient = permissions.includes("patients.create");
+  const canCreateInvestigationPatient = permissions.includes("patients.investigation.create");
+  const defaultCategory = canCreateHospitalPatient ? "new_patient" : "investigation_patient";
   const [form, setForm] = useState<PatientFormValues>(initialForm);
   const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
   const [patientQr, setPatientQr] = useState<PatientQr | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatingId, setGeneratingId] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      patientCategory: current.patientCategory ?? defaultCategory,
+    }));
+  }, [defaultCategory]);
 
   const update = (field: keyof PatientFormValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -49,6 +62,18 @@ export default function PatientRegistrationPage() {
     setLoading(true);
     setError(null);
     setPatientQr(null);
+
+    if (form.patientCategory !== "investigation_patient" && !canCreateHospitalPatient) {
+      setLoading(false);
+      setError("Only reception can register hospital patients. Lab users can register investigation patients.");
+      return;
+    }
+
+    if (form.patientCategory === "investigation_patient" && !canCreateInvestigationPatient) {
+      setLoading(false);
+      setError("Your role cannot register investigation patients.");
+      return;
+    }
 
     const patient = await createPatient(cleanPayload(form));
     setLoading(false);
@@ -94,6 +119,44 @@ export default function PatientRegistrationPage() {
 
         <div className="registration-layout">
           <form className="registration-form" onSubmit={handleSubmit}>
+            <div className="form-section">
+              <h2>Patient Category</h2>
+              <div className="patient-category-selector">
+                {canCreateHospitalPatient && (
+                  <>
+                    <button
+                      type="button"
+                      className={form.patientCategory === "new_patient" ? "category-option active" : "category-option"}
+                      onClick={() => update("patientCategory", "new_patient")}
+                    >
+                      <strong>New Patient</strong>
+                      <span>Full hospital record at reception</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={form.patientCategory === "old_patient" ? "category-option active" : "category-option"}
+                      onClick={() => update("patientCategory", "old_patient")}
+                    >
+                      <strong>Old Patient</strong>
+                      <span>Returning or reactivated hospital record</span>
+                    </button>
+                  </>
+                )}
+                {canCreateInvestigationPatient && (
+                  <button
+                    type="button"
+                    className={
+                      form.patientCategory === "investigation_patient" ? "category-option active" : "category-option"
+                    }
+                    onClick={() => update("patientCategory", "investigation_patient")}
+                  >
+                    <strong>Investigation Patient</strong>
+                    <span>Lab-only visit before conversion</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="form-section">
               <h2>Personal Details</h2>
               <div className="form-grid">
@@ -211,7 +274,11 @@ export default function PatientRegistrationPage() {
             {error && <p className="registration-error">{error}</p>}
 
             <button className="registration-submit" type="submit" disabled={loading}>
-              {loading ? "Registering patient..." : "Register Patient"}
+              {loading
+                ? "Registering patient..."
+                : form.patientCategory === "investigation_patient"
+                  ? "Register Investigation Patient"
+                  : "Register Patient"}
               <FiUserPlus />
             </button>
           </form>

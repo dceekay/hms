@@ -11,6 +11,7 @@ export const patientBaseSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required."),
   gender: z.enum(["male", "female", "other"]),
   status: z.enum(["active", "inactive", "deceased"]).optional(),
+  patientCategory: z.enum(["new_patient", "investigation_patient", "old_patient"]).optional(),
   address: optionalText(255),
   city: optionalText(100),
   state: optionalText(100),

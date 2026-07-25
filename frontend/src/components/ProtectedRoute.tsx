@@ -5,9 +5,14 @@ import { useAuthStore } from "../store/authStore";
 type ProtectedRouteProps = {
   children: ReactElement;
   requiredPermissions?: string[];
+  anyPermissions?: string[];
 };
 
-export function ProtectedRoute({ children, requiredPermissions = [] }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  requiredPermissions = [],
+  anyPermissions = [],
+}: ProtectedRouteProps) {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
 
@@ -16,9 +21,11 @@ export function ProtectedRoute({ children, requiredPermissions = [] }: Protected
   }
 
   const permissions = user?.permissions ?? [];
-  const canAccess = requiredPermissions.every((permission) => permissions.includes(permission));
+  const hasRequiredPermissions = requiredPermissions.every((permission) => permissions.includes(permission));
+  const hasAnyPermission =
+    anyPermissions.length === 0 || anyPermissions.some((permission) => permissions.includes(permission));
 
-  if (!canAccess) {
+  if (!hasRequiredPermissions || !hasAnyPermission) {
     return <Navigate to="/" replace />;
   }
 

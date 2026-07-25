@@ -12,6 +12,12 @@ router.use(authenticate);
 router.get("/", authorizePermissions(["patients.read"]), controller.list);
 router.get("/lookup/:qrCode", authorizePermissions(["patients.read"]), controller.lookupByQrCode);
 router.post(
+  "/investigations",
+  validateBody(patientCreateSchema),
+  authorizePermissions(["patients.investigation.create"]),
+  controller.createInvestigation
+);
+router.post(
   "/",
   validateBody(patientCreateSchema),
   authorizePermissions(["patients.create"]),
@@ -25,6 +31,21 @@ router.patch(
 );
 router.get("/:id/summary", authorizePermissions(["patients.read"]), controller.summary);
 router.get("/:id/qr", authorizePermissions(["patients.read"]), controller.qr);
+router.post(
+  "/:id/convert-to-hospital",
+  authorizePermissions(["patients.convert"]),
+  controller.convertInvestigationToHospital
+);
+router.post(
+  "/:id/reactivate",
+  authorizePermissions(["patients.reactivate"]),
+  controller.reactivate
+);
+router.post(
+  "/:id/deactivate",
+  authorizePermissions(["patients.update"]),
+  controller.deactivate
+);
 router.get("/:id", authorizePermissions(["patients.read"]), controller.getById);
 
 export default router;

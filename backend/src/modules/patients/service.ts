@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Prisma } from "@prisma/client";
+import { PatientCategory, PatientStatus, Prisma } from "@prisma/client";
 import { HttpStatus } from "../../core/HttpStatus";
 import { ApiError } from "../../shared/errors/ApiError";
 import { PatientRepository } from "./repository";
@@ -68,12 +68,14 @@ export class PatientService {
     throw new ApiError(HttpStatus.CONFLICT, "Unable to generate a unique QR code. Please retry.");
   }
 
-  async create(payload: PatientCreateDto) {
+  private async createWithCategory(payload: PatientCreateDto, patientCategory: PatientCategory) {
     const data = normalizePayload(payload);
 
     try {
       return await this.patientRepository.createPatient({
         ...data,
+        patientCategory,
+        status: data.status ?? PatientStatus.active,
         mrn: data.mrn ?? (await this.generateUniqueMrn()),
         qrCode: await this.generateUniqueQrCode(),
       });
@@ -82,13 +84,40 @@ export class PatientService {
     }
   }
 
-  async list(params: { page?: number; take?: number; search?: string }) {
+  async create(payload: PatientCreateDto) {
+    const patientCategory =
+      payload.patientCategory === PatientCategory.old_patient
+        ? PatientCategory.old_patient
+        : PatientCategory.new_patient;
+
+    return this.createWithCategory(payload, patientCategory);
+  }
+
+  async createInvestigation(payload: PatientCreateDto) {
+    return this.createWithCategory(payload, PatientCategory.investigation_patient);
+  }
+
+  async list(params: {
+    page?: number;
+    take?: number;
+    search?: string;
+    status?: string;
+    patientCategory?: string;
+  }) {
     const page = params.page ?? 1;
     const take = params.take ?? 10;
+    const status = Object.values(PatientStatus).includes(params.status as PatientStatus)
+      ? (params.status as PatientStatus)
+      : undefined;
+    const patientCategory = Object.values(PatientCategory).includes(params.patientCategory as PatientCategory)
+      ? (params.patientCategory as PatientCategory)
+      : undefined;
     const items = await this.patientRepository.findManyWithPagination({
       skip: (page - 1) * take,
       take,
       search: params.search,
+      status,
+      patientCategory,
     });
 
     return {
@@ -135,6 +164,7 @@ export class PatientService {
       phone: patient.phone,
       email: patient.email,
       status: patient.status,
+      patientCategory: patient.patientCategory,
       bloodGroup: patient.bloodGroup,
       genotype: patient.genotype,
       allergies: patient.allergies,
@@ -181,8 +211,44 @@ export class PatientService {
       fullName: `${patient.firstName} ${patient.lastName}`,
       gender: patient.gender,
       status: patient.status,
+      patientCategory: patient.patientCategory,
       phone: patient.phone,
       insuranceProvider: patient.insuranceProvider?.name ?? null,
     };
+  }
+
+  async convertInvestigationToHospital(id: string) {
+    const patient = await this.getById(id);
+
+    if (patient.patientCategory !== PatientCategory.investigation_patient) {
+      throw new ApiError(HttpStatus.CONFLICT, "Only investigation patients can be converted.");
+    }
+
+    return this.patientRepository.update(id, {
+      patientCategory: PatientCategory.new_patient,
+      status: PatientStatus.active,
+      convertedToHospitalAt: new Date(),
+      version: patient.version + 1,
+    });
+  }
+
+  async reactivate(id: string) {
+    const patient = await this.getById(id);
+
+    return this.patientRepository.update(id, {
+      patientCategory: PatientCategory.old_patient,
+      status: PatientStatus.active,
+      reactivatedAt: new Date(),
+      version: patient.version + 1,
+    });
+  }
+
+  async deactivate(id: string) {
+    const patient = await this.getById(id);
+
+    return this.patientRepository.update(id, {
+      status: PatientStatus.inactive,
+      version: patient.version + 1,
+    });
   }
 }

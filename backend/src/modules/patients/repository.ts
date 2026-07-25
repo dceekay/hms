@@ -1,4 +1,4 @@
-import { Prisma, Patient } from "@prisma/client";
+import { Patient, PatientCategory, PatientStatus, Prisma } from "@prisma/client";
 import { BaseRepository } from "../../core/BaseRepository";
 import { prisma } from "../../database/prisma";
 
@@ -53,22 +53,28 @@ export class PatientRepository extends BaseRepository<Patient> {
     skip?: number;
     take?: number;
     search?: string;
+    status?: PatientStatus;
+    patientCategory?: PatientCategory;
   }): Promise<PatientWithDetails[]> {
-    const where: Prisma.PatientWhereInput = params.search
-      ? {
-          deletedAt: null,
-          OR: [
-            { mrn: { contains: params.search } },
-            { qrCode: { contains: params.search } },
-            { firstName: { contains: params.search } },
-            { lastName: { contains: params.search } },
-            { email: { contains: params.search } },
-            { phone: { contains: params.search } },
-            { emergencyContactName: { contains: params.search } },
-            { insurancePolicyNumber: { contains: params.search } },
-          ],
-        }
-      : { deletedAt: null };
+    const where: Prisma.PatientWhereInput = {
+      deletedAt: null,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.patientCategory ? { patientCategory: params.patientCategory } : {}),
+      ...(params.search
+        ? {
+            OR: [
+              { mrn: { contains: params.search } },
+              { qrCode: { contains: params.search } },
+              { firstName: { contains: params.search } },
+              { lastName: { contains: params.search } },
+              { email: { contains: params.search } },
+              { phone: { contains: params.search } },
+              { emergencyContactName: { contains: params.search } },
+              { insurancePolicyNumber: { contains: params.search } },
+            ],
+          }
+        : {}),
+    };
 
     return this.model.findMany({
       where,

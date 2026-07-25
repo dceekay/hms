@@ -185,10 +185,13 @@ request
 
 Permission naming:
 - format: `<resource>.<action>`
-- examples:
-  - `patients.read`
-  - `patients.create`
-  - `setup.update`
+  - examples:
+    - `patients.read`
+    - `patients.create`
+    - `patients.investigation.create`
+    - `patients.convert`
+    - `patients.reactivate`
+    - `setup.update`
   - `roles.delete`
   - `users.manage_roles`
 

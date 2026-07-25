@@ -251,10 +251,14 @@ Current endpoints:
 
 | Method | Path | Permission | Purpose |
 | --- | --- | --- | --- |
-| GET | `/patients` | `patients.read` | List patients |
-| POST | `/patients` | `patients.create` | Create patient |
+| GET | `/patients` | `patients.read` | List patients with optional `search`, `status`, and `patientCategory` filters |
+| POST | `/patients` | `patients.create` | Create hospital patient. Reception/front desk only |
+| POST | `/patients/investigations` | `patients.investigation.create` | Create lab-only investigation patient |
 | GET | `/patients/:id` | `patients.read` | Get one patient |
 | PATCH | `/patients/:id` | `patients.update` | Update patient |
+| POST | `/patients/:id/convert-to-hospital` | `patients.convert` | Convert investigation patient to hospital patient |
+| POST | `/patients/:id/reactivate` | `patients.reactivate` | Reactivate inactive/old patient |
+| POST | `/patients/:id/deactivate` | `patients.update` | Mark patient inactive |
 | GET | `/patients/:id/summary` | `patients.read` | Patient overview |
 | GET | `/patients/:id/qr` | `patients.read` | Return QR payload data |
 | GET | `/patients/lookup/:qrCode` | `patients.read` | Resolve QR code to safe patient summary |
@@ -279,6 +283,7 @@ Create patient example:
   "phone": "+2348090001111",
   "dateOfBirth": "1988-07-23",
   "gender": "female",
+  "patientCategory": "new_patient",
   "address": "12 Care Avenue",
   "city": "Lagos",
   "state": "Lagos",
@@ -293,6 +298,14 @@ Create patient example:
   "insuranceCoverageStatus": "active"
 }
 ```
+
+Patient category rules:
+- `new_patient`: full hospital patient created by reception.
+- `investigation_patient`: lab-only patient created by laboratory for tests before full hospital registration.
+- `old_patient`: returning hospital patient record used during reactivation or old-record intake.
+- Laboratory users should use `POST /patients/investigations` and cannot create full hospital registrations.
+- Reception/front desk users can convert an investigation patient with `POST /patients/:id/convert-to-hospital`.
+- Inactive records can be found with `GET /patients?status=inactive` and reactivated with `POST /patients/:id/reactivate`.
 
 Patient QR rules:
 - QR codes must not contain private medical details directly.

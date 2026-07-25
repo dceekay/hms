@@ -53,7 +53,7 @@ export default function App() {
       <Route
         path="/register-patient"
         element={
-          <ProtectedRoute requiredPermissions={["patients.create"]}>
+          <ProtectedRoute anyPermissions={["patients.create", "patients.investigation.create"]}>
             <PatientRegistrationPage />
           </ProtectedRoute>
         }
