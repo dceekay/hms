@@ -2,6 +2,8 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
 import { FaBed, FaHospital, FaUserMd } from "react-icons/fa";
+import mdsLogo from "../assets/logo.png";
+import mdsHospital from "../assets/mds.png";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import "../styles/login.css";
@@ -52,41 +54,21 @@ export default function LoginPage() {
 
   return (
     <main className="login-page">
-      <section className="login-visual" aria-label="CeekayX HMS overview">
-        <div className="login-brand">
-          <div className="login-logo" aria-hidden="true">
-            <span>CX</span>
-          </div>
-          <div>
-            <strong>CeekayX HMS</strong>
-            <small>Hospital Management System</small>
-          </div>
-        </div>
+      <section className="login-visual" aria-label="MDS staff portal overview">
+        <img className="login-hospital-image" src={mdsHospital} alt="" aria-hidden="true" />
 
-        <div className="hospital-picture" role="img" aria-label="Modern hospital command center">
-          <div className="hospital-building">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+        <div className="login-brand">
+          <img className="login-logo" src={mdsLogo} alt="MDS Hospital" />
+          <div>
+            <strong>MDS Hospital</strong>
+            <small>Staff Portal</small>
           </div>
-          <div className="hospital-cross">+</div>
-          <div className="command-screen screen-one" />
-          <div className="command-screen screen-two" />
-          <div className="command-screen screen-three" />
         </div>
 
         <div className="login-copy">
-          <p className="eyebrow">Smarter hospitals. Better care.</p>
-          <h1>One secure workspace for hospital operations.</h1>
-          <p>
-            Manage patients, appointments, wards, billing, laboratory requests, pharmacy workflows,
-            users, roles, and reporting from a single RBAC-protected platform.
-          </p>
+          <p className="eyebrow">MDS Hospital</p>
+          <h1>Welcome to MDS staff portal.</h1>
+          <p>Sign in to manage daily hospital work securely.</p>
         </div>
 
         <div className="login-feature-grid">
@@ -116,8 +98,8 @@ export default function LoginPage() {
               <FiLock />
             </div>
             <div>
-              <p className="eyebrow">Authorized access</p>
-              <h2>Sign in to dashboard</h2>
+              <p className="eyebrow">Authorized staff</p>
+              <h2>Sign in</h2>
             </div>
           </div>
 

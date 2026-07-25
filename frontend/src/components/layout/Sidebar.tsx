@@ -21,6 +21,7 @@ import {
 } from "react-icons/fi";
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserInjured } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
+import mdsLogo from "../../assets/logo.png";
 
 interface Props {
   collapsed: boolean;
@@ -140,14 +141,12 @@ export function Sidebar({ collapsed, toggle }: Props) {
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="sidebar-logo">
-        <div className="logo-mark" aria-hidden="true">
-          <span>CX</span>
-        </div>
+        <img className="logo-mark" src={mdsLogo} alt="MDS Hospital" />
 
         {!collapsed && (
           <div>
-            <h2>CeekayX HMS</h2>
-            <span>Care Command</span>
+            <h2>MDS Hospital</h2>
+            <span>Staff Portal</span>
           </div>
         )}
       </div>

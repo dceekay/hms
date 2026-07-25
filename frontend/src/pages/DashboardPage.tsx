@@ -170,11 +170,10 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
 
   if (hasRole(roles, "Receptionist")) {
     return {
-      roleLabel: "Front desk workspace",
-      eyebrow: "Reception dashboard",
-      title: "Register patients, manage queues, and keep visits flowing.",
-      description:
-        "Use this space for patient registration, appointment intake, QR-ready records, and front-desk queue tracking.",
+      roleLabel: "Reception",
+      eyebrow: "Front desk",
+      title: "Patient intake made simple.",
+      description: "Register, find, and prepare patients for care.",
       stats: [
         { title: "New Registrations", value: "24", change: "QR cards next", color: "#2563eb", icon: <FiUserPlus /> },
         { title: "Check-ins", value: "31", change: "8 waiting", color: "#0f766e", icon: <FiCheckCircle /> },
