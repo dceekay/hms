@@ -364,6 +364,70 @@
   font-size: 0.86rem;
 }
 
+.test-login-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.test-login-panel > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.test-login-panel strong {
+  color: #ffffff;
+  font-size: 0.92rem;
+}
+
+.test-login-panel span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.test-login-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.test-login-btn {
+  min-height: 48px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  color: #e2e8f0;
+  background: rgba(2, 8, 23, 0.54);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.test-login-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.test-login-btn span {
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.test-login-btn small {
+  color: #93c5fd;
+  font-size: 0.74rem;
+}
+
 @media (max-width: 1080px) {
   .login-page {
     grid-template-columns: 1fr;
@@ -468,5 +532,15 @@
   .login-field div,
   .login-submit {
     height: 50px;
+  }
+
+  .test-login-panel > div:first-child {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .test-login-grid {
+    grid-template-columns: 1fr;
   }
 }
