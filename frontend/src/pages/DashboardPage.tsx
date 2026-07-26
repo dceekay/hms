@@ -163,6 +163,48 @@ function adminStats(overview: DashboardOverview | null) {
   ];
 }
 
+function frontDeskStats(overview: DashboardOverview | null) {
+  if (!overview) {
+    return [
+      { title: "Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers /> },
+      { title: "Doctors Available", value: "...", change: "loading", color: "#0f766e", icon: <FiActivity /> },
+      { title: "Appointments", value: "Ready", change: "open scheduler", color: "#7c3aed", icon: <FiCalendar /> },
+      { title: "Bills to Receive", value: "...", change: "loading", color: "#dc2626", icon: <FiCreditCard /> },
+    ];
+  }
+
+  return [
+    {
+      title: "Patients",
+      value: formatNumber(overview.patients.active),
+      change: `${overview.patients.registeredToday} new today`,
+      color: "#2563eb",
+      icon: <FiUsers />,
+    },
+    {
+      title: "Doctors Available",
+      value: formatNumber(overview.users.doctorsAvailable),
+      change: "active doctors",
+      color: "#0f766e",
+      icon: <FiActivity />,
+    },
+    {
+      title: "Appointments",
+      value: "Ready",
+      change: "schedule from desk",
+      color: "#7c3aed",
+      icon: <FiCalendar />,
+    },
+    {
+      title: "Bills to Receive",
+      value: formatNumber(overview.billing.pendingBills),
+      change: "pending patient bills",
+      color: "#dc2626",
+      icon: <FiCreditCard />,
+    },
+  ];
+}
+
 function buildDashboardProfile(roles: string[], permissions: string[]): DashboardProfile {
   const canCreatePatients = permissions.includes("patients.create");
   const canCreateInvestigationPatients = permissions.includes("patients.investigation.create");
@@ -232,33 +274,41 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
     };
   }
 
-  if (hasRole(roles, "Receptionist")) {
+  if (
+    hasRole(roles, "Receptionist") ||
+    hasRole(roles, "Billing Officer") ||
+    hasRole(roles, "Cashier")
+  ) {
     return {
-      roleLabel: "Reception",
-      eyebrow: "Front desk",
-      title: "Patient intake made simple.",
-      description: "Register, find, and prepare patients for care.",
+      roleLabel: "Reception & Cashier",
+      eyebrow: "Front desk workspace",
+      title: "Welcome patients, connect them to doctors, and keep visits moving.",
+      description:
+        "Register patients, check doctor availability, schedule appointments, and receive billing handoffs from one friendly workspace.",
       stats: [
-        { title: "New Registrations", value: "24", change: "QR cards next", color: "#2563eb", icon: <FiUserPlus /> },
-        { title: "Check-ins", value: "31", change: "8 waiting", color: "#0f766e", icon: <FiCheckCircle /> },
-        { title: "Appointments", value: "62", change: "today", color: "#7c3aed", icon: <FiCalendar /> },
-        { title: "Missing Insurance", value: "9", change: "complete profiles", color: "#dc2626", icon: <FiCreditCard /> },
+        { title: "Patients", value: "Ready", change: "find or register", color: "#2563eb", icon: <FiUsers /> },
+        { title: "Doctors Available", value: "Live", change: "see list below", color: "#0f766e", icon: <FiActivity /> },
+        { title: "Appointments", value: "Ready", change: "schedule visit", color: "#7c3aed", icon: <FiCalendar /> },
+        { title: "Bills to Receive", value: "Queue", change: "no money shown here", color: "#dc2626", icon: <FiCreditCard /> },
       ],
       actions: [
         { label: "Register Patient", to: "/register-patient", icon: <FiUserPlus />, primary: true },
         { label: "Patient List", to: "/patients", icon: <FiUsers /> },
-        { label: "Appointments", to: "/appointments", icon: <FiCalendar /> },
+        { label: "Schedule Appointment", to: "/appointments", icon: <FiCalendar /> },
+        ...(permissions.includes("billing.read")
+          ? [{ label: "Billing Desk", to: "/billing", icon: <FiCreditCard /> }]
+          : []),
       ],
       tasks: [
-        { label: "Patient registration", detail: "Capture demographics and generate QR code", time: "Next" },
-        { label: "Insurance details", detail: "9 profiles need policy information", time: "Today" },
-        { label: "Visit intake", detail: "Attach reason for visit before doctor queue", time: "Now" },
+        { label: "Greet and identify", detail: "Search by name, phone, MRN, or create a new profile", time: "Step 1" },
+        { label: "Choose doctor", detail: "Check available doctors before scheduling the visit", time: "Step 2" },
+        { label: "Complete handoff", detail: "Send patient to consultation or billing queue", time: "Step 3" },
       ],
       load: [
         { label: "Registration", value: "74%" },
-        { label: "Check-in", value: "62%" },
-        { label: "Insurance", value: "38%" },
-        { label: "Queue", value: "69%" },
+        { label: "Doctor Scheduling", value: "62%" },
+        { label: "Payment Handoff", value: "48%" },
+        { label: "Patient Queue", value: "69%" },
       ],
     };
   }
@@ -323,33 +373,6 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
     };
   }
 
-  if (hasRole(roles, "Billing Officer") || hasRole(roles, "Accountant")) {
-    return {
-      roleLabel: "Accounts workspace",
-      eyebrow: "Billing dashboard",
-      title: "Monitor invoices, payments, insurance claims, and balances.",
-      description: "This role view is ready for billing users once invoice and payment modules are connected.",
-      stats: [
-        { title: "Invoices", value: "44", change: "today", color: "#2563eb", icon: <FiFileText /> },
-        { title: "Payments", value: "31", change: "posted", color: "#0f766e", icon: <FiCreditCard /> },
-        { title: "Claims", value: "12", change: "insurance", color: "#7c3aed", icon: <FiShield /> },
-        { title: "Outstanding", value: "128", change: "follow up", color: "#dc2626", icon: <FiTrendingUp /> },
-      ],
-      actions: [{ label: "Billing", to: "/billing", icon: <FiCreditCard />, primary: true }],
-      tasks: [
-        { label: "Pending bills", detail: "Review unpaid invoices", time: "Now" },
-        { label: "Insurance claims", detail: "Prepare claim documentation", time: "Today" },
-        { label: "Daily close", detail: "Reconcile posted payments", time: "End day" },
-      ],
-      load: [
-        { label: "Invoices", value: "70%" },
-        { label: "Payments", value: "61%" },
-        { label: "Claims", value: "49%" },
-        { label: "Balance", value: "52%" },
-      ],
-    };
-  }
-
   return {
     roleLabel: hasRole(roles, "Super Admin") ? "Super Admin" : "Administrator",
     eyebrow: "Operations",
@@ -392,15 +415,21 @@ export default function DashboardPage() {
   const isSecurityUser = hasRole(roles, "Security");
   const isAdminDashboard =
     hasRole(roles, "Super Admin") || hasRole(roles, "Administrator");
+  const isFrontDeskDashboard =
+    hasRole(roles, "Receptionist") ||
+    hasRole(roles, "Billing Officer") ||
+    hasRole(roles, "Cashier");
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(false);
   const dashboard = buildDashboardProfile(roles, permissions);
   const displayStats = isAdminDashboard
     ? adminStats(overview)
-    : dashboard.stats;
+    : isFrontDeskDashboard
+      ? frontDeskStats(overview)
+      : dashboard.stats;
 
   useEffect(() => {
-    if (!isAdminDashboard) return;
+    if (!isAdminDashboard && !isFrontDeskDashboard) return;
 
     let mounted = true;
     setOverviewLoading(true);
@@ -414,7 +443,7 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [isAdminDashboard]);
+  }, [isAdminDashboard, isFrontDeskDashboard]);
 
   if (isSecurityUser) {
     return <Navigate to="/security/entry" replace />;
@@ -725,7 +754,128 @@ export default function DashboardPage() {
           </motion.section>
         )}
 
-        {!isAdminDashboard && (
+        {isFrontDeskDashboard && (
+          <motion.section
+            className="frontdesk-workspace-grid"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <article className="dashboard-panel frontdesk-doctors-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Doctors Available</h2>
+                  <p>Choose a doctor before scheduling a visit.</p>
+                </div>
+                <FiActivity />
+              </div>
+
+              <div className="doctor-availability-list">
+                {(overview?.users.availableDoctors ?? []).slice(0, 6).map((doctor) => (
+                  <div className="doctor-availability-card" key={doctor.id}>
+                    <span className="doctor-presence-dot" />
+                    <div>
+                      <strong>{doctor.name}</strong>
+                      <small>{doctor.specialty || doctor.serviceArea || "General consultation"}</small>
+                    </div>
+                    <Link to="/appointments" className="mini-action-link">
+                      Schedule
+                    </Link>
+                  </div>
+                ))}
+
+                {!overviewLoading && (overview?.users.availableDoctors.length ?? 0) === 0 && (
+                  <p className="muted-text">No active doctor account is available yet.</p>
+                )}
+              </div>
+            </article>
+
+            <article className="dashboard-panel frontdesk-actions-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Desk Actions</h2>
+                  <p>Fast actions for reception and cashier flow.</p>
+                </div>
+                <FiCheckCircle />
+              </div>
+
+              <div className="frontdesk-action-grid">
+                {(permissions.includes("patients.create") ||
+                  permissions.includes("patients.investigation.create")) && (
+                  <Link className="frontdesk-action-card primary" to="/register-patient">
+                    <FiUserPlus />
+                    <span>
+                      <strong>Register patient</strong>
+                      <small>Create profile and ID card</small>
+                    </span>
+                  </Link>
+                )}
+                <Link className="frontdesk-action-card" to="/patients">
+                  <FiUsers />
+                  <span>
+                    <strong>Find patient</strong>
+                    <small>Search MRN, name, or phone</small>
+                  </span>
+                </Link>
+                <Link className="frontdesk-action-card" to="/appointments">
+                  <FiCalendar />
+                  <span>
+                    <strong>Schedule visit</strong>
+                    <small>Book with an available doctor</small>
+                  </span>
+                </Link>
+                {permissions.includes("billing.read") && (
+                  <Link className="frontdesk-action-card" to="/billing">
+                    <FiCreditCard />
+                    <span>
+                      <strong>Receive bill</strong>
+                      <small>Open billing queue</small>
+                    </span>
+                  </Link>
+                )}
+              </div>
+
+              <div className="frontdesk-count-strip">
+                <span>
+                  <small>Active patients</small>
+                  <strong>{formatNumber(overview?.patients.active)}</strong>
+                </span>
+                <span>
+                  <small>Pending bills</small>
+                  <strong>{formatNumber(overview?.billing.pendingBills)}</strong>
+                </span>
+                <span>
+                  <small>New today</small>
+                  <strong>{formatNumber(overview?.patients.registeredToday)}</strong>
+                </span>
+              </div>
+            </article>
+
+            <article className="dashboard-panel frontdesk-flow-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Simple Visit Flow</h2>
+                  <p>Keep every patient handoff clear.</p>
+                </div>
+                <FiClock />
+              </div>
+
+              <div className="frontdesk-step-list">
+                {dashboard.tasks.map((task) => (
+                  <div className="frontdesk-step" key={task.label}>
+                    <span>{task.time}</span>
+                    <div>
+                      <strong>{task.label}</strong>
+                      <small>{task.detail}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </motion.section>
+        )}
+
+        {!isAdminDashboard && !isFrontDeskDashboard && (
         <div className="dashboard-panels">
           <motion.section
             className="dashboard-panel activity-panel"

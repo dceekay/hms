@@ -325,6 +325,189 @@
   white-space: nowrap;
 }
 
+.frontdesk-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.frontdesk-flow-panel {
+  grid-column: 1 / -1;
+}
+
+.doctor-availability-list,
+.frontdesk-action-grid,
+.frontdesk-step-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.doctor-availability-card {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #0f766e 8%, transparent), transparent),
+    var(--surface);
+}
+
+.doctor-presence-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 14%, transparent);
+}
+
+.doctor-availability-card strong,
+.frontdesk-action-card strong,
+.frontdesk-step strong {
+  color: var(--text-strong);
+}
+
+.doctor-availability-card small,
+.frontdesk-action-card small,
+.frontdesk-step small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.doctor-availability-card div,
+.frontdesk-action-card span,
+.frontdesk-step div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mini-action-link {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-strong);
+  background: var(--surface-strong);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.frontdesk-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.frontdesk-action-card {
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--surface);
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.frontdesk-action-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.frontdesk-action-card.primary {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #2563eb, #0f766e);
+}
+
+.frontdesk-action-card.primary strong,
+.frontdesk-action-card.primary small {
+  color: #ffffff;
+}
+
+.frontdesk-action-card svg {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 9px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.frontdesk-action-card.primary svg {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.frontdesk-count-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.frontdesk-count-strip span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.frontdesk-count-strip small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.frontdesk-count-strip strong {
+  color: var(--text-strong);
+  font-size: 1.25rem;
+}
+
+.frontdesk-step {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.frontdesk-step > span {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
 .panel-title {
   display: flex;
   align-items: flex-start;
@@ -2441,7 +2624,8 @@
 
   .admin-overview-grid,
   .admin-operations-grid,
-  .admin-recent-grid {
+  .admin-recent-grid,
+  .frontdesk-workspace-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2470,6 +2654,7 @@
   .admin-overview-grid,
   .admin-operations-grid,
   .admin-recent-grid,
+  .frontdesk-workspace-grid,
   .sync-panel,
   .role-strip {
     width: 100%;
@@ -2491,6 +2676,8 @@
 
   .stats-grid,
   .finance-grid,
+  .frontdesk-action-grid,
+  .frontdesk-count-strip,
   .role-strip {
     grid-template-columns: 1fr;
   }
@@ -2521,6 +2708,25 @@
   .compact-activity-row > span {
     text-align: left;
     white-space: normal;
+  }
+
+  .doctor-availability-card {
+    grid-template-columns: 12px minmax(0, 1fr);
+  }
+
+  .doctor-availability-card .mini-action-link {
+    grid-column: 2;
+    width: 100%;
+  }
+
+  .frontdesk-step {
+    grid-template-columns: 1fr;
+  }
+
+  .frontdesk-step > span {
+    justify-content: flex-start;
+    width: fit-content;
+    padding: 0 10px;
   }
 
   .sync-panel {

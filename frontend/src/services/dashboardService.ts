@@ -17,6 +17,16 @@ export type DashboardOverview = {
     total: number;
     active: number;
     inactive: number;
+    doctorsAvailable: number;
+    availableDoctors: Array<{
+      id: string;
+      name: string;
+      username: string;
+      phone?: string | null;
+      specialty?: string | null;
+      doctorType?: string | null;
+      serviceArea?: string | null;
+    }>;
     byService: Array<{
       id: string;
       name: string;

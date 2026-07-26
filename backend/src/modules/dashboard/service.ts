@@ -54,6 +54,7 @@ export class DashboardService {
       recentPatients,
       recentBills,
       recentSemsas,
+      activeDoctors,
       services,
       usersWithServiceAreas,
       billsForServiceSummary,
@@ -165,6 +166,40 @@ export class DashboardService {
           patient: true,
         },
       }),
+      prisma.user.findMany({
+        where: {
+          deletedAt: null,
+          isActive: true,
+          roles: {
+            some: {
+              role: {
+                name: "Doctor",
+              },
+            },
+          },
+        },
+        orderBy: { firstName: "asc" },
+        take: 12,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          phone: true,
+          serviceArea: {
+            select: {
+              name: true,
+              code: true,
+            },
+          },
+          doctorProfile: {
+            select: {
+              doctorType: true,
+              specialty: true,
+            },
+          },
+        },
+      }),
       prisma.hospitalService.findMany({
         where: { deletedAt: null },
         orderBy: { name: "asc" },
@@ -258,6 +293,16 @@ export class DashboardService {
         total: totalUsers,
         active: activeUsers,
         inactive: totalUsers - activeUsers,
+        doctorsAvailable: activeDoctors.length,
+        availableDoctors: activeDoctors.map((doctor) => ({
+          id: doctor.id,
+          name: `Dr. ${doctor.firstName} ${doctor.lastName}`,
+          username: doctor.username,
+          phone: doctor.phone,
+          specialty: doctor.doctorProfile?.specialty ?? "General consultation",
+          doctorType: doctor.doctorProfile?.doctorType ?? null,
+          serviceArea: doctor.serviceArea?.name ?? "Consultation",
+        })),
         byService: Array.from(staffServiceMap.values()).sort(
           (a, b) => b.totalUsers - a.totalUsers
         ),
