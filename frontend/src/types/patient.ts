@@ -29,6 +29,46 @@ export const patientSchema = z
       .optional()
       .or(z.literal("")),
 
+    photoUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .or(z.literal("")),
+
+    photoDataUrl: z
+      .string()
+      .trim()
+      .max(1_000_000)
+      .optional()
+      .or(z.literal("")),
+
+    photoMimeType: z
+      .enum(["image/webp", "image/jpeg", "image/png"])
+      .optional()
+      .or(z.literal("")),
+
+    photoSizeBytes: z
+      .number()
+      .int()
+      .positive()
+      .max(750_000)
+      .optional(),
+
+    photoWidth: z
+      .number()
+      .int()
+      .positive()
+      .max(2000)
+      .optional(),
+
+    photoHeight: z
+      .number()
+      .int()
+      .positive()
+      .max(2000)
+      .optional(),
+
     dateOfBirth: z
       .string()
       .min(1, "Date of birth is required."),
@@ -207,6 +247,13 @@ export type Patient = {
 
   email?: string | null;
   phone?: string | null;
+
+  photoUrl?: string | null;
+  photoDataUrl?: string | null;
+  photoMimeType?: "image/webp" | "image/jpeg" | "image/png" | null;
+  photoSizeBytes?: number | null;
+  photoWidth?: number | null;
+  photoHeight?: number | null;
 
   dateOfBirth: string;
   gender: string;

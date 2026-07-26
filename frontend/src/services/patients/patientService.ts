@@ -1,9 +1,18 @@
-import api from "../api";
 import axios from "axios";
-import { PatientFormValues, Patient, PatientQr } from "../../types/patient";
+import api from "../api";
+import {
+  Patient,
+  PatientFormValues,
+  PatientInsuranceProvider,
+  PatientQr,
+} from "../../types/patient";
 
 type ApiErrorBody = {
   message?: string;
+};
+
+export type PatientUpdatePayload = {
+  [Key in keyof PatientFormValues]?: PatientFormValues[Key] | null;
 };
 
 function getApiErrorMessage(error: unknown) {
@@ -14,10 +23,15 @@ function getApiErrorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
-export async function createPatient(values: PatientFormValues): Promise<{ patient: Patient | null; error?: string }> {
+export async function createPatient(
+  values: PatientFormValues
+): Promise<{ patient: Patient | null; error?: string }> {
   try {
     const endpoint =
-      values.patientCategory === "investigation_patient" ? "/patients/investigations" : "/patients";
+      values.patientCategory === "investigation_patient"
+        ? "/patients/investigations"
+        : "/patients";
+
     const response = await api.post<{ data: Patient }>(endpoint, values);
     return { patient: response.data.data };
   } catch (error) {
@@ -28,14 +42,40 @@ export async function createPatient(values: PatientFormValues): Promise<{ patien
 
 export async function updatePatient(
   patientId: string,
-  values: Partial<PatientFormValues>
+  values: PatientUpdatePayload
 ): Promise<{ patient: Patient | null; error?: string }> {
   try {
-    const response = await api.patch<{ data: Patient }>(`/patients/${patientId}`, values);
+    const response = await api.patch<{ data: Patient }>(
+      `/patients/${patientId}`,
+      values
+    );
+
     return { patient: response.data.data };
   } catch (error) {
     console.error(error);
     return { patient: null, error: getApiErrorMessage(error) };
+  }
+}
+
+export async function fetchPatientInsuranceProviders(): Promise<{
+  providers: PatientInsuranceProvider[] | null;
+  error?: string;
+}> {
+  try {
+    const response = await api.get<{
+      data: PatientInsuranceProvider[];
+    }>("/patients/insurance-providers");
+
+    return {
+      providers: response.data.data,
+    };
+  } catch (error) {
+    console.error(error);
+
+    return {
+      providers: null,
+      error: getApiErrorMessage(error),
+    };
   }
 }
 
@@ -45,17 +85,24 @@ type PatientListParams = {
   patientCategory?: string;
 };
 
-export async function fetchPatients(params: PatientListParams = {}): Promise<Patient[] | null> {
+export async function fetchPatients(
+  params: PatientListParams = {}
+): Promise<Patient[] | null> {
   try {
     const query = {
       ...(params.search?.trim() ? { search: params.search.trim() } : {}),
       ...(params.status ? { status: params.status } : {}),
-      ...(params.patientCategory ? { patientCategory: params.patientCategory } : {}),
+      ...(params.patientCategory
+        ? { patientCategory: params.patientCategory }
+        : {}),
     };
 
-    const response = await api.get<{ data: { items: Patient[] } }>("/patients", {
+    const response = await api.get<{
+      data: { items: Patient[] };
+    }>("/patients", {
       params: Object.keys(query).length > 0 ? query : undefined,
     });
+
     return response.data.data.items;
   } catch (error) {
     console.error(error);
@@ -63,9 +110,14 @@ export async function fetchPatients(params: PatientListParams = {}): Promise<Pat
   }
 }
 
-export async function convertInvestigationPatient(patientId: string): Promise<Patient | null> {
+export async function convertInvestigationPatient(
+  patientId: string
+): Promise<Patient | null> {
   try {
-    const response = await api.post<{ data: Patient }>(`/patients/${patientId}/convert-to-hospital`);
+    const response = await api.post<{ data: Patient }>(
+      `/patients/${patientId}/convert-to-hospital`
+    );
+
     return response.data.data;
   } catch (error) {
     console.error(error);
@@ -73,9 +125,14 @@ export async function convertInvestigationPatient(patientId: string): Promise<Pa
   }
 }
 
-export async function reactivatePatient(patientId: string): Promise<Patient | null> {
+export async function reactivatePatient(
+  patientId: string
+): Promise<Patient | null> {
   try {
-    const response = await api.post<{ data: Patient }>(`/patients/${patientId}/reactivate`);
+    const response = await api.post<{ data: Patient }>(
+      `/patients/${patientId}/reactivate`
+    );
+
     return response.data.data;
   } catch (error) {
     console.error(error);
@@ -83,9 +140,14 @@ export async function reactivatePatient(patientId: string): Promise<Patient | nu
   }
 }
 
-export async function deactivatePatient(patientId: string): Promise<Patient | null> {
+export async function deactivatePatient(
+  patientId: string
+): Promise<Patient | null> {
   try {
-    const response = await api.post<{ data: Patient }>(`/patients/${patientId}/deactivate`);
+    const response = await api.post<{ data: Patient }>(
+      `/patients/${patientId}/deactivate`
+    );
+
     return response.data.data;
   } catch (error) {
     console.error(error);
@@ -93,9 +155,14 @@ export async function deactivatePatient(patientId: string): Promise<Patient | nu
   }
 }
 
-export async function fetchPatientQr(patientId: string): Promise<PatientQr | null> {
+export async function fetchPatientQr(
+  patientId: string
+): Promise<PatientQr | null> {
   try {
-    const response = await api.get<{ data: PatientQr }>(`/patients/${patientId}/qr`);
+    const response = await api.get<{ data: PatientQr }>(
+      `/patients/${patientId}/qr`
+    );
+
     return response.data.data;
   } catch (error) {
     console.error(error);

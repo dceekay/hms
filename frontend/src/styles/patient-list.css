@@ -1,0 +1,465 @@
+patient-list.css/*
+ * Compact and responsive patient list.
+ *
+ * This file is imported directly inside PatientListPage.tsx.
+ */
+
+.patient-list-page {
+  width: min(1460px, 100%);
+  min-width: 0;
+}
+
+.patient-list-page > .card {
+  min-width: 0;
+  padding: clamp(16px, 2vw, 24px);
+}
+
+/* Search and filter toolbar */
+
+.patient-list-page .patient-list-toolbar {
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 1.8fr)
+    minmax(150px, 0.75fr)
+    minmax(140px, 0.7fr)
+    auto
+    auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.patient-list-page
+  .patient-list-toolbar
+  label {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* Compact patient list */
+
+.patient-compact-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.patient-compact-card {
+  display: grid;
+
+  grid-template-columns:
+    minmax(240px, 1.35fr)
+    minmax(150px, 0.78fr)
+    minmax(155px, 0.76fr)
+    minmax(180px, 0.9fr)
+    minmax(170px, auto);
+
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--surface);
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.patient-compact-card:hover {
+  transform: translateY(-1px);
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--accent) 36%,
+      var(--border)
+    );
+
+  background:
+    color-mix(
+      in srgb,
+      var(--accent) 4%,
+      var(--surface)
+    );
+}
+
+/* Patient identity */
+
+.patient-compact-identity {
+  display: grid;
+  grid-template-columns:
+    42px
+    minmax(0, 1fr);
+
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.patient-compact-avatar {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--accent)
+    );
+
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.patient-compact-name,
+.patient-compact-detail {
+  min-width: 0;
+}
+
+.patient-compact-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.patient-compact-title-line > strong {
+  min-width: 0;
+  overflow: hidden;
+
+  color: var(--text-strong);
+
+  font-size: 0.96rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-compact-title-line
+  .patient-status-badge {
+  flex: 0 0 auto;
+}
+
+.patient-compact-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 6px;
+}
+
+.patient-compact-badges
+  .mrn-pill {
+  min-width: 0;
+  max-width: 150px;
+}
+
+.patient-compact-badges
+  .patient-category-badge {
+  flex: 0 0 auto;
+}
+
+/* Patient detail columns */
+
+.patient-compact-detail {
+  display: grid;
+  gap: 3px;
+  align-content: center;
+}
+
+.patient-compact-label {
+  color: var(--muted);
+
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.patient-compact-detail > strong {
+  min-width: 0;
+  overflow: hidden;
+
+  color: var(--text-strong);
+
+  font-size: 0.86rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-compact-detail > small {
+  min-width: 0;
+  overflow: hidden;
+
+  color: var(--muted);
+
+  font-size: 0.76rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Insurance pill */
+
+.insurance-pill {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 27px;
+
+  display: inline-flex;
+  align-items: center;
+
+  overflow: hidden;
+
+  padding: 4px 9px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.insurance-pill.available {
+  color:
+    hsl(
+      var(--insurance-hue)
+      82%
+      76%
+    );
+
+  border-color:
+    hsl(
+      var(--insurance-hue)
+      72%
+      56% / 0.46
+    );
+
+  background:
+    hsl(
+      var(--insurance-hue)
+      72%
+      46% / 0.14
+    );
+}
+
+.insurance-pill.unavailable {
+  color: var(--muted);
+
+  border-style: dashed;
+
+  background:
+    color-mix(
+      in srgb,
+      var(--muted) 8%,
+      transparent
+    );
+}
+
+/* Insurance colours in light mode */
+
+:root[data-theme="light"]
+  .insurance-pill.available {
+  color:
+    hsl(
+      var(--insurance-hue)
+      72%
+      34%
+    );
+
+  border-color:
+    hsl(
+      var(--insurance-hue)
+      62%
+      42% / 0.34
+    );
+
+  background:
+    hsl(
+      var(--insurance-hue)
+      74%
+      48% / 0.11
+    );
+}
+
+/* Compact action buttons */
+
+.patient-compact-actions {
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 6px;
+}
+
+.patient-compact-actions
+  .icon-text-btn {
+  min-height: 32px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+}
+
+/*
+ * Smaller laptop screens:
+ * hide the profile column so there is no horizontal scroll.
+ */
+
+@media (max-width: 1220px) {
+  .patient-compact-card {
+    grid-template-columns:
+      minmax(240px, 1.25fr)
+      minmax(155px, 0.78fr)
+      minmax(180px, 0.9fr)
+      minmax(170px, auto);
+  }
+
+  .patient-profile-detail {
+    display: none;
+  }
+}
+
+/*
+ * Tablet layout:
+ * two columns with insurance and actions using full width.
+ */
+
+@media (max-width: 900px) {
+  .patient-list-page
+    .patient-list-toolbar {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(150px, 0.6fr)
+      minmax(140px, 0.55fr);
+  }
+
+  .patient-list-page
+    .patient-list-toolbar
+    > button {
+    width: 100%;
+  }
+
+  .patient-compact-card {
+    grid-template-columns:
+      minmax(220px, 1.2fr)
+      minmax(160px, 0.8fr);
+  }
+
+  .patient-profile-detail {
+    display: grid;
+  }
+
+  .patient-insurance-detail,
+  .patient-compact-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * Mobile layout:
+ * each patient becomes a compact card.
+ */
+
+@media (max-width: 640px) {
+  .patient-list-page
+    .patient-list-toolbar {
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .patient-list-page
+    .patient-list-toolbar
+    label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .patient-list-page
+    .patient-list-toolbar
+    > button {
+    min-height: 42px;
+  }
+
+  .patient-compact-card {
+    grid-template-columns: 1fr;
+    gap: 11px;
+    padding: 12px;
+  }
+
+  .patient-compact-detail,
+  .patient-insurance-detail,
+  .patient-compact-actions {
+    grid-column: 1;
+  }
+
+  .patient-compact-detail {
+    padding-top: 9px;
+
+    border-top:
+      1px solid
+      color-mix(
+        in srgb,
+        var(--border) 75%,
+        transparent
+      );
+  }
+
+  .patient-compact-actions {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .patient-compact-actions
+    .icon-text-btn {
+    width: 100%;
+  }
+}
+
+/* Very small mobile screens */
+
+@media (max-width: 420px) {
+  .patient-list-page
+    .patient-list-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-list-page
+    .patient-list-toolbar
+    label:first-child {
+    grid-column: 1;
+  }
+
+  .patient-compact-title-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .patient-compact-badges {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .patient-compact-badges
+    .mrn-pill {
+    max-width: 100%;
+  }
+}

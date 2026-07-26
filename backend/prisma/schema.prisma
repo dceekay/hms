@@ -169,6 +169,13 @@ model Patient {
   email String? @db.VarChar(150)
   phone String? @db.VarChar(30)
 
+  photoUrl       String? @db.VarChar(500)
+  photoDataUrl   String? @db.LongText
+  photoMimeType  String? @db.VarChar(50)
+  photoSizeBytes Int?
+  photoWidth     Int?
+  photoHeight    Int?
+
   dateOfBirth DateTime
   gender      PatientGender
   status      PatientStatus @default(active)

@@ -679,40 +679,204 @@
   background: var(--surface);
 }
 
-.patient-id-card {
+.patient-id-print-area {
   display: grid;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(6, 182, 212, 0.08)),
-    var(--surface);
+  gap: 10px;
 }
 
-.patient-id-card p,
-.id-mrn span {
-  margin: 0 0 4px;
-  color: var(--accent);
-  font-size: 0.75rem;
+.patient-id-card {
+  width: min(100%, 430px);
+  aspect-ratio: 1.586 / 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, #0f4c81 0 10px, transparent 10px),
+    radial-gradient(circle at 96% 12%, rgba(37, 99, 235, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 255, 0.94)),
+    #ffffff;
+  box-shadow: 0 18px 40px rgba(2, 8, 23, 0.22);
+  color: #0f172a;
+  overflow: hidden;
+}
+
+.patient-id-brand {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #0f4c81;
+}
+
+.patient-id-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.patient-id-brand strong,
+.patient-id-brand span,
+.patient-id-info h3,
+.patient-id-grid strong,
+.patient-id-insurance strong,
+.patient-id-footer span {
+  overflow-wrap: anywhere;
+}
+
+.patient-id-brand strong {
+  display: block;
+  color: #0f172a;
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.patient-id-brand span {
+  display: block;
+  color: #2563eb;
+  font-size: 0.63rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.patient-id-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 86px;
+  gap: 9px;
+}
+
+.patient-id-photo {
+  min-height: 104px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+  overflow: hidden;
+}
+
+.patient-id-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.patient-id-photo span {
+  color: #1d4ed8;
+  font-size: 1.65rem;
+  font-weight: 900;
+}
+
+.patient-id-info {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.patient-id-info p,
+.patient-id-grid small,
+.patient-id-insurance small {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.patient-id-info h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.98rem;
+  line-height: 1.05;
+}
+
+.patient-id-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 6px;
+}
+
+.patient-id-grid span,
+.patient-id-insurance div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 5px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.patient-id-grid strong,
+.patient-id-insurance strong {
+  color: #0f172a;
+  font-size: 0.66rem;
+  line-height: 1.15;
+}
+
+.patient-id-qr-block {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 5px;
+}
+
+.patient-id-qr-block small {
+  color: #475569;
+  font-size: 0.58rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.patient-id-card strong {
-  display: block;
-  color: var(--text-strong);
-  font-size: 1.15rem;
+.patient-id-insurance {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 0.85fr;
+  gap: 6px;
 }
 
-.patient-id-card code {
-  color: var(--text);
-  font-size: 0.72rem;
+.patient-id-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.58rem;
 }
 
-.patient-id-card small {
-  color: var(--muted);
-  word-break: break-word;
+.patient-id-footer span {
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-weight: 900;
+}
+
+.patient-id-footer small {
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+
+.patient-photo-control {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
 }
 
 .mrn-pill {
@@ -922,6 +1086,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.modal-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .modal-header h2 {
@@ -1977,6 +2147,19 @@
   display: block;
 }
 
+.patient-id-card .patient-qr-image,
+.patient-id-card .patient-qr-loading {
+  width: 78px;
+  height: 78px;
+  padding: 5px;
+  border-radius: 7px;
+}
+
+.patient-id-card .patient-qr-loading {
+  font-size: 0.58rem;
+  text-align: center;
+}
+
 .patient-qr-loading {
   gap: 8px;
   color: #334155;
@@ -1992,6 +2175,15 @@
   border: 1px dashed var(--border);
   border-radius: 8px;
   color: var(--muted);
+}
+
+.patient-id-card .id-empty-qr {
+  width: 78px;
+  min-height: 78px;
+  padding: 6px;
+  color: #64748b;
+  font-size: 0.58rem;
+  text-align: center;
 }
 
 @media (max-width: 1180px) {
@@ -2323,8 +2515,65 @@
   }
 
   .semsas-print-template,
-  .semsas-print-template * {
+  .semsas-print-template *,
+  .patient-id-print-area,
+  .patient-id-print-area * {
     visibility: visible;
+  }
+
+  .patient-id-print-area {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    width: 85.6mm;
+    height: 54mm;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .patient-id-card {
+    width: 85.6mm;
+    height: 54mm;
+    aspect-ratio: auto;
+    padding: 3.2mm;
+    border: 0.25mm solid #0f4c81;
+    border-radius: 2.5mm;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .patient-id-brand {
+    grid-template-columns: 10mm minmax(0, 1fr) auto;
+    gap: 2.2mm;
+    padding-bottom: 1.6mm;
+  }
+
+  .patient-id-brand img {
+    width: 10mm;
+    height: 10mm;
+  }
+
+  .patient-id-body {
+    grid-template-columns: 19mm minmax(0, 1fr) 18mm;
+    gap: 2mm;
+  }
+
+  .patient-id-photo {
+    min-height: 24mm;
+  }
+
+  .patient-id-card .patient-qr-image,
+  .patient-id-card .patient-qr-loading,
+  .patient-id-card .id-empty-qr {
+    width: 17mm;
+    height: 17mm;
+    min-height: 17mm;
+  }
+
+  .patient-id-print-note {
+    display: none;
   }
 
   .semsas-print-template {
