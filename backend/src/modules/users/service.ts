@@ -3,7 +3,7 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { hashPassword } from "../../shared/helpers/bcrypt";
 import { UserRepository } from "./repository";
 import { RoleRepository } from "../roles/repository";
-import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto } from "./dto";
+import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto, CreateUserDto } from "./dto";
 
 function sanitizeUser(user: any) {
   if (!user) return user;
@@ -18,14 +18,18 @@ export class UserService {
   ) {}
 
   async list(params: ListUsersQueryDto) {
-    const page = params.page ?? 1;
-    const limit = params.limit ?? 20;
+    const page = Number(params.page ?? 1);
+    const limit = Number(params.limit ?? 20);
+    const isActive =
+      typeof params.isActive === "string"
+        ? params.isActive === "true"
+        : params.isActive;
 
     const { items, total } = await this.userRepository.findAllWithRoles({
       skip: (page - 1) * limit,
       take: limit,
       search: params.search,
-      isActive: params.isActive,
+      isActive,
     });
 
     return {
@@ -45,6 +49,36 @@ export class UserService {
     if (!user) {
       throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
     }
+
+    return sanitizeUser(user);
+  }
+
+  async create(payload: CreateUserDto) {
+    const existingUser =
+      (await this.userRepository.findByEmail(payload.email)) ||
+      (await this.userRepository.findByUsername(payload.username));
+
+    if (existingUser) {
+      throw new ApiError(HttpStatus.CONFLICT, "A user with this email or username already exists");
+    }
+
+    for (const roleId of payload.roleIds) {
+      const role = await this.roleRepository.findById(roleId);
+      if (!role) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, `Role ${roleId} does not exist`);
+      }
+    }
+
+    const passwordHash = await hashPassword(payload.password);
+    const user = await this.userRepository.createUserWithRoles({
+      email: payload.email,
+      username: payload.username,
+      passwordHash,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      phone: payload.phone || null,
+      roleIds: payload.roleIds,
+    });
 
     return sanitizeUser(user);
   }

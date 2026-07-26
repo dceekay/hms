@@ -1727,6 +1727,197 @@
   color: var(--muted);
 }
 
+.rbac-page {
+  display: grid;
+  gap: 18px;
+}
+
+.rbac-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.rbac-header h1 {
+  margin: 4px 0 6px;
+  color: var(--text-strong);
+  font-size: 1.7rem;
+}
+
+.rbac-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.rbac-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+  gap: 10px;
+  min-width: min(420px, 100%);
+}
+
+.rbac-summary-grid span {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.rbac-summary-grid strong {
+  color: var(--text-strong);
+  font-size: 1.28rem;
+}
+
+.rbac-summary-grid small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rbac-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.rbac-form {
+  position: sticky;
+  top: 96px;
+}
+
+.rbac-check-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rbac-check {
+  width: auto;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.rbac-check input {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  accent-color: var(--primary);
+}
+
+.rbac-check span {
+  white-space: nowrap;
+}
+
+.rbac-copy-box {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.rbac-copy-box code {
+  max-height: 180px;
+  overflow: auto;
+}
+
+.rbac-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rbac-row-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.rbac-row-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rbac-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.rbac-row-main strong {
+  display: block;
+  color: var(--text-strong);
+}
+
+.rbac-row-main p,
+.rbac-row-main small {
+  display: block;
+  margin: 3px 0 0;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rbac-permission-groups {
+  display: grid;
+  gap: 12px;
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.rbac-permission-group {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+.rbac-permission-group h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.command-actions.compact {
+  margin-top: 14px;
+}
+
 .semsas-dashboard-summary {
   display: grid;
   gap: 14px;
@@ -2075,6 +2266,50 @@
   .credential-card,
   .credential-input-row {
     grid-template-columns: 1fr;
+  }
+
+  .rbac-header,
+  .rbac-layout,
+  .rbac-row-card {
+    grid-template-columns: 1fr;
+  }
+
+  .rbac-header {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .rbac-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .rbac-form {
+    position: static;
+  }
+
+  .rbac-row-card {
+    align-items: stretch;
+  }
+
+  .rbac-row-main p,
+  .rbac-row-main small {
+    white-space: normal;
+  }
+
+  .rbac-check {
+    flex: 1 1 100%;
+  }
+
+  .rbac-check span {
+    white-space: normal;
+  }
+
+  .rbac-permission-groups {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
 }
 

@@ -4,6 +4,7 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { ApiError } from "../../shared/errors/ApiError";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import { UserService } from "./service";
+import { listUsersQuerySchema } from "./dto";
 
 function getParamId(req: AuthRequest): string {
   return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -16,7 +17,7 @@ export class UserController extends BaseController {
 
   list = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.userService.list(req.query as any);
+      const result = await this.userService.list(listUsersQuerySchema.parse(req.query));
       this.ok(res, "Users fetched successfully", result);
     } catch (error) {
       next(error);
@@ -27,6 +28,15 @@ export class UserController extends BaseController {
     try {
       const user = await this.userService.getById(getParamId(req));
       this.ok(res, "User fetched successfully", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  create = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.userService.create(req.body);
+      this.created(res, "User account created successfully", user);
     } catch (error) {
       next(error);
     }

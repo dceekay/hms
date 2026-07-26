@@ -1,11 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import AdminLayout from "../layouts/AdminLayout";
 import StatCard from "../components/dashboard/StatCard";
 import { useAuthStore } from "../store/authStore";
 import { fetchSemsasTransfers } from "../services/semsasService";
+import { getUsers } from "../services/userService";
 import { SemsasTransfer } from "../types/semsas";
+import { AppUser } from "../types/rbac";
 import {
   FiActivity,
   FiArchive,
@@ -15,13 +17,11 @@ import {
   FiCreditCard,
   FiDatabase,
   FiFileText,
-  FiLogIn,
   FiPlusCircle,
   FiRefreshCw,
   FiShield,
   FiTrendingUp,
   FiTruck,
-  FiUserCheck,
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
@@ -86,36 +86,6 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   const canCreateInvestigationPatients = permissions.includes("patients.investigation.create");
   const canReadPatients = permissions.includes("patients.read");
   const canTestApi = permissions.includes("setup.read") || permissions.includes("users.read");
-
-  if (hasRole(roles, "Security")) {
-    return {
-      roleLabel: "Security workspace",
-      eyebrow: "Entry point dashboard",
-      title: "Control entry flow with quick identity capture.",
-      description:
-        "Record patients, relatives, staff, and guests at the gate with optional photo capture and staff ID checks.",
-      stats: [
-        { title: "Inside Now", value: "18", change: "active log", color: "#2563eb", icon: <FiUserCheck /> },
-        { title: "Guests", value: "6", change: "anonymous allowed", color: "#0f766e", icon: <FiUsers /> },
-        { title: "Staff Entries", value: "9", change: "ID required", color: "#7c3aed", icon: <FiShield /> },
-        { title: "Checkouts Due", value: "3", change: "follow up", color: "#dc2626", icon: <FiLogIn /> },
-      ],
-      actions: [
-        { label: "Security Entry", to: "/security/entry", icon: <FiUserCheck />, primary: true },
-      ],
-      tasks: [
-        { label: "Entry capture", detail: "Record person type, name, phone, and optional photo", time: "Now" },
-        { label: "Staff ID check", detail: "Staff entries require an ID card number", time: "Always" },
-        { label: "Checkout log", detail: "Mark visitors out when they leave", time: "End visit" },
-      ],
-      load: [
-        { label: "Gate Desk", value: "68%" },
-        { label: "Guests", value: "42%" },
-        { label: "Staff", value: "55%" },
-        { label: "Checkout", value: "34%" },
-      ],
-    };
-  }
 
   if (hasRole(roles, "Doctor")) {
     return {
@@ -337,9 +307,13 @@ export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
+  const isSecurityUser = hasRole(roles, "Security");
   const canReadSemsas = permissions.includes("semsas.read");
+  const canReadUsers = permissions.includes("users.read");
   const [semsasTransfers, setSemsasTransfers] = useState<SemsasTransfer[]>([]);
   const [semsasLoading, setSemsasLoading] = useState(false);
+  const [adminUsers, setAdminUsers] = useState<AppUser[]>([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const dashboard = buildDashboardProfile(roles, permissions);
   const month = currentMonth();
   const semsasSummary = useMemo(() => {
@@ -355,6 +329,15 @@ export default function DashboardPage() {
       unfiledAmount,
     };
   }, [semsasTransfers]);
+  const userSummary = useMemo(
+    () => ({
+      total: adminUsers.length,
+      active: adminUsers.filter((item) => item.isActive).length,
+      inactive: adminUsers.filter((item) => !item.isActive).length,
+      admins: adminUsers.filter((item) => item.roles?.some((entry) => entry.role.name === "Super Admin")).length,
+    }),
+    [adminUsers]
+  );
 
   useEffect(() => {
     if (!canReadSemsas) return;
@@ -372,6 +355,27 @@ export default function DashboardPage() {
       mounted = false;
     };
   }, [canReadSemsas, month]);
+
+  useEffect(() => {
+    if (!canReadUsers) return;
+
+    let mounted = true;
+    setAdminUsersLoading(true);
+    void getUsers().then((result) => {
+      if (!mounted) return;
+
+      setAdminUsers(result ?? []);
+      setAdminUsersLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [canReadUsers]);
+
+  if (isSecurityUser) {
+    return <Navigate to="/security/entry" replace />;
+  }
 
   return (
     <AdminLayout>
@@ -460,6 +464,53 @@ export default function DashboardPage() {
               <FiTruck />
               Open SEMSAS
             </Link>
+          </motion.section>
+        )}
+
+        {canReadUsers && (
+          <motion.section
+            className="dashboard-panel admin-user-summary"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="panel-title">
+              <div>
+                <h2>User Access</h2>
+                <p>Quick view of staff accounts and RBAC setup.</p>
+              </div>
+              <FiShield />
+            </div>
+
+            <div className="semsas-summary-grid">
+              <span>
+                <small>Total users</small>
+                <strong>{adminUsersLoading ? "..." : userSummary.total}</strong>
+              </span>
+              <span>
+                <small>Active</small>
+                <strong>{adminUsersLoading ? "..." : userSummary.active}</strong>
+              </span>
+              <span>
+                <small>Inactive</small>
+                <strong>{adminUsersLoading ? "..." : userSummary.inactive}</strong>
+              </span>
+              <span>
+                <small>Admins</small>
+                <strong>{adminUsersLoading ? "..." : userSummary.admins}</strong>
+              </span>
+            </div>
+
+            <div className="command-actions compact">
+              <Link className="command-btn" to="/admin/users">
+                <FiUsers />
+                Users
+              </Link>
+              <Link className="command-btn" to="/admin/roles">
+                <FiShield />
+                Roles
+              </Link>
+            </div>
           </motion.section>
         )}
 

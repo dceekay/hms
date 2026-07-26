@@ -2,6 +2,7 @@ export interface Permission {
   id: string;
   name: string;
   description?: string | null;
+  rolesUsing?: number;
 }
 
 export interface Role {
@@ -17,6 +18,7 @@ export interface AppUser {
   username: string;
   firstName: string;
   lastName: string;
+  phone?: string | null;
   isActive: boolean;
   roles?: { role: Role }[];
   doctorProfile?: {

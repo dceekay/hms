@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 const permissions = [
   "users.read",
   "users.create",
-  "users.write",
   "users.update",
   "users.delete",
   "users.manage_roles",
@@ -70,7 +69,6 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
   Administrator: [
     "users.read",
     "users.create",
-    "users.write",
     "users.update",
     "users.delete",
     "users.manage_roles",
@@ -415,6 +413,51 @@ async function seedDemoPatient(insuranceProviderId: string) {
     update: demoPatient,
     create: demoPatient,
   });
+}
+
+async function removeObsoletePermissions() {
+  const obsoleteNames = ["users.write"];
+
+  const obsoletePermissions = await prisma.permission.findMany({
+    where: {
+      name: {
+        in: obsoleteNames,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const permissionIds = obsoletePermissions.map(
+    (permission) => permission.id
+  );
+
+  if (permissionIds.length === 0) {
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.rolePermission.deleteMany({
+      where: {
+        permissionId: {
+          in: permissionIds,
+        },
+      },
+    });
+
+    await tx.permission.deleteMany({
+      where: {
+        id: {
+          in: permissionIds,
+        },
+      },
+    });
+  });
+
+  console.log(
+    `Removed obsolete permissions: ${obsoleteNames.join(", ")}`
+  );
 }
 
 async function main() {

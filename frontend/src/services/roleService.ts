@@ -1,6 +1,10 @@
 import api from "./api";
 import { Role, PaginatedResult } from "../types/rbac";
 
+function getErrorMessage(error: any, fallback: string) {
+  return error?.response?.data?.message ?? fallback;
+}
+
 export async function getRoles(): Promise<Role[] | null> {
   try {
     const response = await api.get<{ data: PaginatedResult<Role> }>("/roles");
@@ -25,50 +29,62 @@ export async function createRole(values: {
   name: string;
   description?: string;
   permissionIds?: string[];
-}): Promise<Role | null> {
+}): Promise<{ role: Role | null; error?: string }> {
   try {
     const response = await api.post<{ data: Role }>("/roles", values);
-    return response.data.data;
-  } catch (error) {
+    return { role: response.data.data };
+  } catch (error: any) {
     console.error(error);
-    return null;
+    return {
+      role: null,
+      error: getErrorMessage(error, "Unable to create role."),
+    };
   }
 }
 
 export async function updateRole(
   id: string,
-  values: { name?: string; description?: string }
-): Promise<Role | null> {
+  values: { name?: string; description?: string; permissionIds?: string[] }
+): Promise<{ role: Role | null; error?: string }> {
   try {
     const response = await api.patch<{ data: Role }>(`/roles/${id}`, values);
-    return response.data.data;
-  } catch (error) {
+    return { role: response.data.data };
+  } catch (error: any) {
     console.error(error);
-    return null;
+    return {
+      role: null,
+      error: getErrorMessage(error, "Unable to update role."),
+    };
   }
 }
 
 export async function assignPermissionsToRole(
   id: string,
   permissionIds: string[]
-): Promise<Role | null> {
+): Promise<{ role: Role | null; error?: string }> {
   try {
     const response = await api.post<{ data: Role }>(`/roles/${id}/permissions`, {
       permissionIds,
     });
-    return response.data.data;
-  } catch (error) {
+    return { role: response.data.data };
+  } catch (error: any) {
     console.error(error);
-    return null;
+    return {
+      role: null,
+      error: getErrorMessage(error, "Unable to assign permissions."),
+    };
   }
 }
 
-export async function deleteRole(id: string): Promise<boolean> {
+export async function deleteRole(id: string): Promise<{ success: boolean; error?: string }> {
   try {
     await api.delete(`/roles/${id}`);
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error(error);
-    return false;
+    return {
+      success: false,
+      error: getErrorMessage(error, "Unable to delete role."),
+    };
   }
 }
