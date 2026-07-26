@@ -184,6 +184,147 @@
   padding: 20px;
 }
 
+.admin-overview-grid,
+.admin-operations-grid,
+.admin-recent-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-overview-grid {
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    minmax(0, 1fr)
+    minmax(0, 0.95fr);
+}
+
+.admin-operations-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-recent-grid {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+}
+
+.admin-insight-card {
+  min-height: 292px;
+}
+
+.insight-metric {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.insight-metric strong {
+  color: var(--text-strong);
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 0.9;
+}
+
+.insight-metric span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric-bars,
+.operations-stack,
+.finance-grid,
+.ranked-list,
+.compact-activity-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.metric-bar {
+  display: grid;
+  gap: 8px;
+}
+
+.metric-bar > div:first-child,
+.ranked-row,
+.compact-activity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.metric-bar span,
+.compact-activity-row small,
+.ranked-row small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.metric-bar strong,
+.ranked-row strong,
+.compact-activity-row strong {
+  color: var(--text-strong);
+}
+
+.finance-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.finance-grid span,
+.operations-stack span {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.finance-grid small,
+.operations-stack small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.finance-grid strong,
+.operations-stack strong {
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.ranked-row,
+.compact-activity-row {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ranked-row span,
+.compact-activity-row div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ranked-row b,
+.compact-activity-row > span {
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .panel-title {
   display: flex;
   align-items: flex-start;
@@ -2298,6 +2439,12 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-overview-grid,
+  .admin-operations-grid,
+  .admin-recent-grid {
+    grid-template-columns: 1fr;
+  }
+
   .role-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2320,6 +2467,9 @@
   .command-actions,
   .command-btn,
   .dashboard-panel,
+  .admin-overview-grid,
+  .admin-operations-grid,
+  .admin-recent-grid,
   .sync-panel,
   .role-strip {
     width: 100%;
@@ -2340,6 +2490,7 @@
   }
 
   .stats-grid,
+  .finance-grid,
   .role-strip {
     grid-template-columns: 1fr;
   }
@@ -2354,6 +2505,22 @@
 
   .dashboard-panel {
     padding: 16px;
+  }
+
+  .admin-insight-card {
+    min-height: auto;
+  }
+
+  .ranked-row,
+  .compact-activity-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ranked-row b,
+  .compact-activity-row > span {
+    text-align: left;
+    white-space: normal;
   }
 
   .sync-panel {

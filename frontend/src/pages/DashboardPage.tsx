@@ -1,16 +1,17 @@
 import { Link, Navigate } from "react-router-dom";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import AdminLayout from "../layouts/AdminLayout";
 import StatCard from "../components/dashboard/StatCard";
 import { useAuthStore } from "../store/authStore";
-import { fetchSemsasTransfers } from "../services/semsasService";
-import { getUsers } from "../services/userService";
-import { SemsasTransfer } from "../types/semsas";
-import { AppUser } from "../types/rbac";
+import {
+  fetchDashboardOverview,
+  DashboardOverview,
+} from "../services/dashboardService";
 import {
   FiActivity,
   FiArchive,
+  FiBarChart2,
   FiCalendar,
   FiCheckCircle,
   FiClock,
@@ -69,16 +70,97 @@ const commonSyncItems = [
   "Background sync when backend returns online",
 ];
 
-function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
-}
-
 function money(value: number) {
-  return `NGN ${value.toLocaleString()}`;
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(Number(value ?? 0));
 }
 
 function hasRole(roles: string[], role: string) {
   return roles.some((item) => item.toLowerCase() === role.toLowerCase());
+}
+
+function formatNumber(value?: number | string | null) {
+  return Number(value ?? 0).toLocaleString();
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Not recorded";
+
+  return new Intl.DateTimeFormat("en-NG", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatCategory(value: string) {
+  const labels: Record<string, string> = {
+    new_patient: "New patient",
+    old_patient: "Old patient",
+    investigation_patient: "Investigation",
+  };
+
+  return labels[value] ?? value.replace(/_/g, " ");
+}
+
+function formatTransferType(value: string) {
+  const labels: Record<string, string> = {
+    hospital_ambulance_to_other_hospital: "MDS to other hospital",
+    hospital_ambulance_to_this_hospital: "MDS ambulance inbound",
+    external_ambulance_to_this_hospital: "External ambulance inbound",
+  };
+
+  return labels[value] ?? value.replace(/_/g, " ");
+}
+
+function adminStats(overview: DashboardOverview | null) {
+  if (!overview) {
+    return [
+      { title: "Total Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers /> },
+      { title: "Monthly Billing", value: "...", change: "loading", color: "#0f766e", icon: <FiCreditCard /> },
+      { title: "Active Staff", value: "...", change: "loading", color: "#7c3aed", icon: <FiShield /> },
+      { title: "Open Operations", value: "...", change: "loading", color: "#dc2626", icon: <FiActivity /> },
+    ];
+  }
+
+  return [
+    {
+      title: "Total Patients",
+      value: formatNumber(overview.patients.total),
+      change: `${overview.patients.registeredToday} registered today`,
+      color: "#2563eb",
+      icon: <FiUsers />,
+    },
+    {
+      title: "Monthly Billing",
+      value: money(Number(overview.billing.monthAmount)),
+      change: `${overview.billing.monthBillCount} bills this month`,
+      color: "#0f766e",
+      icon: <FiCreditCard />,
+    },
+    {
+      title: "Active Staff",
+      value: formatNumber(overview.users.active),
+      change: `${overview.users.inactive} inactive`,
+      color: "#7c3aed",
+      icon: <FiShield />,
+    },
+    {
+      title: "Open Operations",
+      value: formatNumber(
+        overview.billing.pendingBills +
+          overview.operations.semsas.unfiled +
+          overview.operations.security.currentlyInside
+      ),
+      change: "pending bills, SEMSAS, entry logs",
+      color: "#dc2626",
+      icon: <FiActivity />,
+    },
+  ];
 }
 
 function buildDashboardProfile(roles: string[], permissions: string[]): DashboardProfile {
@@ -308,70 +390,31 @@ export default function DashboardPage() {
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
   const isSecurityUser = hasRole(roles, "Security");
-  const canReadSemsas = permissions.includes("semsas.read");
-  const canReadUsers = permissions.includes("users.read");
-  const [semsasTransfers, setSemsasTransfers] = useState<SemsasTransfer[]>([]);
-  const [semsasLoading, setSemsasLoading] = useState(false);
-  const [adminUsers, setAdminUsers] = useState<AppUser[]>([]);
-  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const isAdminDashboard =
+    hasRole(roles, "Super Admin") || hasRole(roles, "Administrator");
+  const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(false);
   const dashboard = buildDashboardProfile(roles, permissions);
-  const month = currentMonth();
-  const semsasSummary = useMemo(() => {
-    const unfiled = semsasTransfers.filter((transfer) => !transfer.filedAt);
-    const filed = semsasTransfers.filter((transfer) => transfer.filedAt);
-    const unfiledAmount = unfiled.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
-    const filedAmount = filed.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
-
-    return {
-      total: semsasTransfers.length,
-      unfiled: unfiled.length,
-      filedAmount,
-      unfiledAmount,
-    };
-  }, [semsasTransfers]);
-  const userSummary = useMemo(
-    () => ({
-      total: adminUsers.length,
-      active: adminUsers.filter((item) => item.isActive).length,
-      inactive: adminUsers.filter((item) => !item.isActive).length,
-      admins: adminUsers.filter((item) => item.roles?.some((entry) => entry.role.name === "Super Admin")).length,
-    }),
-    [adminUsers]
-  );
+  const displayStats = isAdminDashboard
+    ? adminStats(overview)
+    : dashboard.stats;
 
   useEffect(() => {
-    if (!canReadSemsas) return;
+    if (!isAdminDashboard) return;
 
     let mounted = true;
-    setSemsasLoading(true);
-    void fetchSemsasTransfers({ month, filingStatus: "" }).then(({ transfers }) => {
+    setOverviewLoading(true);
+    void fetchDashboardOverview().then((result) => {
       if (!mounted) return;
 
-      setSemsasTransfers(transfers ?? []);
-      setSemsasLoading(false);
+      setOverview(result);
+      setOverviewLoading(false);
     });
 
     return () => {
       mounted = false;
     };
-  }, [canReadSemsas, month]);
-
-  useEffect(() => {
-    if (!canReadUsers) return;
-
-    let mounted = true;
-    setAdminUsersLoading(true);
-    void getUsers().then((result) => {
-      if (!mounted) return;
-
-      setAdminUsers(result ?? []);
-      setAdminUsersLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [canReadUsers]);
+  }, [isAdminDashboard]);
 
   if (isSecurityUser) {
     return <Navigate to="/security/entry" replace />;
@@ -413,7 +456,7 @@ export default function DashboardPage() {
           animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
         >
-          {dashboard.stats.map((stat) => (
+          {displayStats.map((stat) => (
             <motion.div variants={cardMotion} key={stat.title}>
               <StatCard
                 title={stat.title}
@@ -426,94 +469,263 @@ export default function DashboardPage() {
           ))}
         </motion.div>
 
-        {canReadSemsas && (
+        {isAdminDashboard && (
           <motion.section
-            className="dashboard-panel semsas-dashboard-summary"
+            className="admin-overview-grid"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 }}
+            transition={{ delay: 0.16 }}
           >
-            <div className="panel-title">
-              <div>
-                <h2>SEMSAS Filing</h2>
-                <p>{month} ambulance service summary.</p>
-              </div>
-              <FiArchive />
-            </div>
-
-            <div className="semsas-summary-grid">
-              <span>
-                <small>Total records</small>
-                <strong>{semsasLoading ? "..." : semsasSummary.total}</strong>
-              </span>
-              <span>
-                <small>Unfiled</small>
-                <strong>{semsasLoading ? "..." : semsasSummary.unfiled}</strong>
-              </span>
-              <span>
-                <small>Filed amount</small>
-                <strong>{semsasLoading ? "..." : money(semsasSummary.filedAmount)}</strong>
-              </span>
-              <span>
-                <small>Unfiled amount</small>
-                <strong>{semsasLoading ? "..." : money(semsasSummary.unfiledAmount)}</strong>
-              </span>
-            </div>
-
-            <Link className="command-btn" to="/operations/semsas">
-              <FiTruck />
-              Open SEMSAS
-            </Link>
-          </motion.section>
-        )}
-
-        {canReadUsers && (
-          <motion.section
-            className="dashboard-panel admin-user-summary"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="panel-title">
-              <div>
-                <h2>User Access</h2>
-                <p>Quick view of staff accounts and RBAC setup.</p>
-              </div>
-              <FiShield />
-            </div>
-
-            <div className="semsas-summary-grid">
-              <span>
-                <small>Total users</small>
-                <strong>{adminUsersLoading ? "..." : userSummary.total}</strong>
-              </span>
-              <span>
-                <small>Active</small>
-                <strong>{adminUsersLoading ? "..." : userSummary.active}</strong>
-              </span>
-              <span>
-                <small>Inactive</small>
-                <strong>{adminUsersLoading ? "..." : userSummary.inactive}</strong>
-              </span>
-              <span>
-                <small>Admins</small>
-                <strong>{adminUsersLoading ? "..." : userSummary.admins}</strong>
-              </span>
-            </div>
-
-            <div className="command-actions compact">
-              <Link className="command-btn" to="/admin/users">
+            <article className="dashboard-panel admin-insight-card">
+              <div className="panel-title">
+                <div>
+                  <h2>Patient Flow</h2>
+                  <p>Live patient categories and active records.</p>
+                </div>
                 <FiUsers />
-                Users
-              </Link>
-              <Link className="command-btn" to="/admin/roles">
-                <FiShield />
-                Roles
-              </Link>
-            </div>
+              </div>
+
+              <div className="insight-metric">
+                <strong>{overviewLoading ? "..." : formatNumber(overview?.patients.active)}</strong>
+                <span>active patients</span>
+              </div>
+
+              <div className="metric-bars">
+                {[
+                  {
+                    label: "New",
+                    value: overview?.patients.categories.newPatients ?? 0,
+                    total: overview?.patients.total ?? 0,
+                  },
+                  {
+                    label: "Investigation",
+                    value: overview?.patients.categories.investigationPatients ?? 0,
+                    total: overview?.patients.total ?? 0,
+                  },
+                  {
+                    label: "Old",
+                    value: overview?.patients.categories.oldPatients ?? 0,
+                    total: overview?.patients.total ?? 0,
+                  },
+                ].map((item) => (
+                  <div className="metric-bar" key={item.label}>
+                    <div>
+                      <span>{item.label}</span>
+                      <strong>{formatNumber(item.value)}</strong>
+                    </div>
+                    <div className="load-track">
+                      <span
+                        style={{
+                          width: item.total
+                            ? `${Math.max(8, (item.value / item.total) * 100)}%`
+                            : "0%",
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="dashboard-panel admin-insight-card">
+              <div className="panel-title">
+                <div>
+                  <h2>Billing Health</h2>
+                  <p>Charges and outstanding patient bills.</p>
+                </div>
+                <FiCreditCard />
+              </div>
+
+              <div className="finance-grid">
+                <span>
+                  <small>Pending</small>
+                  <strong>{money(Number(overview?.billing.pendingAmount ?? 0))}</strong>
+                </span>
+                <span>
+                  <small>Paid</small>
+                  <strong>{money(Number(overview?.billing.paidAmount ?? 0))}</strong>
+                </span>
+                <span>
+                  <small>Pending bills</small>
+                  <strong>{formatNumber(overview?.billing.pendingBills)}</strong>
+                </span>
+                <span>
+                  <small>Total bills</small>
+                  <strong>{formatNumber(overview?.billing.totalBills)}</strong>
+                </span>
+              </div>
+            </article>
+
+            <article className="dashboard-panel admin-insight-card">
+              <div className="panel-title">
+                <div>
+                  <h2>Operations</h2>
+                  <p>SEMSAS, security, and bed status.</p>
+                </div>
+                <FiArchive />
+              </div>
+
+              <div className="operations-stack">
+                <span>
+                  <small>SEMSAS unfiled</small>
+                  <strong>{formatNumber(overview?.operations.semsas.unfiled)}</strong>
+                </span>
+                <span>
+                  <small>Unfiled amount</small>
+                  <strong>{money(Number(overview?.operations.semsas.unfiledAmount ?? 0))}</strong>
+                </span>
+                <span>
+                  <small>Inside facility</small>
+                  <strong>{formatNumber(overview?.operations.security.currentlyInside)}</strong>
+                </span>
+                <span>
+                  <small>Beds available</small>
+                  <strong>
+                    {formatNumber(overview?.operations.beds.available)} / {formatNumber(overview?.operations.beds.total)}
+                  </strong>
+                </span>
+              </div>
+            </article>
           </motion.section>
         )}
 
+        {isAdminDashboard && (
+          <motion.section
+            className="admin-operations-grid"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.22 }}
+          >
+            <article className="dashboard-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Service Revenue</h2>
+                  <p>Billing totals by service for this month.</p>
+                </div>
+                <FiBarChart2 />
+              </div>
+
+              <div className="ranked-list">
+                {(overview?.billing.serviceRevenue ?? []).slice(0, 6).map((service) => (
+                  <div className="ranked-row" key={service.id}>
+                    <span>
+                      <strong>{service.name}</strong>
+                      <small>{service.billCount} bill(s)</small>
+                    </span>
+                    <b>{money(service.totalAmount)}</b>
+                  </div>
+                ))}
+
+                {!overviewLoading && (overview?.billing.serviceRevenue.length ?? 0) === 0 && (
+                  <p className="muted-text">No service billing recorded this month.</p>
+                )}
+              </div>
+            </article>
+
+            <article className="dashboard-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Staff by Service</h2>
+                  <p>Where active accounts are assigned.</p>
+                </div>
+                <FiShield />
+              </div>
+
+              <div className="ranked-list">
+                {(overview?.users.byService ?? []).slice(0, 6).map((service) => (
+                  <div className="ranked-row" key={service.id}>
+                    <span>
+                      <strong>{service.name}</strong>
+                      <small>{service.code || "No code"}</small>
+                    </span>
+                    <b>{service.activeUsers}/{service.totalUsers}</b>
+                  </div>
+                ))}
+
+                {!overviewLoading && (overview?.users.byService.length ?? 0) === 0 && (
+                  <p className="muted-text">No staff service assignments yet.</p>
+                )}
+              </div>
+            </article>
+          </motion.section>
+        )}
+
+        {isAdminDashboard && (
+          <motion.section
+            className="admin-recent-grid"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+          >
+            <article className="dashboard-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Recent Patients</h2>
+                  <p>Latest registered records.</p>
+                </div>
+                <FiUsers />
+              </div>
+
+              <div className="compact-activity-list">
+                {(overview?.recent.patients ?? []).map((patient) => (
+                  <div className="compact-activity-row" key={patient.id}>
+                    <div>
+                      <strong>{patient.name}</strong>
+                      <small>{patient.mrn || "MRN pending"} | {formatCategory(patient.category)}</small>
+                    </div>
+                    <span>{formatDate(patient.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="dashboard-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Recent Bills</h2>
+                  <p>Latest patient charges.</p>
+                </div>
+                <FiCreditCard />
+              </div>
+
+              <div className="compact-activity-list">
+                {(overview?.recent.bills ?? []).map((bill) => (
+                  <div className="compact-activity-row" key={bill.id}>
+                    <div>
+                      <strong>{bill.invoiceNumber}</strong>
+                      <small>{bill.patientName} | {bill.serviceName}</small>
+                    </div>
+                    <span>{money(Number(bill.totalAmount))}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="dashboard-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Recent SEMSAS</h2>
+                  <p>Latest ambulance service records.</p>
+                </div>
+                <FiTruck />
+              </div>
+
+              <div className="compact-activity-list">
+                {(overview?.recent.semsas ?? []).map((transfer) => (
+                  <div className="compact-activity-row" key={transfer.id}>
+                    <div>
+                      <strong>{transfer.patientName}</strong>
+                      <small>{formatTransferType(transfer.transferType)}</small>
+                    </div>
+                    <span>{transfer.filedAt ? "Filed" : money(Number(transfer.feeAmount))}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </motion.section>
+        )}
+
+        {!isAdminDashboard && (
         <div className="dashboard-panels">
           <motion.section
             className="dashboard-panel activity-panel"
@@ -572,6 +784,7 @@ export default function DashboardPage() {
             </div>
           </motion.section>
         </div>
+        )}
 
         <section className="sync-panel">
           <div>

@@ -1,19 +1,19 @@
 import { NextFunction, Request, Response } from "express";
 import { BaseController } from "../../core/BaseController";
+import { DashboardService } from "./service";
 
 export class DashboardController extends BaseController {
-  async overview(req: Request, res: Response, next: NextFunction) {
+  constructor(private readonly dashboardService = new DashboardService()) {
+    super();
+  }
+
+  overview = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      return this.ok(res, "Dashboard overview retrieved successfully", {
-        revenue: 1342500,
-        patientsToday: 42,
-        admissions: 12,
-        doctorsAvailable: 17,
-        occupiedBeds: 34,
-        pendingBills: 8,
-      });
+      const overview = await this.dashboardService.overview();
+
+      return this.ok(res, "Dashboard overview retrieved successfully", overview);
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
