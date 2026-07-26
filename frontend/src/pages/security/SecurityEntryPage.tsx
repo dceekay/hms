@@ -91,13 +91,23 @@ export default function SecurityEntryPage() {
     [entries]
   );
 
-  const update = (field: keyof SecurityEntryFormValues, value: string) => {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-      ...(field === "personType" && value !== "staff" ? { staffIdCardNumber: "" } : {}),
-    }));
-  };
+  const update = (
+  field: keyof SecurityEntryFormValues,
+  value: string
+    ) => {
+      setForm((current) => ({
+        ...current,
+        [field]: value,
+
+        ...(field === "personType" && value !== "staff"
+          ? { staffIdCardNumber: "" }
+          : {}),
+
+        ...(field === "personType" && value !== "patient"
+          ? { patientId: "" }
+          : {}),
+      }));
+    };
 
   const loadEntries = async (searchTerm = search) => {
     setLoadingEntries(true);
