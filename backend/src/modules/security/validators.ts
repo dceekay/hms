@@ -6,7 +6,7 @@ const securityEntryBaseSchema = z.object({
   personType: z.enum(["patient", "patient_relative", "staff", "guest"]),
   name: optionalText(150),
   phone: optionalText(30),
-  patientId: z.string().uuid().optional().nullable(),
+  patientId: optionalText(50),
   staffIdCardNumber: optionalText(80),
   purpose: optionalText(255),
   destination: optionalText(150),

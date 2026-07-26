@@ -9,6 +9,12 @@ const controller = new PatientController();
 
 router.use(authenticate);
 
+router.get(
+  "/insurance-providers",
+  authorizePermissions(["patients.read"]),
+  controller.insuranceProviders
+);
+
 router.get("/", authorizePermissions(["patients.read"]), controller.list);
 router.get("/lookup/:qrCode", authorizePermissions(["patients.read"]), controller.lookupByQrCode);
 router.post(

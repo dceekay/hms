@@ -108,6 +108,25 @@ export class PatientController extends BaseController {
     }
   };
 
+  insuranceProviders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const providers =
+      await this.patientService.listActiveInsuranceProviders();
+
+    return this.ok(
+      res,
+      "Insurance providers retrieved successfully",
+      providers
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
   reactivate = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;

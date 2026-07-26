@@ -3,6 +3,7 @@ import { PatientCategory, PatientStatus, Prisma } from "@prisma/client";
 import { HttpStatus } from "../../core/HttpStatus";
 import { ApiError } from "../../shared/errors/ApiError";
 import { PatientRepository } from "./repository";
+import { prisma } from "../../database/prisma";
 import { PatientCreateDto, PatientUpdateDto } from "./validators";
 
 function toDate(value: string | Date) {
@@ -86,6 +87,24 @@ export class PatientService {
       handlePrismaError(error);
     }
   }
+
+  async listActiveInsuranceProviders() {
+  return prisma.insuranceProvider.findMany({
+    where: {
+      isActive: true,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      patientPayPercentage: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
 
   async create(payload: PatientCreateDto) {
     const patientCategory =

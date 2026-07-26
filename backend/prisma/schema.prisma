@@ -441,7 +441,7 @@ model SecurityEntryLog {
   name  String? @db.VarChar(150)
   phone String? @db.VarChar(30)
 
-  patientId String? @db.Char(36)
+  patientId String? @db.VarChar(50)
   staffIdCardNumber String? @db.VarChar(80)
 
   purpose     String? @db.VarChar(255)
