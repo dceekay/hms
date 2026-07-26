@@ -12,6 +12,17 @@ export type InsuranceProvider = {
   updatedAt?: string;
 };
 
+export type HospitalService = {
+  id: string;
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  price?: number | string | null;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type InsuranceProviderFormValues = {
   name: string;
   code: string;
@@ -20,5 +31,13 @@ export type InsuranceProviderFormValues = {
   address: string;
   description: string;
   patientPayPercentage: string;
+  isActive: boolean;
+};
+
+export type HospitalServiceFormValues = {
+  name: string;
+  code: string;
+  description: string;
+  price: string;
   isActive: boolean;
 };

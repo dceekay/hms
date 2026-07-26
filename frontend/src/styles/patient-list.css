@@ -1,4 +1,4 @@
-patient-list.css/*
+/*
  * Compact and responsive patient list.
  *
  * This file is imported directly inside PatientListPage.tsx.
@@ -12,6 +12,33 @@ patient-list.css/*
 .patient-list-page > .card {
   min-width: 0;
   padding: clamp(16px, 2vw, 24px);
+}
+
+.patient-page-title {
+  display: grid;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.patient-page-logo {
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  object-fit: contain;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.patient-page-title h1 {
+  margin: 0;
+}
+
+.patient-page-title p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
 }
 
 /* Search and filter toolbar */
@@ -155,6 +182,7 @@ patient-list.css/*
 .patient-compact-badges {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
   margin-top: 6px;
@@ -163,7 +191,12 @@ patient-list.css/*
 .patient-compact-badges
   .mrn-pill {
   min-width: 0;
-  max-width: 150px;
+  max-width: 100%;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .patient-compact-badges

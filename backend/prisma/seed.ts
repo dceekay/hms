@@ -38,6 +38,7 @@ const permissions = [
   "laboratory.read",
   "pharmacy.read",
   "billing.read",
+  "billing.create",
   "inventory.read",
   "reports.read",
   "security.entry.read",
@@ -61,8 +62,120 @@ const roles = [
   { name: "Security", description: "Entry Point Security Staff" },
 ] as const;
 
+const hospitalServices = [
+  {
+    name: "Administration",
+    code: "ADMIN",
+    description: "Administrative leadership and system setup",
+    price: 0,
+  },
+  {
+    name: "Reception",
+    code: "RECEP",
+    description: "Patient registration and front desk services",
+    price: 0,
+  },
+  {
+    name: "Cashier",
+    code: "CASH",
+    description: "Payment collection and cashier desk",
+    price: 0,
+  },
+  {
+    name: "Consultation",
+    code: "CONS",
+    description: "Outpatient and doctor consultation",
+    price: 5000,
+  },
+  {
+    name: "Laboratory",
+    code: "LAB",
+    description: "Laboratory tests and sample processing",
+    price: 0,
+  },
+  {
+    name: "Radiology",
+    code: "RAD",
+    description: "Radiology imaging services",
+    price: 0,
+  },
+  {
+    name: "Scanning and ECG",
+    code: "SCAN-ECG",
+    description: "Ultrasound scanning and ECG services",
+    price: 0,
+  },
+  {
+    name: "Admission",
+    code: "ADM",
+    description: "Inpatient admission and ward care",
+    price: 0,
+  },
+  {
+    name: "Surgery and Theatre",
+    code: "SURG-TH",
+    description: "Surgical and theatre services",
+    price: 0,
+  },
+  {
+    name: "Maternity and Labour Room",
+    code: "MAT-LR",
+    description: "Maternity care and labour room services",
+    price: 0,
+  },
+  {
+    name: "MVA",
+    code: "MVA",
+    description: "Manual vacuum aspiration service",
+    price: 0,
+  },
+  {
+    name: "Immunization",
+    code: "IMM",
+    description: "Vaccination and immunization services",
+    price: 0,
+  },
+  {
+    name: "ANC / Antenatal Care",
+    code: "ANC",
+    description: "Antenatal clinic services",
+    price: 0,
+  },
+  {
+    name: "Dental and Ophthalmology",
+    code: "DENT-OPH",
+    description: "Dental care and eye clinic services",
+    price: 0,
+  },
+  {
+    name: "Dressing",
+    code: "DRESS",
+    description: "Wound dressing and minor procedures",
+    price: 0,
+  },
+  {
+    name: "Physiotherapy",
+    code: "PHYSIO",
+    description: "Physiotherapy and rehabilitation services",
+    price: 0,
+  },
+  {
+    name: "Pharmacy",
+    code: "PHARM",
+    description: "Pharmacy dispensing services",
+    price: 0,
+  },
+  {
+    name: "Security",
+    code: "SEC",
+    description: "Entry point security desk",
+    price: 0,
+  },
+] as const;
+
 type PermissionName = (typeof permissions)[number];
 type RoleName = (typeof roles)[number]["name"];
+type HospitalServiceCode = (typeof hospitalServices)[number]["code"];
 
 const rolePermissions: Record<RoleName, PermissionName[]> = {
   "Super Admin": [...permissions],
@@ -94,6 +207,8 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "patients.delete",
     "patients.convert",
     "patients.reactivate",
+    "billing.read",
+    "billing.create",
     "semsas.read",
     "semsas.create",
     "semsas.update",
@@ -114,7 +229,14 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
   ],
   Laboratory: ["laboratory.read", "patients.read", "patients.investigation.create", "patients.update"],
   Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
-  "Billing Officer": ["billing.read", "reports.read", "patients.read", "semsas.read", "semsas.file"],
+  "Billing Officer": [
+    "billing.read",
+    "billing.create",
+    "reports.read",
+    "patients.read",
+    "semsas.read",
+    "semsas.file",
+  ],
   Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
 };
 
@@ -126,6 +248,7 @@ const testUsers = [
     password: "Admin@123",
     firstName: "System",
     lastName: "Administrator",
+    serviceCode: "ADMIN",
   },
   {
     role: "Doctor",
@@ -135,6 +258,7 @@ const testUsers = [
     firstName: "John",
     lastName: "Doe",
     phone: "+2348012345678",
+    serviceCode: "CONS",
   },
   {
     role: "Receptionist",
@@ -144,6 +268,7 @@ const testUsers = [
     firstName: "Jane",
     lastName: "Smith",
     phone: "+2348098765432",
+    serviceCode: "RECEP",
   },
   {
     role: "Nurse",
@@ -153,6 +278,7 @@ const testUsers = [
     firstName: "Amina",
     lastName: "Bello",
     phone: "+2348070001001",
+    serviceCode: "ADM",
   },
   {
     role: "Laboratory",
@@ -162,6 +288,7 @@ const testUsers = [
     firstName: "Samuel",
     lastName: "Okoro",
     phone: "+2348070001002",
+    serviceCode: "LAB",
   },
   {
     role: "Pharmacist",
@@ -171,6 +298,7 @@ const testUsers = [
     firstName: "Fatima",
     lastName: "Musa",
     phone: "+2348070001003",
+    serviceCode: "PHARM",
   },
   {
     role: "Billing Officer",
@@ -180,6 +308,7 @@ const testUsers = [
     firstName: "David",
     lastName: "Ibrahim",
     phone: "+2348070001004",
+    serviceCode: "CASH",
   },
   {
     role: "Security",
@@ -189,6 +318,7 @@ const testUsers = [
     firstName: "Peter",
     lastName: "Gate",
     phone: "+2348070001005",
+    serviceCode: "SEC",
   },
 ] satisfies Array<{
   role: RoleName;
@@ -198,6 +328,7 @@ const testUsers = [
   firstName: string;
   lastName: string;
   phone?: string;
+  serviceCode?: HospitalServiceCode;
 }>;
 
 async function upsertRoles() {
@@ -260,9 +391,16 @@ async function assignRolePermissions(
   );
 }
 
-async function upsertTestUsers(roleMap: Record<RoleName, string>) {
+async function upsertTestUsers(
+  roleMap: Record<RoleName, string>,
+  serviceMap: Record<HospitalServiceCode, string>
+) {
   for (const userData of testUsers) {
     const passwordHash = await bcrypt.hash(userData.password, 12);
+    const serviceAreaId = userData.serviceCode
+      ? serviceMap[userData.serviceCode]
+      : null;
+
     const user = await prisma.user.upsert({
       where: { email: userData.email },
       update: {
@@ -271,6 +409,7 @@ async function upsertTestUsers(roleMap: Record<RoleName, string>) {
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone,
+        serviceAreaId,
         isActive: true,
       },
       create: {
@@ -280,6 +419,7 @@ async function upsertTestUsers(roleMap: Record<RoleName, string>) {
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone,
+        serviceAreaId,
       },
     });
 
@@ -349,22 +489,25 @@ async function seedSetupData() {
     },
   });
 
-  await prisma.hospitalService.upsert({
-    where: { name: "General Consultation" },
-    update: {
-      code: "CONS-GEN",
-      price: 5000,
-      isActive: true,
-    },
-    create: {
-      name: "General Consultation",
-      code: "CONS-GEN",
-      description: "Standard outpatient consultation",
-      price: 5000,
-    },
-  });
+  const serviceMap = {} as Record<HospitalServiceCode, string>;
 
-  return prisma.insuranceProvider.upsert({
+  for (const serviceData of hospitalServices) {
+    const service = await prisma.hospitalService.upsert({
+      where: { code: serviceData.code },
+      update: {
+        name: serviceData.name,
+        description: serviceData.description,
+        price: serviceData.price,
+        isActive: true,
+        deletedAt: null,
+      },
+      create: serviceData,
+    });
+
+    serviceMap[serviceData.code] = service.id;
+  }
+
+  const insuranceProvider = await prisma.insuranceProvider.upsert({
     where: { name: "CeekayX Health Plan" },
     update: {
       code: "CXHP",
@@ -379,6 +522,11 @@ async function seedSetupData() {
       patientPayPercentage: 20,
     },
   });
+
+  return {
+    insuranceProvider,
+    serviceMap,
+  };
 }
 
 async function seedDemoPatient(insuranceProviderId: string) {
@@ -466,9 +614,9 @@ async function main() {
   const [roleMap, permissionMap] = await Promise.all([upsertRoles(), upsertPermissions()]);
 
   await assignRolePermissions(roleMap, permissionMap);
-  await upsertTestUsers(roleMap);
+  const { insuranceProvider, serviceMap } = await seedSetupData();
 
-  const insuranceProvider = await seedSetupData();
+  await upsertTestUsers(roleMap, serviceMap);
   await seedDemoPatient(insuranceProvider.id);
 
   console.log("Database Seeded Successfully");

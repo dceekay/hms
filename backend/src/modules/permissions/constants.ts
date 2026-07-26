@@ -18,4 +18,14 @@ export const PROTECTED_PERMISSIONS = [
     "permissions.update",
     "permissions.delete",
 
+    // Setup
+    "setup.read",
+    "setup.create",
+    "setup.update",
+    "setup.delete",
+
+    // Billing
+    "billing.read",
+    "billing.create",
+
 ];

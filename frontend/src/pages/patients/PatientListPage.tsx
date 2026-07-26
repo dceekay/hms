@@ -24,6 +24,7 @@ import {
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
+import mdsLogo from "../../assets/logo.png";
 
 import "../../styles/patient-list.css";
 
@@ -802,14 +803,19 @@ export function PatientListPage() {
       <main className="page-container patient-list-page">
         <div className="card">
           <div className="page-header">
-            <div>
+            <div className="patient-page-title">
+              <img
+                src={mdsLogo}
+                alt="MDS Hospital"
+                className="patient-page-logo"
+              />
+
               <h1>Patients</h1>
 
               <p>
-                Search, identify and
-                manage registered
-                patients without
-                horizontal scrolling.
+                Find patients, update
+                their records, and print
+                ID cards when needed.
               </p>
             </div>
           </div>

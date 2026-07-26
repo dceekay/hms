@@ -7,7 +7,9 @@ import {
   createDoctorAccount,
   getUsers,
 } from "../../services/userService";
+import { fetchHospitalServices } from "../../services/setupService";
 import { AppUser } from "../../types/rbac";
+import { HospitalService } from "../../types/setup";
 
 const doctorTypeLabels: Record<DoctorType, string> = {
   medical_doctor: "Medical Doctor",
@@ -22,6 +24,7 @@ const emptyForm: CreateDoctorAccountValues = {
   username: "",
   password: "",
   phone: "",
+  serviceAreaId: "",
   doctorType: "medical_doctor",
   specialty: "",
 };
@@ -61,6 +64,7 @@ function doctorAccountMessage(user: AppUser, password: string) {
 export default function DoctorsPage() {
   const [form, setForm] = useState<CreateDoctorAccountValues>({ ...emptyForm, password: generatePassword() });
   const [doctors, setDoctors] = useState<AppUser[]>([]);
+  const [services, setServices] = useState<HospitalService[]>([]);
   const [createdUser, setCreatedUser] = useState<AppUser | null>(null);
   const [createdPassword, setCreatedPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,10 +79,16 @@ export default function DoctorsPage() {
 
   const loadDoctors = async () => {
     setLoading(true);
-    const users = await getUsers();
+    const [users, serviceResult] = await Promise.all([
+      getUsers(),
+      fetchHospitalServices(),
+    ]);
     setLoading(false);
 
     if (!users) return;
+    if (serviceResult.services) {
+      setServices(serviceResult.services);
+    }
 
     setDoctors(
       users.filter((user) => user.roles?.some((entry) => entry.role.name === "Doctor"))
@@ -110,7 +120,10 @@ export default function DoctorsPage() {
     setMessage("");
     setCreatedUser(null);
 
-    const { user, error: createError } = await createDoctorAccount(form);
+    const { user, error: createError } = await createDoctorAccount({
+      ...form,
+      serviceAreaId: form.serviceAreaId || null,
+    });
     setSaving(false);
 
     if (!user) {
@@ -181,6 +194,17 @@ export default function DoctorsPage() {
                 <label>
                   Phone
                   <input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+                </label>
+                <label>
+                  Service area
+                  <select value={form.serviceAreaId ?? ""} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
+                    <option value="">No service area</option>
+                    {services.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   Specialty
@@ -267,6 +291,7 @@ export default function DoctorsPage() {
                         ? doctorTypeLabels[doctor.doctorProfile.doctorType]
                         : "Doctor"}
                       {doctor.doctorProfile?.specialty ? ` | ${doctor.doctorProfile.specialty}` : ""}
+                      {doctor.serviceArea?.name ? ` | ${doctor.serviceArea.name}` : ""}
                     </small>
                   </article>
                 ))}

@@ -1,6 +1,11 @@
 import axios from "axios";
 import api from "./api";
-import { InsuranceProvider, InsuranceProviderFormValues } from "../types/setup";
+import {
+  HospitalService,
+  HospitalServiceFormValues,
+  InsuranceProvider,
+  InsuranceProviderFormValues,
+} from "../types/setup";
 
 type ApiErrorBody = {
   message?: string;
@@ -37,6 +42,64 @@ function cleanProviderPayload(values: InsuranceProviderFormValues) {
     patientPayPercentage: Number(values.patientPayPercentage || 0),
     isActive: values.isActive,
   };
+}
+
+function cleanServicePayload(values: HospitalServiceFormValues) {
+  return {
+    name: values.name.trim(),
+    code: values.code.trim() || null,
+    description: values.description.trim() || undefined,
+    price: Number(values.price || 0),
+    isActive: values.isActive,
+  };
+}
+
+export async function fetchHospitalServices(params: { search?: string } = {}) {
+  try {
+    const response = await api.get<SetupListResponse<HospitalService>>("/setup/services", {
+      params: params.search?.trim() ? { search: params.search.trim(), limit: 100 } : { limit: 100 },
+    });
+
+    return { services: response.data.data.items, error: undefined };
+  } catch (error) {
+    console.error(error);
+    return { services: null, error: getApiErrorMessage(error) };
+  }
+}
+
+export async function createHospitalService(values: HospitalServiceFormValues) {
+  try {
+    const response = await api.post<{ data: HospitalService }>("/setup/services", cleanServicePayload(values));
+
+    return { service: response.data.data, error: undefined };
+  } catch (error) {
+    console.error(error);
+    return { service: null, error: getApiErrorMessage(error) };
+  }
+}
+
+export async function updateHospitalService(id: string, values: HospitalServiceFormValues) {
+  try {
+    const response = await api.patch<{ data: HospitalService }>(
+      `/setup/services/${id}`,
+      cleanServicePayload(values)
+    );
+
+    return { service: response.data.data, error: undefined };
+  } catch (error) {
+    console.error(error);
+    return { service: null, error: getApiErrorMessage(error) };
+  }
+}
+
+export async function deactivateHospitalService(id: string) {
+  try {
+    await api.delete(`/setup/services/${id}`);
+    return { success: true, error: undefined };
+  } catch (error) {
+    console.error(error);
+    return { success: false, error: getApiErrorMessage(error) };
+  }
 }
 
 export async function fetchInsuranceProviders(params: { search?: string } = {}) {

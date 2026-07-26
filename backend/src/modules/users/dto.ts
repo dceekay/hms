@@ -5,6 +5,7 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1).optional(),
   phone: z.string().min(7).max(30).optional(),
   email: z.string().email().optional(),
+  serviceAreaId: z.string().uuid().optional().nullable(),
 });
 
 export const assignRolesSchema = z.object({
@@ -18,6 +19,7 @@ export const createUserSchema = z.object({
   username: z.string().trim().min(3).max(100),
   password: z.string().min(8).max(100),
   phone: z.string().trim().min(7).max(30).optional().or(z.literal("")),
+  serviceAreaId: z.string().uuid().optional().nullable(),
   roleIds: z.array(z.string().uuid()).default([]),
 });
 
@@ -28,6 +30,7 @@ export const createDoctorSchema = z.object({
   username: z.string().trim().min(3).max(100),
   password: z.string().min(8).max(100),
   phone: z.string().trim().min(7).max(30).optional().or(z.literal("")),
+  serviceAreaId: z.string().uuid().optional().nullable(),
   doctorType: z.enum(["medical_doctor", "visiting_consultant", "visiting_specialist"]),
   specialty: z.string().trim().max(150).optional().or(z.literal("")),
 });

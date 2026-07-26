@@ -20,6 +20,12 @@ export interface AppUser {
   lastName: string;
   phone?: string | null;
   isActive: boolean;
+  serviceAreaId?: string | null;
+  serviceArea?: {
+    id: string;
+    name: string;
+    code?: string | null;
+  } | null;
   roles?: { role: Role }[];
   doctorProfile?: {
     id: string;

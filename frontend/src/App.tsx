@@ -8,6 +8,8 @@ import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
 import SecurityEntryPage from "./pages/security/SecurityEntryPage";
 import SemsasPage from "./pages/operations/SemsasPage";
 import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
+import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
+import BillingPage from "./pages/billing/BillingPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 
 import APITesterPage from "./pages/APITesterPage";
@@ -19,7 +21,7 @@ import DoctorsPage from "./pages/admin/DoctorsPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { FaBed, FaCapsules, FaFlask } from "react-icons/fa";
-import { FiActivity, FiCreditCard, FiDatabase, FiPackage, FiPieChart, FiTool, FiTruck } from "react-icons/fi";
+import { FiActivity, FiDatabase, FiPackage, FiPieChart, FiTruck } from "react-icons/fi";
 
 export default function App() {
   return (
@@ -144,12 +146,8 @@ export default function App() {
       <Route
         path="/billing"
         element={
-          <ProtectedRoute>
-            <ComingSoonPage
-              title="Billing"
-              description="Billing will generate invoices from services, lab requests, pharmacy dispensing, and payments."
-              icon={<FiCreditCard />}
-            />
+          <ProtectedRoute requiredPermissions={["billing.read"]}>
+            <BillingPage />
           </ProtectedRoute>
         }
       />
@@ -196,12 +194,8 @@ export default function App() {
       <Route
         path="/setup/services"
         element={
-          <ProtectedRoute requiredPermissions={["setup.read"]}>
-            <ComingSoonPage
-              title="Hospital Services"
-              description="Service setup is available through the setup API and ready for a dedicated admin screen later."
-              icon={<FiTool />}
-            />
+          <ProtectedRoute requiredPermissions={["setup.read"]} requiredRoles={["Super Admin"]}>
+            <HospitalServicesPage />
           </ProtectedRoute>
         }
       />

@@ -81,7 +81,7 @@ const menus: MenuItem[] = [
       { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck /> },
       { title: "SEMSAS", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
       { title: "Inventory", path: "/inventory", icon: <FiPackage /> },
-      { title: "Billing", path: "/billing", icon: <FiCreditCard /> },
+      { title: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
       { title: "Reports", path: "/reports", icon: <FiPieChart /> },
     ],
   },
@@ -91,7 +91,7 @@ const menus: MenuItem[] = [
     children: [
       { title: "Departments", path: "/departments", icon: <FiDatabase /> },
       { title: "Wards & Beds", path: "/setup/wards", icon: <FaBed /> },
-      { title: "Services", path: "/setup/services", icon: <FiTool /> },
+      { title: "Services", path: "/setup/services", icon: <FiTool />, requiredRoles: ["Super Admin"] },
       { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
     ],
   },

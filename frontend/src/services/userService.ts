@@ -10,6 +10,7 @@ export type CreateDoctorAccountValues = {
   username: string;
   password: string;
   phone?: string;
+  serviceAreaId?: string | null;
   doctorType: DoctorType;
   specialty?: string;
 };
@@ -21,6 +22,7 @@ export type CreateUserAccountValues = {
   username: string;
   password: string;
   phone?: string;
+  serviceAreaId?: string | null;
   roleIds: string[];
 };
 
@@ -29,6 +31,7 @@ export type UpdateUserAccountValues = {
   lastName?: string;
   email?: string;
   phone?: string;
+  serviceAreaId?: string | null;
 };
 
 function getErrorMessage(error: any, fallback: string) {

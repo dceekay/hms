@@ -2,6 +2,29 @@ import { UserRepository as AuthUserRepository } from "../auth/repository";
 import { prisma } from "../../database/prisma";
 
 export class UserRepository extends AuthUserRepository {
+  async findByIdWithRolesAndPermissions(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        serviceArea: true,
+        doctorProfile: true,
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async findAllWithRoles(params: {
     skip?: number;
     take?: number;
@@ -34,6 +57,7 @@ export class UserRepository extends AuthUserRepository {
         include: {
           roles: { include: { role: true } },
           doctorProfile: true,
+          serviceArea: true,
         },
       }),
       prisma.user.count({ where }),
@@ -49,6 +73,7 @@ export class UserRepository extends AuthUserRepository {
     firstName: string;
     lastName: string;
     phone?: string | null;
+    serviceAreaId?: string | null;
     doctorType: "medical_doctor" | "visiting_consultant" | "visiting_specialist";
     specialty?: string | null;
     doctorRoleId: string;
@@ -62,6 +87,7 @@ export class UserRepository extends AuthUserRepository {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: data.phone || null,
+          serviceAreaId: data.serviceAreaId || null,
           roles: {
             create: {
               roleId: data.doctorRoleId,
@@ -77,6 +103,7 @@ export class UserRepository extends AuthUserRepository {
         include: {
           roles: { include: { role: true } },
           doctorProfile: true,
+          serviceArea: true,
         },
       });
 
@@ -91,6 +118,7 @@ export class UserRepository extends AuthUserRepository {
     firstName: string;
     lastName: string;
     phone?: string | null;
+    serviceAreaId?: string | null;
     roleIds: string[];
   }) {
     return prisma.$transaction(async (tx) => {
@@ -102,6 +130,7 @@ export class UserRepository extends AuthUserRepository {
           firstName: data.firstName,
           lastName: data.lastName,
           phone: data.phone || null,
+          serviceAreaId: data.serviceAreaId || null,
           roles: data.roleIds.length
             ? {
                 create: data.roleIds.map((roleId) => ({ roleId })),
@@ -111,6 +140,7 @@ export class UserRepository extends AuthUserRepository {
         include: {
           roles: { include: { role: true } },
           doctorProfile: true,
+          serviceArea: true,
         },
       });
 
@@ -130,13 +160,46 @@ export class UserRepository extends AuthUserRepository {
 
       return tx.user.findUnique({
         where: { id: userId },
-        include: { roles: { include: { role: true } } },
+        include: {
+          roles: { include: { role: true } },
+          doctorProfile: true,
+          serviceArea: true,
+        },
       });
     });
   }
 
+  async updateUserDetails(
+    id: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string | null;
+      serviceAreaId?: string | null;
+    }
+  ) {
+    return prisma.user.update({
+      where: { id },
+      data,
+      include: {
+        roles: { include: { role: true } },
+        doctorProfile: true,
+        serviceArea: true,
+      },
+    });
+  }
+
   async setActive(id: string, isActive: boolean) {
-    return prisma.user.update({ where: { id }, data: { isActive } });
+    return prisma.user.update({
+      where: { id },
+      data: { isActive },
+      include: {
+        roles: { include: { role: true } },
+        doctorProfile: true,
+        serviceArea: true,
+      },
+    });
   }
 
   async softDelete(id: string) {

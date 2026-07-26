@@ -26,6 +26,7 @@ import permissionRoutes from "../modules/permissions/routes";
 import setupRoutes from "../modules/setup/routes";
 import securityRoutes from "../modules/security/routes";
 import semsasRoutes from "../modules/semsas/routes";
+import billingRoutes from "../modules/billing/routes";
 
 const router = Router();
 
@@ -52,5 +53,6 @@ router.use("/permissions", permissionRoutes);
 router.use("/setup", setupRoutes);
 router.use("/security", securityRoutes);
 router.use("/semsas", semsasRoutes);
+router.use("/billing", billingRoutes);
 
 export default router;

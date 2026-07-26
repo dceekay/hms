@@ -22,7 +22,9 @@ import {
   getUsers,
   updateUserAccount,
 } from "../../services/userService";
+import { fetchHospitalServices } from "../../services/setupService";
 import { AppUser, Role } from "../../types/rbac";
+import { HospitalService } from "../../types/setup";
 import { useAuthStore } from "../../store/authStore";
 
 type UserForm = {
@@ -32,6 +34,7 @@ type UserForm = {
   username: string;
   password: string;
   phone: string;
+  serviceAreaId: string;
   roleIds: string[];
 };
 
@@ -42,6 +45,7 @@ const emptyForm: UserForm = {
   username: "",
   password: "",
   phone: "",
+  serviceAreaId: "",
   roleIds: [],
 };
 
@@ -76,6 +80,7 @@ export default function UsersPage() {
 
   const [users, setUsers] = useState<AppUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [services, setServices] = useState<HospitalService[]>([]);
   const [form, setForm] = useState<UserForm>({ ...emptyForm, password: generatePassword() });
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [search, setSearch] = useState("");
@@ -101,16 +106,21 @@ export default function UsersPage() {
     setLoading(true);
     setError(null);
     const isActive = statusFilter === "all" ? undefined : statusFilter === "active";
-    const [usersResult, rolesResult] = await Promise.all([getUsers(search, isActive), getRoles()]);
+    const [usersResult, rolesResult, servicesResult] = await Promise.all([
+      getUsers(search, isActive),
+      getRoles(),
+      fetchHospitalServices(),
+    ]);
     setLoading(false);
 
-    if (!usersResult || !rolesResult) {
-      setError("Unable to load users and roles.");
+    if (!usersResult || !rolesResult || !servicesResult.services) {
+      setError("Unable to load users, roles, and services.");
       return;
     }
 
     setUsers(usersResult);
     setRoles(rolesResult);
+    setServices(servicesResult.services);
   };
 
   useEffect(() => {
@@ -150,6 +160,7 @@ export default function UsersPage() {
       username: user.username,
       password: "",
       phone: user.phone ?? "",
+      serviceAreaId: user.serviceAreaId ?? "",
       roleIds: user.roles?.map((entry) => entry.role.id) ?? [],
     });
     setError(null);
@@ -168,6 +179,7 @@ export default function UsersPage() {
         lastName: form.lastName,
         email: form.email,
         phone: form.phone,
+        serviceAreaId: form.serviceAreaId || null,
       });
 
       if (!updateResult.user) {
@@ -192,7 +204,10 @@ export default function UsersPage() {
       return;
     }
 
-    const createResult = await createUserAccount(form);
+    const createResult = await createUserAccount({
+      ...form,
+      serviceAreaId: form.serviceAreaId || null,
+    });
     setSaving(false);
 
     if (!createResult.user) {
@@ -280,6 +295,17 @@ export default function UsersPage() {
                 <label>Last name<input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required /></label>
                 <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required /></label>
                 <label>Phone<input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} /></label>
+                <label>
+                  Service area
+                  <select value={form.serviceAreaId} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
+                    <option value="">No service area</option>
+                    {services.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label>Username<input value={form.username} onChange={(event) => updateField("username", event.target.value)} required disabled={!!editingUser} /></label>
                 {!editingUser && (
                   <label>
@@ -363,7 +389,10 @@ export default function UsersPage() {
                       <div>
                         <strong>{user.firstName} {user.lastName}</strong>
                         <p>{user.username} | {user.email}</p>
-                        <small>{roleNames(user)}</small>
+                        <small>
+                          {roleNames(user)}
+                          {user.serviceArea?.name ? ` | ${user.serviceArea.name}` : ""}
+                        </small>
                       </div>
                     </div>
                     <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>

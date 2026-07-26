@@ -4,6 +4,7 @@ import { hashPassword } from "../../shared/helpers/bcrypt";
 import { UserRepository } from "./repository";
 import { RoleRepository } from "../roles/repository";
 import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto, CreateUserDto } from "./dto";
+import { prisma } from "../../database/prisma";
 
 function sanitizeUser(user: any) {
   if (!user) return user;
@@ -16,6 +17,22 @@ export class UserService {
     private readonly userRepository = new UserRepository(),
     private readonly roleRepository = new RoleRepository()
   ) {}
+
+  private async assertServiceAreaExists(serviceAreaId?: string | null) {
+    if (!serviceAreaId) return;
+
+    const serviceArea = await prisma.hospitalService.findFirst({
+      where: {
+        id: serviceAreaId,
+        isActive: true,
+        deletedAt: null,
+      },
+    });
+
+    if (!serviceArea) {
+      throw new ApiError(HttpStatus.BAD_REQUEST, "Selected service area does not exist or is inactive");
+    }
+  }
 
   async list(params: ListUsersQueryDto) {
     const page = Number(params.page ?? 1);
@@ -69,6 +86,8 @@ export class UserService {
       }
     }
 
+    await this.assertServiceAreaExists(payload.serviceAreaId);
+
     const passwordHash = await hashPassword(payload.password);
     const user = await this.userRepository.createUserWithRoles({
       email: payload.email,
@@ -77,6 +96,7 @@ export class UserService {
       firstName: payload.firstName,
       lastName: payload.lastName,
       phone: payload.phone || null,
+      serviceAreaId: payload.serviceAreaId || null,
       roleIds: payload.roleIds,
     });
 
@@ -98,6 +118,8 @@ export class UserService {
       throw new ApiError(HttpStatus.BAD_REQUEST, "Doctor role has not been seeded");
     }
 
+    await this.assertServiceAreaExists(payload.serviceAreaId);
+
     const passwordHash = await hashPassword(payload.password);
     const user = await this.userRepository.createDoctorWithRole({
       email: payload.email,
@@ -106,6 +128,7 @@ export class UserService {
       firstName: payload.firstName,
       lastName: payload.lastName,
       phone: payload.phone || null,
+      serviceAreaId: payload.serviceAreaId || null,
       doctorType: payload.doctorType,
       specialty: payload.specialty || null,
       doctorRoleId: doctorRole.id,
@@ -128,7 +151,29 @@ export class UserService {
       }
     }
 
-    const updated = await this.userRepository.update(id, payload as any);
+    await this.assertServiceAreaExists(payload.serviceAreaId);
+
+    const updateData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string | null;
+      serviceAreaId?: string | null;
+    } = {
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+    };
+
+    if (payload.phone !== undefined) {
+      updateData.phone = payload.phone || null;
+    }
+
+    if (payload.serviceAreaId !== undefined) {
+      updateData.serviceAreaId = payload.serviceAreaId || null;
+    }
+
+    const updated = await this.userRepository.updateUserDetails(id, updateData);
     return sanitizeUser(updated);
   }
 
