@@ -83,7 +83,18 @@ const envSchema = z.object({
   /**
    * Frontend
    */
-  CLIENT_URL: z.string().url(),
+  CLIENT_URL: z.string().min(1).refine(
+    (value) =>
+      value
+        .split(",")
+        .map((url) => url.trim())
+        .filter(Boolean)
+        .every((url) => z.string().url().safeParse(url).success),
+    {
+      message:
+        "CLIENT_URL must be one or more comma-separated URLs.",
+    }
+  ),
 
   /**
    * Logging

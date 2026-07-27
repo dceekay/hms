@@ -23,16 +23,44 @@ import compression from "compression";
 import cookieParser from "cookie-parser";
 
 import routes from "./routes";
+import { env } from "./config/env";
 
 import { errorMiddleware } from "./middleware/error.middleware";
 import { notFound } from "./middleware/notFound.middleware";
 
 const app = express();
 
+const allowedCorsOrigins = env.CLIENT_URL.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const developmentCorsOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+const corsOrigins = new Set(
+  env.NODE_ENV === "production"
+    ? allowedCorsOrigins
+    : [...allowedCorsOrigins, ...developmentCorsOrigins]
+);
+
 /**
  * Enable CORS
  */
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin(origin, callback) {
+      if (!origin || corsOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS origin not allowed: ${origin}`));
+    },
+  })
+);
 
 /**
  * Secure HTTP headers
