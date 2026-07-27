@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FiActivity,
@@ -8,6 +8,7 @@ import {
   FiCreditCard,
   FiDatabase,
   FiDroplet,
+  FiFileText,
   FiHome,
   FiLayers,
   FiPackage,
@@ -57,40 +58,47 @@ const menus: MenuItem[] = [
     title: "Patients",
     icon: <FaUserInjured />,
     children: [
-      { title: "Patient List", path: "/patients", icon: <FiUsers /> },
-      { title: "Register Patient", path: "/register-patient", icon: <FiPlusCircle /> },
+      { title: "Patient List", path: "/patients", icon: <FiUsers />, requiredPermissions: ["patients.read"] },
+      {
+        title: "Register Patient",
+        path: "/register-patient",
+        icon: <FiPlusCircle />,
+        anyPermissions: ["patients.create", "patients.investigation.create"],
+      },
     ],
   },
   {
     title: "Appointments",
     icon: <FiActivity />,
     path: "/appointments",
+    requiredPermissions: ["appointments.read"],
   },
   {
     title: "Clinical",
     icon: <FaHospitalUser />,
     children: [
-      { title: "Laboratory", path: "/laboratory", icon: <FaFlask /> },
-      { title: "Pharmacy", path: "/pharmacy", icon: <FaCapsules /> },
+      { title: "Laboratory", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
+      { title: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
     ],
   },
   {
     title: "Operations",
     icon: <FiLayers />,
     children: [
-      { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck /> },
+      { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck />, requiredPermissions: ["security.entry.create"] },
+      { title: "All Entries", path: "/security/logs", icon: <FiFileText />, requiredPermissions: ["security.entry.read"] },
       { title: "SEMSAS", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
-      { title: "Inventory", path: "/inventory", icon: <FiPackage /> },
+      { title: "Inventory", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
       { title: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
-      { title: "Reports", path: "/reports", icon: <FiPieChart /> },
+      { title: "Reports", path: "/reports", icon: <FiPieChart />, requiredPermissions: ["reports.read"] },
     ],
   },
   {
     title: "Setup",
     icon: <FiSettings />,
     children: [
-      { title: "Departments", path: "/departments", icon: <FiDatabase /> },
-      { title: "Wards & Beds", path: "/setup/wards", icon: <FaBed /> },
+      { title: "Departments", path: "/departments", icon: <FiDatabase />, requiredPermissions: ["departments.read"] },
+      { title: "Wards & Beds", path: "/setup/wards", icon: <FaBed />, requiredPermissions: ["setup.read"] },
       { title: "Services", path: "/setup/services", icon: <FiTool />, requiredRoles: ["Super Admin"] },
       { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
     ],
@@ -99,16 +107,17 @@ const menus: MenuItem[] = [
     title: "Administration",
     icon: <FiShield />,
     children: [
-      { title: "Users", path: "/admin/users", icon: <FiUsers /> },
+      { title: "Users", path: "/admin/users", icon: <FiUsers />, requiredPermissions: ["users.read"] },
       { title: "Doctors", path: "/admin/doctors", icon: <FiUserPlus />, requiredRoles: ["Super Admin"] },
-      { title: "Roles", path: "/admin/roles", icon: <FiShield /> },
-      { title: "Permissions", path: "/admin/permissions", icon: <FiTool /> },
+      { title: "Roles", path: "/admin/roles", icon: <FiShield />, requiredPermissions: ["roles.read"] },
+      { title: "Permissions", path: "/admin/permissions", icon: <FiTool />, requiredPermissions: ["permissions.read"] },
     ],
   },
   {
     title: "API Tester",
     icon: <FiDatabase />,
     path: "/api-tester",
+    requiredRoles: ["Super Admin"],
   },
 ];
 
@@ -117,6 +126,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
   const user = useAuthStore((state) => state.user);
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
+  const securityOnly = roles.includes("Security") && roles.length === 1;
 
   const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
     const hasRequiredRole = !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
@@ -129,14 +139,38 @@ export function Sidebar({ collapsed, toggle }: Props) {
   };
 
   const visibleMenus = useMemo(
-    () =>
-      menus
+    () => {
+      const sourceMenus: MenuItem[] = securityOnly
+        ? [
+            {
+              title: "Security",
+              icon: <FiShield />,
+              children: [
+                {
+                  title: "Security Entry",
+                  path: "/security/entry",
+                  icon: <FiUserCheck />,
+                  requiredPermissions: ["security.entry.create"],
+                },
+                {
+                  title: "All Entries",
+                  path: "/security/logs",
+                  icon: <FiFileText />,
+                  requiredPermissions: ["security.entry.read"],
+                },
+              ],
+            },
+          ]
+        : menus;
+
+      return sourceMenus
         .map((menu) => ({
           ...menu,
           children: menu.children?.filter(canAccess),
         }))
-        .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0)),
-    [permissions, roles]
+        .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
+    },
+    [permissions, roles, securityOnly]
   );
 
   const initiallyOpen = useMemo(() => {

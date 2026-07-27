@@ -6,6 +6,7 @@ import DashboardPage from "./pages/DashboardPage";
 import { PatientListPage } from "./pages/patients/PatientListPage";
 import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
 import SecurityEntryPage from "./pages/security/SecurityEntryPage";
+import SecurityLogsPage from "./pages/security/SecurityLogsPage";
 import SemsasPage from "./pages/operations/SemsasPage";
 import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
 import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
@@ -74,6 +75,15 @@ export default function App() {
       />
 
       <Route
+        path="/security/logs"
+        element={
+          <ProtectedRoute requiredPermissions={["security.entry.read"]}>
+            <SecurityLogsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/operations/semsas"
         element={
           <ProtectedRoute requiredPermissions={["semsas.read"]}>
@@ -85,7 +95,7 @@ export default function App() {
       <Route
         path="/api-tester"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={["Super Admin"]}>
             <APITesterPage />
           </ProtectedRoute>
         }
@@ -94,7 +104,7 @@ export default function App() {
       <Route
         path="/appointments"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermissions={["appointments.read"]}>
             <ComingSoonPage
               title="Appointments"
               description="Scheduling will connect patients, doctors, services, check-in, and cancellation workflows after the patient backend is complete."
@@ -107,7 +117,7 @@ export default function App() {
       <Route
         path="/laboratory"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermissions={["laboratory.read"]}>
             <ComingSoonPage
               title="Laboratory"
               description="Lab catalog, requests, specimens, results, and verification will come after clinical encounters are in place."
@@ -120,7 +130,7 @@ export default function App() {
       <Route
         path="/pharmacy"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermissions={["pharmacy.read"]}>
             <ComingSoonPage
               title="Pharmacy"
               description="Medicine catalog, prescriptions, dispensing, and stock movement will be built after clinical records."
@@ -133,7 +143,7 @@ export default function App() {
       <Route
         path="/inventory"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermissions={["inventory.read"]}>
             <ComingSoonPage
               title="Inventory"
               description="Inventory will manage stock items, batches, movement history, and low-stock alerts."
@@ -155,7 +165,7 @@ export default function App() {
       <Route
         path="/reports"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredPermissions={["reports.read"]}>
             <ComingSoonPage
               title="Reports"
               description="Reports will summarize revenue, patient flow, appointments, pharmacy stock, lab turnaround, and bed occupancy."

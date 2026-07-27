@@ -1,5 +1,5 @@
 import api from "../api";
-import { SecurityEntryFormValues, SecurityEntryLog } from "../../types/security";
+import type { SecurityEntryFormValues, SecurityEntryLog } from "../../types/security";
 
 export async function createSecurityEntry(
   values: SecurityEntryFormValues
@@ -13,11 +13,20 @@ export async function createSecurityEntry(
   }
 }
 
-export async function fetchSecurityEntries(search = ""): Promise<SecurityEntryLog[] | null> {
+export async function fetchSecurityEntries(
+  search = "",
+  options: {
+    activeOnly?: boolean;
+    take?: number;
+  } = {}
+): Promise<SecurityEntryLog[] | null> {
   try {
     const response = await api.get<{ data: { items: SecurityEntryLog[] } }>("/security/entry-logs", {
       params: {
-        take: 50,
+        take: options.take ?? 50,
+        ...(options.activeOnly !== undefined
+          ? { activeOnly: options.activeOnly }
+          : {}),
         ...(search.trim() ? { search: search.trim() } : {}),
       },
     });

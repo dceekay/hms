@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { FiCamera, FiCheckCircle, FiLogIn, FiLogOut, FiRefreshCw, FiSearch, FiShield, FiTrash2 } from "react-icons/fi";
+import { FiCamera, FiCheckCircle, FiLogIn, FiRefreshCw, FiSearch, FiShield, FiTrash2 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
+import SecurityEntryLogList from "../../components/security/SecurityEntryLogList";
 import {
   checkoutSecurityEntry,
   createSecurityEntry,
@@ -30,48 +32,6 @@ function cleanPayload(values: SecurityEntryFormValues): SecurityEntryFormValues 
   return Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, value === "" ? undefined : value])
   ) as SecurityEntryFormValues;
-}
-
-function formatLogTime(value?: string | null) {
-  if (!value) return "Still inside";
-
-  return new Intl.DateTimeFormat("en-NG", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function formatLogDate(value?: string | null) {
-  if (!value) return "";
-
-  return new Intl.DateTimeFormat("en-NG", {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
-
-function dayRolloverBadge(entry: SecurityEntryLog) {
-  if (!entry.checkedOutAt) return null;
-
-  const checkedIn = new Date(entry.checkedInAt);
-  const checkedOut = new Date(entry.checkedOutAt);
-  const inDay = new Date(
-    checkedIn.getFullYear(),
-    checkedIn.getMonth(),
-    checkedIn.getDate()
-  );
-  const outDay = new Date(
-    checkedOut.getFullYear(),
-    checkedOut.getMonth(),
-    checkedOut.getDate()
-  );
-  const dayDifference = Math.round(
-    (outDay.getTime() - inDay.getTime()) / 86400000
-  );
-
-  if (dayDifference <= 0) return null;
-
-  return `+${dayDifference} ${dayDifference === 1 ? "day" : "days"}`;
 }
 
 async function compressImageToWebp(file: File) {
@@ -353,10 +313,12 @@ export default function SecurityEntryPage() {
           <aside className="security-log-panel">
             <div className="panel-title">
               <div>
-                <h2>Entry Log</h2>
+                <h2>Recent Entries</h2>
                 <p>Recent movement with time in and time out.</p>
               </div>
-              <FiRefreshCw />
+              <Link className="icon-text-btn" to="/security/logs">
+                All entries
+              </Link>
             </div>
 
             <form className="security-search" onSubmit={handleSearch}>
@@ -369,59 +331,12 @@ export default function SecurityEntryPage() {
               <button type="submit">Search</button>
             </form>
 
-            {loadingEntries && <p>Loading entries...</p>}
-
-            <div className="security-entry-list">
-              {entries.map((entry) => {
-                const rolloverBadge = dayRolloverBadge(entry);
-
-                return (
-                  <article
-                    className={`security-entry-card ${
-                      entry.checkedOutAt ? "checked-out" : "active"
-                    }`}
-                    key={entry.id}
-                  >
-                    {entry.photoDataUrl ? <img src={entry.photoDataUrl} alt="" /> : <span className="entry-avatar" />}
-                    <div className="security-entry-main">
-                      <div className="security-entry-title">
-                        <strong>{entry.name || personTypeLabels[entry.personType]}</strong>
-                        <span className={`security-state-badge ${entry.checkedOutAt ? "out" : "in"}`}>
-                          {entry.checkedOutAt ? "Checked out" : "Inside"}
-                        </span>
-                      </div>
-                      <small>
-                        {personTypeLabels[entry.personType]} {entry.phone ? `- ${entry.phone}` : ""}
-                      </small>
-                      {entry.staffIdCardNumber && <code>{entry.staffIdCardNumber}</code>}
-
-                      <div className="security-time-grid">
-                        <span>
-                          <small>Time in</small>
-                          <strong>{formatLogTime(entry.checkedInAt)}</strong>
-                          <em>{formatLogDate(entry.checkedInAt)}</em>
-                        </span>
-                        <span>
-                          <small>Time out</small>
-                          <strong>{formatLogTime(entry.checkedOutAt)}</strong>
-                          <em>{formatLogDate(entry.checkedOutAt) || "Pending"}</em>
-                        </span>
-                        {rolloverBadge && (
-                          <b className="security-day-badge">{rolloverBadge}</b>
-                        )}
-                      </div>
-                    </div>
-                    {!entry.checkedOutAt && (
-                      <button type="button" onClick={() => handleCheckout(entry)} title="Check out">
-                        <FiLogOut />
-                      </button>
-                    )}
-                  </article>
-                );
-              })}
-
-              {!loadingEntries && entries.length === 0 && <p>No security entries found.</p>}
-            </div>
+            <SecurityEntryLogList
+              entries={entries}
+              loading={loadingEntries}
+              emptyMessage="No recent security entries."
+              onCheckout={handleCheckout}
+            />
           </aside>
         </div>
       </div>

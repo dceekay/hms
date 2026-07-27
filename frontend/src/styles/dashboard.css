@@ -1456,6 +1456,10 @@
   line-height: 1.65;
 }
 
+.security-hero.compact {
+  min-height: 144px;
+}
+
 .security-live-count {
   width: 132px;
   min-height: 132px;
@@ -1500,6 +1504,38 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-strong);
+}
+
+.security-log-panel.full-width {
+  width: 100%;
+}
+
+.security-log-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.security-log-summary span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.security-log-summary small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.security-log-summary strong {
+  color: var(--text-strong);
+  font-size: 1.35rem;
 }
 
 .person-type-grid {
@@ -1615,11 +1651,33 @@
 
 .security-search button {
   min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
   border: 0;
   border-radius: 8px;
   color: #ffffff;
   background: var(--accent);
   cursor: pointer;
+}
+
+.security-search select {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-strong);
+  background: var(--surface-strong);
+}
+
+.security-log-search {
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    minmax(128px, auto)
+    auto
+    auto;
 }
 
 .security-entry-list {
@@ -2937,6 +2995,21 @@
 
   .security-search button {
     grid-column: 1 / -1;
+  }
+
+  .security-log-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .security-log-search {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .security-log-search select,
+  .security-log-search button {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .security-entry-card,
