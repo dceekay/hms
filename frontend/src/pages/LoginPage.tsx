@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
 import { FaBed, FaHospital, FaUserMd } from "react-icons/fa";
 import mdsLogo from "../assets/logo.png";
@@ -21,6 +21,7 @@ const testAccounts = [
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setToken = useAuthStore((state) => state.setToken);
   const setUser = useAuthStore((state) => state.setUser);
   const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -136,6 +137,10 @@ export default function LoginPage() {
           </button>
 
           {error && <p className="login-error">{error}</p>}
+
+          {!error && searchParams.get("session") === "expired" && (
+            <p className="login-error">Your session expired. Please sign in again.</p>
+          )}
 
           <div className="login-note">
             <FiShield />

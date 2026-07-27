@@ -82,7 +82,7 @@ export const env = {
    * Access Token Expiry
    */
   ACCESS_TOKEN_EXPIRES:
-    process.env.ACCESS_TOKEN_EXPIRES || "15m",
+    process.env.ACCESS_TOKEN_EXPIRES || "7h",
 
   /**
    * Refresh Token Expiry

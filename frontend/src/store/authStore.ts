@@ -1,9 +1,24 @@
 import { create } from "zustand";
-import { User } from "../types/auth";
+import type { User } from "../types/auth";
+import { isJwtExpired } from "../utils/session";
+
+const clearStoredSession = () => {
+  if (typeof window === "undefined") return;
+
+  localStorage.removeItem("hms_token");
+  localStorage.removeItem("hms_user");
+};
 
 const getInitialToken = () => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("hms_token");
+  const token = localStorage.getItem("hms_token");
+
+  if (isJwtExpired(token)) {
+    clearStoredSession();
+    return null;
+  }
+
+  return token;
 };
 
 const getInitialUser = (): User | null => {
@@ -50,10 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user });
   },
   logout: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("hms_token");
-      localStorage.removeItem("hms_user");
-    }
+    clearStoredSession();
     set({ token: null, user: null });
   },
 }));
