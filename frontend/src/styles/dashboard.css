@@ -1638,6 +1638,11 @@
   background: var(--surface);
 }
 
+.security-entry-card.checked-out {
+  grid-template-columns: 48px minmax(0, 1fr);
+  opacity: 0.82;
+}
+
 .security-entry-card img,
 .entry-avatar {
   width: 48px;
@@ -1645,6 +1650,20 @@
   border-radius: 8px;
   object-fit: cover;
   background: linear-gradient(135deg, #2563eb, #06b6d4);
+}
+
+.security-entry-main {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.security-entry-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .security-entry-card strong,
@@ -1664,6 +1683,72 @@
 .security-entry-card code {
   color: var(--accent);
   font-size: 0.78rem;
+}
+
+.security-state-badge,
+.security-day-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.security-state-badge.in {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.security-state-badge.out {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+}
+
+.security-time-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.security-time-grid span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.security-time-grid span small {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.security-time-grid span strong {
+  color: var(--text-strong);
+  font-size: 0.88rem;
+}
+
+.security-time-grid span em {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.security-day-badge {
+  color: #ffffff;
+  background: linear-gradient(135deg, #dc2626, #f59e0b);
+  white-space: nowrap;
 }
 
 .security-entry-card button {
@@ -2852,6 +2937,25 @@
 
   .security-search button {
     grid-column: 1 / -1;
+  }
+
+  .security-entry-card,
+  .security-entry-card.checked-out {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .security-entry-card button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .security-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .security-day-badge {
+    justify-content: center;
   }
 
   .setup-hero,

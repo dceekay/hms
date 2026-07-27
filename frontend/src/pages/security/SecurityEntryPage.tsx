@@ -32,6 +32,48 @@ function cleanPayload(values: SecurityEntryFormValues): SecurityEntryFormValues 
   ) as SecurityEntryFormValues;
 }
 
+function formatLogTime(value?: string | null) {
+  if (!value) return "Still inside";
+
+  return new Intl.DateTimeFormat("en-NG", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatLogDate(value?: string | null) {
+  if (!value) return "";
+
+  return new Intl.DateTimeFormat("en-NG", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
+
+function dayRolloverBadge(entry: SecurityEntryLog) {
+  if (!entry.checkedOutAt) return null;
+
+  const checkedIn = new Date(entry.checkedInAt);
+  const checkedOut = new Date(entry.checkedOutAt);
+  const inDay = new Date(
+    checkedIn.getFullYear(),
+    checkedIn.getMonth(),
+    checkedIn.getDate()
+  );
+  const outDay = new Date(
+    checkedOut.getFullYear(),
+    checkedOut.getMonth(),
+    checkedOut.getDate()
+  );
+  const dayDifference = Math.round(
+    (outDay.getTime() - inDay.getTime()) / 86400000
+  );
+
+  if (dayDifference <= 0) return null;
+
+  return `+${dayDifference} ${dayDifference === 1 ? "day" : "days"}`;
+}
+
 async function compressImageToWebp(file: File) {
   const bitmap = await createImageBitmap(file);
   const maxSize = 640;
@@ -190,7 +232,9 @@ export default function SecurityEntryPage() {
   const handleCheckout = async (entry: SecurityEntryLog) => {
     const checkedOut = await checkoutSecurityEntry(entry.id);
     if (checkedOut) {
-      setEntries((current) => current.filter((item) => item.id !== entry.id));
+      setEntries((current) =>
+        current.map((item) => (item.id === entry.id ? checkedOut : item))
+      );
     }
   };
 
@@ -309,8 +353,8 @@ export default function SecurityEntryPage() {
           <aside className="security-log-panel">
             <div className="panel-title">
               <div>
-                <h2>Active Entry Log</h2>
-                <p>People currently checked in.</p>
+                <h2>Entry Log</h2>
+                <p>Recent movement with time in and time out.</p>
               </div>
               <FiRefreshCw />
             </div>
@@ -328,23 +372,55 @@ export default function SecurityEntryPage() {
             {loadingEntries && <p>Loading entries...</p>}
 
             <div className="security-entry-list">
-              {entries.map((entry) => (
-                <article className="security-entry-card" key={entry.id}>
-                  {entry.photoDataUrl ? <img src={entry.photoDataUrl} alt="" /> : <span className="entry-avatar" />}
-                  <div>
-                    <strong>{entry.name || personTypeLabels[entry.personType]}</strong>
-                    <small>
-                      {personTypeLabels[entry.personType]} {entry.phone ? `- ${entry.phone}` : ""}
-                    </small>
-                    {entry.staffIdCardNumber && <code>{entry.staffIdCardNumber}</code>}
-                  </div>
-                  <button type="button" onClick={() => handleCheckout(entry)}>
-                    <FiLogOut />
-                  </button>
-                </article>
-              ))}
+              {entries.map((entry) => {
+                const rolloverBadge = dayRolloverBadge(entry);
 
-              {!loadingEntries && entries.length === 0 && <p>No active security entries.</p>}
+                return (
+                  <article
+                    className={`security-entry-card ${
+                      entry.checkedOutAt ? "checked-out" : "active"
+                    }`}
+                    key={entry.id}
+                  >
+                    {entry.photoDataUrl ? <img src={entry.photoDataUrl} alt="" /> : <span className="entry-avatar" />}
+                    <div className="security-entry-main">
+                      <div className="security-entry-title">
+                        <strong>{entry.name || personTypeLabels[entry.personType]}</strong>
+                        <span className={`security-state-badge ${entry.checkedOutAt ? "out" : "in"}`}>
+                          {entry.checkedOutAt ? "Checked out" : "Inside"}
+                        </span>
+                      </div>
+                      <small>
+                        {personTypeLabels[entry.personType]} {entry.phone ? `- ${entry.phone}` : ""}
+                      </small>
+                      {entry.staffIdCardNumber && <code>{entry.staffIdCardNumber}</code>}
+
+                      <div className="security-time-grid">
+                        <span>
+                          <small>Time in</small>
+                          <strong>{formatLogTime(entry.checkedInAt)}</strong>
+                          <em>{formatLogDate(entry.checkedInAt)}</em>
+                        </span>
+                        <span>
+                          <small>Time out</small>
+                          <strong>{formatLogTime(entry.checkedOutAt)}</strong>
+                          <em>{formatLogDate(entry.checkedOutAt) || "Pending"}</em>
+                        </span>
+                        {rolloverBadge && (
+                          <b className="security-day-badge">{rolloverBadge}</b>
+                        )}
+                      </div>
+                    </div>
+                    {!entry.checkedOutAt && (
+                      <button type="button" onClick={() => handleCheckout(entry)} title="Check out">
+                        <FiLogOut />
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
+
+              {!loadingEntries && entries.length === 0 && <p>No security entries found.</p>}
             </div>
           </aside>
         </div>

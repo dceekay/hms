@@ -17,7 +17,7 @@ export async function fetchSecurityEntries(search = ""): Promise<SecurityEntryLo
   try {
     const response = await api.get<{ data: { items: SecurityEntryLog[] } }>("/security/entry-logs", {
       params: {
-        activeOnly: true,
+        take: 50,
         ...(search.trim() ? { search: search.trim() } : {}),
       },
     });
