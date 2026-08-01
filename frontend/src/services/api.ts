@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 import { isJwtExpired } from "../utils/session";
+import { queryClient, queryKeys } from "../lib/queryClient";
 
 const api = axios.create({
   baseURL: (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1",
@@ -30,7 +31,15 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toUpperCase();
+
+    if (method && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview });
+    }
+
+    return response;
+  },
   (error) => {
     const status = error?.response?.status;
     const hasSession = typeof window !== "undefined" && Boolean(localStorage.getItem("hms_token"));

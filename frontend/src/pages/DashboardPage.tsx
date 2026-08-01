@@ -1,9 +1,11 @@
 import { Link, Navigate } from "react-router-dom";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import AdminLayout from "../layouts/AdminLayout";
 import StatCard from "../components/dashboard/StatCard";
 import { useAuthStore } from "../store/authStore";
+import { queryKeys } from "../lib/queryClient";
 import {
   fetchDashboardOverview,
   DashboardOverview,
@@ -419,31 +421,21 @@ export default function DashboardPage() {
     hasRole(roles, "Receptionist") ||
     hasRole(roles, "Billing Officer") ||
     hasRole(roles, "Cashier");
-  const [overview, setOverview] = useState<DashboardOverview | null>(null);
-  const [overviewLoading, setOverviewLoading] = useState(false);
   const dashboard = buildDashboardProfile(roles, permissions);
+  const {
+    data: overview = null,
+    isFetching: overviewLoading,
+  } = useQuery({
+    queryKey: queryKeys.dashboard.overview,
+    queryFn: fetchDashboardOverview,
+    enabled: isAdminDashboard || isFrontDeskDashboard,
+    refetchInterval: 10000,
+  });
   const displayStats = isAdminDashboard
     ? adminStats(overview)
     : isFrontDeskDashboard
       ? frontDeskStats(overview)
       : dashboard.stats;
-
-  useEffect(() => {
-    if (!isAdminDashboard && !isFrontDeskDashboard) return;
-
-    let mounted = true;
-    setOverviewLoading(true);
-    void fetchDashboardOverview().then((result) => {
-      if (!mounted) return;
-
-      setOverview(result);
-      setOverviewLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-    };
-  }, [isAdminDashboard, isFrontDeskDashboard]);
 
   if (isSecurityUser) {
     return <Navigate to="/security/entry" replace />;

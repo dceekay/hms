@@ -385,6 +385,40 @@ Guest entry example:
 }
 ```
 
+## Pharmacy Endpoints
+
+Mounted at `/pharmacy`.
+
+| Method | Path | Permission | Purpose |
+| --- | --- | --- | --- |
+| GET | `/pharmacy/medications` | `pharmacy.read` | List/search medicine catalog with stock summary |
+| POST | `/pharmacy/medications` | `pharmacy.create` | Add a medicine with pricing, stock, batch, and expiry data |
+| PATCH | `/pharmacy/medications/:id` | `pharmacy.update` | Update medicine catalog fields |
+| POST | `/pharmacy/medications/:id/stock` | `pharmacy.update` | Receive stock or correct stock counts |
+| GET | `/pharmacy/sales` | `pharmacy.read` | List patient pharmacy invoices |
+| POST | `/pharmacy/sales` | `pharmacy.dispense` | Sell one or more medicines to a patient and generate one invoice |
+| GET | `/pharmacy/stock-movements` | `pharmacy.read` | Review stock movement history |
+
+Sale example:
+
+```json
+{
+  "patientId": "patient-uuid",
+  "discountAmount": 0,
+  "amountPaid": 1200,
+  "paymentStatus": "paid",
+  "notes": "Cash payment",
+  "items": [
+    {
+      "medicationId": "medication-uuid",
+      "quantity": 2,
+      "unitPrice": 600,
+      "instructions": "One tablet twice daily"
+    }
+  ]
+}
+```
+
 ## Dashboard Endpoint
 
 Mounted at `/dashboard`.

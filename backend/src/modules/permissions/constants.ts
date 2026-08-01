@@ -28,4 +28,10 @@ export const PROTECTED_PERMISSIONS = [
     "billing.read",
     "billing.create",
 
+    // Pharmacy
+    "pharmacy.read",
+    "pharmacy.create",
+    "pharmacy.update",
+    "pharmacy.dispense",
+
 ];

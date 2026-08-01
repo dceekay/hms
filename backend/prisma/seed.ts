@@ -37,6 +37,9 @@ const permissions = [
   "patients.reactivate",
   "laboratory.read",
   "pharmacy.read",
+  "pharmacy.create",
+  "pharmacy.update",
+  "pharmacy.dispense",
   "billing.read",
   "billing.create",
   "inventory.read",
@@ -228,7 +231,14 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "semsas.update",
   ],
   Laboratory: ["laboratory.read", "patients.read", "patients.investigation.create", "patients.update"],
-  Pharmacist: ["pharmacy.read", "inventory.read", "patients.read"],
+  Pharmacist: [
+    "pharmacy.read",
+    "pharmacy.create",
+    "pharmacy.update",
+    "pharmacy.dispense",
+    "inventory.read",
+    "patients.read",
+  ],
   "Billing Officer": [
     "billing.read",
     "billing.create",
@@ -330,6 +340,48 @@ const testUsers = [
   phone?: string;
   serviceCode?: HospitalServiceCode;
 }>;
+
+const demoMedications = [
+  {
+    name: "Paracetamol",
+    genericName: "Acetaminophen",
+    category: "Analgesic",
+    strength: "500mg",
+    dosageForm: "Tablet",
+    unit: "tablet",
+    sellingPrice: 100,
+    costPrice: 45,
+    currentStock: 250,
+    reorderLevel: 50,
+    batchNumber: "PCM-500-A",
+  },
+  {
+    name: "Amoxicillin",
+    genericName: "Amoxicillin",
+    category: "Antibiotic",
+    strength: "500mg",
+    dosageForm: "Capsule",
+    unit: "capsule",
+    sellingPrice: 250,
+    costPrice: 120,
+    currentStock: 120,
+    reorderLevel: 30,
+    batchNumber: "AMX-500-B",
+  },
+  {
+    name: "ORS",
+    genericName: "Oral Rehydration Salt",
+    category: "Rehydration",
+    strength: "Sachet",
+    dosageForm: "Powder",
+    unit: "sachet",
+    sellingPrice: 150,
+    costPrice: 70,
+    currentStock: 80,
+    reorderLevel: 20,
+    batchNumber: "ORS-001",
+  },
+] as const;
 
 async function upsertRoles() {
   const roleMap: Record<RoleName, string> = {} as Record<RoleName, string>;
@@ -563,6 +615,26 @@ async function seedDemoPatient(insuranceProviderId: string) {
   });
 }
 
+async function seedDemoMedications() {
+  for (const medication of demoMedications) {
+    await prisma.medication.upsert({
+      where: {
+        name_strength_dosageForm: {
+          name: medication.name,
+          strength: medication.strength,
+          dosageForm: medication.dosageForm,
+        },
+      },
+      update: {
+        ...medication,
+        isActive: true,
+        deletedAt: null,
+      },
+      create: medication,
+    });
+  }
+}
+
 async function removeObsoletePermissions() {
   const obsoleteNames = ["users.write"];
 
@@ -618,6 +690,7 @@ async function main() {
 
   await upsertTestUsers(roleMap, serviceMap);
   await seedDemoPatient(insuranceProvider.id);
+  await seedDemoMedications();
 
   console.log("Database Seeded Successfully");
 }

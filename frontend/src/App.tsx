@@ -8,6 +8,7 @@ import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
 import SecurityEntryPage from "./pages/security/SecurityEntryPage";
 import SecurityLogsPage from "./pages/security/SecurityLogsPage";
 import SemsasPage from "./pages/operations/SemsasPage";
+import PharmacyPage from "./pages/pharmacy/PharmacyPage";
 import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
 import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
 import BillingPage from "./pages/billing/BillingPage";
@@ -131,11 +132,7 @@ export default function App() {
         path="/pharmacy"
         element={
           <ProtectedRoute requiredPermissions={["pharmacy.read"]}>
-            <ComingSoonPage
-              title="Pharmacy"
-              description="Medicine catalog, prescriptions, dispensing, and stock movement will be built after clinical records."
-              icon={<FaCapsules />}
-            />
+            <PharmacyPage />
           </ProtectedRoute>
         }
       />
