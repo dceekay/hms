@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
+import { Link } from "react-router-dom";
 import { FaBed, FaHospital, FaUserMd } from "react-icons/fa";
 import mdsLogo from "../assets/logo.png";
 import mdsHospital from "../assets/mds.png";
@@ -18,6 +19,28 @@ const testAccounts = [
   { role: "Billing Officer", username: "billing", password: "Billing@123" },
   { role: "Security", username: "security", password: "Security@123" },
 ];
+
+function getPostLoginPath(roles: string[] = []) {
+  const normalizedRoles = roles.map((role) => role.toLowerCase());
+
+  if (normalizedRoles.includes("pharmacist") || normalizedRoles.includes("pharmacy")) {
+    return "/pharmacy";
+  }
+
+  if (normalizedRoles.includes("laboratory")) {
+    return "/laboratory";
+  }
+
+  if (normalizedRoles.includes("doctor")) {
+    return "/doctor";
+  }
+
+  if (normalizedRoles.includes("security")) {
+    return "/security/entry";
+  }
+
+  return "/";
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -44,7 +67,7 @@ export default function LoginPage() {
 
     setToken(result.accessToken);
     setUser(result.user);
-    navigate("/");
+    navigate(getPostLoginPath(result.user?.roles), { replace: true });
   }
 
   const fillTestAccount = (account: (typeof testAccounts)[number]) => {
@@ -146,6 +169,11 @@ export default function LoginPage() {
             <FiShield />
             <span>Access is protected by roles, permissions, and secure tokens.</span>
           </div>
+
+          <Link to="/landing" className="landing-link-btn">
+            View hospital landing page
+            <FiArrowRight />
+          </Link>
 
           <div className="test-login-panel">
             <div>

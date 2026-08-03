@@ -6,6 +6,7 @@ import type {
   PharmacyDispenseFormValues,
   PharmacySale,
   PharmacySaleFormValues,
+  PharmacyStockMovement,
   PharmacyStockStatus,
   PharmacySummary,
 } from "../types/pharmacy";
@@ -48,6 +49,13 @@ type SaleListResponse = {
       paidAmount: number | string;
       pendingAmount: number | string;
     };
+  };
+};
+
+type StockMovementListResponse = {
+  data: {
+    items: PharmacyStockMovement[];
+    total: number;
   };
 };
 
@@ -251,6 +259,25 @@ export async function createPharmacySale(values: PharmacySaleFormValues) {
     return {
       sale: null,
       error: getErrorMessage(error, "Unable to complete pharmacy sale."),
+    };
+  }
+}
+
+export async function fetchPharmacyStockMovements(medicationId?: string) {
+  try {
+    const response = await api.get<StockMovementListResponse>("/pharmacy/stock-movements", {
+      params: {
+        limit: 100,
+        ...(medicationId ? { medicationId } : {}),
+      },
+    });
+
+    return { result: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      result: null,
+      error: getErrorMessage(error, "Unable to load pharmacy stock movements."),
     };
   }
 }

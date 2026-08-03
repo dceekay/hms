@@ -30,13 +30,29 @@ import { notFound } from "./middleware/notFound.middleware";
 
 const app = express();
 
+function normalizeCorsOrigin(origin: string) {
+  const trimmedOrigin = origin.trim();
+
+  if (!trimmedOrigin) return "";
+
+  try {
+    return new URL(trimmedOrigin).origin;
+  } catch {
+    return trimmedOrigin;
+  }
+}
+
 const allowedCorsOrigins = env.CLIENT_URL.split(",")
-  .map((origin) => origin.trim())
+  .map(normalizeCorsOrigin)
   .filter(Boolean);
 
 const developmentCorsOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+  "http://localhost:5175",
+  "http://127.0.0.1:5175",
   "http://localhost:4173",
   "http://127.0.0.1:4173",
 ];

@@ -78,7 +78,7 @@
     minmax(150px, 0.78fr)
     minmax(155px, 0.76fr)
     minmax(180px, 0.9fr)
-    minmax(170px, auto);
+    minmax(150px, 150px);
 
   align-items: center;
   gap: 14px;
@@ -334,17 +334,52 @@
 
 /* Compact action buttons */
 
-.patient-compact-actions {
-  justify-content: flex-end;
+.patient-list-page
+  .patient-compact-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  align-items: center;
+  justify-content: start;
+  justify-self: start;
   min-width: 0;
-  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  gap: 5px;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    color-mix(
+      in srgb,
+      var(--surface-strong) 82%,
+      transparent
+    );
 }
 
-.patient-compact-actions
+.patient-list-page
+  .patient-compact-actions
   .icon-text-btn {
-  min-height: 32px;
-  padding: 6px 8px;
-  font-size: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  height: 38px;
+  aspect-ratio: 1;
+  gap: 0;
+  padding: 0;
+  border-radius: 9px;
+  font-size: 0.82rem;
+}
+
+.patient-list-page
+  .patient-compact-actions
+  .icon-text-btn
+  svg {
+  flex: 0 0 auto;
+}
+
+.patient-action-label {
+  display: none;
 }
 
 /*
@@ -358,7 +393,7 @@
       minmax(240px, 1.25fr)
       minmax(155px, 0.78fr)
       minmax(180px, 0.9fr)
-      minmax(170px, auto);
+      minmax(150px, 150px);
   }
 
   .patient-profile-detail {
@@ -397,8 +432,39 @@
   }
 
   .patient-insurance-detail,
-  .patient-compact-actions {
+  .patient-list-page
+    .patient-compact-actions {
     grid-column: 1 / -1;
+  }
+
+  .patient-list-page
+    .patient-compact-actions {
+    justify-self: stretch;
+    width: 100%;
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(78px, 1fr)
+      );
+  }
+
+  .patient-list-page
+    .patient-compact-actions
+    .icon-text-btn {
+    aspect-ratio: auto;
+    min-height: 40px;
+    height: auto;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .patient-action-label {
+    display: inline;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -410,15 +476,13 @@
 @media (max-width: 640px) {
   .patient-list-page
     .patient-list-toolbar {
-    grid-template-columns:
-      1fr
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .patient-list-page
     .patient-list-toolbar
     label:first-child {
-    grid-column: 1 / -1;
+    grid-column: 1;
   }
 
   .patient-list-page
@@ -434,9 +498,22 @@
   }
 
   .patient-compact-detail,
-  .patient-insurance-detail,
-  .patient-compact-actions {
+  .patient-list-page
+    .patient-compact-actions {
     grid-column: 1;
+  }
+
+  .patient-profile-detail,
+  .patient-insurance-detail {
+    display: none;
+  }
+
+  .patient-page-title p {
+    display: none;
+  }
+
+  .patient-contact-detail small {
+    display: none;
   }
 
   .patient-compact-detail {
@@ -451,9 +528,10 @@
       );
   }
 
-  .patient-compact-actions {
-    display: grid;
-
+  .patient-list-page
+    .patient-compact-actions {
+    justify-self: stretch;
+    width: 100%;
     grid-template-columns:
       repeat(
         2,
@@ -461,7 +539,8 @@
       );
   }
 
-  .patient-compact-actions
+  .patient-list-page
+    .patient-compact-actions
     .icon-text-btn {
     width: 100%;
   }

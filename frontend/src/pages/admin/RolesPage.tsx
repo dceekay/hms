@@ -130,8 +130,10 @@ export default function RolesPage() {
       return;
     }
 
-    setSuccess(editingRole ? "Role updated." : "Role created.");
+    const message = editingRole ? "Role updated." : "Role created.";
+
     resetForm();
+    setSuccess(message);
     await loadData();
   };
 

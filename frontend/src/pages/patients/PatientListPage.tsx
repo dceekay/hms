@@ -1120,6 +1120,7 @@ export function PatientListPage() {
                         <button
                           type="button"
                           className="icon-text-btn"
+                          aria-label="Open patient ID card"
                           onClick={() =>
                             handleViewIdCard(
                               patient
@@ -1128,13 +1129,16 @@ export function PatientListPage() {
                           title="Open patient ID card"
                         >
                           <FiCreditCard />
-                          ID
+                          <span className="patient-action-label">
+                            ID
+                          </span>
                         </button>
 
                         {canUpdate && (
                           <button
                             type="button"
                             className="icon-text-btn"
+                            aria-label="Edit patient"
                             onClick={() =>
                               openEditPatient(
                                 patient
@@ -1143,7 +1147,9 @@ export function PatientListPage() {
                             title="Edit patient"
                           >
                             <FiEdit3 />
-                            Edit
+                            <span className="patient-action-label">
+                              Edit
+                            </span>
                           </button>
                         )}
 
@@ -1153,6 +1159,7 @@ export function PatientListPage() {
                             <button
                               type="button"
                               className="icon-text-btn success"
+                              aria-label="Convert investigation patient"
                               onClick={() =>
                                 handlePatientAction(
                                   patient,
@@ -1162,7 +1169,9 @@ export function PatientListPage() {
                               title="Convert investigation patient"
                             >
                               <FiUserCheck />
-                              Convert
+                              <span className="patient-action-label">
+                                Convert
+                              </span>
                             </button>
                           )}
 
@@ -1172,6 +1181,7 @@ export function PatientListPage() {
                             <button
                               type="button"
                               className="icon-text-btn success"
+                              aria-label="Reactivate patient"
                               onClick={() =>
                                 handlePatientAction(
                                   patient,
@@ -1181,7 +1191,9 @@ export function PatientListPage() {
                               title="Reactivate patient"
                             >
                               <FiRefreshCw />
-                              Reactivate
+                              <span className="patient-action-label">
+                                Active
+                              </span>
                             </button>
                           )}
 
@@ -1192,6 +1204,7 @@ export function PatientListPage() {
                             <button
                               type="button"
                               className="icon-text-btn danger"
+                              aria-label="Mark patient inactive"
                               onClick={() =>
                                 handlePatientAction(
                                   patient,
@@ -1201,7 +1214,9 @@ export function PatientListPage() {
                               title="Mark patient inactive"
                             >
                               <FiSlash />
-                              Inactive
+                              <span className="patient-action-label">
+                                Inactive
+                              </span>
                             </button>
                           )}
                       </div>

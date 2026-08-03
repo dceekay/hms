@@ -7,6 +7,7 @@ import {
   SecurityEntryCreateDto,
   SecurityEntryUpdateDto,
 } from "./validators";
+import { NotificationService } from "../notifications/service";
 
 const entryPersonTypes = ["patient", "patient_relative", "staff", "guest"];
 
@@ -22,10 +23,24 @@ export class SecurityEntryService {
   async create(payload: SecurityEntryCreateDto, recordedById?: string) {
     const data = normalizeEmptyValues(payload);
 
-    return this.repository.createEntry({
+    const entry = await this.repository.createEntry({
       ...data,
       recordedById,
     });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "New security entry",
+      message: `${entry.name || entry.personType.replace("_", " ")} checked in at the entrance.`,
+      eventKey: "security.entry.created",
+      priority: entry.personType === "patient" ? "info" : "warning",
+      linkUrl: "/security/logs",
+      metadata: {
+        entryId: entry.id,
+        personType: entry.personType,
+      },
+    });
+
+    return entry;
   }
 
   async list(params: {

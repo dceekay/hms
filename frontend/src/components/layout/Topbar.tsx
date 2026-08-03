@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import {
-  FiBell,
   FiClock,
   FiLogOut,
   FiMoon,
@@ -12,11 +11,12 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
+import NotificationCenter from "./NotificationCenter";
+import { endSession } from "../../services/sessionManager";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const { status, latencyMs } = useBackendHealth();
   const { isDark, toggleTheme } = useThemeMode();
 
@@ -28,7 +28,7 @@ export default function Topbar() {
   });
 
   const handleLogout = () => {
-    logout();
+    endSession();
     navigate("/login", { replace: true });
   };
 
@@ -71,10 +71,7 @@ export default function Topbar() {
           {isDark ? <FiSun /> : <FiMoon />}
         </button>
 
-        <button className="icon-btn notification-action" type="button" aria-label="Notifications">
-          <FiBell />
-          <span />
-        </button>
+        <NotificationCenter />
 
         <div className="profile">
           <div className="avatar">

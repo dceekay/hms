@@ -68,6 +68,15 @@ enum PatientCategory {
   old_patient
 }
 
+enum AppointmentStatus {
+  scheduled
+  checked_in
+  in_consultation
+  completed
+  cancelled
+  no_show
+}
+
 enum BedStatus {
   available
   occupied
@@ -98,6 +107,42 @@ enum PharmacyMovementType {
   stock_in
   adjustment
   dispense
+}
+
+enum InventoryMovementType {
+  stock_in
+  stock_out
+  adjustment
+  damaged
+  lost
+  transfer
+}
+
+enum NotificationPriority {
+  info
+  success
+  warning
+  critical
+}
+
+enum LaboratoryRequestStatus {
+  pending
+  sample_collected
+  in_progress
+  completed
+  cancelled
+}
+
+enum ClinicalEncounterStatus {
+  open
+  completed
+  cancelled
+}
+
+enum PrescriptionStatus {
+  sent_to_pharmacy
+  dispensed
+  cancelled
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,6 +214,22 @@ model User {
 
   pharmacySalesRecorded PharmacySale[] @relation("PharmacySalesRecordedBy")
 
+  inventoryMovementsRecorded InventoryStockMovement[] @relation("InventoryMovementsRecordedBy")
+
+  labRequestsRecorded LaboratoryRequest[] @relation("LabRequestsRecordedBy")
+
+  labRequestsCompleted LaboratoryRequest[] @relation("LabRequestsCompletedBy")
+
+  doctorEncounters ClinicalEncounter[] @relation("DoctorEncounters")
+
+  doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
+
+  appointmentsAsDoctor Appointment[] @relation("AppointmentDoctor")
+
+  appointmentsRecorded Appointment[] @relation("AppointmentRecordedBy")
+
+  notificationReads NotificationRead[]
+
   @@index([serviceAreaId])
   @@map("users")
 }
@@ -227,6 +288,14 @@ model Patient {
 
   pharmacySales PharmacySale[]
 
+  laboratoryRequests LaboratoryRequest[]
+
+  clinicalEncounters ClinicalEncounter[]
+
+  prescriptions Prescription[]
+
+  appointments Appointment[]
+
   version               Int       @default(1)
   convertedToHospitalAt DateTime?
   reactivatedAt         DateTime?
@@ -242,6 +311,43 @@ model Patient {
   @@index([status])
   @@index([patientCategory])
   @@map("patients")
+}
+
+model Appointment {
+  id String @id @default(uuid()) @db.Char(36)
+
+  appointmentNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  doctorId String @db.Char(36)
+  doctor   User   @relation("AppointmentDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+
+  status AppointmentStatus @default(scheduled)
+
+  scheduledFor DateTime @default(now())
+  reason       String?  @db.VarChar(500)
+  notes        String?  @db.VarChar(500)
+
+  checkedInAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation("AppointmentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([recordedById])
+  @@map("appointments")
 }
 
 model Department {
@@ -416,6 +522,7 @@ model Medication {
   stockMovements PharmacyStockMovement[]
   dispenses      PharmacyDispense[]
   saleItems      PharmacySaleItem[]
+  prescriptionItems PrescriptionItem[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -543,6 +650,276 @@ model PharmacySaleItem {
   @@index([saleId])
   @@index([medicationId])
   @@map("pharmacy_sale_items")
+}
+
+model ClinicalEncounter {
+  id String @id @default(uuid()) @db.Char(36)
+
+  encounterNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  doctorId String @db.Char(36)
+  doctor   User   @relation("DoctorEncounters", fields: [doctorId], references: [id], onDelete: Restrict)
+
+  visitType      String? @db.VarChar(100)
+  chiefComplaint String? @db.VarChar(500)
+  history        String? @db.VarChar(1000)
+  examination    String? @db.VarChar(1000)
+  diagnosis      String? @db.VarChar(500)
+  remarks        String? @db.VarChar(1000)
+  plan           String? @db.VarChar(1000)
+
+  status ClinicalEncounterStatus @default(open)
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  prescriptions Prescription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("clinical_encounters")
+}
+
+model Prescription {
+  id String @id @default(uuid()) @db.Char(36)
+
+  prescriptionNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  doctorId String @db.Char(36)
+  doctor   User   @relation("DoctorPrescriptions", fields: [doctorId], references: [id], onDelete: Restrict)
+
+  encounterId String?             @db.Char(36)
+  encounter   ClinicalEncounter?  @relation(fields: [encounterId], references: [id], onDelete: SetNull)
+
+  status PrescriptionStatus @default(sent_to_pharmacy)
+
+  notes String? @db.VarChar(500)
+
+  items PrescriptionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([encounterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id String @id @default(uuid()) @db.Char(36)
+
+  prescriptionId String       @db.Char(36)
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  medicationId String?     @db.Char(36)
+  medication   Medication? @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+
+  medicationName String  @db.VarChar(150)
+  strength       String? @db.VarChar(80)
+  dosageForm     String? @db.VarChar(80)
+  dose           String  @db.VarChar(120)
+  frequency      String  @db.VarChar(120)
+  duration       String  @db.VarChar(120)
+  quantity       Int?
+  instructions   String? @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+
+  @@index([prescriptionId])
+  @@index([medicationId])
+  @@map("prescription_items")
+}
+
+model LaboratoryTemplate {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @unique @db.VarChar(150)
+  code        String? @unique @db.VarChar(50)
+  category    String? @db.VarChar(100)
+  specimen    String? @db.VarChar(100)
+  reportTitle String? @db.VarChar(150)
+
+  fields Json
+
+  notes    String? @db.VarChar(500)
+  isActive Boolean @default(true)
+
+  requests LaboratoryRequest[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([category])
+  @@index([isActive])
+  @@map("laboratory_templates")
+}
+
+model LaboratoryRequest {
+  id String @id @default(uuid()) @db.Char(36)
+
+  requestNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  templateId String             @db.Char(36)
+  template   LaboratoryTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+
+  status LaboratoryRequestStatus @default(pending)
+
+  clinicalNotes String? @db.VarChar(500)
+  resultValues  Json?
+  interpretation String? @db.VarChar(500)
+  technicianNote String? @db.VarChar(500)
+
+  sampleCollectedAt DateTime?
+  completedAt       DateTime?
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation("LabRequestsRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  completedById String? @db.Char(36)
+  completedBy   User?   @relation("LabRequestsCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([templateId])
+  @@index([status])
+  @@index([requestNumber])
+  @@index([createdAt])
+  @@index([recordedById])
+  @@index([completedById])
+  @@map("laboratory_requests")
+}
+
+model InventoryItem {
+  id String @id @default(uuid()) @db.Char(36)
+
+  name        String  @db.VarChar(150)
+  code        String? @unique @db.VarChar(50)
+  category    String? @db.VarChar(100)
+  itemType    String? @db.VarChar(80)
+  description String? @db.VarChar(500)
+
+  unit       String  @default("unit") @db.VarChar(40)
+  location   String? @db.VarChar(150)
+  department String? @db.VarChar(150)
+  supplier   String? @db.VarChar(150)
+
+  serialNumber String? @unique @db.VarChar(100)
+  batchNumber  String? @db.VarChar(80)
+
+  costPrice Decimal @default(0) @db.Decimal(12, 2)
+
+  currentStock Int @default(0)
+  reorderLevel Int @default(5)
+
+  isConsumable Boolean @default(true)
+  isActive     Boolean @default(true)
+
+  notes String? @db.VarChar(500)
+
+  movements InventoryStockMovement[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([category])
+  @@index([department])
+  @@index([location])
+  @@index([currentStock])
+  @@map("inventory_items")
+}
+
+model InventoryStockMovement {
+  id String @id @default(uuid()) @db.Char(36)
+
+  itemId String        @db.Char(36)
+  item   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  movementType InventoryMovementType
+  quantity     Int
+  stockBefore  Int
+  stockAfter   Int
+
+  reason      String? @db.VarChar(255)
+  destination String? @db.VarChar(150)
+  issuedTo    String? @db.VarChar(150)
+  notes       String? @db.VarChar(500)
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation("InventoryMovementsRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@index([movementType])
+  @@index([createdAt])
+  @@index([recordedById])
+  @@map("inventory_stock_movements")
+}
+
+model AppNotification {
+  id String @id @default(uuid()) @db.Char(36)
+
+  title    String @db.VarChar(150)
+  message  String @db.VarChar(500)
+  eventKey String @db.VarChar(100)
+
+  priority NotificationPriority @default(info)
+
+  targetRole   String? @db.VarChar(100)
+  targetUserId String? @db.Char(36)
+
+  linkUrl  String? @db.VarChar(255)
+  metadata Json?
+
+  readReceipts NotificationRead[]
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@index([targetRole])
+  @@index([targetUserId])
+  @@index([eventKey])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("app_notifications")
+}
+
+model NotificationRead {
+  id String @id @default(uuid()) @db.Char(36)
+
+  notificationId String          @db.Char(36)
+  notification   AppNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  userId String @db.Char(36)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  readAt DateTime @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+  @@map("notification_reads")
 }
 
 model InsuranceProvider {

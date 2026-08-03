@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import { type ReactElement, useEffect } from "react";
 import { useAuthStore } from "../store/authStore";
 import { isJwtExpired } from "../utils/session";
+import { endSession } from "../services/sessionManager";
 
 type ProtectedRouteProps = {
   children: ReactElement;
@@ -18,17 +19,16 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
   const tokenExpired = isJwtExpired(token);
 
   useEffect(() => {
     if (tokenExpired) {
-      logout();
+      endSession();
     }
-  }, [logout, tokenExpired]);
+  }, [tokenExpired]);
 
   if (!token || tokenExpired) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={tokenExpired ? "/login?session=expired" : "/login"} replace />;
   }
 
   const permissions = user?.permissions ?? [];

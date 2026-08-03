@@ -2,6 +2,8 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:16px;
+    min-width:0;
     background:#162032;
     border-radius:18px;
     padding:25px;
@@ -17,11 +19,13 @@
 .stat-left p{
     color:#94a3b8;
     margin:0;
+    overflow-wrap:anywhere;
 }
 
 .stat-left h2{
     margin:12px 0;
     font-size:34px;
+    overflow-wrap:anywhere;
 }
 
 .stat-change{
@@ -43,7 +47,7 @@
 
 display:grid;
 
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(4,minmax(0,1fr));
 
 gap:22px;
 
@@ -119,4 +123,39 @@ color:#16a34a;
 
 font-weight:600;
 
+}
+
+@media(max-width:1100px){
+  .stats-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:640px){
+  .stats-grid{
+    grid-template-columns:1fr;
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card{
+    min-height:112px;
+    padding:18px;
+    border-radius:12px;
+  }
+
+  .stat-card:hover{
+    transform:none;
+  }
+
+  .stat-left h2{
+    font-size:1.65rem;
+  }
+
+  .stat-icon{
+    width:48px;
+    height:48px;
+    border-radius:12px;
+    font-size:1.35rem;
+  }
 }

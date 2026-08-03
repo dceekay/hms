@@ -28,6 +28,11 @@ import securityRoutes from "../modules/security/routes";
 import semsasRoutes from "../modules/semsas/routes";
 import billingRoutes from "../modules/billing/routes";
 import pharmacyRoutes from "../modules/pharmacy/routes";
+import inventoryRoutes from "../modules/inventory/routes";
+import notificationRoutes from "../modules/notifications/routes";
+import laboratoryRoutes from "../modules/laboratory/routes";
+import clinicalRoutes from "../modules/clinical/routes";
+import appointmentRoutes from "../modules/appointments/routes";
 
 const router = Router();
 
@@ -56,5 +61,10 @@ router.use("/security", securityRoutes);
 router.use("/semsas", semsasRoutes);
 router.use("/billing", billingRoutes);
 router.use("/pharmacy", pharmacyRoutes);
+router.use("/inventory", inventoryRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/laboratory", laboratoryRoutes);
+router.use("/clinical", clinicalRoutes);
+router.use("/appointments", appointmentRoutes);
 
 export default router;

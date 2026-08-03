@@ -1,7 +1,7 @@
-import axios from "axios";
-import { useAuthStore } from "../store/authStore";
+import axios, { CanceledError } from "axios";
 import { isJwtExpired } from "../utils/session";
 import { queryClient, queryKeys } from "../lib/queryClient";
+import { expireSession } from "./sessionManager";
 
 const api = axios.create({
   baseURL: (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1",
@@ -14,13 +14,8 @@ api.interceptors.request.use((config) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("hms_token") : null;
 
   if (isJwtExpired(token)) {
-    useAuthStore.getState().logout();
-
-    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-      window.location.assign("/login?session=expired");
-    }
-
-    return config;
+    expireSession();
+    return Promise.reject(new CanceledError("Session expired"));
   }
 
   if (token && config.headers) {
@@ -42,14 +37,12 @@ api.interceptors.response.use(
   },
   (error) => {
     const status = error?.response?.status;
-    const hasSession = typeof window !== "undefined" && Boolean(localStorage.getItem("hms_token"));
+    const hasStoredSession = typeof window !== "undefined" && Boolean(localStorage.getItem("hms_token"));
+    const requestHadAuthHeader = Boolean(error?.config?.headers?.Authorization);
+    const isAuthEndpoint = typeof error?.config?.url === "string" && error.config.url.includes("/auth/");
 
-    if (status === 401 && hasSession) {
-      useAuthStore.getState().logout();
-
-      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-        window.location.assign("/login?session=expired");
-      }
+    if (status === 401 && !isAuthEndpoint && (hasStoredSession || requestHadAuthHeader)) {
+      expireSession();
     }
 
     return Promise.reject(error);

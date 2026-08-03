@@ -169,18 +169,170 @@
   background: var(--surface-hover);
 }
 
-.notification-action {
+.notification-center {
   position: relative;
 }
 
 .notification-action span {
   position: absolute;
-  top: 11px;
-  right: 12px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  top: 7px;
+  right: 7px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid var(--surface-strong);
+  border-radius: 999px;
   background: var(--danger);
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(380px, calc(100vw - 28px));
+  max-height: min(620px, calc(100vh - 110px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  box-shadow: 0 26px 70px color-mix(in srgb, #020617 34%, transparent);
+}
+
+.notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notification-panel-header strong,
+.notification-card strong {
+  display: block;
+  color: var(--text-strong);
+}
+
+.notification-panel-header small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.notification-panel-header button,
+.notification-tools button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.notification-panel-header button {
+  width: 36px;
+  padding: 0;
+}
+
+.notification-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.notification-tools button {
+  min-width: 0;
+  padding: 0 8px;
+  font-size: 0.78rem;
+}
+
+.notification-tools button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.notification-list {
+  display: grid;
+  gap: 8px;
+  min-height: 80px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.notification-card {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-card.unread {
+  border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+
+.notification-card small,
+.notification-card em {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.notification-card em {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.notification-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.notification-card.success .notification-dot {
+  background: var(--success);
+}
+
+.notification-card.warning .notification-dot {
+  background: var(--warning);
+}
+
+.notification-card.critical .notification-dot {
+  background: var(--danger);
+}
+
+.notification-card.read {
+  opacity: 0.72;
+}
+
+.notification-empty {
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+  text-align: center;
 }
 
 .profile {
@@ -278,9 +430,9 @@
 @media (max-width: 680px) {
   .topbar {
     min-height: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
     gap: 10px;
     padding: 12px 14px;
     border-bottom: 1px solid var(--border);
@@ -309,7 +461,8 @@
   }
 
   .topbar-right {
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: space-between;
     gap: 8px;
   }
 
@@ -369,5 +522,38 @@
     width: 44px;
     height: 44px;
     border-radius: 14px;
+  }
+
+  .notification-panel {
+    position: fixed;
+    inset: auto 10px calc(78px + env(safe-area-inset-bottom)) 10px;
+    width: auto;
+    max-height: min(70vh, 560px);
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .notification-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-tools button,
+  .notification-card {
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar-right {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .backend-status,
+  .icon-btn,
+  .logout-btn,
+  .profile,
+  .avatar {
+    width: 100%;
   }
 }

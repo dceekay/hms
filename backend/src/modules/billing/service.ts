@@ -3,6 +3,7 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
 import { ApiError } from "../../shared/errors/ApiError";
 import { CreatePatientBillDto, ListPatientBillsQueryDto } from "./dto";
+import { NotificationService } from "../notifications/service";
 
 function createInvoiceNumber() {
   const year = new Date().getFullYear();
@@ -126,7 +127,7 @@ export class BillingService {
         : BillPaymentStatus.pending);
 
     try {
-      return await prisma.patientBill.create({
+      const bill = await prisma.patientBill.create({
         data: {
           invoiceNumber: createInvoiceNumber(),
           patientId: payload.patientId,
@@ -152,6 +153,22 @@ export class BillingService {
           },
         },
       });
+
+      await NotificationService.notifyRoles(["Billing Officer", "Receptionist", "Administrator", "Super Admin"], {
+        title: "Patient bill created",
+        message: `${bill.invoiceNumber} was created for ${bill.patient.firstName} ${bill.patient.lastName}.`,
+        eventKey: "billing.created",
+        priority: paymentStatus === BillPaymentStatus.pending ? "warning" : "success",
+        linkUrl: "/billing",
+        metadata: {
+          billId: bill.id,
+          invoiceNumber: bill.invoiceNumber,
+          patientId: bill.patientId,
+          paymentStatus,
+        },
+      });
+
+      return bill;
     } catch (error) {
       handlePrismaError(error);
     }

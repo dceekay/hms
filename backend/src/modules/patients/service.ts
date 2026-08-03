@@ -5,6 +5,7 @@ import { ApiError } from "../../shared/errors/ApiError";
 import { PatientRepository } from "./repository";
 import { prisma } from "../../database/prisma";
 import { PatientCreateDto, PatientUpdateDto } from "./validators";
+import { NotificationService } from "../notifications/service";
 
 function toDate(value: string | Date) {
   return value instanceof Date ? value : new Date(value);
@@ -76,13 +77,36 @@ export class PatientService {
     const data = normalizePayload(payload);
 
     try {
-      return await this.patientRepository.createPatient({
+      const patient = await this.patientRepository.createPatient({
         ...data,
         patientCategory,
         status: data.status ?? PatientStatus.active,
         mrn: data.mrn ?? (await this.generateUniqueMrn()),
         qrCode: await this.generateUniqueQrCode(),
       });
+
+      await NotificationService.notifyRoles(
+        patientCategory === PatientCategory.investigation_patient
+          ? ["Laboratory", "Receptionist", "Administrator", "Super Admin"]
+          : ["Doctor", "Receptionist", "Administrator", "Super Admin"],
+        {
+          title:
+            patientCategory === PatientCategory.investigation_patient
+              ? "Investigation patient registered"
+              : "New patient registered",
+          message: `${patient.firstName} ${patient.lastName} has been registered with MRN ${patient.mrn}.`,
+          eventKey: "patient.created",
+          priority: "success",
+          linkUrl: "/patients",
+          metadata: {
+            patientId: patient.id,
+            mrn: patient.mrn,
+            patientCategory,
+          },
+        }
+      );
+
+      return patient;
     } catch (error) {
       handlePrismaError(error);
     }
@@ -246,12 +270,26 @@ export class PatientService {
       throw new ApiError(HttpStatus.CONFLICT, "Only investigation patients can be converted.");
     }
 
-    return this.patientRepository.update(id, {
+    const updatedPatient = await this.patientRepository.update(id, {
       patientCategory: PatientCategory.new_patient,
       status: PatientStatus.active,
       convertedToHospitalAt: new Date(),
       version: patient.version + 1,
     });
+
+    await NotificationService.notifyRoles(["Doctor", "Receptionist", "Administrator", "Super Admin"], {
+      title: "Investigation patient converted",
+      message: `${updatedPatient.firstName} ${updatedPatient.lastName} is now a hospital patient.`,
+      eventKey: "patient.converted",
+      priority: "info",
+      linkUrl: "/patients",
+      metadata: {
+        patientId: updatedPatient.id,
+        mrn: updatedPatient.mrn,
+      },
+    });
+
+    return updatedPatient;
   }
 
   async reactivate(id: string) {

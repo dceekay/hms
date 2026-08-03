@@ -1,10 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { endSession } from "../services/sessionManager";
 
 export function NavBar() {
-  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
   const permissions = useAuthStore((state) => state.user?.permissions ?? []);
   const hasPermission = (permission: string) => permissions.includes(permission);
+  const handleLogout = () => {
+    endSession();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <nav className="nav-bar">
@@ -18,7 +23,7 @@ export function NavBar() {
         {hasPermission("permissions.read") && <Link to="/admin/permissions">Permissions</Link>}
         <Link to="/api-tester">API Tester</Link>
       </div>
-      <button type="button" className="button button-secondary" onClick={logout}>
+      <button type="button" className="button button-secondary" onClick={handleLogout}>
         Logout
       </button>
     </nav>

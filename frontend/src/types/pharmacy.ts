@@ -3,6 +3,7 @@ import type { AppUser } from "./rbac";
 
 export type PharmacyPaymentStatus = "pending" | "paid" | "cancelled";
 export type PharmacyStockStatus = "all" | "low" | "out" | "expired";
+export type PharmacyMovementType = "stock_in" | "adjustment" | "dispense";
 
 export type Medication = {
   id: string;
@@ -66,6 +67,20 @@ export type PharmacySale = {
   soldAt: string;
   patient: Patient;
   items: PharmacySaleItem[];
+  recordedBy?: Pick<AppUser, "id" | "firstName" | "lastName" | "username"> | null;
+};
+
+export type PharmacyStockMovement = {
+  id: string;
+  medicationId: string;
+  movementType: PharmacyMovementType;
+  quantity: number;
+  stockBefore: number;
+  stockAfter: number;
+  reason?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  medication: Medication;
   recordedBy?: Pick<AppUser, "id" | "firstName" | "lastName" | "username"> | null;
 };
 

@@ -1,0 +1,19 @@
+{
+  "name": "MDS Hospital Staff Portal",
+  "short_name": "MDS HMS",
+  "description": "Mobile-first hospital operations portal for MDS Hospital staff.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#0f4c81",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mds-notification.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

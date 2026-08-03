@@ -34,7 +34,7 @@ let server: ReturnType<typeof app.listen>;
 async function bootstrap(): Promise<void> {
   try {
     logger.info("====================================");
-    logger.info("Starting CeekayX HMS Backend...");
+    logger.info("Starting CeekayX Nexux HMS Backend...");
     logger.info("====================================");
 
     /**
@@ -47,7 +47,7 @@ async function bootstrap(): Promise<void> {
      */
     server = app.listen(env.PORT, () => {
       logger.info("====================================");
-      logger.info("CeekayX Hospital Management System");
+      logger.info("CeekayX Nexus Management System");
       logger.info("Backend Started Successfully");
       logger.info(`Environment : ${env.NODE_ENV}`);
       logger.info(`Port        : ${env.PORT}`);

@@ -33,3 +33,11 @@ export function isJwtExpired(token: string | null, clockSkewMs = 5000) {
 
   return Date.now() + clockSkewMs >= expiryMs;
 }
+
+export function getMsUntilJwtExpiry(token: string | null, clockSkewMs = 0) {
+  const expiryMs = getJwtExpiryMs(token);
+
+  if (!expiryMs) return 0;
+
+  return Math.max(expiryMs - Date.now() - clockSkewMs, 0);
+}

@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FiArchive,
+  FiClipboard,
   FiEdit3,
   FiPlus,
   FiPrinter,
@@ -19,6 +20,7 @@ import {
   createPharmacySale,
   fetchMedications,
   fetchPharmacySales,
+  fetchPharmacyStockMovements,
   updateMedication,
 } from "../../services/pharmacyService";
 import { useAuthStore } from "../../store/authStore";
@@ -29,6 +31,7 @@ import type {
   PharmacySale,
   PharmacySaleCartItem,
   PharmacySaleFormValues,
+  PharmacyStockMovement,
   PharmacyStockStatus,
   PharmacySummary,
 } from "../../types/pharmacy";
@@ -78,12 +81,20 @@ function patientName(patient: Patient) {
   return `${patient.firstName} ${patient.lastName}`;
 }
 
+function patientOptionLabel(patient: Patient) {
+  return `${patientName(patient)}${patient.mrn ? ` | ${patient.mrn}` : ""}${patient.phone ? ` | ${patient.phone}` : ""}`;
+}
+
 function medicationLabel(medication: Medication) {
   return [
     medication.name,
     medication.strength,
     medication.dosageForm,
   ].filter(Boolean).join(" ");
+}
+
+function medicationOptionLabel(medication: Medication) {
+  return `${medicationLabel(medication)} | ${medication.currentStock} ${medication.unit} | ${money(medication.sellingPrice)}`;
 }
 
 function formatDate(value?: string | null) {
@@ -131,6 +142,7 @@ export default function PharmacyPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [sales, setSales] = useState<PharmacySale[]>([]);
+  const [movements, setMovements] = useState<PharmacyStockMovement[]>([]);
   const [summary, setSummary] = useState<PharmacySummary>({
     active: 0,
     lowStock: 0,
@@ -140,13 +152,17 @@ export default function PharmacyPage() {
   const [medicineSearch, setMedicineSearch] = useState("");
   const [stockFilter, setStockFilter] = useState<PharmacyStockStatus>("all");
   const [saleSearch, setSaleSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"sell" | "inventory" | "invoices">("sell");
+  const [activeTab, setActiveTab] = useState<"sell" | "inventory" | "invoices" | "stock">("sell");
   const [medicineForm, setMedicineForm] = useState<MedicationFormValues>(emptyMedicationForm);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [saleForm, setSaleForm] = useState<PharmacySaleFormValues>(emptySaleForm);
   const [cartDraft, setCartDraft] = useState<PharmacySaleCartItem>(emptyCartDraft);
+  const [patientPicker, setPatientPicker] = useState("");
+  const [medicinePicker, setMedicinePicker] = useState("");
   const [stockTarget, setStockTarget] = useState<Medication | null>(null);
   const [stockChange, setStockChange] = useState("0");
+  const [stockReason, setStockReason] = useState("");
+  const [stockNotes, setStockNotes] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<PharmacySale | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -168,23 +184,37 @@ export default function PharmacyPage() {
   );
   const invoiceTotal = Math.max(0, cartTotal - Number(saleForm.discountAmount || 0));
   const invoiceBalance = Math.max(0, invoiceTotal - Number(saleForm.amountPaid || 0));
+  const ledgerTotals = useMemo(
+    () =>
+      movements.reduce(
+        (totals, movement) => {
+          if (movement.quantity > 0) totals.received += movement.quantity;
+          if (movement.quantity < 0) totals.issued += Math.abs(movement.quantity);
+          return totals;
+        },
+        { received: 0, issued: 0 }
+      ),
+    [movements]
+  );
 
   const loadData = async () => {
     setLoading(true);
     setError(null);
 
-    const [patientResult, medicationResult, salesResult] = await Promise.all([
+    const [patientResult, medicationResult, salesResult, movementResult] = await Promise.all([
       fetchPatients({ status: "active" }),
       fetchMedications({ search: medicineSearch, stockStatus: stockFilter }),
       fetchPharmacySales(saleSearch),
+      fetchPharmacyStockMovements(),
     ]);
 
     setLoading(false);
 
-    if (!patientResult || !medicationResult.result || !salesResult.result) {
+    if (!patientResult || !medicationResult.result || !salesResult.result || !movementResult.result) {
       setError(
         medicationResult.error ??
           salesResult.error ??
+          movementResult.error ??
           "Unable to load pharmacy workspace."
       );
       return;
@@ -194,6 +224,7 @@ export default function PharmacyPage() {
     setMedications(medicationResult.result.items);
     setSummary(medicationResult.result.summary);
     setSales(salesResult.result.items);
+    setMovements(movementResult.result.items);
   };
 
   useEffect(() => {
@@ -206,6 +237,12 @@ export default function PharmacyPage() {
 
   const updateSaleField = (field: keyof PharmacySaleFormValues, value: string) => {
     setSaleForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handlePatientPick = (value: string) => {
+    setPatientPicker(value);
+    const patient = patients.find((item) => patientOptionLabel(item) === value);
+    setSaleForm((current) => ({ ...current, patientId: patient?.id ?? "" }));
   };
 
   const handleMedicationSubmit = async (event: FormEvent) => {
@@ -247,6 +284,12 @@ export default function PharmacyPage() {
     }));
   };
 
+  const handleMedicinePickerChange = (value: string) => {
+    setMedicinePicker(value);
+    const medication = medications.find((item) => medicationOptionLabel(item) === value);
+    handleMedicationPick(medication?.id ?? "");
+  };
+
   const addCartItem = () => {
     const medication = medications.find((item) => item.id === cartDraft.medicationId);
     const quantity = Number(cartDraft.quantity || 0);
@@ -266,6 +309,7 @@ export default function PharmacyPage() {
       items: [...current.items, cartDraft],
     }));
     setCartDraft(emptyCartDraft);
+    setMedicinePicker("");
     setError(null);
   };
 
@@ -292,6 +336,8 @@ export default function PharmacyPage() {
 
     setSuccess(`Invoice ${result.sale.invoiceNumber} generated.`);
     setSaleForm(emptySaleForm);
+    setPatientPicker("");
+    setMedicinePicker("");
     setSelectedInvoice(result.sale);
     setActiveTab("invoices");
     await loadData();
@@ -307,7 +353,8 @@ export default function PharmacyPage() {
     setError(null);
     const result = await adjustMedicationStock(stockTarget.id, {
       quantityChange: Number(stockChange),
-      reason: Number(stockChange) > 0 ? "Stock received" : "Stock correction",
+      reason: stockReason.trim() || (Number(stockChange) > 0 ? "Stock received" : "Stock correction"),
+      notes: stockNotes.trim() || undefined,
     });
     setSaving(false);
 
@@ -319,6 +366,8 @@ export default function PharmacyPage() {
     setSuccess("Stock updated.");
     setStockTarget(null);
     setStockChange("0");
+    setStockReason("");
+    setStockNotes("");
     await loadData();
   };
 
@@ -362,6 +411,7 @@ export default function PharmacyPage() {
               { id: "sell", label: "Sell", icon: <FiShoppingCart /> },
               { id: "inventory", label: "Inventory", icon: <FaCapsules /> },
               { id: "invoices", label: "Invoices", icon: <FiArchive /> },
+              { id: "stock", label: "Stock Ledger", icon: <FiClipboard /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -395,18 +445,18 @@ export default function PharmacyPage() {
 
                 <label>
                   Patient
-                  <select
-                    value={saleForm.patientId}
-                    onChange={(event) => updateSaleField("patientId", event.target.value)}
+                  <input
+                    list="pharmacy-patient-options"
+                    value={patientPicker}
+                    onChange={(event) => handlePatientPick(event.target.value)}
+                    placeholder="Search patient by name, MRN or phone"
                     required
-                  >
-                    <option value="">Select patient</option>
+                  />
+                  <datalist id="pharmacy-patient-options">
                     {patients.map((patient) => (
-                      <option key={patient.id} value={patient.id}>
-                        {patientName(patient)} {patient.mrn ? `(${patient.mrn})` : ""}
-                      </option>
+                      <option key={patient.id} value={patientOptionLabel(patient)} />
                     ))}
-                  </select>
+                  </datalist>
                 </label>
 
                 {selectedPatient && (
@@ -419,19 +469,19 @@ export default function PharmacyPage() {
                 <div className="pharmacy-cart-builder">
                   <label>
                     Medicine
-                    <select
-                      value={cartDraft.medicationId}
-                      onChange={(event) => handleMedicationPick(event.target.value)}
-                    >
-                      <option value="">Select medicine</option>
+                    <input
+                      list="pharmacy-medicine-options"
+                      value={medicinePicker}
+                      onChange={(event) => handleMedicinePickerChange(event.target.value)}
+                      placeholder="Search medicine by name, strength or price"
+                    />
+                    <datalist id="pharmacy-medicine-options">
                       {medications
                         .filter((medication) => medication.isActive && medication.currentStock > 0)
                         .map((medication) => (
-                          <option key={medication.id} value={medication.id}>
-                            {medicationLabel(medication)} - {medication.currentStock} {medication.unit}
-                          </option>
+                          <option key={medication.id} value={medicationOptionLabel(medication)} />
                         ))}
-                    </select>
+                    </datalist>
                   </label>
                   <label>
                     Qty
@@ -777,8 +827,64 @@ export default function PharmacyPage() {
                     <strong>{money(sale.totalAmount)}</strong>
                     <button type="button" className="icon-text-btn" onClick={() => handlePrintInvoice(sale)}>
                       <FiPrinter />
-                      Print
+                      {sale.paymentStatus === "paid" ? "Receipt" : "Invoice"}
                     </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {activeTab === "stock" && (
+            <section className="setup-list-panel pharmacy-ledger-panel">
+              <div className="panel-title">
+                <div>
+                  <h2>Stock Ledger</h2>
+                  <p>All received, adjusted, and dispensed medicine movements.</p>
+                </div>
+                <FiClipboard />
+              </div>
+
+              <div className="pharmacy-ledger-summary">
+                <span>
+                  <small>Movement records</small>
+                  <strong>{movements.length}</strong>
+                </span>
+                <span>
+                  <small>Units received</small>
+                  <strong>{ledgerTotals.received}</strong>
+                </span>
+                <span>
+                  <small>Units issued</small>
+                  <strong>{ledgerTotals.issued}</strong>
+                </span>
+                <span>
+                  <small>Low stock items</small>
+                  <strong>{summary.lowStock}</strong>
+                </span>
+              </div>
+
+              <div className="pharmacy-ledger-list">
+                {movements.length === 0 && <p className="muted-text">No stock movements recorded yet.</p>}
+                {movements.map((movement) => (
+                  <article className="pharmacy-ledger-card" key={movement.id}>
+                    <div className={movement.quantity >= 0 ? "pharmacy-ledger-icon in" : "pharmacy-ledger-icon out"}>
+                      {movement.quantity >= 0 ? <FiPlus /> : <FiArchive />}
+                    </div>
+                    <div>
+                      <div className="setup-provider-title">
+                        <strong>{medicationLabel(movement.medication)}</strong>
+                        <span className="pharmacy-stock-badge">{movement.movementType.replace("_", " ")}</span>
+                      </div>
+                      <p>{movement.reason || movement.notes || "No reason added."}</p>
+                      <small>
+                        {formatDate(movement.createdAt)} | {movement.recordedBy ? `${movement.recordedBy.firstName} ${movement.recordedBy.lastName}` : "System"}
+                      </small>
+                    </div>
+                    <div className={movement.quantity >= 0 ? "inventory-quantity in" : "inventory-quantity out"}>
+                      <strong>{movement.quantity > 0 ? "+" : ""}{movement.quantity}</strong>
+                      <small>{movement.stockBefore} to {movement.stockAfter}</small>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -808,8 +914,35 @@ export default function PharmacyPage() {
                     placeholder="Use negative number to reduce"
                   />
                 </label>
+                <label>
+                  Reason
+                  <input
+                    value={stockReason}
+                    onChange={(event) => setStockReason(event.target.value)}
+                    placeholder="Stock received, count correction, expired batch"
+                  />
+                </label>
+                <label>
+                  Notes
+                  <textarea
+                    rows={3}
+                    value={stockNotes}
+                    onChange={(event) => setStockNotes(event.target.value)}
+                    placeholder="Supplier, batch note, or approval detail"
+                  />
+                </label>
                 <div className="setup-actions">
-                  <button type="button" className="icon-text-btn" onClick={() => setStockTarget(null)}>Cancel</button>
+                  <button
+                    type="button"
+                    className="icon-text-btn"
+                    onClick={() => {
+                      setStockTarget(null);
+                      setStockReason("");
+                      setStockNotes("");
+                    }}
+                  >
+                    Cancel
+                  </button>
                   <button type="button" className="registration-submit" disabled={saving} onClick={handleStockAdjust}>
                     Update Stock
                   </button>
@@ -824,7 +957,7 @@ export default function PharmacyPage() {
                 <img src={mdsLogo} alt="MDS Hospital" />
                 <div>
                   <h2>MDS Hospital</h2>
-                  <p>Pharmacy Invoice</p>
+                  <p>{selectedInvoice.paymentStatus === "paid" ? "Pharmacy Receipt" : "Pharmacy Invoice"}</p>
                 </div>
                 <span>{selectedInvoice.invoiceNumber}</span>
               </div>
@@ -845,6 +978,10 @@ export default function PharmacyPage() {
                 <span>
                   <small>Status</small>
                   <strong>{selectedInvoice.paymentStatus}</strong>
+                </span>
+                <span>
+                  <small>Insurance</small>
+                  <strong>{selectedInvoice.patient.insuranceProvider?.name || "Self pay"}</strong>
                 </span>
               </div>
 
@@ -877,6 +1014,7 @@ export default function PharmacyPage() {
                 <span><small>Discount</small><strong>{money(selectedInvoice.discountAmount)}</strong></span>
                 <span><small>Total</small><strong>{money(selectedInvoice.totalAmount)}</strong></span>
                 <span><small>Paid</small><strong>{money(selectedInvoice.amountPaid)}</strong></span>
+                <span><small>Balance</small><strong>{money(Math.max(0, Number(selectedInvoice.totalAmount) - Number(selectedInvoice.amountPaid)))}</strong></span>
               </div>
 
               <p className="pharmacy-print-footer">

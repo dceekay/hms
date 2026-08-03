@@ -41,13 +41,26 @@
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  touch-action: pan-y;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--app-bg);
   color: var(--text);
+  overscroll-behavior-y: auto;
 }
 
 button,
@@ -55,6 +68,25 @@ input,
 select,
 textarea {
   font: inherit;
+  min-width: 0;
+  max-width: 100%;
+}
+
+button,
+a,
+select {
+  touch-action: manipulation;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+button {
+  min-height: 40px;
 }
 
 .app-shell {
@@ -70,6 +102,7 @@ textarea {
 .page-container {
   width: min(1180px, 100%);
   margin: 24px auto;
+  min-width: 0;
 }
 
 .nav-bar {
@@ -460,11 +493,14 @@ pre {
 
 .table-responsive {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
 }
 
@@ -496,6 +532,10 @@ pre {
 }
 
 @media (max-width: 680px) {
+  .page-container {
+    margin: 10px auto;
+  }
+
   .app-shell {
     padding: 14px;
   }
@@ -510,6 +550,18 @@ pre {
 
   .nav-bar {
     width: 100%;
+    max-width: 100%;
+  }
+
+  .nav-links {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-links a {
+    min-width: 0;
+    text-align: center;
   }
 
   .dashboard-grid,
@@ -561,6 +613,7 @@ pre {
   select,
   textarea {
     font-size: 16px;
+    min-height: 46px;
   }
 
   .patient-table-wrapper {
@@ -617,5 +670,101 @@ pre {
   .patient-table .patient-row-actions .icon-text-btn {
     flex: 1 1 112px;
     min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-content,
+  .page-container,
+  .dashboard-page,
+  .patient-page,
+  .registration-page,
+  .appointments-page,
+  .doctor-page,
+  .laboratory-page,
+  .pharmacy-page,
+  .inventory-page,
+  .billing-page,
+  .semsas-page,
+  .security-page,
+  .setup-page,
+  .rbac-page,
+  .doctor-admin-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .command-btn,
+  .button,
+  .button-secondary,
+  .icon-text-btn,
+  .setup-actions button,
+  .doctor-action-row button,
+  .patient-row-actions button,
+  .patient-row-actions a {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .command-actions,
+  .setup-actions,
+  .doctor-action-row,
+  .patient-row-actions,
+  .registration-hero-actions,
+  .tester-actions {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .command-actions > *,
+  .setup-actions > *,
+  .doctor-action-row > *,
+  .patient-row-actions > *,
+  .registration-hero-actions > *,
+  .tester-actions > * {
+    flex: 1 1 132px;
+  }
+
+  [class*="grid"],
+  [class*="panel"],
+  [class*="card"],
+  form,
+  fieldset {
+    min-width: 0;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-content {
+    padding-inline: 10px;
+  }
+
+  .command-btn,
+  .button,
+  .button-secondary,
+  .icon-text-btn {
+    padding-inline: 10px;
+    font-size: 0.88rem;
+  }
+
+  .mobile-bottom-nav {
+    gap: 4px;
+  }
+
+  .mobile-nav-item {
+    min-width: 58px;
+    padding-inline: 6px;
   }
 }

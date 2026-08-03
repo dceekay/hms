@@ -10,6 +10,7 @@ import {
   StockAdjustmentDto,
   UpdateMedicationDto,
 } from "./dto";
+import { NotificationService } from "../notifications/service";
 
 function cleanText(value?: string | null) {
   return value?.trim() ? value.trim() : null;
@@ -159,7 +160,7 @@ export class PharmacyService {
   }
 
   async adjustStock(id: string, payload: StockAdjustmentDto, recordedById?: string) {
-    return prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx) => {
       const medication = await tx.medication.findFirst({
         where: { id, deletedAt: null },
       });
@@ -197,10 +198,27 @@ export class PharmacyService {
 
       return updated;
     });
+
+    if (updated.currentStock <= updated.reorderLevel) {
+      await NotificationService.notifyRoles(["Pharmacist", "Administrator", "Super Admin"], {
+        title: updated.currentStock === 0 ? "Medicine out of stock" : "Medicine stock is low",
+        message: `${updated.name} has ${updated.currentStock} ${updated.unit} remaining.`,
+        eventKey: "pharmacy.stock.low",
+        priority: updated.currentStock === 0 ? "critical" : "warning",
+        linkUrl: "/pharmacy",
+        metadata: {
+          medicationId: updated.id,
+          currentStock: updated.currentStock,
+          reorderLevel: updated.reorderLevel,
+        },
+      });
+    }
+
+    return updated;
   }
 
   async dispense(payload: DispenseMedicationDto, recordedById?: string) {
-    return prisma.$transaction(async (tx) => {
+    const dispense = await prisma.$transaction(async (tx) => {
       const [medication, patient] = await Promise.all([
         tx.medication.findFirst({
           where: { id: payload.medicationId, deletedAt: null, isActive: true },
@@ -280,6 +298,34 @@ export class PharmacyService {
 
       return dispense;
     });
+
+    await NotificationService.notifyRoles(["Pharmacist", "Billing Officer", "Administrator", "Super Admin"], {
+      title: "Medication dispensed",
+      message: `${dispense.medication.name} was dispensed to ${dispense.patient.firstName} ${dispense.patient.lastName}.`,
+      eventKey: "pharmacy.dispensed",
+      priority: "success",
+      linkUrl: "/pharmacy",
+      metadata: {
+        dispenseId: dispense.id,
+        invoiceNumber: dispense.invoiceNumber,
+        patientId: dispense.patientId,
+      },
+    });
+
+    if (dispense.medication.currentStock - dispense.quantity <= dispense.medication.reorderLevel) {
+      await NotificationService.notifyRoles(["Pharmacist", "Administrator", "Super Admin"], {
+        title: "Medicine needs restock",
+        message: `${dispense.medication.name} is near reorder level after dispensing.`,
+        eventKey: "pharmacy.stock.low",
+        priority: "warning",
+        linkUrl: "/pharmacy",
+        metadata: {
+          medicationId: dispense.medicationId,
+        },
+      });
+    }
+
+    return dispense;
   }
 
   async listDispenses(params: { page?: number; limit?: number; search?: string }) {
@@ -334,7 +380,7 @@ export class PharmacyService {
   }
 
   async createSale(payload: CreatePharmacySaleDto, recordedById?: string) {
-    return prisma.$transaction(async (tx) => {
+    const sale = await prisma.$transaction(async (tx) => {
       const patient = await tx.patient.findFirst({
         where: { id: payload.patientId, deletedAt: null },
       });
@@ -467,6 +513,39 @@ export class PharmacyService {
 
       return sale;
     });
+
+    await NotificationService.notifyRoles(["Pharmacist", "Billing Officer", "Administrator", "Super Admin"], {
+      title: "Pharmacy invoice generated",
+      message: `${sale.invoiceNumber} was generated for ${sale.patient.firstName} ${sale.patient.lastName}.`,
+      eventKey: "pharmacy.sale.created",
+      priority: "success",
+      linkUrl: "/pharmacy",
+      metadata: {
+        saleId: sale.id,
+        invoiceNumber: sale.invoiceNumber,
+        patientId: sale.patientId,
+      },
+    });
+
+    const lowItems = sale.items.filter(
+      (item) => item.medication.currentStock - item.quantity <= item.medication.reorderLevel
+    );
+
+    if (lowItems.length > 0) {
+      await NotificationService.notifyRoles(["Pharmacist", "Administrator", "Super Admin"], {
+        title: "Pharmacy restock needed",
+        message: `${lowItems.length} medicine item(s) are near or below reorder level.`,
+        eventKey: "pharmacy.stock.low",
+        priority: "warning",
+        linkUrl: "/pharmacy",
+        metadata: {
+          saleId: sale.id,
+          medicationIds: lowItems.map((item) => item.medicationId),
+        },
+      });
+    }
+
+    return sale;
   }
 
   async listSales(params: { page?: number; limit?: number; search?: string }) {

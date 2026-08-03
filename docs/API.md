@@ -419,6 +419,55 @@ Sale example:
 }
 ```
 
+## Hospital Inventory Endpoints
+
+Mounted at `/inventory`.
+
+| Method | Path | Permission | Purpose |
+| --- | --- | --- | --- |
+| GET | `/inventory/items` | `inventory.read` | List/search hospital materials, consumables, appliances, and equipment |
+| POST | `/inventory/items` | `inventory.create` | Add a material or equipment record with stock and location details |
+| PATCH | `/inventory/items/:id` | `inventory.update` | Update inventory item details |
+| POST | `/inventory/items/:id/movements` | `inventory.issue` | Receive, issue, transfer, damage, lose, or adjust stock |
+| GET | `/inventory/movements` | `inventory.read` | Review inventory movement history |
+
+Movement example:
+
+```json
+{
+  "movementType": "stock_out",
+  "quantityChange": -2,
+  "reason": "Issued to emergency room",
+  "destination": "Emergency Room",
+  "issuedTo": "Nurse station",
+  "notes": "Night shift restock"
+}
+```
+
+Inventory list filters:
+
+- `search`: item name, code, department, supplier, serial number, or batch number.
+- `stockStatus`: `all`, `low`, or `out`.
+- `itemKind`: `all`, `consumable`, or `appliance`.
+- `category`: exact category name from existing inventory records.
+
+## Notification Endpoints
+
+Mounted at `/notifications`.
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/notifications` | access token | List notifications visible to the signed-in user's role/user |
+| POST | `/notifications/:id/read` | access token | Mark one notification as read for the signed-in user |
+| POST | `/notifications/read-all` | access token | Mark all visible notifications as read for the signed-in user |
+
+Notification visibility:
+
+- A notification may target a single user, a role, or everyone.
+- Read state is per user, so one staff member reading a role notification does not hide it for others.
+- Current frontend delivery is app polling plus browser notifications while the app is installed/open.
+- True background Android push should use Firebase Cloud Messaging or Web Push VAPID subscriptions on top of this same notification event model.
+
 ## Dashboard Endpoint
 
 Mounted at `/dashboard`.
