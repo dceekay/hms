@@ -62,15 +62,20 @@ const emptyPrescriptionDraft: PrescriptionItemFormValues = {
   instructions: "",
 };
 
-function patientName(patient: Patient) {
-  return `${patient.firstName} ${patient.lastName}`;
+function patientName(patient?: Patient | null) {
+  if (!patient) return "Unknown patient";
+  const fullName = [patient.firstName, patient.lastName].filter(Boolean).join(" ").trim();
+  return fullName || "Unknown patient";
 }
 
-function patientOptionLabel(patient: Patient) {
-  return `${patientName(patient)}${patient.mrn ? ` | ${patient.mrn}` : ""}${patient.phone ? ` | ${patient.phone}` : ""}`;
+function patientOptionLabel(patient?: Patient | null) {
+  if (!patient) return "Unknown patient";
+  const name = patientName(patient);
+  return `${name}${patient.mrn ? ` | ${patient.mrn}` : ""}${patient.phone ? ` | ${patient.phone}` : ""}`;
 }
 
-function medicineLabel(medication: Medication) {
+function medicineLabel(medication?: Medication | null) {
+  if (!medication) return "Unknown medication";
   return [
     medication.name,
     medication.strength,
@@ -177,17 +182,20 @@ export default function DoctorDashboardPage() {
     ]);
 
     if (workspaceResult.workspace) {
-      setWorkspace(workspaceResult.workspace);
-      setPatientHistory(workspaceResult.workspace.recentEncounters);
+      const workspaceData = workspaceResult.workspace;
+      setWorkspace(workspaceData);
+      setPatientHistory(workspaceData.recentEncounters ?? []);
 
       if (!selectedPatient) {
-        const firstAppointment = workspaceResult.workspace.assignedAppointments[0];
-        const firstPatient = firstAppointment?.patient ?? workspaceResult.workspace.patients[0];
+        const appointments = workspaceData.assignedAppointments ?? [];
+        const firstAppointment = appointments[0];
+        const patients = workspaceData.patients ?? [];
+        const firstPatient = firstAppointment?.patient ?? patients[0];
 
         if (firstPatient) {
           void selectPatient(
             firstPatient,
-            workspaceResult.workspace.recentEncounters,
+            workspaceData.recentEncounters ?? [],
             firstAppointment ?? null
           );
         }
@@ -462,6 +470,8 @@ export default function DoctorDashboardPage() {
     prescriptionsSent: 0,
     encounters: {},
   };
+  const assignedAppointments = workspace?.assignedAppointments ?? [];
+  const patients = workspace?.patients ?? [];
 
   return (
     <AdminLayout>
@@ -523,11 +533,11 @@ export default function DoctorDashboardPage() {
           </div>
 
           <div className="doctor-appointment-queue">
-            {workspace?.assignedAppointments.length === 0 && (
+            {assignedAppointments.length === 0 && (
               <p>No assigned patients yet.</p>
             )}
 
-            {workspace?.assignedAppointments.map((appointment) => (
+            {assignedAppointments.map((appointment) => (
               <article
                 key={appointment.id}
                 className={
@@ -541,7 +551,7 @@ export default function DoctorDashboardPage() {
                   onClick={() =>
                     void selectPatient(
                       appointment.patient,
-                      workspace.recentEncounters,
+                      workspace?.recentEncounters ?? [],
                       appointment
                     )
                   }
@@ -595,7 +605,7 @@ export default function DoctorDashboardPage() {
               />
             </div>
             <datalist id="doctor-patient-options">
-              {workspace?.patients.map((patient) => (
+              {patients.map((patient) => (
                 <option key={patient.id} value={patientOptionLabel(patient)} />
               ))}
             </datalist>
@@ -979,7 +989,7 @@ export default function DoctorDashboardPage() {
               {[...pendingLabsForPatient, ...completedLabsForPatient].map((request) => (
                 <article key={request.id} className="doctor-record-card slim">
                   <div>
-                    <strong>{request.template.name}</strong>
+                    <strong>{request.template?.name ?? "Lab request"}</strong>
                     <span>{request.requestNumber}</span>
                   </div>
                   <span className={`doctor-status ${request.status}`}>{request.status.replaceAll("_", " ")}</span>
