@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -30,6 +30,23 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
 import { FaBed, FaCapsules } from "react-icons/fa";
 import { FiDatabase, FiPieChart, FiTruck } from "react-icons/fi";
+import { useAuthStore } from "./store/authStore";
+import { isJwtExpired } from "./utils/session";
+
+function RootRoute() {
+  const token = useAuthStore((state) => state.token);
+  const tokenExpired = isJwtExpired(token);
+
+  if (token && !tokenExpired) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (tokenExpired) {
+    return <Navigate to="/login?session=expired" replace />;
+  }
+
+  return <LandingPage />;
+}
 
 export default function App() {
   return (
@@ -39,16 +56,22 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
 
-        <Route
-          path="/"
-          element={<LandingPage />}
-        />
+        <Route path="/" element={<RootRoute />} />
 
         <Route
           path="/home"
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
             </ProtectedRoute>
           }
         />

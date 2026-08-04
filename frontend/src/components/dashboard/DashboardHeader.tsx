@@ -1,5 +1,6 @@
 import { FiBell, FiSearch } from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
+import { getUserDisplayName } from "../../utils/userDisplay";
 
 export default function DashboardHeader() {
   const user = useAuthStore((state: any) => state.user);
@@ -24,7 +25,7 @@ export default function DashboardHeader() {
 
       <div className="dashboard-left">
         <h1>
-          {greeting()}, {user?.firstName || "Administrator"} 👋
+          {greeting()}, {getUserDisplayName(user)} 👋
         </h1>
 
         <p>{today}</p>
@@ -54,10 +55,10 @@ export default function DashboardHeader() {
 
           <div>
             <strong>
-              {user?.firstName} {user?.lastName}
+              {getUserDisplayName(user)}
             </strong>
 
-            <small>Administrator</small>
+            <small>{user?.roles?.join(", ") || "Administrator"}</small>
           </div>
         </div>
 

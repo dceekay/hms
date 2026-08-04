@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   authenticate,
   authorizePermissions,
+  authorizeRoles,
 } from "../../shared/middleware/auth.middleware";
 import { LaboratoryController } from "./controller";
 
@@ -11,8 +12,18 @@ const controller = new LaboratoryController();
 router.use(authenticate);
 
 router.get("/templates", authorizePermissions(["laboratory.read"]), controller.listTemplates);
-router.post("/templates", authorizePermissions(["laboratory.create"]), controller.createTemplate);
-router.patch("/templates/:id", authorizePermissions(["laboratory.update"]), controller.updateTemplate);
+router.post(
+  "/templates",
+  authorizeRoles(["Laboratory", "Super Admin"]),
+  authorizePermissions(["laboratory.create"]),
+  controller.createTemplate
+);
+router.patch(
+  "/templates/:id",
+  authorizeRoles(["Laboratory", "Super Admin"]),
+  authorizePermissions(["laboratory.update"]),
+  controller.updateTemplate
+);
 
 router.get("/requests", authorizePermissions(["laboratory.read"]), controller.listRequests);
 router.post("/requests", authorizePermissions(["laboratory.create"]), controller.createRequest);

@@ -13,6 +13,7 @@ import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
 import NotificationCenter from "./NotificationCenter";
 import { endSession } from "../../services/sessionManager";
+import { getUserDisplayName } from "../../utils/userDisplay";
 
 export default function Topbar() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function Topbar() {
       <div className="topbar-left">
         <p className="topbar-kicker">{primaryRole}</p>
         <h2>
-          Welcome, <span>{user?.firstName || "Admin"}</span>
+          Welcome, <span>{getUserDisplayName(user)}</span>
         </h2>
 
         <p>
@@ -81,7 +82,7 @@ export default function Topbar() {
 
           <div>
             <strong>
-              {user?.firstName || "System"} {user?.lastName || "Admin"}
+              {getUserDisplayName(user)}
             </strong>
 
             <small>{user?.roles?.join(", ") || "Care team"}</small>

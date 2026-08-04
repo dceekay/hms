@@ -314,8 +314,8 @@ const testUsers = [
     email: "admin@ceekayx.com",
     username: "admin",
     password: "Admin@123",
-    firstName: "System",
-    lastName: "Administrator",
+    firstName: "Abdulkadir",
+    lastName: "Yakubu",
     serviceCode: "ADMIN",
   },
   {

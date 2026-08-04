@@ -125,7 +125,12 @@ function formFromTemplate(template: LaboratoryTemplate): LaboratoryTemplateFormV
 }
 
 export default function LaboratoryPage() {
-  const permissions = useAuthStore((state) => state.user?.permissions ?? []);
+  const user = useAuthStore((state) => state.user);
+  const permissions = user?.permissions ?? [];
+  const roles = user?.roles ?? [];
+  const isSuperAdmin = roles.some((role) => role.toLowerCase() === "super admin");
+  const isLaboratoryRole = roles.some((role) => role.toLowerCase() === "laboratory");
+  const canManageTemplates = isSuperAdmin || isLaboratoryRole;
   const canCreate = permissions.includes("laboratory.create");
   const canUpdate = permissions.includes("laboratory.update");
   const canComplete = permissions.includes("laboratory.result");
@@ -372,7 +377,7 @@ export default function LaboratoryPage() {
             {[
               { id: "requests", label: "Requests", icon: <FiClipboard /> },
               { id: "results", label: "Results", icon: <FiCheckCircle /> },
-              { id: "templates", label: "Templates", icon: <FiFileText /> },
+              ...(canManageTemplates ? [{ id: "templates", label: "Templates", icon: <FiFileText /> }] : []),
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -651,16 +656,27 @@ export default function LaboratoryPage() {
 
           {activeTab === "templates" && (
             <section className="laboratory-template-layout">
-              <form className="setup-form laboratory-template-form" onSubmit={handleTemplateSubmit}>
-                <div className="panel-title">
-                  <div>
-                    <h2>{editingTemplate ? "Edit Template" : "Add Template"}</h2>
-                    <p>Build the result form once, reuse it for each test.</p>
+              {!canManageTemplates ? (
+                <div className="setup-form laboratory-template-form">
+                  <div className="panel-title">
+                    <div>
+                      <h2>Template Access</h2>
+                      <p>Only laboratory staff and super administrators can manage lab templates.</p>
+                    </div>
+                    <FiFileText />
                   </div>
-                  <FiFileText />
                 </div>
+              ) : (
+                <form className="setup-form laboratory-template-form" onSubmit={handleTemplateSubmit}>
+                  <div className="panel-title">
+                    <div>
+                      <h2>{editingTemplate ? "Edit Template" : "Add Template"}</h2>
+                      <p>Build the result form once, reuse it for each test.</p>
+                    </div>
+                    <FiFileText />
+                  </div>
 
-                <div className="form-grid">
+                  <div className="form-grid">
                   <label>
                     Test name
                     <input value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} required />
@@ -683,106 +699,107 @@ export default function LaboratoryPage() {
                   </label>
                 </div>
 
-                <div className="laboratory-fields-editor">
-                  <div className="setup-list-header">
-                    <strong>Result fields</strong>
-                    <button type="button" className="icon-text-btn" onClick={addTemplateField}>
-                      <FiPlus />
-                      Add field
-                    </button>
+                  <div className="laboratory-fields-editor">
+                    <div className="setup-list-header">
+                      <strong>Result fields</strong>
+                      <button type="button" className="icon-text-btn" onClick={addTemplateField}>
+                        <FiPlus />
+                        Add field
+                      </button>
+                    </div>
+
+                    {templateForm.fields.map((field, index) => (
+                      <article className="laboratory-field-row" key={index}>
+                        <input
+                          value={field.label}
+                          onChange={(event) => handleTemplateFieldChange(index, "label", event.target.value)}
+                          placeholder="Field label"
+                          required
+                        />
+                        <input
+                          value={field.key}
+                          onChange={(event) => handleTemplateFieldChange(index, "key", event.target.value.replace(/\s+/g, "_").toLowerCase())}
+                          placeholder="field_key"
+                          required
+                        />
+                        <select
+                          value={field.type}
+                          onChange={(event) => handleTemplateFieldChange(index, "type", event.target.value as LaboratoryFieldType)}
+                        >
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="select">Dropdown</option>
+                          <option value="textarea">Long text</option>
+                        </select>
+                        <input
+                          value={field.unit ?? ""}
+                          onChange={(event) => handleTemplateFieldChange(index, "unit", event.target.value)}
+                          placeholder="Unit"
+                        />
+                        <input
+                          value={field.referenceRange ?? ""}
+                          onChange={(event) => handleTemplateFieldChange(index, "referenceRange", event.target.value)}
+                          placeholder="Reference"
+                        />
+                        <input
+                          value={(field.options ?? []).join(", ")}
+                          onChange={(event) => handleTemplateFieldChange(index, "options", event.target.value.split(",").map((option) => option.trim()))}
+                          placeholder="Dropdown options"
+                        />
+                        <label className="setup-toggle laboratory-field-required">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(field.required)}
+                            onChange={(event) => handleTemplateFieldChange(index, "required", event.target.checked)}
+                          />
+                          Required
+                        </label>
+                        <button type="button" className="icon-text-btn" onClick={() => removeTemplateField(index)}>
+                          Remove
+                        </button>
+                      </article>
+                    ))}
                   </div>
 
-                  {templateForm.fields.map((field, index) => (
-                    <article className="laboratory-field-row" key={index}>
-                      <input
-                        value={field.label}
-                        onChange={(event) => handleTemplateFieldChange(index, "label", event.target.value)}
-                        placeholder="Field label"
-                        required
-                      />
-                      <input
-                        value={field.key}
-                        onChange={(event) => handleTemplateFieldChange(index, "key", event.target.value.replace(/\s+/g, "_").toLowerCase())}
-                        placeholder="field_key"
-                        required
-                      />
-                      <select
-                        value={field.type}
-                        onChange={(event) => handleTemplateFieldChange(index, "type", event.target.value as LaboratoryFieldType)}
+                  <label>
+                    Notes
+                    <textarea
+                      rows={3}
+                      value={templateForm.notes}
+                      onChange={(event) => setTemplateForm((current) => ({ ...current, notes: event.target.value }))}
+                      placeholder="Report note or processing instruction"
+                    />
+                  </label>
+
+                  <label className="setup-toggle">
+                    <input
+                      type="checkbox"
+                      checked={templateForm.isActive}
+                      onChange={(event) => setTemplateForm((current) => ({ ...current, isActive: event.target.checked }))}
+                    />
+                    Active template
+                  </label>
+
+                  <div className="setup-actions">
+                    {editingTemplate && (
+                      <button
+                        type="button"
+                        className="icon-text-btn"
+                        onClick={() => {
+                          setEditingTemplate(null);
+                          setTemplateForm(emptyTemplateForm);
+                        }}
                       >
-                        <option value="text">Text</option>
-                        <option value="number">Number</option>
-                        <option value="select">Dropdown</option>
-                        <option value="textarea">Long text</option>
-                      </select>
-                      <input
-                        value={field.unit ?? ""}
-                        onChange={(event) => handleTemplateFieldChange(index, "unit", event.target.value)}
-                        placeholder="Unit"
-                      />
-                      <input
-                        value={field.referenceRange ?? ""}
-                        onChange={(event) => handleTemplateFieldChange(index, "referenceRange", event.target.value)}
-                        placeholder="Reference"
-                      />
-                      <input
-                        value={(field.options ?? []).join(", ")}
-                        onChange={(event) => handleTemplateFieldChange(index, "options", event.target.value.split(",").map((option) => option.trim()))}
-                        placeholder="Dropdown options"
-                      />
-                      <label className="setup-toggle laboratory-field-required">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(field.required)}
-                          onChange={(event) => handleTemplateFieldChange(index, "required", event.target.checked)}
-                        />
-                        Required
-                      </label>
-                      <button type="button" className="icon-text-btn" onClick={() => removeTemplateField(index)}>
-                        Remove
+                        Cancel
                       </button>
-                    </article>
-                  ))}
-                </div>
-
-                <label>
-                  Notes
-                  <textarea
-                    rows={3}
-                    value={templateForm.notes}
-                    onChange={(event) => setTemplateForm((current) => ({ ...current, notes: event.target.value }))}
-                    placeholder="Report note or processing instruction"
-                  />
-                </label>
-
-                <label className="setup-toggle">
-                  <input
-                    type="checkbox"
-                    checked={templateForm.isActive}
-                    onChange={(event) => setTemplateForm((current) => ({ ...current, isActive: event.target.checked }))}
-                  />
-                  Active template
-                </label>
-
-                <div className="setup-actions">
-                  {editingTemplate && (
-                    <button
-                      type="button"
-                      className="icon-text-btn"
-                      onClick={() => {
-                        setEditingTemplate(null);
-                        setTemplateForm(emptyTemplateForm);
-                      }}
-                    >
-                      Cancel
+                    )}
+                    <button className="registration-submit" type="submit" disabled={saving || (!canCreate && !canUpdate)}>
+                      {saving ? "Saving..." : editingTemplate ? "Update Template" : "Add Template"}
+                      <FiSave />
                     </button>
-                  )}
-                  <button className="registration-submit" type="submit" disabled={saving || (!canCreate && !canUpdate)}>
-                    {saving ? "Saving..." : editingTemplate ? "Update Template" : "Add Template"}
-                    <FiSave />
-                  </button>
-                </div>
-              </form>
+                  </div>
+                </form>
+              )}
 
               <section className="setup-list-panel">
                 <div className="setup-list-header">
@@ -816,7 +833,7 @@ export default function LaboratoryPage() {
                         <p>{template.category || "General"} | {template.specimen || "Specimen not set"}</p>
                         <small>{template.fields.length} field(s) | {template.code || "No code"}</small>
                       </div>
-                      {canUpdate && (
+                      {canManageTemplates && canUpdate && (
                         <button type="button" className="icon-text-btn" onClick={() => startEditTemplate(template)}>
                           <FiEdit3 />
                           Edit

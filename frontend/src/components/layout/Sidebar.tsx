@@ -25,6 +25,7 @@ import {
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserInjured } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 import mdsLogo from "../../assets/logo.png";
+import { getUserDisplayName } from "../../utils/userDisplay";
 
 interface Props {
   collapsed: boolean;
@@ -52,7 +53,7 @@ const menus: MenuItem[] = [
   {
     title: "Dashboard",
     icon: <FiHome />,
-    path: "/",
+    path: "/dashboard",
   },
   {
     title: "Patients",
@@ -285,7 +286,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
         {!collapsed && (
           <>
             <strong>
-              {user?.firstName} {user?.lastName}
+              {getUserDisplayName(user)}
             </strong>
             <small>{user?.roles?.join(", ") || "Care team"}</small>
           </>

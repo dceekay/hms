@@ -524,6 +524,59 @@ img {
   transform: translateX(-50%);
 }
 
+/* Partner marquee */
+
+.partners-marquee {
+  width: min(1180px, calc(100% - 60px));
+  margin: -18px auto 0;
+  padding: 18px 0;
+  overflow: hidden;
+  border: 1px solid rgba(3, 29, 73, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 40px rgba(3, 29, 73, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.partners-track {
+  display: flex;
+  width: max-content;
+  gap: 14px;
+  padding: 0 12px;
+  animation: partner-scroll 18s linear infinite;
+}
+
+.partner-pill {
+  min-width: 140px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: rgba(237, 245, 251, 0.95);
+  color: var(--mds-deep-navy);
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.partner-pill img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: white;
+}
+
+@keyframes partner-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* Quick actions */
 
 .quick-actions {
@@ -588,6 +641,51 @@ img {
 
 .quick-actions > a > svg {
   color: var(--mds-teal);
+}
+
+/* Showcase */
+
+.showcase-section {
+  padding-top: 86px;
+}
+
+.showcase-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.showcase-card {
+  overflow: hidden;
+  border: 1px solid var(--mds-border);
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 18px 40px rgba(3, 29, 73, 0.07);
+}
+
+.showcase-card img {
+  width: 100%;
+  height: 220px;
+  display: block;
+  object-fit: cover;
+}
+
+.showcase-card-body {
+  padding: 18px 18px 22px;
+}
+
+.showcase-card h3 {
+  margin: 0 0 8px;
+  color: var(--mds-deep-navy);
+  font-size: 0.98rem;
+}
+
+.showcase-card p {
+  margin: 0;
+  color: var(--mds-muted);
+  font-size: 0.77rem;
+  line-height: 1.68;
 }
 
 /* About */
@@ -1892,6 +1990,15 @@ img {
     right: 18px;
   }
 
+  .partners-marquee {
+    width: min(100% - 34px, 1180px);
+    border-radius: 22px;
+  }
+
+  .partner-pill {
+    min-width: 126px;
+  }
+
   .quick-actions {
     grid-template-columns: 1fr;
   }
@@ -2056,6 +2163,10 @@ img {
     padding: 17px;
   }
 
+  .showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .about-section {
     gap: 45px;
   }
@@ -2076,6 +2187,10 @@ img {
   }
 
   .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .showcase-grid {
     grid-template-columns: 1fr;
   }
 

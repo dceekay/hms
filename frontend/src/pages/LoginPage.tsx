@@ -39,7 +39,7 @@ function getPostLoginPath(roles: string[] = []) {
     return "/security/entry";
   }
 
-  return "/";
+  return "/dashboard";
 }
 
 export default function LoginPage() {

@@ -35,6 +35,14 @@ import mdsLogo from "../assets/logo.png";
 import medicalDirector from "../assets/dr.jpg";
 import patientJourneyEnglish from "../assets/patient-journey-en.png";
 import patientJourneyBilingual from "../assets/patient-journey-bilingual.png";
+import consultantPhoto from "../assets/consult.png";
+import specialistPhoto from "../assets/specialist.png";
+import laparoscopyPhoto from "../assets/lapo.png";
+import surgeryPhoto from "../assets/lab.png";
+import mriPhoto from "../assets/mri.png";
+import nhiaLogo from "../assets/NHIA.png";
+import kachimaLogo from "../assets/kschmalogo.png";
+import jichimaLogo from "../assets/jichima.png";
 
 import "../styles/landing.css";
 
@@ -201,6 +209,43 @@ const trustItems = [
   "Structured referrals and follow-up",
   "Emergency and ambulance support",
   "English and Hausa patient guidance",
+];
+
+const partnerLogos = [
+  { src: nhiaLogo, alt: "NHIA" },
+  { src: kachimaLogo, alt: "KACHIMA" },
+  { src: jichimaLogo, alt: "JICHIMA" },
+  { src: nhiaLogo, alt: "NHIA" },
+  { src: kachimaLogo, alt: "KACHIMA" },
+  { src: jichimaLogo, alt: "JICHIMA" },
+];
+
+const showcaseCards = [
+  {
+    title: "Consultant care",
+    description: "Precision-led outpatient evaluation and coordinated treatment planning.",
+    image: consultantPhoto,
+  },
+  {
+    title: "Specialist clinics",
+    description: "Focused expertise for complex, multi-disciplinary patient pathways.",
+    image: specialistPhoto,
+  },
+  {
+    title: "Laparoscopy",
+    description: "Modern minimal-access surgery with careful perioperative support.",
+    image: laparoscopyPhoto,
+  },
+  {
+    title: "Surgery",
+    description: "Safe theatre workflows and restorative recovery planning.",
+    image: surgeryPhoto,
+  },
+  {
+    title: "MRI diagnostics",
+    description: "High-resolution imaging support for clear clinical direction.",
+    image: mriPhoto,
+  },
 ];
 
 const reveal = {
@@ -393,6 +438,17 @@ export default function LandingPage() {
             Discover MDS Hospital
             <FaChevronDown />
           </a>
+        </section>
+
+        <section className="partners-marquee" aria-label="Partner and accreditation logos">
+          <div className="partners-track">
+            {[...partnerLogos, ...partnerLogos].map((partner, index) => (
+              <div className="partner-pill" key={`${partner.alt}-${index}`}>
+                <img src={partner.src} alt={partner.alt} />
+                <span>{partner.alt}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Quick actions */}
@@ -693,6 +749,36 @@ export default function LandingPage() {
               and the terms of the patient’s scheme. Some specialised services
               may attract separate billing.
             </p>
+          </div>
+        </section>
+
+        <section className="showcase-section page-section">
+          <div className="section-heading centered-heading">
+            <p className="eyebrow">Modern clinical experience</p>
+            <h2>Care pathways presented with clarity, motion, and confidence.</h2>
+            <p>
+              From consultant-led reviews to surgical and imaging services, every experience is crafted to feel calm, modern, and reassuring.
+            </p>
+          </div>
+
+          <div className="showcase-grid">
+            {showcaseCards.map((card, index) => (
+              <motion.article
+                key={card.title}
+                className="showcase-card"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.45, delay: index * 0.05 }}
+                whileHover={{ y: -8, scale: 1.01 }}
+              >
+                <img src={card.image} alt={card.title} />
+                <div className="showcase-card-body">
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
+                </div>
+              </motion.article>
+            ))}
           </div>
         </section>
 
