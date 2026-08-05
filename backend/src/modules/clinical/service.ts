@@ -136,105 +136,130 @@ export class ClinicalService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [
-      patients,
-      assignedAppointments,
-      recentEncounters,
-      recentPrescriptions,
-      pendingLabRequests,
-      completedLabRequests,
-      medications,
-      summary,
-    ] = await prisma.$transaction([
-      prisma.patient.findMany({
-        where: { deletedAt: null, status: "active" },
-        take: 80,
-        orderBy: { updatedAt: "desc" },
-        select: patientSelect(),
-      }),
-      prisma.appointment.findMany({
-        where: {
-          deletedAt: null,
-          doctorId,
-          status: { in: ["scheduled", "checked_in", "in_consultation"] },
-        },
-        take: 50,
-        orderBy: [{ scheduledFor: "asc" }, { createdAt: "desc" }],
-        include: appointmentInclude,
-      }),
-      prisma.clinicalEncounter.findMany({
-        take: 50,
-        orderBy: { startedAt: "desc" },
-        include: encounterInclude,
-      }),
-      prisma.prescription.findMany({
-        where: { doctorId },
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: prescriptionInclude,
-      }),
-      prisma.laboratoryRequest.findMany({
-        where: { status: { in: ["pending", "sample_collected", "in_progress"] } },
-        take: 15,
-        orderBy: { createdAt: "desc" },
-        include: {
-          patient: { select: patientSelect() },
-          template: true,
-        },
-      }),
-      prisma.laboratoryRequest.findMany({
-        where: { status: "completed" },
-        take: 15,
-        orderBy: { completedAt: "desc" },
-        include: {
-          patient: { select: patientSelect() },
-          template: true,
-          completedBy: { select: doctorSelect },
-        },
-      }),
-      prisma.medication.findMany({
-        where: { deletedAt: null, isActive: true },
-        take: 100,
-        orderBy: [{ name: "asc" }],
-      }),
-      prisma.clinicalEncounter.groupBy({
-        by: ["status"],
-        where: { doctorId },
-        _count: { status: true },
-      }),
-    ]);
+    try {
+      const [
+        patients,
+        assignedAppointments,
+        recentEncounters,
+        recentPrescriptions,
+        pendingLabRequests,
+        completedLabRequests,
+        medications,
+        summary,
+      ] = await prisma.$transaction([
+        prisma.patient.findMany({
+          where: { deletedAt: null, status: "active" },
+          take: 80,
+          orderBy: { updatedAt: "desc" },
+          select: patientSelect(),
+        }),
+        prisma.appointment.findMany({
+          where: {
+            deletedAt: null,
+            doctorId,
+            status: { in: ["scheduled", "checked_in", "in_consultation"] },
+          },
+          take: 50,
+          orderBy: [{ scheduledFor: "asc" }, { createdAt: "desc" }],
+          include: appointmentInclude,
+        }),
+        prisma.clinicalEncounter.findMany({
+          take: 50,
+          orderBy: { startedAt: "desc" },
+          include: encounterInclude,
+        }),
+        prisma.prescription.findMany({
+          where: { doctorId },
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: prescriptionInclude,
+        }),
+        prisma.laboratoryRequest.findMany({
+          where: { status: { in: ["pending", "sample_collected", "in_progress"] } },
+          take: 15,
+          orderBy: { createdAt: "desc" },
+          include: {
+            patient: { select: patientSelect() },
+            template: true,
+          },
+        }),
+        prisma.laboratoryRequest.findMany({
+          where: { status: "completed" },
+          take: 15,
+          orderBy: { completedAt: "desc" },
+          include: {
+            patient: { select: patientSelect() },
+            template: true,
+            completedBy: { select: doctorSelect },
+          },
+        }),
+        prisma.medication.findMany({
+          where: { deletedAt: null, isActive: true },
+          take: 100,
+          orderBy: [{ name: "asc" }],
+        }),
+        prisma.clinicalEncounter.groupBy({
+          by: ["status"],
+          where: { doctorId },
+          _count: { status: true },
+        }),
+      ]);
 
-    const todayEncounters = recentEncounters.filter(
-      (encounter) => encounter.startedAt >= today
-    ).length;
-    const appointmentPatients = assignedAppointments.map((appointment) => appointment.patient);
-    const patientMap = new Map(patients.map((patient) => [patient.id, patient]));
+      const todayEncounters = recentEncounters.filter(
+        (encounter) => encounter.startedAt >= today
+      ).length;
+      const appointmentPatients = assignedAppointments.map((appointment) => appointment.patient);
+      const patientMap = new Map(patients.map((patient) => [patient.id, patient]));
 
-    for (const patient of appointmentPatients) {
-      patientMap.set(patient.id, patient);
+      for (const patient of appointmentPatients) {
+        patientMap.set(patient.id, patient);
+      }
+
+      return {
+        patients: Array.from(patientMap.values()),
+        assignedAppointments,
+        recentEncounters,
+        recentPrescriptions,
+        pendingLabRequests,
+        completedLabRequests,
+        medications,
+        summary: {
+          activePatients: patients.length,
+          assignedAppointments: assignedAppointments.length,
+          todayEncounters,
+          pendingLabRequests: pendingLabRequests.length,
+          completedLabResults: completedLabRequests.length,
+          prescriptionsSent: recentPrescriptions.length,
+          encounters: summary.reduce<Record<string, number>>((accumulator, item) => {
+            accumulator[item.status] = item._count.status;
+            return accumulator;
+          }, {}),
+        },
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientInitializationError || error instanceof Prisma.PrismaClientKnownRequestError) {
+        return {
+          patients: [],
+          assignedAppointments: [],
+          recentEncounters: [],
+          recentPrescriptions: [],
+          pendingLabRequests: [],
+          completedLabRequests: [],
+          medications: [],
+          summary: {
+            activePatients: 0,
+            assignedAppointments: 0,
+            todayEncounters: 0,
+            pendingLabRequests: 0,
+            completedLabResults: 0,
+            prescriptionsSent: 0,
+            encounters: {},
+          },
+        };
+      }
+
+      throw error;
     }
-
-    return {
-      patients: Array.from(patientMap.values()),
-      assignedAppointments,
-      recentEncounters,
-      recentPrescriptions,
-      pendingLabRequests,
-      completedLabRequests,
-      medications,
-      summary: {
-        activePatients: patients.length,
-        assignedAppointments: assignedAppointments.length,
-        todayEncounters,
-        pendingLabRequests: pendingLabRequests.length,
-        completedLabResults: completedLabRequests.length,
-        prescriptionsSent: recentPrescriptions.length,
-        encounters: summary.reduce<Record<string, number>>((accumulator, item) => {
-          accumulator[item.status] = item._count.status;
-          return accumulator;
-        }, {}),
-      },
-    };
   }
 
   async listEncounters(params: ListClinicalQueryDto) {

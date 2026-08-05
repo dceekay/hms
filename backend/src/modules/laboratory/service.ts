@@ -41,6 +41,68 @@ function handleTemplatePrismaError(error: unknown): never {
   throw error;
 }
 
+function isDatabaseUnavailableError(error: unknown): boolean {
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return true;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return [
+      "P1000",
+      "P1001",
+      "P1002",
+      "P1003",
+      "P1004",
+      "P1005",
+      "P1006",
+      "P1007",
+      "P1008",
+      "P1009",
+      "P1010",
+      "P1011",
+      "P1012",
+      "P1013",
+      "P1014",
+      "P1015",
+      "P1016",
+      "P1017",
+      "P1018",
+      "P1019",
+      "P1020",
+      "P1021",
+      "P1022",
+      "P1023",
+      "P1024",
+      "P1025",
+      "P1026",
+      "P1027",
+      "P1028",
+      "P1029",
+      "P1030",
+      "P1100",
+      "P1101",
+      "P1102",
+      "P1103",
+      "P1104",
+      "P1105",
+    ].includes(error.code);
+  }
+
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    return [
+      "authentication failed against database server",
+      "can't reach database server",
+      "connection refused",
+      "connect econnrefused",
+      "timed out",
+      "server request failed",
+    ].some((fragment) => message.includes(fragment));
+  }
+
+  return false;
+}
+
 function templatePayload(payload: LaboratoryTemplateDto | UpdateLaboratoryTemplateDto) {
   return {
     ...payload,
@@ -73,25 +135,41 @@ export class LaboratoryService {
         : {}),
     };
 
-    const [items, total] = await prisma.$transaction([
-      prisma.laboratoryTemplate.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: [{ isActive: "desc" }, { name: "asc" }],
-      }),
-      prisma.laboratoryTemplate.count({ where }),
-    ]);
+    try {
+      const [items, total] = await prisma.$transaction([
+        prisma.laboratoryTemplate.findMany({
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: [{ isActive: "desc" }, { name: "asc" }],
+        }),
+        prisma.laboratoryTemplate.count({ where }),
+      ]);
 
-    return {
-      items,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        items,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        return {
+          items: [],
+          meta: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+
+      throw error;
+    }
   }
 
   async createTemplate(payload: LaboratoryTemplateDto) {
@@ -139,12 +217,145 @@ export class LaboratoryService {
         : {}),
     };
 
-    const [items, total, summary] = await prisma.$transaction([
-      prisma.laboratoryRequest.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: "desc" },
+    try {
+      const [items, total, summary] = await prisma.$transaction([
+        prisma.laboratoryRequest.findMany({
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
+            patient: true,
+            template: true,
+            recordedBy: {
+              select: { id: true, firstName: true, lastName: true, username: true },
+            },
+            completedBy: {
+              select: { id: true, firstName: true, lastName: true, username: true },
+            },
+          },
+        }),
+        prisma.laboratoryRequest.count({ where }),
+        prisma.laboratoryRequest.groupBy({
+          by: ["status"],
+          _count: { status: true },
+        }),
+      ]);
+
+      return {
+        items,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        summary: summary.reduce<Record<string, number>>((accumulator, item) => {
+          accumulator[item.status] = item._count.status;
+          return accumulator;
+        }, {}),
+      };
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        return {
+          items: [],
+          meta: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+          summary: {},
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  async createRequest(payload: CreateLaboratoryRequestDto, recordedById?: string) {
+    try {
+      const request = await prisma.$transaction(async (tx) => {
+        const [patient, template] = await Promise.all([
+          tx.patient.findFirst({
+            where: { id: payload.patientId, deletedAt: null },
+          }),
+          tx.laboratoryTemplate.findFirst({
+            where: { id: payload.templateId, deletedAt: null, isActive: true },
+          }),
+        ]);
+
+        if (!patient) {
+          throw new ApiError(HttpStatus.NOT_FOUND, "Patient not found");
+        }
+
+        if (!template) {
+          throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory template not found or inactive");
+        }
+
+        return tx.laboratoryRequest.create({
+          data: {
+            requestNumber: createLabRequestNumber(),
+            patientId: patient.id,
+            templateId: template.id,
+            clinicalNotes: cleanText(payload.clinicalNotes),
+            recordedById: recordedById ?? null,
+          },
+          include: {
+            patient: true,
+            template: true,
+            recordedBy: {
+              select: { id: true, firstName: true, lastName: true, username: true },
+            },
+            completedBy: {
+              select: { id: true, firstName: true, lastName: true, username: true },
+            },
+          },
+        });
+      });
+
+      await NotificationService.notifyRoles(["Laboratory", "Administrator", "Super Admin"], {
+        title: "New laboratory request",
+        message: `${request.template.name} requested for ${request.patient.firstName} ${request.patient.lastName}.`,
+        eventKey: "laboratory.request.created",
+        priority: "info",
+        linkUrl: "/laboratory",
+        metadata: {
+          requestId: request.id,
+          requestNumber: request.requestNumber,
+          patientId: request.patientId,
+        },
+      });
+
+      return request;
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
+      }
+
+      throw error;
+    }
+  }
+
+  async updateRequest(id: string, payload: UpdateLaboratoryRequestDto) {
+    try {
+      const data: Prisma.LaboratoryRequestUpdateInput = {};
+
+      if (payload.clinicalNotes !== undefined) {
+        data.clinicalNotes = cleanText(payload.clinicalNotes);
+      }
+
+      if (payload.status) {
+        data.status = payload.status as LaboratoryRequestStatus;
+      }
+
+      if (payload.sampleCollectedAt !== undefined) {
+        data.sampleCollectedAt = parseDate(payload.sampleCollectedAt);
+      }
+
+      return prisma.laboratoryRequest.update({
+        where: { id },
+        data,
         include: {
           patient: true,
           template: true,
@@ -155,55 +366,27 @@ export class LaboratoryService {
             select: { id: true, firstName: true, lastName: true, username: true },
           },
         },
-      }),
-      prisma.laboratoryRequest.count({ where }),
-      prisma.laboratoryRequest.groupBy({
-        by: ["status"],
-        _count: { status: true },
-      }),
-    ]);
+      });
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
+      }
 
-    return {
-      items,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      summary: summary.reduce<Record<string, number>>((accumulator, item) => {
-        accumulator[item.status] = item._count.status;
-        return accumulator;
-      }, {}),
-    };
+      throw error;
+    }
   }
 
-  async createRequest(payload: CreateLaboratoryRequestDto, recordedById?: string) {
-    const request = await prisma.$transaction(async (tx) => {
-      const [patient, template] = await Promise.all([
-        tx.patient.findFirst({
-          where: { id: payload.patientId, deletedAt: null },
-        }),
-        tx.laboratoryTemplate.findFirst({
-          where: { id: payload.templateId, deletedAt: null, isActive: true },
-        }),
-      ]);
-
-      if (!patient) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Patient not found");
-      }
-
-      if (!template) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory template not found or inactive");
-      }
-
-      return tx.laboratoryRequest.create({
+  async completeRequest(id: string, payload: CompleteLaboratoryRequestDto, completedById?: string) {
+    try {
+      const request = await prisma.laboratoryRequest.update({
+        where: { id },
         data: {
-          requestNumber: createLabRequestNumber(),
-          patientId: patient.id,
-          templateId: template.id,
-          clinicalNotes: cleanText(payload.clinicalNotes),
-          recordedById: recordedById ?? null,
+          status: LaboratoryRequestStatus.completed,
+          resultValues: payload.resultValues as Prisma.InputJsonValue,
+          interpretation: cleanText(payload.interpretation),
+          technicianNote: cleanText(payload.technicianNote),
+          completedAt: new Date(),
+          completedById: completedById ?? null,
         },
         include: {
           patient: true,
@@ -216,91 +399,27 @@ export class LaboratoryService {
           },
         },
       });
-    });
 
-    await NotificationService.notifyRoles(["Laboratory", "Administrator", "Super Admin"], {
-      title: "New laboratory request",
-      message: `${request.template.name} requested for ${request.patient.firstName} ${request.patient.lastName}.`,
-      eventKey: "laboratory.request.created",
-      priority: "info",
-      linkUrl: "/laboratory",
-      metadata: {
-        requestId: request.id,
-        requestNumber: request.requestNumber,
-        patientId: request.patientId,
-      },
-    });
+      await NotificationService.notifyRoles(["Doctor", "Receptionist", "Administrator", "Super Admin"], {
+        title: "Laboratory result completed",
+        message: `${request.template.name} result is ready for ${request.patient.firstName} ${request.patient.lastName}.`,
+        eventKey: "laboratory.result.completed",
+        priority: "success",
+        linkUrl: "/laboratory",
+        metadata: {
+          requestId: request.id,
+          requestNumber: request.requestNumber,
+          patientId: request.patientId,
+        },
+      });
 
-    return request;
-  }
+      return request;
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
+      }
 
-  async updateRequest(id: string, payload: UpdateLaboratoryRequestDto) {
-    const data: Prisma.LaboratoryRequestUpdateInput = {};
-
-    if (payload.clinicalNotes !== undefined) {
-      data.clinicalNotes = cleanText(payload.clinicalNotes);
+      throw error;
     }
-
-    if (payload.status) {
-      data.status = payload.status as LaboratoryRequestStatus;
-    }
-
-    if (payload.sampleCollectedAt !== undefined) {
-      data.sampleCollectedAt = parseDate(payload.sampleCollectedAt);
-    }
-
-    return prisma.laboratoryRequest.update({
-      where: { id },
-      data,
-      include: {
-        patient: true,
-        template: true,
-        recordedBy: {
-          select: { id: true, firstName: true, lastName: true, username: true },
-        },
-        completedBy: {
-          select: { id: true, firstName: true, lastName: true, username: true },
-        },
-      },
-    });
-  }
-
-  async completeRequest(id: string, payload: CompleteLaboratoryRequestDto, completedById?: string) {
-    const request = await prisma.laboratoryRequest.update({
-      where: { id },
-      data: {
-        status: LaboratoryRequestStatus.completed,
-        resultValues: payload.resultValues as Prisma.InputJsonValue,
-        interpretation: cleanText(payload.interpretation),
-        technicianNote: cleanText(payload.technicianNote),
-        completedAt: new Date(),
-        completedById: completedById ?? null,
-      },
-      include: {
-        patient: true,
-        template: true,
-        recordedBy: {
-          select: { id: true, firstName: true, lastName: true, username: true },
-        },
-        completedBy: {
-          select: { id: true, firstName: true, lastName: true, username: true },
-        },
-      },
-    });
-
-    await NotificationService.notifyRoles(["Doctor", "Receptionist", "Administrator", "Super Admin"], {
-      title: "Laboratory result completed",
-      message: `${request.template.name} result is ready for ${request.patient.firstName} ${request.patient.lastName}.`,
-      eventKey: "laboratory.result.completed",
-      priority: "success",
-      linkUrl: "/laboratory",
-      metadata: {
-        requestId: request.id,
-        requestNumber: request.requestNumber,
-        patientId: request.patientId,
-      },
-    });
-
-    return request;
   }
 }
