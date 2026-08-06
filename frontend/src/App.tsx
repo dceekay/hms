@@ -142,7 +142,7 @@ export default function App() {
         <Route
           path="/doctor"
           element={
-            <ProtectedRoute requiredPermissions={["clinical.read"]} requiredRoles={["Doctor"]}>
+            <ProtectedRoute requiredRoles={["Doctor"]}>
               <DoctorDashboardPage />
             </ProtectedRoute>
           }

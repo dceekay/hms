@@ -79,7 +79,7 @@ const menus: MenuItem[] = [
     icon: <FaHospitalUser />,
     children: [
       { title: "Laboratory", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
-      { title: "Doctor Desk", path: "/doctor", icon: <FaHospitalUser />, requiredRoles: ["Doctor"], requiredPermissions: ["clinical.read"] },
+      { title: "Doctor Desk", path: "/doctor", icon: <FaHospitalUser />, requiredRoles: ["Doctor"] },
       { title: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
     ],
   },

@@ -88,10 +88,13 @@ function medicineLabel(medication?: Medication | null) {
 
 function formatDate(value?: string | null) {
   if (!value) return "Not recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not recorded";
+
   return new Intl.DateTimeFormat("en-NG", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 const appointmentStatusLabels: Record<AppointmentStatus, string> = {
@@ -103,9 +106,38 @@ const appointmentStatusLabels: Record<AppointmentStatus, string> = {
   no_show: "No show",
 };
 
+const defaultWorkspaceSummary: ClinicalWorkspace["summary"] = {
+  activePatients: 0,
+  assignedAppointments: 0,
+  todayEncounters: 0,
+  pendingLabRequests: 0,
+  completedLabResults: 0,
+  prescriptionsSent: 0,
+  encounters: {},
+};
+
+function normalizeWorkspace(workspace: Partial<ClinicalWorkspace>): ClinicalWorkspace {
+  return {
+    patients: workspace.patients ?? [],
+    assignedAppointments: workspace.assignedAppointments ?? [],
+    recentEncounters: workspace.recentEncounters ?? [],
+    recentPrescriptions: workspace.recentPrescriptions ?? [],
+    pendingLabRequests: workspace.pendingLabRequests ?? [],
+    completedLabRequests: workspace.completedLabRequests ?? [],
+    medications: workspace.medications ?? [],
+    summary: {
+      ...defaultWorkspaceSummary,
+      ...(workspace.summary ?? {}),
+      encounters: workspace.summary?.encounters ?? {},
+    },
+  };
+}
+
 function ageFromDob(value?: string | null) {
   if (!value) return "Age not set";
   const dob = new Date(value);
+  if (Number.isNaN(dob.getTime())) return "Age not set";
+
   const today = new Date();
   let age = today.getFullYear() - dob.getFullYear();
   const monthDiff = today.getMonth() - dob.getMonth();
@@ -119,7 +151,7 @@ function ageFromDob(value?: string | null) {
 
 function initials(patient?: Patient | null) {
   if (!patient) return "PT";
-  return `${patient.firstName.charAt(0)}${patient.lastName.charAt(0)}`.toUpperCase();
+  return `${patient.firstName?.charAt(0) ?? ""}${patient.lastName?.charAt(0) ?? ""}`.toUpperCase() || "PT";
 }
 
 export default function DoctorDashboardPage() {
@@ -182,9 +214,9 @@ export default function DoctorDashboardPage() {
     ]);
 
     if (workspaceResult.workspace) {
-      const workspaceData = workspaceResult.workspace;
+      const workspaceData = normalizeWorkspace(workspaceResult.workspace);
       setWorkspace(workspaceData);
-      setPatientHistory(workspaceData.recentEncounters ?? []);
+      setPatientHistory(workspaceData.recentEncounters);
 
       if (!selectedPatient) {
         const appointments = workspaceData.assignedAppointments ?? [];
@@ -195,7 +227,7 @@ export default function DoctorDashboardPage() {
         if (firstPatient) {
           void selectPatient(
             firstPatient,
-            workspaceData.recentEncounters ?? [],
+            workspaceData.recentEncounters,
             firstAppointment ?? null
           );
         }
@@ -203,7 +235,7 @@ export default function DoctorDashboardPage() {
     }
 
     if (templatesResult.result) {
-      setTemplates(templatesResult.result.items);
+      setTemplates(templatesResult.result.items ?? []);
     }
 
     if (workspaceResult.error || templatesResult.error) {
@@ -265,7 +297,7 @@ export default function DoctorDashboardPage() {
 
   function handlePatientSearch(value: string) {
     setPatientSearch(value);
-    const patient = workspace?.patients.find((item) => patientOptionLabel(item) === value);
+    const patient = (workspace?.patients ?? []).find((item) => patientOptionLabel(item) === value);
 
     if (patient) {
       void selectPatient(patient);
@@ -273,7 +305,7 @@ export default function DoctorDashboardPage() {
   }
 
   function handleMedicationSelection(value: string) {
-    const medication = workspace?.medications.find((item) => medicineLabel(item) === value);
+    const medication = (workspace?.medications ?? []).find((item) => medicineLabel(item) === value);
 
     if (!medication) {
       setPrescriptionDraft((current) => ({
@@ -461,15 +493,7 @@ export default function DoctorDashboardPage() {
     window.setTimeout(() => window.print(), 80);
   }
 
-  const stats = workspace?.summary ?? {
-    activePatients: 0,
-    assignedAppointments: 0,
-    todayEncounters: 0,
-    pendingLabRequests: 0,
-    completedLabResults: 0,
-    prescriptionsSent: 0,
-    encounters: {},
-  };
+  const stats = workspace?.summary ?? defaultWorkspaceSummary;
   const assignedAppointments = workspace?.assignedAppointments ?? [];
   const patients = workspace?.patients ?? [];
 
@@ -548,19 +572,22 @@ export default function DoctorDashboardPage() {
               >
                 <button
                   type="button"
+                  disabled={!appointment.patient}
                   onClick={() =>
-                    void selectPatient(
-                      appointment.patient,
-                      workspace?.recentEncounters ?? [],
-                      appointment
-                    )
+                    appointment.patient
+                      ? void selectPatient(
+                          appointment.patient,
+                          workspace?.recentEncounters ?? [],
+                          appointment
+                        )
+                      : undefined
                   }
                 >
                   <span className={`doctor-status ${appointment.status}`}>
-                    {appointmentStatusLabels[appointment.status]}
+                    {appointmentStatusLabels[appointment.status] ?? appointment.status.replaceAll("_", " ")}
                   </span>
                   <strong>{patientName(appointment.patient)}</strong>
-                  <small>{appointment.patient.mrn ?? "MRN pending"}</small>
+                  <small>{appointment.patient?.mrn ?? "MRN pending"}</small>
                   <em>{appointment.reason || "General consultation"}</em>
                 </button>
 
@@ -840,7 +867,7 @@ export default function DoctorDashboardPage() {
                 />
               </label>
               <datalist id="doctor-medication-options">
-                {workspace?.medications.map((medication) => (
+                {(workspace?.medications ?? []).map((medication) => (
                   <option key={medication.id} value={medicineLabel(medication)} />
                 ))}
               </datalist>

@@ -20,7 +20,7 @@ const testAccounts = [
   { role: "Security", username: "security", password: "Security@123" },
 ];
 
-function getPostLoginPath(roles: string[] = []) {
+function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
   const normalizedRoles = roles.map((role) => role.toLowerCase());
 
   if (normalizedRoles.includes("pharmacist") || normalizedRoles.includes("pharmacy")) {
@@ -31,7 +31,7 @@ function getPostLoginPath(roles: string[] = []) {
     return "/laboratory";
   }
 
-  if (normalizedRoles.includes("doctor")) {
+  if (normalizedRoles.includes("doctor") && permissions.includes("clinical.read")) {
     return "/doctor";
   }
 
@@ -67,7 +67,7 @@ export default function LoginPage() {
 
     setToken(result.accessToken);
     setUser(result.user);
-    navigate(getPostLoginPath(result.user?.roles), { replace: true });
+    navigate(getPostLoginPath(result.user?.roles, result.user?.permissions), { replace: true });
   }
 
   const fillTestAccount = (account: (typeof testAccounts)[number]) => {
