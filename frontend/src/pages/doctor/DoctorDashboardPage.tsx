@@ -496,6 +496,8 @@ export default function DoctorDashboardPage() {
   const stats = workspace?.summary ?? defaultWorkspaceSummary;
   const assignedAppointments = workspace?.assignedAppointments ?? [];
   const patients = workspace?.patients ?? [];
+  const recentPrescriptions = workspace?.recentPrescriptions ?? [];
+  const pendingLabRequests = workspace?.pendingLabRequests ?? [];
 
   return (
     <AdminLayout>
@@ -1023,6 +1025,44 @@ export default function DoctorDashboardPage() {
                   {request.interpretation && <p>{request.interpretation}</p>}
                 </article>
               ))}
+            </div>
+          </div>
+
+          <div className="doctor-panel">
+            <div className="doctor-panel-heading">
+              <div>
+                <span>Activity</span>
+                <h2>Doctor handoffs</h2>
+              </div>
+              <FiClipboard />
+            </div>
+
+            <div className="doctor-record-list">
+              {pendingLabRequests.slice(0, 3).map((request) => (
+                <article key={request.id} className="doctor-record-card slim">
+                  <div>
+                    <strong>{patientName(request.patient)}</strong>
+                    <span>{request.template?.name ?? "Lab request"} pending</span>
+                  </div>
+                  <span className={`doctor-status ${request.status}`}>{request.status.replaceAll("_", " ")}</span>
+                </article>
+              ))}
+
+              {recentPrescriptions.slice(0, 3).map((prescription) => (
+                <article key={prescription.id} className="doctor-record-card slim">
+                  <div>
+                    <strong>{patientName(prescription.patient)}</strong>
+                    <span>{prescription.prescriptionNumber}</span>
+                  </div>
+                  <span className={`doctor-status ${prescription.status}`}>
+                    {prescription.status.replaceAll("_", " ")}
+                  </span>
+                </article>
+              ))}
+
+              {pendingLabRequests.length === 0 && recentPrescriptions.length === 0 && (
+                <p>No lab or pharmacy handoffs yet.</p>
+              )}
             </div>
           </div>
         </section>

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   authenticate,
   authorizePermissions,
+  authorizePermissionsOrRoles,
 } from "../../shared/middleware/auth.middleware";
 import { ClinicalController } from "./controller";
 
@@ -12,18 +13,34 @@ router.use(authenticate);
 
 router.get(
   "/doctor-workspace",
-  authorizePermissions(["clinical.read"]),
+  authorizePermissionsOrRoles(["clinical.read"], ["Doctor", "Administrator", "Super Admin"]),
   controller.doctorWorkspace
 );
 
-router.get("/encounters", authorizePermissions(["clinical.read"]), controller.listEncounters);
-router.post("/encounters", authorizePermissions(["clinical.create"]), controller.createEncounter);
-router.patch("/encounters/:id", authorizePermissions(["clinical.update"]), controller.updateEncounter);
+router.get(
+  "/encounters",
+  authorizePermissionsOrRoles(["clinical.read"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.listEncounters
+);
+router.post(
+  "/encounters",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.createEncounter
+);
+router.patch(
+  "/encounters/:id",
+  authorizePermissionsOrRoles(["clinical.update"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.updateEncounter
+);
 
-router.get("/prescriptions", authorizePermissions(["prescriptions.read"]), controller.listPrescriptions);
+router.get(
+  "/prescriptions",
+  authorizePermissionsOrRoles(["prescriptions.read"], ["Doctor", "Pharmacist", "Administrator", "Super Admin"]),
+  controller.listPrescriptions
+);
 router.post(
   "/prescriptions",
-  authorizePermissions(["prescriptions.create"]),
+  authorizePermissionsOrRoles(["prescriptions.create"], ["Doctor", "Administrator", "Super Admin"]),
   controller.createPrescription
 );
 router.patch(

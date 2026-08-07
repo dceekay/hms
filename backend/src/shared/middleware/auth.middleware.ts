@@ -82,3 +82,34 @@ export function authorizePermissions(requiredPermissions: string[]) {
     next();
   };
 }
+
+export function authorizePermissionsOrRoles(
+  requiredPermissions: string[],
+  fallbackRoles: string[]
+) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    const hasFallbackRole = (user.roles ?? []).some((role) =>
+      fallbackRoles.includes(role)
+    );
+
+    if (hasFallbackRole) {
+      return next();
+    }
+
+    const hasPermission = requiredPermissions.every((permission) =>
+      (user.permissions ?? []).includes(permission)
+    );
+
+    if (!hasPermission) {
+      return next(new ApiError(HttpStatus.FORBIDDEN, "Insufficient permissions"));
+    }
+
+    next();
+  };
+}

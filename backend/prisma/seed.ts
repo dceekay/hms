@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -807,6 +807,22 @@ async function upsertTestUsers(
         roleId: roleMap[userData.role],
       },
     });
+
+    if (userData.role === "Doctor") {
+      await prisma.doctorProfile.upsert({
+        where: { userId: user.id },
+        update: {
+          doctorType: "medical_doctor",
+          specialty: "General Medicine",
+          deletedAt: null,
+        },
+        create: {
+          userId: user.id,
+          doctorType: "medical_doctor",
+          specialty: "General Medicine",
+        },
+      });
+    }
   }
 }
 
@@ -927,11 +943,204 @@ async function seedDemoPatient(insuranceProviderId: string) {
     insuranceCoverageStatus: "active",
   };
 
-  await prisma.patient.upsert({
+  return prisma.patient.upsert({
     where: { mrn: demoPatient.mrn },
     update: demoPatient,
     create: demoPatient,
   });
+}
+
+async function seedDemoDoctorWorkspace(patientId: string) {
+  const [doctor, receptionist, labTech, fbcTemplate, malariaTemplate, medication] =
+    await Promise.all([
+      prisma.user.findUnique({ where: { username: "drjohn" } }),
+      prisma.user.findUnique({ where: { username: "reception" } }),
+      prisma.user.findUnique({ where: { username: "labtech" } }),
+      prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-FBC" } }),
+      prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-MP" } }),
+      prisma.medication.findFirst({
+        where: {
+          name: "Paracetamol",
+          strength: "500mg",
+          dosageForm: "Tablet",
+        },
+      }),
+    ]);
+
+  if (!doctor) {
+    return;
+  }
+
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  await prisma.appointment.upsert({
+    where: { appointmentNumber: "MDS-APT-DEMO-001" },
+    update: {
+      patientId,
+      doctorId: doctor.id,
+      status: "checked_in",
+      scheduledFor: now,
+      checkedInAt: oneHourAgo,
+      reason: "Fever, headache, and body weakness",
+      notes: "Vitals checked at reception. Patient is ready for consultation.",
+      recordedById: receptionist?.id ?? doctor.id,
+      deletedAt: null,
+    },
+    create: {
+      appointmentNumber: "MDS-APT-DEMO-001",
+      patientId,
+      doctorId: doctor.id,
+      status: "checked_in",
+      scheduledFor: now,
+      checkedInAt: oneHourAgo,
+      reason: "Fever, headache, and body weakness",
+      notes: "Vitals checked at reception. Patient is ready for consultation.",
+      recordedById: receptionist?.id ?? doctor.id,
+    },
+  });
+
+  const encounter = await prisma.clinicalEncounter.upsert({
+    where: { encounterNumber: "MDSE-DEMO-001" },
+    update: {
+      patientId,
+      doctorId: doctor.id,
+      visitType: "General outpatient consultation",
+      chiefComplaint: "Intermittent fever and headache for three days",
+      history: "No convulsion. No known drug allergy. Reduced appetite reported.",
+      examination: "Alert, mildly febrile, no respiratory distress. Abdomen soft.",
+      diagnosis: "Suspected uncomplicated malaria",
+      remarks: "Patient counselled on hydration, fever monitoring, and return precautions.",
+      plan: "Request malaria parasite test and full blood count. Start antipyretic pending result.",
+      status: "completed",
+      startedAt: yesterday,
+      completedAt: new Date(yesterday.getTime() + 25 * 60 * 1000),
+    },
+    create: {
+      encounterNumber: "MDSE-DEMO-001",
+      patientId,
+      doctorId: doctor.id,
+      visitType: "General outpatient consultation",
+      chiefComplaint: "Intermittent fever and headache for three days",
+      history: "No convulsion. No known drug allergy. Reduced appetite reported.",
+      examination: "Alert, mildly febrile, no respiratory distress. Abdomen soft.",
+      diagnosis: "Suspected uncomplicated malaria",
+      remarks: "Patient counselled on hydration, fever monitoring, and return precautions.",
+      plan: "Request malaria parasite test and full blood count. Start antipyretic pending result.",
+      status: "completed",
+      startedAt: yesterday,
+      completedAt: new Date(yesterday.getTime() + 25 * 60 * 1000),
+    },
+  });
+
+  const prescription = await prisma.prescription.upsert({
+    where: { prescriptionNumber: "MDSPR-DEMO-001" },
+    update: {
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      status: "sent_to_pharmacy",
+      notes: "Dispense after pharmacist review.",
+    },
+    create: {
+      prescriptionNumber: "MDSPR-DEMO-001",
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      status: "sent_to_pharmacy",
+      notes: "Dispense after pharmacist review.",
+    },
+  });
+
+  await prisma.prescriptionItem.deleteMany({
+    where: { prescriptionId: prescription.id },
+  });
+
+  await prisma.prescriptionItem.create({
+    data: {
+      prescriptionId: prescription.id,
+      medicationId: medication?.id,
+      medicationName: "Paracetamol",
+      strength: "500mg",
+      dosageForm: "Tablet",
+      dose: "1 tablet",
+      frequency: "Every 8 hours",
+      duration: "3 days",
+      quantity: 9,
+      instructions: "Take after meals. Return if fever persists.",
+    },
+  });
+
+  if (fbcTemplate) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-001" },
+      update: {
+        patientId,
+        templateId: fbcTemplate.id,
+        status: "completed",
+        clinicalNotes: "Baseline blood count for febrile illness.",
+        resultValues: {
+          hb: "12.8",
+          pcv: "38",
+          wbc: "6.2",
+          platelets: "242",
+        },
+        interpretation: "Full blood count is within acceptable range.",
+        technicianNote: "Sample processed successfully.",
+        sampleCollectedAt: yesterday,
+        completedAt: new Date(yesterday.getTime() + 90 * 60 * 1000),
+        recordedById: doctor.id,
+        completedById: labTech?.id ?? doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-001",
+        patientId,
+        templateId: fbcTemplate.id,
+        status: "completed",
+        clinicalNotes: "Baseline blood count for febrile illness.",
+        resultValues: {
+          hb: "12.8",
+          pcv: "38",
+          wbc: "6.2",
+          platelets: "242",
+        },
+        interpretation: "Full blood count is within acceptable range.",
+        technicianNote: "Sample processed successfully.",
+        sampleCollectedAt: yesterday,
+        completedAt: new Date(yesterday.getTime() + 90 * 60 * 1000),
+        recordedById: doctor.id,
+        completedById: labTech?.id ?? doctor.id,
+      },
+    });
+  }
+
+  if (malariaTemplate) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-002" },
+      update: {
+        patientId,
+        templateId: malariaTemplate.id,
+        status: "pending",
+        clinicalNotes: "Repeat malaria test if symptoms persist.",
+        resultValues: Prisma.JsonNull,
+        interpretation: null,
+        technicianNote: null,
+        sampleCollectedAt: null,
+        completedAt: null,
+        recordedById: doctor.id,
+        completedById: null,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-002",
+        patientId,
+        templateId: malariaTemplate.id,
+        status: "pending",
+        clinicalNotes: "Repeat malaria test if symptoms persist.",
+        recordedById: doctor.id,
+      },
+    });
+  }
 }
 
 async function seedDemoMedications() {
@@ -1036,10 +1245,11 @@ async function main() {
   const { insuranceProvider, serviceMap } = await seedSetupData();
 
   await upsertTestUsers(roleMap, serviceMap);
-  await seedDemoPatient(insuranceProvider.id);
+  const demoPatient = await seedDemoPatient(insuranceProvider.id);
   await seedDemoMedications();
   await seedDemoInventoryItems();
   await seedDemoLaboratoryTemplates();
+  await seedDemoDoctorWorkspace(demoPatient.id);
 
   console.log("Database Seeded Successfully");
 }
