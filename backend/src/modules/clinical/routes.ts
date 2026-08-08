@@ -49,4 +49,26 @@ router.patch(
   controller.updatePrescriptionStatus
 );
 
+router.post(
+  "/admission-requests",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.createAdmissionRequest
+);
+router.patch(
+  "/admission-requests/:id/status",
+  authorizePermissionsOrRoles(["clinical.update"], ["Doctor", "Nurse", "Administrator", "Super Admin"]),
+  controller.updateAdmissionRequestStatus
+);
+
+router.post(
+  "/referrals",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.createReferral
+);
+router.patch(
+  "/referrals/:id/status",
+  authorizePermissionsOrRoles(["clinical.update"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.updateReferralStatus
+);
+
 export default router;

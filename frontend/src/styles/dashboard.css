@@ -4203,6 +4203,7 @@
   .pharmacy-page,
   .inventory-page,
   .laboratory-page,
+  .doctor-page,
   .semsas-page,
   .rbac-page,
   .doctor-admin-page {
@@ -4216,6 +4217,7 @@
   .pharmacy-page *,
   .inventory-page *,
   .laboratory-page *,
+  .doctor-page *,
   .semsas-page *,
   .rbac-page *,
   .doctor-admin-page * {
@@ -4458,6 +4460,60 @@
   align-items: start;
 }
 
+.doctor-workbench {
+  overflow: hidden;
+}
+
+.doctor-tool-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.doctor-tool-tabs button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #cbd5e1;
+  background: transparent;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.doctor-tool-tabs button:hover,
+.doctor-tool-tabs button.active {
+  transform: translateY(-1px);
+  border-color: rgba(34, 211, 238, 0.36);
+  color: #ffffff;
+  background: rgba(14, 165, 233, 0.18);
+}
+
+.doctor-tool-tabs svg {
+  flex: 0 0 auto;
+  color: #38bdf8;
+}
+
+.doctor-action-form {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
 .doctor-side-stack {
   display: grid;
   gap: 16px;
@@ -4477,6 +4533,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.doctor-panel-heading > div {
+  min-width: 0;
+}
+
+.doctor-panel-heading h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .doctor-panel-heading svg {
@@ -4643,7 +4710,7 @@
 
 .doctor-history-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -4677,6 +4744,22 @@
 .doctor-status.completed {
   color: #bbf7d0;
   background: rgba(22, 163, 74, 0.18);
+}
+
+.doctor-status.pending,
+.doctor-status.scheduled,
+.doctor-status.sent_to_pharmacy {
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.doctor-status.approved,
+.doctor-status.admitted,
+.doctor-status.sent,
+.doctor-status.sample_collected,
+.doctor-status.in_progress {
+  color: #fde68a;
+  background: rgba(217, 119, 6, 0.18);
 }
 
 .doctor-status.cancelled {
@@ -4862,6 +4945,22 @@
     grid-template-columns: 1fr;
   }
 
+  .doctor-tool-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+
+  .doctor-tool-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doctor-tool-tabs button {
+    flex: 0 0 auto;
+    min-width: 112px;
+  }
+
   .doctor-action-row > .command-btn,
   .doctor-panel > .command-btn {
     flex: 1 1 150px;
@@ -4883,6 +4982,11 @@
   .doctor-command,
   .doctor-patient-strip {
     padding: 12px;
+  }
+
+  .doctor-tool-tabs button {
+    min-width: 96px;
+    padding: 0 10px;
   }
 }
 

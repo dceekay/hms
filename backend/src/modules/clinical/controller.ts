@@ -2,11 +2,15 @@ import { NextFunction, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import {
+  createAdmissionRequestSchema,
   createEncounterSchema,
   createPrescriptionSchema,
+  createReferralSchema,
   listClinicalQuerySchema,
+  updateAdmissionRequestStatusSchema,
   updateEncounterSchema,
   updatePrescriptionStatusSchema,
+  updateReferralStatusSchema,
 } from "./dto";
 import { ClinicalService } from "./service";
 
@@ -96,6 +100,58 @@ export class ClinicalController extends BaseController {
       );
 
       this.ok(res, "Prescription status updated successfully", prescription);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createAdmissionRequest = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const admissionRequest = await this.clinicalService.createAdmissionRequest(
+        createAdmissionRequestSchema.parse(req.body),
+        req.user?.sub
+      );
+
+      this.created(res, "Admission request created successfully", admissionRequest);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateAdmissionRequestStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const admissionRequest = await this.clinicalService.updateAdmissionRequestStatus(
+        String(req.params.id),
+        updateAdmissionRequestStatusSchema.parse(req.body)
+      );
+
+      this.ok(res, "Admission request updated successfully", admissionRequest);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createReferral = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const referral = await this.clinicalService.createReferral(
+        createReferralSchema.parse(req.body),
+        req.user?.sub
+      );
+
+      this.created(res, "Referral created successfully", referral);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateReferralStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const referral = await this.clinicalService.updateReferralStatus(
+        String(req.params.id),
+        updateReferralStatusSchema.parse(req.body)
+      );
+
+      this.ok(res, "Referral updated successfully", referral);
     } catch (error) {
       next(error);
     }

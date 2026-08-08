@@ -951,7 +951,7 @@ async function seedDemoPatient(insuranceProviderId: string) {
 }
 
 async function seedDemoDoctorWorkspace(patientId: string) {
-  const [doctor, receptionist, labTech, fbcTemplate, malariaTemplate, medication] =
+  const [doctor, receptionist, labTech, fbcTemplate, malariaTemplate, medication, ward, bed] =
     await Promise.all([
       prisma.user.findUnique({ where: { username: "drjohn" } }),
       prisma.user.findUnique({ where: { username: "reception" } }),
@@ -965,6 +965,8 @@ async function seedDemoDoctorWorkspace(patientId: string) {
           dosageForm: "Tablet",
         },
       }),
+      prisma.ward.findUnique({ where: { name: "General Ward" } }),
+      prisma.bed.findUnique({ where: { bedNumber: "GW-101-A" } }),
     ]);
 
   if (!doctor) {
@@ -1141,6 +1143,64 @@ async function seedDemoDoctorWorkspace(patientId: string) {
       },
     });
   }
+
+  await prisma.clinicalAdmissionRequest.upsert({
+    where: { requestNumber: "MDSADM-DEMO-001" },
+    update: {
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      wardId: ward?.id,
+      bedId: bed?.id,
+      priority: "urgent",
+      status: "pending",
+      diagnosis: "Suspected malaria with dehydration risk",
+      reason: "Observe hydration and fever pattern if symptoms worsen.",
+      notes: "Reception or nursing team should confirm ward availability before admission.",
+    },
+    create: {
+      requestNumber: "MDSADM-DEMO-001",
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      wardId: ward?.id,
+      bedId: bed?.id,
+      priority: "urgent",
+      status: "pending",
+      diagnosis: "Suspected malaria with dehydration risk",
+      reason: "Observe hydration and fever pattern if symptoms worsen.",
+      notes: "Reception or nursing team should confirm ward availability before admission.",
+    },
+  });
+
+  await prisma.clinicalReferral.upsert({
+    where: { referralNumber: "MDSREF-DEMO-001" },
+    update: {
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      priority: "routine",
+      status: "pending",
+      destinationFacility: "MDS Specialist Clinic",
+      departmentOrSpecialty: "Internal Medicine",
+      reason: "Review if fever persists after initial treatment.",
+      clinicalSummary: "Patient had intermittent fever, headache, and mild dehydration symptoms.",
+      notes: "Send with recent FBC and malaria test result.",
+    },
+    create: {
+      referralNumber: "MDSREF-DEMO-001",
+      patientId,
+      doctorId: doctor.id,
+      encounterId: encounter.id,
+      priority: "routine",
+      status: "pending",
+      destinationFacility: "MDS Specialist Clinic",
+      departmentOrSpecialty: "Internal Medicine",
+      reason: "Review if fever persists after initial treatment.",
+      clinicalSummary: "Patient had intermittent fever, headache, and mild dehydration symptoms.",
+      notes: "Send with recent FBC and malaria test result.",
+    },
+  });
 }
 
 async function seedDemoMedications() {

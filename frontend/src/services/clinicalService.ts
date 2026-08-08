@@ -1,10 +1,14 @@
 import api from "./api";
 import type {
+  AdmissionRequestFormValues,
+  ClinicalAdmissionRequest,
   ClinicalEncounter,
   ClinicalEncounterFormValues,
+  ClinicalReferral,
   ClinicalWorkspace,
   Prescription,
   PrescriptionFormValues,
+  ReferralFormValues,
 } from "../types/clinical";
 
 type WorkspaceResponse = {
@@ -68,6 +72,32 @@ function cleanPrescriptionPayload(values: PrescriptionFormValues) {
       quantity: item.quantity ? Number(item.quantity) : undefined,
       instructions: item.instructions.trim() || undefined,
     })),
+  };
+}
+
+function cleanAdmissionPayload(values: AdmissionRequestFormValues) {
+  return {
+    patientId: values.patientId,
+    encounterId: values.encounterId || undefined,
+    wardId: values.wardId || undefined,
+    bedId: values.bedId || undefined,
+    priority: values.priority,
+    diagnosis: values.diagnosis.trim() || undefined,
+    reason: values.reason.trim(),
+    notes: values.notes.trim() || undefined,
+  };
+}
+
+function cleanReferralPayload(values: ReferralFormValues) {
+  return {
+    patientId: values.patientId,
+    encounterId: values.encounterId || undefined,
+    priority: values.priority,
+    destinationFacility: values.destinationFacility.trim(),
+    departmentOrSpecialty: values.departmentOrSpecialty.trim() || undefined,
+    reason: values.reason.trim(),
+    clinicalSummary: values.clinicalSummary.trim() || undefined,
+    notes: values.notes.trim() || undefined,
   };
 }
 
@@ -177,6 +207,40 @@ export async function createPrescription(values: PrescriptionFormValues) {
     return {
       prescription: null,
       error: getErrorMessage(error, "Unable to send prescription."),
+    };
+  }
+}
+
+export async function createAdmissionRequest(values: AdmissionRequestFormValues) {
+  try {
+    const response = await api.post<{ data: ClinicalAdmissionRequest }>(
+      "/clinical/admission-requests",
+      cleanAdmissionPayload(values)
+    );
+
+    return { admissionRequest: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      admissionRequest: null,
+      error: getErrorMessage(error, "Unable to request admission or ward."),
+    };
+  }
+}
+
+export async function createReferral(values: ReferralFormValues) {
+  try {
+    const response = await api.post<{ data: ClinicalReferral }>(
+      "/clinical/referrals",
+      cleanReferralPayload(values)
+    );
+
+    return { referral: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      referral: null,
+      error: getErrorMessage(error, "Unable to create referral."),
     };
   }
 }

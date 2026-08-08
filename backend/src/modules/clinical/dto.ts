@@ -49,8 +49,42 @@ export const updatePrescriptionStatusSchema = z.object({
   status: z.enum(["sent_to_pharmacy", "dispensed", "cancelled"]),
 });
 
+export const createAdmissionRequestSchema = z.object({
+  patientId: z.string().uuid(),
+  encounterId: z.string().uuid().optional().or(z.literal("")),
+  wardId: z.string().uuid().optional().or(z.literal("")),
+  bedId: z.string().uuid().optional().or(z.literal("")),
+  priority: z.enum(["routine", "urgent", "emergency"]).default("routine"),
+  diagnosis: optionalText(500),
+  reason: z.string().trim().min(2, "Reason is required").max(500),
+  notes: optionalText(1000),
+});
+
+export const updateAdmissionRequestStatusSchema = z.object({
+  status: z.enum(["pending", "approved", "admitted", "cancelled"]),
+});
+
+export const createReferralSchema = z.object({
+  patientId: z.string().uuid(),
+  encounterId: z.string().uuid().optional().or(z.literal("")),
+  priority: z.enum(["routine", "urgent", "emergency"]).default("routine"),
+  destinationFacility: z.string().trim().min(2, "Destination facility is required").max(180),
+  departmentOrSpecialty: optionalText(150),
+  reason: z.string().trim().min(2, "Referral reason is required").max(500),
+  clinicalSummary: optionalText(1500),
+  notes: optionalText(1000),
+});
+
+export const updateReferralStatusSchema = z.object({
+  status: z.enum(["pending", "sent", "completed", "cancelled"]),
+});
+
 export type ListClinicalQueryDto = z.infer<typeof listClinicalQuerySchema>;
 export type CreateEncounterDto = z.infer<typeof createEncounterSchema>;
 export type UpdateEncounterDto = z.infer<typeof updateEncounterSchema>;
 export type CreatePrescriptionDto = z.infer<typeof createPrescriptionSchema>;
 export type UpdatePrescriptionStatusDto = z.infer<typeof updatePrescriptionStatusSchema>;
+export type CreateAdmissionRequestDto = z.infer<typeof createAdmissionRequestSchema>;
+export type UpdateAdmissionRequestStatusDto = z.infer<typeof updateAdmissionRequestStatusSchema>;
+export type CreateReferralDto = z.infer<typeof createReferralSchema>;
+export type UpdateReferralStatusDto = z.infer<typeof updateReferralStatusSchema>;

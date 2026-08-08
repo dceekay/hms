@@ -4,11 +4,15 @@ import { prisma } from "../../database/prisma";
 import { ApiError } from "../../shared/errors/ApiError";
 import { NotificationService } from "../notifications/service";
 import {
+  CreateAdmissionRequestDto,
   CreateEncounterDto,
   CreatePrescriptionDto,
+  CreateReferralDto,
   ListClinicalQueryDto,
+  UpdateAdmissionRequestStatusDto,
   UpdateEncounterDto,
   UpdatePrescriptionStatusDto,
+  UpdateReferralStatusDto,
 } from "./dto";
 
 function cleanText(value?: string | null) {
@@ -25,6 +29,18 @@ function createPrescriptionNumber() {
   const year = new Date().getFullYear();
   const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `MDSPR-${year}-${suffix}`;
+}
+
+function createAdmissionRequestNumber() {
+  const year = new Date().getFullYear();
+  const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `MDSADM-${year}-${suffix}`;
+}
+
+function createReferralNumber() {
+  const year = new Date().getFullYear();
+  const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `MDSREF-${year}-${suffix}`;
 }
 
 function patientSelect() {
@@ -115,6 +131,20 @@ const prescriptionInclude = {
   },
 };
 
+const admissionRequestInclude = {
+  patient: { select: patientSelect() },
+  doctor: { select: doctorSelect },
+  encounter: true,
+  ward: true,
+  bed: true,
+};
+
+const referralInclude = {
+  patient: { select: patientSelect() },
+  doctor: { select: doctorSelect },
+  encounter: true,
+};
+
 function mapEncounterPayload(payload: CreateEncounterDto | UpdateEncounterDto) {
   return {
     visitType: cleanText(payload.visitType),
@@ -145,6 +175,10 @@ export class ClinicalService {
         pendingLabRequests,
         completedLabRequests,
         medications,
+        admissionRequests,
+        referrals,
+        wards,
+        availableBeds,
         summary,
       ] = await prisma.$transaction([
         prisma.patient.findMany({
@@ -198,6 +232,31 @@ export class ClinicalService {
           take: 100,
           orderBy: [{ name: "asc" }],
         }),
+        prisma.clinicalAdmissionRequest.findMany({
+          where: { doctorId },
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: admissionRequestInclude,
+        }),
+        prisma.clinicalReferral.findMany({
+          where: { doctorId },
+          take: 20,
+          orderBy: { createdAt: "desc" },
+          include: referralInclude,
+        }),
+        prisma.ward.findMany({
+          where: { deletedAt: null, isActive: true },
+          orderBy: { name: "asc" },
+        }),
+        prisma.bed.findMany({
+          where: { isActive: true, status: "available" },
+          take: 50,
+          orderBy: { bedNumber: "asc" },
+          include: {
+            ward: true,
+            room: true,
+          },
+        }),
         prisma.clinicalEncounter.groupBy({
           by: ["status"],
           where: { doctorId },
@@ -223,6 +282,10 @@ export class ClinicalService {
         pendingLabRequests,
         completedLabRequests,
         medications,
+        admissionRequests,
+        referrals,
+        wards,
+        availableBeds,
         summary: {
           activePatients: patients.length,
           assignedAppointments: assignedAppointments.length,
@@ -230,6 +293,8 @@ export class ClinicalService {
           pendingLabRequests: pendingLabRequests.length,
           completedLabResults: completedLabRequests.length,
           prescriptionsSent: recentPrescriptions.length,
+          pendingAdmissionRequests: admissionRequests.filter((request) => request.status === "pending").length,
+          referralsSent: referrals.length,
           encounters: summary.reduce<Record<string, number>>((accumulator, item) => {
             accumulator[item.status] = item._count.status;
             return accumulator;
@@ -246,6 +311,10 @@ export class ClinicalService {
           pendingLabRequests: [],
           completedLabRequests: [],
           medications: [],
+          admissionRequests: [],
+          referrals: [],
+          wards: [],
+          availableBeds: [],
           summary: {
             activePatients: 0,
             assignedAppointments: 0,
@@ -253,6 +322,8 @@ export class ClinicalService {
             pendingLabRequests: 0,
             completedLabResults: 0,
             prescriptionsSent: 0,
+            pendingAdmissionRequests: 0,
+            referralsSent: 0,
             encounters: {},
           },
         };
@@ -473,6 +544,136 @@ export class ClinicalService {
       where: { id },
       data: { status: payload.status as PrescriptionStatus },
       include: prescriptionInclude,
+    });
+  }
+
+  async createAdmissionRequest(payload: CreateAdmissionRequestDto, doctorId?: string) {
+    if (!doctorId) {
+      throw new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized");
+    }
+
+    const patient = await prisma.patient.findFirst({
+      where: { id: payload.patientId, deletedAt: null, status: "active" },
+    });
+
+    if (!patient) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "Active patient not found");
+    }
+
+    const encounterId = cleanText(payload.encounterId);
+
+    if (encounterId) {
+      const encounter = await prisma.clinicalEncounter.findFirst({
+        where: { id: encounterId, patientId: patient.id, doctorId },
+      });
+
+      if (!encounter) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Clinical encounter not found for this patient");
+      }
+    }
+
+    const admissionRequest = await prisma.clinicalAdmissionRequest.create({
+      data: {
+        requestNumber: createAdmissionRequestNumber(),
+        patientId: patient.id,
+        doctorId,
+        encounterId,
+        wardId: cleanText(payload.wardId),
+        bedId: cleanText(payload.bedId),
+        priority: payload.priority,
+        diagnosis: cleanText(payload.diagnosis),
+        reason: payload.reason.trim(),
+        notes: cleanText(payload.notes),
+      },
+      include: admissionRequestInclude,
+    });
+
+    await NotificationService.notifyRoles(["Receptionist", "Nurse", "Administrator", "Super Admin"], {
+      title: "Admission requested",
+      message: `${patient.firstName} ${patient.lastName} has a ward or bed request from doctor desk.`,
+      eventKey: "clinical.admission.requested",
+      priority: payload.priority === "emergency" ? "critical" : "info",
+      linkUrl: "/setup/wards",
+      metadata: {
+        admissionRequestId: admissionRequest.id,
+        patientId: patient.id,
+        doctorId,
+      },
+    });
+
+    return admissionRequest;
+  }
+
+  async updateAdmissionRequestStatus(id: string, payload: UpdateAdmissionRequestStatusDto) {
+    return prisma.clinicalAdmissionRequest.update({
+      where: { id },
+      data: { status: payload.status },
+      include: admissionRequestInclude,
+    });
+  }
+
+  async createReferral(payload: CreateReferralDto, doctorId?: string) {
+    if (!doctorId) {
+      throw new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized");
+    }
+
+    const patient = await prisma.patient.findFirst({
+      where: { id: payload.patientId, deletedAt: null, status: "active" },
+    });
+
+    if (!patient) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "Active patient not found");
+    }
+
+    const encounterId = cleanText(payload.encounterId);
+
+    if (encounterId) {
+      const encounter = await prisma.clinicalEncounter.findFirst({
+        where: { id: encounterId, patientId: patient.id, doctorId },
+      });
+
+      if (!encounter) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Clinical encounter not found for this patient");
+      }
+    }
+
+    const referral = await prisma.clinicalReferral.create({
+      data: {
+        referralNumber: createReferralNumber(),
+        patientId: patient.id,
+        doctorId,
+        encounterId,
+        priority: payload.priority,
+        destinationFacility: payload.destinationFacility.trim(),
+        departmentOrSpecialty: cleanText(payload.departmentOrSpecialty),
+        reason: payload.reason.trim(),
+        clinicalSummary: cleanText(payload.clinicalSummary),
+        notes: cleanText(payload.notes),
+      },
+      include: referralInclude,
+    });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "Referral created",
+      message: `${patient.firstName} ${patient.lastName} has a referral from doctor desk.`,
+      eventKey: "clinical.referral.created",
+      priority: payload.priority === "emergency" ? "critical" : "info",
+      linkUrl: "/doctor",
+      metadata: {
+        referralId: referral.id,
+        patientId: patient.id,
+        doctorId,
+      },
+    });
+
+    return referral;
+  }
+
+  async updateReferralStatus(id: string, payload: UpdateReferralStatusDto) {
+    return prisma.clinicalReferral.update({
+      where: { id },
+      data: { status: payload.status },
+      include: referralInclude,
     });
   }
 }

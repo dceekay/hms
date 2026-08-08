@@ -145,6 +145,26 @@ enum PrescriptionStatus {
   cancelled
 }
 
+enum ClinicalRequestPriority {
+  routine
+  urgent
+  emergency
+}
+
+enum AdmissionRequestStatus {
+  pending
+  approved
+  admitted
+  cancelled
+}
+
+enum ReferralStatus {
+  pending
+  sent
+  completed
+  cancelled
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // USER
 ///////////////////////////////////////////////////////////////////////////////
@@ -224,6 +244,10 @@ model User {
 
   doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
 
+  admissionRequests ClinicalAdmissionRequest[] @relation("AdmissionRequestsDoctor")
+
+  referrals ClinicalReferral[] @relation("ClinicalReferralsDoctor")
+
   appointmentsAsDoctor Appointment[] @relation("AppointmentDoctor")
 
   appointmentsRecorded Appointment[] @relation("AppointmentRecordedBy")
@@ -293,6 +317,10 @@ model Patient {
   clinicalEncounters ClinicalEncounter[]
 
   prescriptions Prescription[]
+
+  admissionRequests ClinicalAdmissionRequest[]
+
+  referrals ClinicalReferral[]
 
   appointments Appointment[]
 
@@ -389,6 +417,8 @@ model Ward {
   rooms Room[]
   beds  Bed[]
 
+  admissionRequests ClinicalAdmissionRequest[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -430,6 +460,8 @@ model Bed {
 
   roomId String? @db.Char(36)
   room   Room?   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+
+  admissionRequests ClinicalAdmissionRequest[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -678,6 +710,10 @@ model ClinicalEncounter {
 
   prescriptions Prescription[]
 
+  admissionRequests ClinicalAdmissionRequest[]
+
+  referrals ClinicalReferral[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -742,6 +778,82 @@ model PrescriptionItem {
   @@index([prescriptionId])
   @@index([medicationId])
   @@map("prescription_items")
+}
+
+model ClinicalAdmissionRequest {
+  id String @id @default(uuid()) @db.Char(36)
+
+  requestNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  doctorId String @db.Char(36)
+  doctor   User   @relation("AdmissionRequestsDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+
+  encounterId String?            @db.Char(36)
+  encounter   ClinicalEncounter? @relation(fields: [encounterId], references: [id], onDelete: SetNull)
+
+  wardId String? @db.Char(36)
+  ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: SetNull)
+
+  bedId String? @db.Char(36)
+  bed   Bed?    @relation(fields: [bedId], references: [id], onDelete: SetNull)
+
+  priority ClinicalRequestPriority @default(routine)
+  status   AdmissionRequestStatus  @default(pending)
+
+  diagnosis String? @db.VarChar(500)
+  reason    String  @db.VarChar(500)
+  notes     String? @db.VarChar(1000)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([encounterId])
+  @@index([wardId])
+  @@index([bedId])
+  @@index([priority])
+  @@index([status])
+  @@index([createdAt])
+  @@map("clinical_admission_requests")
+}
+
+model ClinicalReferral {
+  id String @id @default(uuid()) @db.Char(36)
+
+  referralNumber String @unique @db.VarChar(50)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  doctorId String @db.Char(36)
+  doctor   User   @relation("ClinicalReferralsDoctor", fields: [doctorId], references: [id], onDelete: Restrict)
+
+  encounterId String?            @db.Char(36)
+  encounter   ClinicalEncounter? @relation(fields: [encounterId], references: [id], onDelete: SetNull)
+
+  status   ReferralStatus          @default(pending)
+  priority ClinicalRequestPriority @default(routine)
+
+  destinationFacility String @db.VarChar(180)
+  departmentOrSpecialty String? @db.VarChar(150)
+  reason String @db.VarChar(500)
+  clinicalSummary String? @db.VarChar(1500)
+  notes String? @db.VarChar(1000)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([encounterId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("clinical_referrals")
 }
 
 model LaboratoryTemplate {
