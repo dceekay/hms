@@ -1,11 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   FiCreditCard,
+  FiPrinter,
   FiRefreshCw,
   FiSave,
   FiSearch,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
+import mdsLogo from "../../assets/logo.png";
 import {
   createPatientBill,
   fetchPatientBills,
@@ -56,6 +58,7 @@ export default function BillingPage() {
     pendingAmount: 0,
     paidAmount: 0,
   });
+  const [selectedBill, setSelectedBill] = useState<PatientBill | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +138,11 @@ export default function BillingPage() {
     setSuccess(`Bill ${result.bill.invoiceNumber} created.`);
     setForm(emptyForm);
     await loadData();
+  };
+
+  const handlePrintBill = (bill: PatientBill) => {
+    setSelectedBill(bill);
+    window.setTimeout(() => window.print(), 80);
   };
 
   return (
@@ -326,11 +334,98 @@ export default function BillingPage() {
                       <small>{bill.patient.mrn || "No MRN"}</small>
                     </div>
                     <strong>{money(bill.totalAmount)}</strong>
+                    <button type="button" className="icon-text-btn" onClick={() => handlePrintBill(bill)}>
+                      <FiPrinter />
+                      {bill.paymentStatus === "paid" ? "Receipt" : "Invoice"}
+                    </button>
                   </article>
                 ))}
               </div>
             </section>
           </section>
+
+          {selectedBill && (
+            <section className="pharmacy-print-template billing-print-template" aria-label="Printable patient bill">
+              <div className="pharmacy-print-header">
+                <img src={mdsLogo} alt="MDS Hospital" />
+                <div>
+                  <h2>MDS Hospital</h2>
+                  <p>{selectedBill.paymentStatus === "paid" ? "Patient Receipt" : "Patient Invoice"}</p>
+                </div>
+                <span>{selectedBill.invoiceNumber}</span>
+              </div>
+
+              <div className="pharmacy-print-meta">
+                <span>
+                  <small>Patient</small>
+                  <strong>{patientName(selectedBill.patient)}</strong>
+                </span>
+                <span>
+                  <small>MRN</small>
+                  <strong>{selectedBill.patient.mrn || "N/A"}</strong>
+                </span>
+                <span>
+                  <small>Phone</small>
+                  <strong>{selectedBill.patient.phone || "N/A"}</strong>
+                </span>
+                <span>
+                  <small>Date</small>
+                  <strong>{new Date(selectedBill.billedAt).toLocaleString("en-NG")}</strong>
+                </span>
+                <span>
+                  <small>Status</small>
+                  <strong>{selectedBill.paymentStatus}</strong>
+                </span>
+                <span>
+                  <small>Insurance</small>
+                  <strong>{selectedBill.patient.insuranceProvider?.name || "Self pay"}</strong>
+                </span>
+                <span>
+                  <small>Recorded by</small>
+                  <strong>
+                    {selectedBill.recordedBy
+                      ? `${selectedBill.recordedBy.firstName} ${selectedBill.recordedBy.lastName}`
+                      : "System"}
+                  </strong>
+                </span>
+              </div>
+
+              <table className="pharmacy-print-table">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <strong>{selectedBill.service.name}</strong>
+                      <small>{selectedBill.notes || selectedBill.service.description || "Hospital service charge"}</small>
+                    </td>
+                    <td>{selectedBill.quantity}</td>
+                    <td>{money(selectedBill.unitPrice)}</td>
+                    <td>{money(selectedBill.totalAmount)}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="pharmacy-print-totals">
+                <span><small>Total</small><strong>{money(selectedBill.totalAmount)}</strong></span>
+                <span><small>Paid</small><strong>{money(selectedBill.amountPaid)}</strong></span>
+                <span>
+                  <small>Balance</small>
+                  <strong>{money(Math.max(0, Number(selectedBill.totalAmount) - Number(selectedBill.amountPaid)))}</strong>
+                </span>
+              </div>
+
+              <p className="pharmacy-print-footer">
+                This document confirms the service billed by MDS Hospital.
+              </p>
+            </section>
+          )}
         </div>
       </main>
     </AdminLayout>

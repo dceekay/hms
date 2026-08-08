@@ -7,6 +7,8 @@ import { authenticate, authorizePermissions, authorizeRoles } from "../../shared
 const router = Router();
 const userController = new UserController();
 
+router.get("/verify/:id", userController.verifyStaff);
+
 router.use(authenticate);
 
 router.get("/", authorizePermissions(["users.read"]), userController.list);

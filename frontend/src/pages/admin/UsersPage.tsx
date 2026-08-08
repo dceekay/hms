@@ -1,17 +1,21 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
 import {
   FiCheckCircle,
   FiCopy,
   FiEdit3,
+  FiPrinter,
   FiRefreshCw,
   FiSave,
   FiSearch,
+  FiShield,
   FiSlash,
   FiTrash2,
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
+import mdsLogo from "../../assets/logo.png";
 import { getRoles } from "../../services/roleService";
 import {
   activateUser,
@@ -70,6 +74,20 @@ function accountMessage(user: AppUser, password: string) {
   ].join("\n");
 }
 
+function staffId(user: AppUser) {
+  return `MDS-${user.username.toUpperCase()}`;
+}
+
+function staffFullName(user: AppUser) {
+  return `${user.firstName} ${user.lastName}`;
+}
+
+function getStaffVerifyUrl(user: AppUser) {
+  const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";
+  const normalizedBase = apiBaseUrl.replace(/\/$/, "");
+  return `${normalizedBase}/users/verify/${user.id}`;
+}
+
 export default function UsersPage() {
   const currentUserId = useAuthStore((state) => state.user?.id);
   const permissions = useAuthStore((state) => state.user?.permissions ?? []);
@@ -87,6 +105,8 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [createdUser, setCreatedUser] = useState<AppUser | null>(null);
   const [createdPassword, setCreatedPassword] = useState("");
+  const [idCardUser, setIdCardUser] = useState<AppUser | null>(null);
+  const [staffQrSvg, setStaffQrSvg] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +146,38 @@ export default function UsersPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    setStaffQrSvg("");
+
+    if (!idCardUser) {
+      return () => {
+        active = false;
+      };
+    }
+
+    QRCode.toString(getStaffVerifyUrl(idCardUser), {
+      type: "svg",
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 180,
+      color: {
+        dark: "#020617",
+        light: "#ffffff",
+      },
+    })
+      .then((qrSvg) => {
+        if (active) setStaffQrSvg(qrSvg);
+      })
+      .catch(() => {
+        if (active) setStaffQrSvg("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [idCardUser]);
 
   const updateField = (field: keyof UserForm, value: string | string[]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -226,6 +278,11 @@ export default function UsersPage() {
     if (!createdUser) return;
     await navigator.clipboard.writeText(accountMessage(createdUser, createdPassword));
     setSuccess("Login message copied.");
+  };
+
+  const printEmployeeId = (user: AppUser) => {
+    setIdCardUser(user);
+    window.setTimeout(() => window.print(), 120);
   };
 
   const handleActiveToggle = async (user: AppUser) => {
@@ -387,7 +444,7 @@ export default function UsersPage() {
                     <div className="rbac-row-main">
                       <span className="rbac-avatar">{user.firstName.charAt(0)}{user.lastName.charAt(0)}</span>
                       <div>
-                        <strong>{user.firstName} {user.lastName}</strong>
+                        <strong>{staffFullName(user)}</strong>
                         <p>{user.username} | {user.email}</p>
                         <small>
                           {roleNames(user)}
@@ -399,6 +456,14 @@ export default function UsersPage() {
                       {user.isActive ? "Active" : "Inactive"}
                     </span>
                     <div className="patient-row-actions">
+                      <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)}>
+                        <FiShield />
+                        ID
+                      </button>
+                      <button type="button" className="icon-text-btn" onClick={() => printEmployeeId(user)}>
+                        <FiPrinter />
+                        Print
+                      </button>
                       {canUpdate && <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}><FiEdit3 />Edit</button>}
                       {canUpdate && (
                         <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
@@ -413,6 +478,102 @@ export default function UsersPage() {
               </div>
             </section>
           </section>
+
+          {idCardUser && (
+            <section className="patient-id-modal" role="dialog" aria-modal="true">
+              <button className="patient-id-modal-backdrop" type="button" onClick={() => setIdCardUser(null)} />
+              <div className="patient-id-modal-panel employee-id-modal-panel">
+                <div className="modal-header">
+                  <div>
+                    <p className="eyebrow">Employee ID</p>
+                    <h2>{staffFullName(idCardUser)}</h2>
+                  </div>
+                  <button className="icon-btn" type="button" onClick={() => setIdCardUser(null)}>
+                    x
+                  </button>
+                </div>
+
+                <div className="patient-id-print-area employee-id-print-area">
+                  <article className="patient-id-card employee-id-card">
+                    <div className="patient-id-brand">
+                      <img src={mdsLogo} alt="MDS Hospital" />
+                      <div>
+                        <strong>MDS Hospital</strong>
+                        <span>Staff Identification Card</span>
+                      </div>
+                    </div>
+
+                    <div className="employee-id-body">
+                      <div className="patient-id-photo employee-id-photo">
+                        <span>
+                          {idCardUser.firstName.charAt(0)}
+                          {idCardUser.lastName.charAt(0)}
+                        </span>
+                      </div>
+
+                      <div className="patient-id-info">
+                        <p>Employee name</p>
+                        <h3>{staffFullName(idCardUser)}</h3>
+                        <div className="patient-id-grid">
+                          <span>
+                            <small>Staff ID</small>
+                            <strong>{staffId(idCardUser)}</strong>
+                          </span>
+                          <span>
+                            <small>Status</small>
+                            <strong>{idCardUser.isActive ? "Verified" : "Inactive"}</strong>
+                          </span>
+                        </div>
+                        <div className="patient-id-insurance employee-id-role-strip">
+                          <div>
+                            <small>Role</small>
+                            <strong>{roleNames(idCardUser)}</strong>
+                          </div>
+                          <div>
+                            <small>Service</small>
+                            <strong>{idCardUser.serviceArea?.name || "General"}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="patient-id-qr-block">
+                        {staffQrSvg ? (
+                          <>
+                            <div
+                              className="patient-qr-image"
+                              aria-label={`Scannable employee verification code ${staffId(idCardUser)}`}
+                              dangerouslySetInnerHTML={{ __html: staffQrSvg }}
+                            />
+                            <small>Scan to verify</small>
+                          </>
+                        ) : (
+                          <div className="id-empty-qr">
+                            <FiRefreshCw />
+                            <span>Preparing QR</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="patient-id-footer">
+                      <span>{staffId(idCardUser)}</span>
+                      <small>{idCardUser.phone || idCardUser.username}</small>
+                    </div>
+                  </article>
+                </div>
+
+                <div className="setup-actions">
+                  <button type="button" className="icon-text-btn" onClick={() => printEmployeeId(idCardUser)}>
+                    <FiPrinter />
+                    Print ID
+                  </button>
+                  <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(null)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </AdminLayout>

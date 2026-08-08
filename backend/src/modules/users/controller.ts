@@ -33,6 +33,15 @@ export class UserController extends BaseController {
     }
   };
 
+  verifyStaff = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.userService.verifyStaff(getParamId(req));
+      this.ok(res, "Staff verification fetched successfully", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   create = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.create(req.body);

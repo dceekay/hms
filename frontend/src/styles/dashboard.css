@@ -2078,7 +2078,7 @@
 
 .billing-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
   padding: 14px;
@@ -2097,6 +2097,45 @@
   color: var(--text-strong);
   font-size: 1.05rem;
   white-space: nowrap;
+}
+
+.billing-card .icon-text-btn {
+  justify-self: end;
+}
+
+.employee-id-modal-panel {
+  width: min(620px, calc(100vw - 28px));
+}
+
+.employee-id-print-area {
+  justify-items: center;
+}
+
+.employee-id-card {
+  width: min(100%, 460px);
+}
+
+.employee-id-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 86px;
+  gap: 9px;
+}
+
+.employee-id-photo {
+  min-height: 108px;
+}
+
+.employee-id-photo span {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+}
+
+.employee-id-role-strip {
+  margin-top: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0;
+  border: 0;
 }
 
 .pharmacy-page {
@@ -3979,6 +4018,11 @@
     white-space: normal;
   }
 
+  .billing-card .icon-text-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
+
   .pharmacy-sale-layout,
   .pharmacy-inventory-layout,
   .pharmacy-ledger-summary,
@@ -4171,6 +4215,11 @@
     max-height: none;
     overflow: visible;
     padding-right: 0;
+  }
+
+  .employee-id-body,
+  .employee-id-role-strip {
+    grid-template-columns: 1fr;
   }
 }
 

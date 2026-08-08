@@ -70,6 +70,64 @@ export class UserService {
     return sanitizeUser(user);
   }
 
+  async verifyStaff(id: string) {
+    const user = await prisma.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        isActive: true,
+        serviceArea: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
+        roles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        doctorProfile: {
+          select: {
+            doctorType: true,
+            specialty: true,
+          },
+        },
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "Staff record not found");
+    }
+
+    return {
+      verified: user.isActive,
+      staffId: `MDS-${user.username.toUpperCase()}`,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      isActive: user.isActive,
+      serviceArea: user.serviceArea,
+      roles: user.roles.map((entry) => entry.role.name),
+      doctorProfile: user.doctorProfile,
+      verifiedAt: new Date().toISOString(),
+      recordUpdatedAt: user.updatedAt,
+    };
+  }
+
   async create(payload: CreateUserDto) {
     const existingUser =
       (await this.userRepository.findByEmail(payload.email)) ||

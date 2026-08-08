@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   FiCheckCircle,
   FiCalendar,
@@ -227,6 +227,7 @@ export default function DoctorDashboardPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const selectedPatientRef = useRef<Patient | null>(null);
 
   const selectedPatientHistory = useMemo(
     () =>
@@ -286,7 +287,7 @@ export default function DoctorDashboardPage() {
       setWorkspace(workspaceData);
       setPatientHistory(workspaceData.recentEncounters);
 
-      if (!selectedPatient) {
+      if (!selectedPatientRef.current) {
         const appointments = workspaceData.assignedAppointments ?? [];
         const firstAppointment = appointments[0];
         const patients = workspaceData.patients ?? [];
@@ -326,6 +327,7 @@ export default function DoctorDashboardPage() {
     appointment: Appointment | null = null
   ) {
     setSelectedPatient(patient);
+    selectedPatientRef.current = patient;
     setSelectedAppointment(appointment);
     setPatientSearch(patientOptionLabel(patient));
     setEncounterForm({ ...emptyEncounterForm, patientId: patient.id });
