@@ -82,6 +82,8 @@ export class UserService {
         firstName: true,
         lastName: true,
         phone: true,
+        photoDataUrl: true,
+        photoUrl: true,
         isActive: true,
         serviceArea: {
           select: {
@@ -119,6 +121,8 @@ export class UserService {
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone,
+      photoDataUrl: user.photoDataUrl,
+      photoUrl: user.photoUrl,
       isActive: user.isActive,
       serviceArea: user.serviceArea,
       roles: user.roles.map((entry) => entry.role.name),
@@ -155,6 +159,12 @@ export class UserService {
       lastName: payload.lastName,
       phone: payload.phone || null,
       serviceAreaId: payload.serviceAreaId || null,
+      photoUrl: payload.photoUrl || null,
+      photoDataUrl: payload.photoDataUrl || null,
+      photoMimeType: payload.photoMimeType || null,
+      photoSizeBytes: payload.photoSizeBytes || null,
+      photoWidth: payload.photoWidth || null,
+      photoHeight: payload.photoHeight || null,
       roleIds: payload.roleIds,
     });
 
@@ -217,6 +227,12 @@ export class UserService {
       email?: string;
       phone?: string | null;
       serviceAreaId?: string | null;
+      photoUrl?: string | null;
+      photoDataUrl?: string | null;
+      photoMimeType?: string | null;
+      photoSizeBytes?: number | null;
+      photoWidth?: number | null;
+      photoHeight?: number | null;
     } = {
       firstName: payload.firstName,
       lastName: payload.lastName,
@@ -229,6 +245,30 @@ export class UserService {
 
     if (payload.serviceAreaId !== undefined) {
       updateData.serviceAreaId = payload.serviceAreaId || null;
+    }
+
+    if (payload.photoUrl !== undefined) {
+      updateData.photoUrl = payload.photoUrl || null;
+    }
+
+    if (payload.photoDataUrl !== undefined) {
+      updateData.photoDataUrl = payload.photoDataUrl || null;
+    }
+
+    if (payload.photoMimeType !== undefined) {
+      updateData.photoMimeType = payload.photoMimeType || null;
+    }
+
+    if (payload.photoSizeBytes !== undefined) {
+      updateData.photoSizeBytes = payload.photoSizeBytes || null;
+    }
+
+    if (payload.photoWidth !== undefined) {
+      updateData.photoWidth = payload.photoWidth || null;
+    }
+
+    if (payload.photoHeight !== undefined) {
+      updateData.photoHeight = payload.photoHeight || null;
     }
 
     const updated = await this.userRepository.updateUserDetails(id, updateData);

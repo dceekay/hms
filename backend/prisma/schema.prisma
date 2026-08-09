@@ -185,6 +185,13 @@ model User {
 
   phone String? @db.VarChar(30)
 
+  photoUrl       String? @db.VarChar(500)
+  photoDataUrl   String? @db.LongText
+  photoMimeType  String? @db.VarChar(50)
+  photoSizeBytes Int?
+  photoWidth     Int?
+  photoHeight    Int?
+
   /// Account Status
   isActive        Boolean @default(true)
   isEmailVerified Boolean @default(false)

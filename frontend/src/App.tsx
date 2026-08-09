@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
+import StaffVerificationPage from "./pages/StaffVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
 import { PatientListPage } from "./pages/patients/PatientListPage";
 import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
@@ -55,6 +56,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/verify/staff/:id" element={<StaffVerificationPage />} />
 
         <Route path="/" element={<RootRoute />} />
 

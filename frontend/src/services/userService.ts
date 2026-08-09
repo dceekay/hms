@@ -1,4 +1,5 @@
 import api from "./api";
+import axios from "axios";
 import { AppUser, PaginatedResult } from "../types/rbac";
 
 export type DoctorType = "medical_doctor" | "visiting_consultant" | "visiting_specialist";
@@ -23,6 +24,12 @@ export type CreateUserAccountValues = {
   password: string;
   phone?: string;
   serviceAreaId?: string | null;
+  photoUrl?: string | null;
+  photoDataUrl?: string | null;
+  photoMimeType?: "image/webp" | "image/jpeg" | "image/png" | null;
+  photoSizeBytes?: number | null;
+  photoWidth?: number | null;
+  photoHeight?: number | null;
   roleIds: string[];
 };
 
@@ -32,6 +39,12 @@ export type UpdateUserAccountValues = {
   email?: string;
   phone?: string;
   serviceAreaId?: string | null;
+  photoUrl?: string | null;
+  photoDataUrl?: string | null;
+  photoMimeType?: "image/webp" | "image/jpeg" | "image/png" | null;
+  photoSizeBytes?: number | null;
+  photoWidth?: number | null;
+  photoHeight?: number | null;
 };
 
 function getErrorMessage(error: any, fallback: string) {
@@ -149,5 +162,39 @@ export async function createDoctorAccount(values: CreateDoctorAccountValues): Pr
       user: null,
       error: getErrorMessage(error, "Unable to create doctor account."),
     };
+  }
+}
+
+export type StaffVerification = {
+  verified: boolean;
+  staffId: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  photoDataUrl?: string | null;
+  photoUrl?: string | null;
+  isActive: boolean;
+  serviceArea?: {
+    name: string;
+    code?: string | null;
+  } | null;
+  roles: string[];
+  doctorProfile?: {
+    doctorType: DoctorType;
+    specialty?: string | null;
+  } | null;
+  verifiedAt: string;
+  recordUpdatedAt: string;
+};
+
+export async function verifyStaffPublic(id: string): Promise<StaffVerification | null> {
+  try {
+    const baseURL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";
+    const response = await axios.get<{ data: StaffVerification }>(`${baseURL.replace(/\/$/, "")}/users/verify/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error(error);
+    return null;
   }
 }

@@ -119,6 +119,12 @@ export class UserRepository extends AuthUserRepository {
     lastName: string;
     phone?: string | null;
     serviceAreaId?: string | null;
+    photoUrl?: string | null;
+    photoDataUrl?: string | null;
+    photoMimeType?: string | null;
+    photoSizeBytes?: number | null;
+    photoWidth?: number | null;
+    photoHeight?: number | null;
     roleIds: string[];
   }) {
     return prisma.$transaction(async (tx) => {
@@ -131,6 +137,12 @@ export class UserRepository extends AuthUserRepository {
           lastName: data.lastName,
           phone: data.phone || null,
           serviceAreaId: data.serviceAreaId || null,
+          photoUrl: data.photoUrl || null,
+          photoDataUrl: data.photoDataUrl || null,
+          photoMimeType: data.photoMimeType || null,
+          photoSizeBytes: data.photoSizeBytes || null,
+          photoWidth: data.photoWidth || null,
+          photoHeight: data.photoHeight || null,
           roles: data.roleIds.length
             ? {
                 create: data.roleIds.map((roleId) => ({ roleId })),
@@ -177,6 +189,12 @@ export class UserRepository extends AuthUserRepository {
       email?: string;
       phone?: string | null;
       serviceAreaId?: string | null;
+      photoUrl?: string | null;
+      photoDataUrl?: string | null;
+      photoMimeType?: string | null;
+      photoSizeBytes?: number | null;
+      photoWidth?: number | null;
+      photoHeight?: number | null;
     }
   ) {
     return prisma.user.update({

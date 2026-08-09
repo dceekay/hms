@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import {
+  FiCamera,
   FiCheckCircle,
   FiCopy,
   FiEdit3,
@@ -16,6 +17,7 @@ import {
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/logo.png";
+import { compressImageToWebp } from "../../utils/imageCompression";
 import { getRoles } from "../../services/roleService";
 import {
   activateUser,
@@ -38,6 +40,12 @@ type UserForm = {
   username: string;
   password: string;
   phone: string;
+  photoUrl: string;
+  photoDataUrl: string;
+  photoMimeType: "image/webp" | "image/jpeg" | "image/png" | "";
+  photoSizeBytes: number | null;
+  photoWidth: number | null;
+  photoHeight: number | null;
   serviceAreaId: string;
   roleIds: string[];
 };
@@ -49,6 +57,12 @@ const emptyForm: UserForm = {
   username: "",
   password: "",
   phone: "",
+  photoUrl: "",
+  photoDataUrl: "",
+  photoMimeType: "",
+  photoSizeBytes: null,
+  photoWidth: null,
+  photoHeight: null,
   serviceAreaId: "",
   roleIds: [],
 };
@@ -82,10 +96,20 @@ function staffFullName(user: AppUser) {
   return `${user.firstName} ${user.lastName}`;
 }
 
+function staffInitials(user: AppUser) {
+  return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase() || "ST";
+}
+
+function staffPhotoSource(user: AppUser) {
+  return user.photoDataUrl || user.photoUrl || "";
+}
+
 function getStaffVerifyUrl(user: AppUser) {
-  const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";
-  const normalizedBase = apiBaseUrl.replace(/\/$/, "");
-  return `${normalizedBase}/users/verify/${user.id}`;
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/verify/staff/${user.id}`;
+  }
+
+  return `/verify/staff/${user.id}`;
 }
 
 export default function UsersPage() {
@@ -212,6 +236,12 @@ export default function UsersPage() {
       username: user.username,
       password: "",
       phone: user.phone ?? "",
+      photoUrl: user.photoUrl ?? "",
+      photoDataUrl: user.photoDataUrl ?? "",
+      photoMimeType: user.photoMimeType ?? "",
+      photoSizeBytes: user.photoSizeBytes ?? null,
+      photoWidth: user.photoWidth ?? null,
+      photoHeight: user.photoHeight ?? null,
       serviceAreaId: user.serviceAreaId ?? "",
       roleIds: user.roles?.map((entry) => entry.role.id) ?? [],
     });
@@ -232,6 +262,12 @@ export default function UsersPage() {
         email: form.email,
         phone: form.phone,
         serviceAreaId: form.serviceAreaId || null,
+        photoUrl: form.photoUrl || null,
+        photoDataUrl: form.photoDataUrl || null,
+        photoMimeType: form.photoMimeType || null,
+        photoSizeBytes: form.photoSizeBytes,
+        photoWidth: form.photoWidth,
+        photoHeight: form.photoHeight,
       });
 
       if (!updateResult.user) {
@@ -257,8 +293,20 @@ export default function UsersPage() {
     }
 
     const createResult = await createUserAccount({
-      ...form,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      username: form.username,
+      password: form.password,
+      phone: form.phone,
       serviceAreaId: form.serviceAreaId || null,
+      photoUrl: form.photoUrl || null,
+      photoDataUrl: form.photoDataUrl || null,
+      photoMimeType: form.photoMimeType || null,
+      photoSizeBytes: form.photoSizeBytes,
+      photoWidth: form.photoWidth,
+      photoHeight: form.photoHeight,
+      roleIds: form.roleIds,
     });
     setSaving(false);
 
@@ -278,6 +326,39 @@ export default function UsersPage() {
     if (!createdUser) return;
     await navigator.clipboard.writeText(accountMessage(createdUser, createdPassword));
     setSuccess("Login message copied.");
+  };
+
+  const handlePhotoChange = async (file?: File | null) => {
+    if (!file) return;
+
+    try {
+      const photo = await compressImageToWebp(file, 520, 0.76);
+      setForm((current) => ({
+        ...current,
+        photoUrl: "",
+        photoDataUrl: photo.dataUrl,
+        photoMimeType: photo.mimeType,
+        photoSizeBytes: photo.sizeBytes,
+        photoWidth: photo.width,
+        photoHeight: photo.height,
+      }));
+      setSuccess("Staff photo prepared.");
+    } catch (photoError) {
+      console.error(photoError);
+      setError("Unable to prepare staff photo. Try a smaller image.");
+    }
+  };
+
+  const clearPhoto = () => {
+    setForm((current) => ({
+      ...current,
+      photoUrl: "",
+      photoDataUrl: "",
+      photoMimeType: "",
+      photoSizeBytes: null,
+      photoWidth: null,
+      photoHeight: null,
+    }));
   };
 
   const printEmployeeId = (user: AppUser) => {
@@ -348,6 +429,30 @@ export default function UsersPage() {
               </div>
 
               <div className="form-grid">
+                <label className="staff-photo-control">
+                  Staff photo
+                  <span className="staff-photo-row">
+                    <span className="staff-photo-preview">
+                      {form.photoDataUrl || form.photoUrl ? (
+                        <img src={form.photoDataUrl || form.photoUrl} alt="Staff preview" />
+                      ) : (
+                        <FiCamera />
+                      )}
+                    </span>
+                    <span className="staff-photo-actions">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => void handlePhotoChange(event.target.files?.[0])}
+                      />
+                      {(form.photoDataUrl || form.photoUrl) && (
+                        <button className="icon-text-btn" type="button" onClick={clearPhoto}>
+                          Remove
+                        </button>
+                      )}
+                    </span>
+                  </span>
+                </label>
                 <label>First name<input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required /></label>
                 <label>Last name<input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required /></label>
                 <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required /></label>
@@ -442,7 +547,13 @@ export default function UsersPage() {
                 {users.map((user) => (
                   <article className="rbac-row-card" key={user.id}>
                     <div className="rbac-row-main">
-                      <span className="rbac-avatar">{user.firstName.charAt(0)}{user.lastName.charAt(0)}</span>
+                      <span className="rbac-avatar">
+                        {staffPhotoSource(user) ? (
+                          <img src={staffPhotoSource(user)} alt="" />
+                        ) : (
+                          staffInitials(user)
+                        )}
+                      </span>
                       <div>
                         <strong>{staffFullName(user)}</strong>
                         <p>{user.username} | {user.email}</p>
@@ -501,10 +612,11 @@ export default function UsersPage() {
 
                     <div className="employee-id-body">
                       <div className="patient-id-photo employee-id-photo">
-                        <span>
-                          {idCardUser.firstName.charAt(0)}
-                          {idCardUser.lastName.charAt(0)}
-                        </span>
+                        {staffPhotoSource(idCardUser) ? (
+                          <img src={staffPhotoSource(idCardUser)} alt={staffFullName(idCardUser)} />
+                        ) : (
+                          <span>{staffInitials(idCardUser)}</span>
+                        )}
                       </div>
 
                       <div className="patient-id-info">

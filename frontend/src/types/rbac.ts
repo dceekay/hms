@@ -19,6 +19,12 @@ export interface AppUser {
   firstName: string;
   lastName: string;
   phone?: string | null;
+  photoUrl?: string | null;
+  photoDataUrl?: string | null;
+  photoMimeType?: "image/webp" | "image/jpeg" | "image/png" | null;
+  photoSizeBytes?: number | null;
+  photoWidth?: number | null;
+  photoHeight?: number | null;
   isActive: boolean;
   serviceAreaId?: string | null;
   serviceArea?: {
