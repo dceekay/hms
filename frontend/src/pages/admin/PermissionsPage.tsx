@@ -241,7 +241,7 @@ export default function PermissionsPage() {
                               <small>{permission.rolesUsing ?? 0} role(s) using this</small>
                             </div>
                           </div>
-                          <div className="patient-row-actions">
+                          <div className="rbac-row-actions">
                             {canWrite && <button type="button" className="icon-text-btn" onClick={() => startEdit(permission)}><FiEdit3 />Edit</button>}
                             {canDelete && !protectedPermissionNames.has(permission.name) && (
                               <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(permission)}>

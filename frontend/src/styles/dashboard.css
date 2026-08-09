@@ -3511,8 +3511,8 @@
 
 .rbac-row-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
+  grid-template-columns: 1fr;
+  align-items: stretch;
   gap: 14px;
   padding: 14px;
   border: 1px solid var(--border);
@@ -3525,6 +3525,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.rbac-row-main > div {
+  min-width: 0;
 }
 
 .rbac-avatar {
@@ -3542,6 +3546,9 @@
 .rbac-row-main strong {
   display: block;
   color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rbac-row-main p,
@@ -3551,6 +3558,20 @@
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rbac-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rbac-row-actions .icon-text-btn {
+  min-height: 38px;
+  padding: 0 10px;
   white-space: nowrap;
 }
 
@@ -4198,6 +4219,10 @@
     align-items: stretch;
   }
 
+  .rbac-row-actions {
+    justify-content: flex-start;
+  }
+
   .rbac-row-main p,
   .rbac-row-main small {
     white-space: normal;
@@ -4292,6 +4317,7 @@
   }
 
   .patient-row-actions,
+  .rbac-row-actions,
   .setup-actions,
   .command-actions,
   .registration-hero-actions {
@@ -4302,6 +4328,7 @@
   }
 
   .patient-row-actions > *,
+  .rbac-row-actions > *,
   .setup-actions > *,
   .command-actions > *,
   .registration-hero-actions > * {
@@ -4680,8 +4707,7 @@
   cursor: pointer;
 }
 
-.doctor-appointment-card strong,
-.appointment-card strong {
+.doctor-appointment-card strong {
   color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4690,9 +4716,6 @@
 
 .doctor-appointment-card small,
 .doctor-appointment-card em,
-.appointment-card small,
-.appointment-card p,
-.appointment-card-meta span,
 .appointment-selection-summary {
   color: #94a3b8;
 }
@@ -4905,9 +4928,10 @@
   gap: 14px;
   min-width: 0;
   padding: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(2, 6, 23, 0.24);
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
 .appointment-card-main,
@@ -4922,6 +4946,70 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.appointment-card strong {
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appointment-card small,
+.appointment-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.appointment-card .doctor-status {
+  border: 1px solid color-mix(in srgb, #2563eb 26%, var(--border));
+  color: #1d4ed8;
+  background: color-mix(in srgb, #2563eb 14%, var(--surface-strong));
+  font-weight: 900;
+}
+
+.appointment-card .doctor-status.completed {
+  border-color: color-mix(in srgb, #16a34a 32%, var(--border));
+  color: #15803d;
+  background: color-mix(in srgb, #16a34a 15%, var(--surface-strong));
+}
+
+.appointment-card .doctor-status.checked_in,
+.appointment-card .doctor-status.in_consultation {
+  border-color: color-mix(in srgb, #d97706 34%, var(--border));
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 18%, var(--surface-strong));
+}
+
+.appointment-card .doctor-status.cancelled,
+.appointment-card .doctor-status.no_show {
+  border-color: color-mix(in srgb, #dc2626 32%, var(--border));
+  color: #b91c1c;
+  background: color-mix(in srgb, #ef4444 14%, var(--surface-strong));
+}
+
+:root:not([data-theme="light"]) .appointment-card .doctor-status {
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.22);
+}
+
+:root:not([data-theme="light"]) .appointment-card .doctor-status.completed {
+  color: #bbf7d0;
+  background: rgba(22, 163, 74, 0.2);
+}
+
+:root:not([data-theme="light"]) .appointment-card .doctor-status.checked_in,
+:root:not([data-theme="light"]) .appointment-card .doctor-status.in_consultation {
+  color: #fde68a;
+  background: rgba(217, 119, 6, 0.22);
+}
+
+:root:not([data-theme="light"]) .appointment-card .doctor-status.cancelled,
+:root:not([data-theme="light"]) .appointment-card .doctor-status.no_show {
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.2);
 }
 
 .appointment-selection-summary {

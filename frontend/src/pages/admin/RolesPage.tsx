@@ -261,7 +261,7 @@ export default function RolesPage() {
                         <small>{permissionIds(role).length} permission(s)</small>
                       </div>
                     </div>
-                    <div className="patient-row-actions">
+                    <div className="rbac-row-actions">
                       {canUpdate && <button type="button" className="icon-text-btn" onClick={() => startEdit(role)}><FiEdit3 />Edit</button>}
                       {canDelete && role.name !== "Super Admin" && (
                         <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(role)}>

@@ -455,14 +455,10 @@ export default function UsersPage() {
                     <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
                       {user.isActive ? "Active" : "Inactive"}
                     </span>
-                    <div className="patient-row-actions">
+                    <div className="rbac-row-actions">
                       <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)}>
                         <FiShield />
-                        ID
-                      </button>
-                      <button type="button" className="icon-text-btn" onClick={() => printEmployeeId(user)}>
-                        <FiPrinter />
-                        Print
+                        ID Card
                       </button>
                       {canUpdate && <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}><FiEdit3 />Edit</button>}
                       {canUpdate && (
