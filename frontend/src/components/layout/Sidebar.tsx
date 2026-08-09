@@ -100,7 +100,12 @@ const menus: MenuItem[] = [
     icon: <FiSettings />,
     children: [
       { title: "Departments", path: "/departments", icon: <FiDatabase />, requiredPermissions: ["departments.read"] },
-      { title: "Wards & Beds", path: "/setup/wards", icon: <FaBed />, requiredPermissions: ["setup.read"] },
+      {
+        title: "Wards & Beds",
+        path: "/setup/wards",
+        icon: <FaBed />,
+        requiredRoles: ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"],
+      },
       { title: "Services", path: "/setup/services", icon: <FiTool />, requiredRoles: ["Super Admin"] },
       { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
     ],

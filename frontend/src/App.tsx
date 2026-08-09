@@ -17,6 +17,7 @@ import AppointmentsPage from "./pages/appointments/AppointmentsPage";
 import InventoryPage from "./pages/inventory/InventoryPage";
 import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
 import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
+import WardsBedsPage from "./pages/setup/WardsBedsPage";
 import BillingPage from "./pages/billing/BillingPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 
@@ -215,12 +216,8 @@ export default function App() {
         <Route
           path="/setup/wards"
           element={
-            <ProtectedRoute requiredPermissions={["setup.read"]}>
-              <ComingSoonPage
-                title="Wards & Beds"
-                description="The setup API already supports wards, rooms, and beds. Use API Tester while we build the dedicated setup screens."
-                icon={<FaBed />}
-              />
+            <ProtectedRoute requiredRoles={["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"]}>
+              <WardsBedsPage />
             </ProtectedRoute>
           }
         />

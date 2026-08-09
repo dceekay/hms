@@ -33,6 +33,7 @@ import notificationRoutes from "../modules/notifications/routes";
 import laboratoryRoutes from "../modules/laboratory/routes";
 import clinicalRoutes from "../modules/clinical/routes";
 import appointmentRoutes from "../modules/appointments/routes";
+import wardRoutes from "../modules/wards/routes";
 
 const router = Router();
 
@@ -66,5 +67,6 @@ router.use("/notifications", notificationRoutes);
 router.use("/laboratory", laboratoryRoutes);
 router.use("/clinical", clinicalRoutes);
 router.use("/appointments", appointmentRoutes);
+router.use("/wards", wardRoutes);
 
 export default router;

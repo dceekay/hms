@@ -16,7 +16,16 @@ const commonNamedSchema = z.object({
 });
 
 export const specialtySchema = commonNamedSchema;
-export const wardSchema = commonNamedSchema;
+export const wardSchema = commonNamedSchema.extend({
+  code: z.string().trim().max(50).optional().nullable(),
+  department: z.string().trim().max(150).optional().nullable(),
+  building: z.string().trim().max(150).optional().nullable(),
+  floor: z.string().trim().max(80).optional().nullable(),
+  wardType: z.string().trim().max(100).optional().nullable(),
+  nurseStation: z.string().trim().max(150).optional().nullable(),
+  wardManager: z.string().trim().max(150).optional().nullable(),
+  contactNumber: z.string().trim().max(30).optional().nullable(),
+});
 
 export const roomSchema = commonNamedSchema.extend({
   roomNumber: z.string().trim().min(1).max(50),
@@ -26,7 +35,7 @@ export const roomSchema = commonNamedSchema.extend({
 
 export const bedSchema = z.object({
   bedNumber: z.string().trim().min(1).max(50),
-  status: z.enum(["available", "occupied", "maintenance", "reserved"]).optional(),
+  status: z.enum(["available", "occupied", "maintenance", "reserved", "cleaning", "blocked"]).optional(),
   wardId: z.string().uuid().optional().nullable(),
   roomId: z.string().uuid().optional().nullable(),
   isActive: z.boolean().optional(),

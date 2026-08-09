@@ -2212,6 +2212,254 @@
   min-width: 0;
 }
 
+.ward-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.ward-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ward-hero h1,
+.ward-card h2 {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.ward-hero p,
+.ward-card p,
+.ward-request-card p,
+.bed-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.ward-summary-grid,
+.ward-mini-stats {
+  display: grid;
+  gap: 10px;
+}
+
+.ward-summary-grid {
+  width: min(100%, 520px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ward-summary-grid span,
+.ward-mini-stats span {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 86%, var(--primary) 4%);
+}
+
+.ward-summary-grid strong,
+.ward-mini-stats strong {
+  color: var(--text-strong);
+  font-size: clamp(1rem, 2vw, 1.45rem);
+}
+
+.ward-summary-grid small,
+.ward-mini-stats small,
+.bed-card-top span,
+.bed-occupant small,
+.ward-request-card small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.ward-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.ward-assignment-form {
+  position: sticky;
+  top: 96px;
+}
+
+.ward-assignment-form .form-grid {
+  grid-template-columns: 1fr;
+}
+
+.ward-assignment-form .span-2 {
+  grid-column: 1 / -1;
+}
+
+.ward-request-panel,
+.ward-board-panel,
+.ward-card,
+.bed-card,
+.ward-request-card {
+  min-width: 0;
+}
+
+.ward-request-list,
+.ward-board-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ward-request-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ward-request-card strong,
+.bed-card strong {
+  color: var(--text-strong);
+}
+
+.ward-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ward-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ward-card-header > span {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.ward-mini-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ward-detail-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ward-detail-strip span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 90%, var(--accent) 4%);
+}
+
+.ward-detail-strip small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ward-detail-strip strong {
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.ward-admin-form {
+  display: grid;
+  gap: 14px;
+}
+
+.ward-admin-form .span-2 {
+  grid-column: 1 / -1;
+}
+
+.bed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.bed-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.bed-card.available {
+  border-left-color: #10b981;
+}
+
+.bed-card.occupied {
+  border-left-color: #2563eb;
+}
+
+.bed-card.reserved {
+  border-left-color: #a855f7;
+}
+
+.bed-card.cleaning {
+  border-left-color: #f59e0b;
+}
+
+.bed-card.maintenance,
+.bed-card.blocked {
+  border-left-color: #ef4444;
+}
+
+.bed-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bed-card-top span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, var(--primary) 8%);
+}
+
+.bed-occupant,
+.bed-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.bed-occupant small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .pharmacy-summary-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -4350,6 +4598,7 @@
   .dashboard-page,
   .billing-page,
   .pharmacy-page,
+  .ward-page,
   .inventory-page,
   .laboratory-page,
   .doctor-page,
@@ -4364,6 +4613,7 @@
   .dashboard-page *,
   .billing-page *,
   .pharmacy-page *,
+  .ward-page *,
   .inventory-page *,
   .laboratory-page *,
   .doctor-page *,
@@ -4381,6 +4631,9 @@
   .pharmacy-cart-item,
   .pharmacy-invoice-card,
   .pharmacy-medicine-card,
+  .ward-card,
+  .ward-request-card,
+  .bed-card,
   .inventory-item-card,
   .inventory-movement-card,
   .laboratory-request-card,
@@ -4413,6 +4666,9 @@
   .setup-form input,
   .setup-form select,
   .setup-form textarea,
+  .ward-assignment-form input,
+  .ward-assignment-form select,
+  .ward-assignment-form textarea,
   .registration-form input,
   .registration-form select,
   .registration-form textarea,
@@ -4420,6 +4676,40 @@
   .security-form select,
   .security-form textarea {
     min-height: 46px;
+  }
+
+  .ward-hero,
+  .ward-layout,
+  .ward-card-header,
+  .ward-request-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ward-summary-grid,
+  .ward-mini-stats,
+  .ward-detail-strip {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ward-assignment-form {
+    position: static;
+  }
+
+  .bed-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bed-card-top,
+  .bed-actions {
+    align-items: stretch;
+  }
+
+  .bed-actions .icon-text-btn,
+  .bed-occupant .icon-text-btn {
+    width: 100%;
   }
 }
 
