@@ -26,6 +26,8 @@ export interface AppUser {
   photoWidth?: number | null;
   photoHeight?: number | null;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   serviceAreaId?: string | null;
   serviceArea?: {
     id: string;

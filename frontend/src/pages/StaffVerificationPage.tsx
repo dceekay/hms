@@ -13,6 +13,17 @@ function photoSource(staff: StaffVerification) {
   return staff.photoDataUrl || staff.photoUrl || "";
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function StaffVerificationPage() {
   const { id } = useParams();
   const [staff, setStaff] = useState<StaffVerification | null>(null);
@@ -72,7 +83,7 @@ export default function StaffVerificationPage() {
           <>
             <div className={`verification-status ${staff.verified ? "verified" : "inactive"}`}>
               {staff.verified ? <FiCheckCircle /> : <FiSlash />}
-              <span>{staff.verified ? "Verified staff" : "Inactive staff ID"}</span>
+              <span>{staff.verified ? "Official staff ID" : "Inactive staff ID"}</span>
             </div>
 
             <div className="verification-profile">
@@ -96,16 +107,16 @@ export default function StaffVerificationPage() {
                 <strong>{staff.serviceArea?.name || "General"}</strong>
               </span>
               <span>
-                <small>Username</small>
-                <strong>{staff.username}</strong>
+                <small>Issue Date</small>
+                <strong>{formatDate(staff.issueDate)}</strong>
+              </span>
+              <span>
+                <small>Expires</small>
+                <strong>{formatDate(staff.expiresAt)}</strong>
               </span>
               <span>
                 <small>Phone</small>
                 <strong>{staff.phone || "Not provided"}</strong>
-              </span>
-              <span>
-                <small>Record Status</small>
-                <strong>{staff.isActive ? "Active" : "Inactive"}</strong>
               </span>
             </div>
           </>

@@ -12,6 +12,22 @@ function sanitizeUser(user: any) {
   return safe;
 }
 
+function getStaffIssueDates(createdAt: Date) {
+  const expiresAt = new Date(createdAt);
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+  return {
+    issueDate: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+
+function makeStaffId(user: { id: string; createdAt: Date }) {
+  const year = user.createdAt.getFullYear();
+  const code = user.id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `MDS${year}${code}`;
+}
+
 export class UserService {
   constructor(
     private readonly userRepository = new UserRepository(),
@@ -85,6 +101,7 @@ export class UserService {
         photoDataUrl: true,
         photoUrl: true,
         isActive: true,
+        createdAt: true,
         serviceArea: {
           select: {
             name: true,
@@ -116,7 +133,7 @@ export class UserService {
 
     return {
       verified: user.isActive,
-      staffId: `MDS-${user.username.toUpperCase()}`,
+      staffId: makeStaffId(user),
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -127,6 +144,7 @@ export class UserService {
       serviceArea: user.serviceArea,
       roles: user.roles.map((entry) => entry.role.name),
       doctorProfile: user.doctorProfile,
+      ...getStaffIssueDates(user.createdAt),
       verifiedAt: new Date().toISOString(),
       recordUpdatedAt: user.updatedAt,
     };

@@ -89,11 +89,33 @@ function accountMessage(user: AppUser, password: string) {
 }
 
 function staffId(user: AppUser) {
-  return `MDS-${user.username.toUpperCase()}`;
+  const issueDate = getStaffIssueDate(user);
+  const year = issueDate.getFullYear();
+  const code = user.id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `MDS${year}${code}`;
 }
 
 function staffFullName(user: AppUser) {
   return `${user.firstName} ${user.lastName}`;
+}
+
+function getStaffIssueDate(user: AppUser) {
+  const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+  return Number.isNaN(createdAt.getTime()) ? new Date() : createdAt;
+}
+
+function getStaffExpiryDate(user: AppUser) {
+  const expiresAt = new Date(getStaffIssueDate(user));
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  return expiresAt;
+}
+
+function formatIdDate(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 function staffInitials(user: AppUser) {
@@ -628,8 +650,14 @@ export default function UsersPage() {
                             <strong>{staffId(idCardUser)}</strong>
                           </span>
                           <span>
-                            <small>Status</small>
-                            <strong>{idCardUser.isActive ? "Verified" : "Inactive"}</strong>
+                            <small>Issue Date</small>
+                            <strong>{formatIdDate(getStaffIssueDate(idCardUser))}</strong>
+                          </span>
+                        </div>
+                        <div className="patient-id-grid employee-id-date-grid">
+                          <span>
+                            <small>Expires</small>
+                            <strong>{formatIdDate(getStaffExpiryDate(idCardUser))}</strong>
                           </span>
                         </div>
                         <div className="patient-id-insurance employee-id-role-strip">

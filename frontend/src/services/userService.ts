@@ -184,6 +184,8 @@ export type StaffVerification = {
     doctorType: DoctorType;
     specialty?: string | null;
   } | null;
+  issueDate: string;
+  expiresAt: string;
   verifiedAt: string;
   recordUpdatedAt: string;
 };

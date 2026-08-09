@@ -2160,6 +2160,10 @@
   border: 0;
 }
 
+.employee-id-date-grid {
+  grid-template-columns: 1fr;
+}
+
 .staff-photo-control {
   grid-column: 1 / -1;
 }
