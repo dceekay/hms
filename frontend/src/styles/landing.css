@@ -1113,31 +1113,6 @@ img {
   font-size: 0.9rem;
 }
 
-.language-switch {
-  padding: 4px;
-  display: flex;
-  gap: 4px;
-  border-radius: 10px;
-  background: #edf3f8;
-}
-
-.language-switch button {
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--mds-muted);
-  font-size: 0.68rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.language-switch button.active {
-  background: white;
-  color: var(--mds-navy);
-  box-shadow: 0 4px 12px rgba(3, 29, 73, 0.08);
-}
-
 .journey-image-link {
   position: relative;
   display: block;

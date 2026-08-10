@@ -33,7 +33,6 @@ import { useState } from "react";
 import mdsHospital from "../assets/mds.png";
 import mdsLogo from "../assets/logo.png";
 import medicalDirector from "../assets/dr.jpg";
-import patientJourneyEnglish from "../assets/patient-journey-en.png";
 import patientJourneyBilingual from "../assets/patient-journey-bilingual.png";
 import consultantPhoto from "../assets/consult.png";
 import specialistPhoto from "../assets/specialist.png";
@@ -272,7 +271,6 @@ const reveal = {
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [journeyLanguage, setJourneyLanguage] = useState("bilingual");
 
   const scrollToSection = () => {
     setMenuOpen(false);
@@ -695,50 +693,18 @@ export default function LandingPage() {
               <div className="journey-preview-header">
                 <div>
                   <small>Patient service guide</small>
-                  <strong>
-                    {journeyLanguage === "bilingual"
-                      ? "English and Hausa"
-                      : "English version"}
-                  </strong>
-                </div>
-
-                <div className="language-switch">
-                  <button
-                    type="button"
-                    className={
-                      journeyLanguage === "bilingual" ? "active" : ""
-                    }
-                    onClick={() => setJourneyLanguage("bilingual")}
-                  >
-                    EN / HA
-                  </button>
-
-                  <button
-                    type="button"
-                    className={journeyLanguage === "english" ? "active" : ""}
-                    onClick={() => setJourneyLanguage("english")}
-                  >
-                    English
-                  </button>
+                  <strong>English and Hausa</strong>
                 </div>
               </div>
 
               <a
-                href={
-                  journeyLanguage === "bilingual"
-                    ? patientJourneyBilingual
-                    : patientJourneyEnglish
-                }
+                href={patientJourneyBilingual}
                 target="_blank"
                 rel="noreferrer"
                 className="journey-image-link"
               >
                 <img
-                  src={
-                    journeyLanguage === "bilingual"
-                      ? patientJourneyBilingual
-                      : patientJourneyEnglish
-                  }
+                  src={patientJourneyBilingual}
                   alt="MDS Hospital patient journey and service map"
                 />
 
