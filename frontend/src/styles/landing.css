@@ -1652,7 +1652,7 @@ img {
 
 .contact-details {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -1753,6 +1753,35 @@ img {
   color: #93a2b3;
   font-size: 0.6rem;
   line-height: 1.5;
+}
+
+.contact-map-card {
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.contact-map-card iframe {
+  width: 100%;
+  height: 230px;
+  display: block;
+  border: 0;
+  filter: saturate(0.95);
+}
+
+.contact-map-card a {
+  min-height: 46px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: white;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 /* Footer */
@@ -2282,6 +2311,10 @@ img {
     margin-bottom: 75px;
     padding: 55px 20px;
     border-radius: 25px;
+  }
+
+  .contact-map-card iframe {
+    height: 190px;
   }
 
   .footer-main {

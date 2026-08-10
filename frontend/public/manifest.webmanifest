@@ -1,7 +1,7 @@
 {
-  "name": "MDS Hospital Staff Portal",
-  "short_name": "MDS HMS",
-  "description": "Mobile-first hospital operations portal for MDS Hospital staff.",
+  "name": "MDS Hospital Kano",
+  "short_name": "MDS Hospital",
+  "description": "MDS Hospital in Giginyu, Kano - emergency care, surgery, diagnostics, pharmacy and specialist clinics.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

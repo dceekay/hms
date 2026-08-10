@@ -46,6 +46,19 @@ import jichimaLogo from "../assets/jichima.png";
 
 import "../styles/landing.css";
 
+const hospitalAddress =
+  "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu, Kano 700213, Kano";
+const whatsappDisplay = "0806 225 5150";
+const whatsappUrl =
+  "https://wa.me/2348062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
+const emergencyDisplay = "0708 229 7430";
+const emergencyTel = "tel:+2347082297430";
+const receptionTel = "tel:+2348062255150";
+const googleMapsUrl =
+  "https://www.google.com/maps/place/MDS+HOSPITAL/@11.9926965,8.5865612,17z/data=!3m1!4b1!4m6!3m5!1s0x11ae833f2e4d110f:0x916e22c7202b3a5!8m2!3d11.9926965!4d8.5865612!16s%2Fg%2F11hz_lk_v0";
+const googleMapsEmbedUrl =
+  "https://www.google.com/maps?q=MDS%20Hospital%2C%20Eastern%20Bypass%2C%20Giginyu%2C%20Kano&output=embed";
+
 const services = [
   {
     title: "General Surgery",
@@ -275,9 +288,9 @@ export default function LandingPage() {
             24/7 Emergency and Ambulance Support
           </span>
 
-          <a href="tel:+2340000000000">
+          <a href={emergencyTel}>
             <FiPhoneCall />
-            Emergency line: Add hospital number
+            Emergency line: {emergencyDisplay}
           </a>
         </div>
       </div>
@@ -350,24 +363,35 @@ export default function LandingPage() {
             <p className="eyebrow">Compassionate care. Modern precision.</p>
 
             <h1>
-              Expert healthcare built around{" "}
+              MDS Hospital Kano: expert care for{" "}
               <span>every patient’s journey.</span>
             </h1>
 
             <p className="hero-text">
               MDS Hospital provides coordinated medical, surgical, diagnostic,
               pharmacy, emergency, and preventive healthcare services in a
-              calm, safe, and patient-focused environment.
+              calm, safe, and patient-focused environment on Eastern Bypass,
+              Giginyu, Kano.
             </p>
 
             <div className="hero-actions">
-              <a href="#contact" className="primary-btn">
+              <a
+                href={whatsappUrl}
+                className="primary-btn"
+                target="_blank"
+                rel="noreferrer"
+              >
                 Book an appointment
                 <FiArrowRight />
               </a>
 
-              <a href="#services" className="secondary-btn">
-                Explore our services
+              <a
+                href={googleMapsUrl}
+                className="secondary-btn"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Get directions
               </a>
             </div>
 
@@ -613,12 +637,17 @@ export default function LandingPage() {
           </div>
 
           <div className="emergency-actions">
-            <a href="tel:+2340000000000" className="emergency-call-btn">
+            <a href={emergencyTel} className="emergency-call-btn">
               <FaPhoneAlt />
-              Call emergency line
+              Call {emergencyDisplay}
             </a>
 
-            <a href="#contact" className="emergency-location-btn">
+            <a
+              href={googleMapsUrl}
+              className="emergency-location-btn"
+              target="_blank"
+              rel="noreferrer"
+            >
               <FiMapPin />
               Get directions
             </a>
@@ -947,31 +976,43 @@ export default function LandingPage() {
 
             <p>
               Contact reception for appointments, specialist clinic schedules,
-              coverage enquiries, referrals, and hospital directions.
+              coverage enquiries, referrals, and directions to our Giginyu,
+              Kano facility.
             </p>
 
             <div className="contact-details">
-              <a href="tel:+2340000000000">
+              <a href={receptionTel}>
                 <span>
                   <FiPhoneCall />
                 </span>
 
                 <div>
                   <small>Call MDS Hospital</small>
-                  <strong>Add official phone number</strong>
+                  <strong>{whatsappDisplay}</strong>
                 </div>
               </a>
 
-              <div>
+              <a href={emergencyTel}>
+                <span>
+                  <FaAmbulance />
+                </span>
+
+                <div>
+                  <small>Emergency contact</small>
+                  <strong>{emergencyDisplay}</strong>
+                </div>
+              </a>
+
+              <a href={googleMapsUrl} target="_blank" rel="noreferrer">
                 <span>
                   <FiMapPin />
                 </span>
 
                 <div>
                   <small>Hospital address</small>
-                  <strong>Add official MDS Hospital address</strong>
+                  <strong>{hospitalAddress}</strong>
                 </div>
-              </div>
+              </a>
 
               <div>
                 <span>
@@ -983,6 +1024,20 @@ export default function LandingPage() {
                   <strong>Emergency services available 24/7</strong>
                 </div>
               </div>
+            </div>
+
+            <div className="contact-map-card">
+              <iframe
+                title="MDS Hospital location map"
+                src={googleMapsEmbedUrl}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+
+              <a href={googleMapsUrl} target="_blank" rel="noreferrer">
+                Open in Google Maps
+                <FiExternalLink />
+              </a>
             </div>
           </div>
 
@@ -1000,7 +1055,7 @@ export default function LandingPage() {
             </p>
 
             <a
-              href="https://wa.me/2340000000000"
+              href={whatsappUrl}
               className="whatsapp-btn"
               target="_blank"
               rel="noreferrer"
@@ -1009,14 +1064,14 @@ export default function LandingPage() {
               Chat with reception
             </a>
 
-            <a href="tel:+2340000000000" className="call-btn">
+            <a href={receptionTel} className="call-btn">
               <FaPhoneAlt />
               Call the hospital
             </a>
 
             <small className="appointment-notice">
-              Replace the placeholder links with the official hospital contact
-              details.
+              WhatsApp connects you to reception. Use the emergency line for
+              urgent medical assistance.
             </small>
           </div>
         </section>
@@ -1047,7 +1102,12 @@ export default function LandingPage() {
               <a href="#instagram" aria-label="Instagram">
                 <FaInstagram />
               </a>
-              <a href="#whatsapp" aria-label="WhatsApp">
+              <a
+                href={whatsappUrl}
+                aria-label="WhatsApp"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <FaWhatsapp />
               </a>
             </div>
@@ -1073,8 +1133,10 @@ export default function LandingPage() {
             <h4>Quick access</h4>
             <Link to="/login">Staff portal</Link>
             <a href="#contact">Appointments</a>
-            <a href="#contact">Emergency contact</a>
-            <a href="#contact">Hospital directions</a>
+            <a href={emergencyTel}>Emergency contact</a>
+            <a href={googleMapsUrl} target="_blank" rel="noreferrer">
+              Hospital directions
+            </a>
           </div>
         </div>
 
@@ -1089,7 +1151,7 @@ export default function LandingPage() {
 
       {/* Floating WhatsApp */}
       <a
-        href="https://wa.me/2340000000000"
+        href={whatsappUrl}
         className="floating-whatsapp"
         target="_blank"
         rel="noreferrer"
