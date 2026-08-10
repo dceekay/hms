@@ -32,6 +32,7 @@ import { fetchHospitalServices } from "../../services/setupService";
 import { AppUser, Role } from "../../types/rbac";
 import { HospitalService } from "../../types/setup";
 import { useAuthStore } from "../../store/authStore";
+import { getAppUrl } from "../../utils/appUrl";
 
 type UserForm = {
   firstName: string;
@@ -84,7 +85,7 @@ function accountMessage(user: AppUser, password: string) {
     "",
     `Username: ${user.username}`,
     `Password: ${password}`,
-    "Login: http://127.0.0.1:5173/login",
+    `Login: ${getAppUrl("/login")}`,
     "",
     "Please change your password from Account Settings after your first login.",
   ].join("\n");
@@ -129,11 +130,7 @@ function staffPhotoSource(user: AppUser) {
 }
 
 function getStaffVerifyUrl(user: AppUser) {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/verify/staff/${user.id}`;
-  }
-
-  return `/verify/staff/${user.id}`;
+  return getAppUrl(`/verify/staff/${user.id}`);
 }
 
 export default function UsersPage() {

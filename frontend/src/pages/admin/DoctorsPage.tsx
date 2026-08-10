@@ -10,6 +10,7 @@ import {
 import { fetchHospitalServices } from "../../services/setupService";
 import { AppUser } from "../../types/rbac";
 import { HospitalService } from "../../types/setup";
+import { getAppUrl } from "../../utils/appUrl";
 
 const doctorTypeLabels: Record<DoctorType, string> = {
   medical_doctor: "Medical Doctor",
@@ -55,7 +56,7 @@ function doctorAccountMessage(user: AppUser, password: string) {
     `Role: ${type}`,
     `Username: ${user.username}`,
     `Password: ${password}`,
-    "Login: http://127.0.0.1:5173/login",
+    `Login: ${getAppUrl("/login")}`,
     "",
     "Please change your password from Account Settings after your first login.",
   ].join("\n");

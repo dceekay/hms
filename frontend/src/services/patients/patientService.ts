@@ -169,3 +169,34 @@ export async function fetchPatientQr(
     return null;
   }
 }
+
+export type PatientVerification = {
+  id?: string;
+  mrn: string | null;
+  fullName: string;
+  gender: string;
+  status?: string | null;
+  patientCategory?: string | null;
+  phone?: string | null;
+  insuranceProvider?: string | null;
+  insurancePrincipalName?: string | null;
+  insuranceMemberNumber?: string | null;
+};
+
+export async function verifyPatientPublic(
+  qrCode: string
+): Promise<PatientVerification | null> {
+  try {
+    const baseURL =
+      (import.meta.env.VITE_API_URL as string | undefined) ||
+      "http://localhost:5000/api/v1";
+    const response = await axios.get<{ data: PatientVerification }>(
+      `${baseURL.replace(/\/$/, "")}/patients/verify/${encodeURIComponent(qrCode)}`
+    );
+
+    return response.data.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}

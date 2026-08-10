@@ -7,6 +7,8 @@ import { patientCreateSchema, patientUpdateSchema } from "./validators";
 const router = Router();
 const controller = new PatientController();
 
+router.get("/verify/:qrCode", controller.verifyByQrCode);
+
 router.use(authenticate);
 
 router.get(

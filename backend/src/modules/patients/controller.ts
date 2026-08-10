@@ -98,6 +98,16 @@ export class PatientController extends BaseController {
     }
   };
 
+  verifyByQrCode = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const qrCode = Array.isArray(req.params.qrCode) ? req.params.qrCode[0] : req.params.qrCode;
+      const patient = await this.patientService.verifyByQrCode(qrCode);
+      return this.ok(res, "Patient QR verification completed successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   convertInvestigationToHospital = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;

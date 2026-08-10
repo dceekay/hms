@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { FiCreditCard, FiRefreshCw, FiShield } from "react-icons/fi";
 import { Patient, PatientQr } from "../../types/patient";
 import mdsLogo from "../../assets/logo.png";
+import { getAppUrl } from "../../utils/appUrl";
 
 function getInitials(patient: Patient) {
   const first = patient.firstName?.trim().charAt(0) ?? "";
@@ -44,15 +45,7 @@ function getQrValue(patientQr: PatientQr) {
     return patientQr.lookupPath;
   }
 
-  const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";
-  const origin =
-    /^https?:\/\//i.test(apiBaseUrl)
-      ? new URL(apiBaseUrl).origin
-      : typeof window !== "undefined"
-        ? window.location.origin
-        : "";
-
-  return `${origin}${patientQr.lookupPath.startsWith("/") ? patientQr.lookupPath : `/${patientQr.lookupPath}`}`;
+  return getAppUrl(patientQr.lookupPath);
 }
 
 function PatientQrImage({ patientQr }: { patientQr: PatientQr }) {

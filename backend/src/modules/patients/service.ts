@@ -21,7 +21,7 @@ function normalizePayload<T extends PatientCreateDto | PatientUpdateDto>(payload
 function publicQrPayload(qrCode: string) {
   return {
     qrCode,
-    lookupPath: `/api/v1/patients/lookup/${qrCode}`,
+    lookupPath: `/verify/patient/${qrCode}`,
   };
 }
 
@@ -264,6 +264,23 @@ export class PatientService {
       insuranceProvider: patient.insuranceProvider?.name ?? null,
       insurancePrincipalName: patient.insurancePrincipalName,
       insuranceMemberNumber: patient.insuranceMemberNumber,
+    };
+  }
+
+  async verifyByQrCode(qrCode: string) {
+    const patient = await this.patientRepository.findByQrCode(qrCode);
+
+    if (!patient || patient.deletedAt) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "Patient not found for QR code.");
+    }
+
+    return {
+      mrn: patient.mrn,
+      fullName: `${patient.firstName} ${patient.lastName}`,
+      gender: patient.gender,
+      status: patient.status,
+      patientCategory: patient.patientCategory,
+      insuranceProvider: patient.insuranceProvider?.name ?? null,
     };
   }
 
