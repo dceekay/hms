@@ -1,9 +1,9 @@
 import { ApiError } from "../../shared/errors/ApiError";
 import { HttpStatus } from "../../core/HttpStatus";
-import { hashPassword } from "../../shared/helpers/bcrypt";
+import { comparePassword, hashPassword } from "../../shared/helpers/bcrypt";
 import { UserRepository } from "./repository";
 import { RoleRepository } from "../roles/repository";
-import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto, CreateUserDto } from "./dto";
+import { UpdateUserDto, AssignRolesDto, ListUsersQueryDto, CreateDoctorDto, CreateUserDto, UpdateOwnAccountDto } from "./dto";
 import { prisma } from "../../database/prisma";
 
 function sanitizeUser(user: any) {
@@ -44,6 +44,40 @@ function parseStaffCardNumber(staffId: string) {
     idPrefix,
     createdFrom: new Date(year, 0, 1),
     createdTo: new Date(year + 1, 0, 1),
+  };
+}
+
+function extractRolesAndPermissions(user: any): { roles: string[]; permissions: string[] } {
+  const roles =
+    user.roles?.flatMap((userRole: any) =>
+      userRole?.role?.name ? [String(userRole.role.name)] : []
+    ) ?? [];
+
+  const permissions =
+    user.roles?.flatMap((userRole: any) =>
+      userRole?.role?.permissions?.flatMap((rolePermission: any) =>
+        rolePermission?.permission?.name ? [String(rolePermission.permission.name)] : []
+      ) ?? []
+    ) ?? [];
+
+  return {
+    roles: Array.from(new Set(roles)),
+    permissions: Array.from(new Set(permissions)),
+  };
+}
+
+function toAuthUser(user: any) {
+  const { roles, permissions } = extractRolesAndPermissions(user);
+
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    roles,
+    permissions,
   };
 }
 
@@ -320,12 +354,22 @@ export class UserService {
       }
     }
 
+    if (payload.username && payload.username !== existing.username) {
+      const usernameTaken = await this.userRepository.findByUsername(payload.username);
+      if (usernameTaken) {
+        throw new ApiError(HttpStatus.CONFLICT, "Username already in use");
+      }
+    }
+
     await this.assertServiceAreaExists(payload.serviceAreaId);
 
     const updateData: {
       firstName?: string;
       lastName?: string;
       email?: string;
+      username?: string;
+      passwordHash?: string;
+      passwordChangedAt?: Date;
       phone?: string | null;
       serviceAreaId?: string | null;
       photoUrl?: string | null;
@@ -338,7 +382,13 @@ export class UserService {
       firstName: payload.firstName,
       lastName: payload.lastName,
       email: payload.email,
+      username: payload.username,
     };
+
+    if (payload.password) {
+      updateData.passwordHash = await hashPassword(payload.password);
+      updateData.passwordChangedAt = new Date();
+    }
 
     if (payload.phone !== undefined) {
       updateData.phone = payload.phone || null;
@@ -374,6 +424,89 @@ export class UserService {
 
     const updated = await this.userRepository.updateUserDetails(id, updateData);
     return sanitizeUser(updated);
+  }
+
+  async updateOwnAccount(id: string | undefined, payload: UpdateOwnAccountDto) {
+    if (!id) {
+      throw new ApiError(HttpStatus.UNAUTHORIZED, "Authentication is required");
+    }
+
+    const existing = await prisma.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
+
+    if (!existing) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (payload.email && payload.email !== existing.email) {
+      const emailTaken = await this.userRepository.findByEmail(payload.email);
+      if (emailTaken && emailTaken.id !== id) {
+        throw new ApiError(HttpStatus.CONFLICT, "Email already in use");
+      }
+    }
+
+    if (payload.username && payload.username !== existing.username) {
+      const usernameTaken = await this.userRepository.findByUsername(payload.username);
+      if (usernameTaken && usernameTaken.id !== id) {
+        throw new ApiError(HttpStatus.CONFLICT, "Username already in use");
+      }
+    }
+
+    const updateData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      username?: string;
+      phone?: string | null;
+      passwordHash?: string;
+      passwordChangedAt?: Date;
+    } = {
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      email: payload.email,
+      username: payload.username,
+    };
+
+    if (payload.phone !== undefined) {
+      updateData.phone = payload.phone || null;
+    }
+
+    if (payload.newPassword) {
+      const passwordMatches = await comparePassword(payload.currentPassword ?? "", existing.passwordHash);
+
+      if (!passwordMatches) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+      }
+
+      updateData.passwordHash = await hashPassword(payload.newPassword);
+      updateData.passwordChangedAt = new Date();
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return toAuthUser(updated);
   }
 
   async assignRoles(id: string, payload: AssignRolesDto) {

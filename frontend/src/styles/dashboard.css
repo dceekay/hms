@@ -3977,6 +3977,64 @@
   text-transform: uppercase;
 }
 
+.account-settings-page {
+  display: grid;
+  gap: 18px;
+}
+
+.account-settings-header {
+  align-items: center;
+}
+
+.account-settings-badge {
+  min-height: 46px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.account-settings-form {
+  max-width: 960px;
+}
+
+.account-password-panel {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.account-password-panel > div:first-child {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-strong);
+}
+
+.account-password-panel > div:first-child svg {
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.account-password-panel strong,
+.account-password-panel small {
+  display: block;
+}
+
+.account-password-panel small {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
 .command-actions.compact {
   margin-top: 14px;
 }

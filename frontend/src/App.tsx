@@ -20,6 +20,7 @@ import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
 import WardsBedsPage from "./pages/setup/WardsBedsPage";
 import BillingPage from "./pages/billing/BillingPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import AccountSettingsPage from "./pages/AccountSettingsPage";
 
 import APITesterPage from "./pages/APITesterPage";
 
@@ -77,6 +78,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <AccountSettingsPage />
             </ProtectedRoute>
           }
         />

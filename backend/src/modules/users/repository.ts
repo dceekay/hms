@@ -187,6 +187,9 @@ export class UserRepository extends AuthUserRepository {
       firstName?: string;
       lastName?: string;
       email?: string;
+      username?: string;
+      passwordHash?: string;
+      passwordChangedAt?: Date;
       phone?: string | null;
       serviceAreaId?: string | null;
       photoUrl?: string | null;

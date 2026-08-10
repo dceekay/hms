@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { UserController } from "./controller";
 import { validateBody } from "../../shared/middleware/validation.middleware";
-import { updateUserSchema, assignRolesSchema, createDoctorSchema, createUserSchema } from "./dto";
+import { updateUserSchema, assignRolesSchema, createDoctorSchema, createUserSchema, updateOwnAccountSchema } from "./dto";
 import { authenticate, authorizePermissions, authorizeRoles } from "../../shared/middleware/auth.middleware";
 
 const router = Router();
@@ -10,6 +10,8 @@ const userController = new UserController();
 router.get("/verify/:id", userController.verifyStaff);
 
 router.use(authenticate);
+
+router.patch("/me", validateBody(updateOwnAccountSchema), userController.updateMe);
 
 router.get("/", authorizePermissions(["users.read"]), userController.list);
 router.get(

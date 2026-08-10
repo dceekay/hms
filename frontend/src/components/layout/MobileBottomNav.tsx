@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { type ReactNode, useMemo } from "react";
-import { FiCreditCard, FiFileText, FiHome, FiLogIn, FiPackage, FiShield, FiUsers } from "react-icons/fi";
+import { FiCreditCard, FiFileText, FiHome, FiLogIn, FiPackage, FiSettings, FiShield, FiUsers } from "react-icons/fi";
 import { FaCapsules, FaFlask, FaUserInjured, FaUserMd } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 
@@ -28,6 +28,7 @@ const mobileItems: MobileNavItem[] = [
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
   { label: "Store", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
   { label: "Admin", path: "/admin/users", icon: <FiShield />, requiredPermissions: ["users.read"] },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
 const securityMobileItems: MobileNavItem[] = [
@@ -42,6 +43,11 @@ const securityMobileItems: MobileNavItem[] = [
     path: "/security/logs",
     icon: <FiFileText />,
     requiredPermissions: ["security.entry.read"],
+  },
+  {
+    label: "Me",
+    path: "/settings",
+    icon: <FiSettings />,
   },
 ];
 

@@ -1,6 +1,7 @@
 import api from "./api";
 import axios from "axios";
 import { AppUser, PaginatedResult } from "../types/rbac";
+import type { User } from "../types/auth";
 
 export type DoctorType = "medical_doctor" | "visiting_consultant" | "visiting_specialist";
 
@@ -37,6 +38,8 @@ export type UpdateUserAccountValues = {
   firstName?: string;
   lastName?: string;
   email?: string;
+  username?: string;
+  password?: string;
   phone?: string;
   serviceAreaId?: string | null;
   photoUrl?: string | null;
@@ -45,6 +48,16 @@ export type UpdateUserAccountValues = {
   photoSizeBytes?: number | null;
   photoWidth?: number | null;
   photoHeight?: number | null;
+};
+
+export type UpdateOwnAccountValues = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  username?: string;
+  phone?: string;
+  currentPassword?: string;
+  newPassword?: string;
 };
 
 function getErrorMessage(error: any, fallback: string) {
@@ -92,6 +105,21 @@ export async function updateUserAccount(
     return {
       user: null,
       error: getErrorMessage(error, "Unable to update user account."),
+    };
+  }
+}
+
+export async function updateOwnAccount(
+  values: UpdateOwnAccountValues
+): Promise<{ user: User | null; error?: string }> {
+  try {
+    const response = await api.patch<{ data: User }>("/users/me", values);
+    return { user: response.data.data };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      user: null,
+      error: getErrorMessage(error, "Unable to update account settings."),
     };
   }
 }

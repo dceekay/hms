@@ -4,6 +4,7 @@ import {
   FiLogOut,
   FiMoon,
   FiSearch,
+  FiSettings,
   FiSun,
   FiRefreshCw,
   FiWifi,
@@ -90,6 +91,16 @@ export default function Topbar() {
         </button>
 
         <NotificationCenter />
+
+        <button
+          className="icon-btn"
+          type="button"
+          onClick={() => navigate("/settings")}
+          aria-label="Open account settings"
+          title="Account settings"
+        >
+          <FiSettings />
+        </button>
 
         <div className="profile">
           <div className="avatar">

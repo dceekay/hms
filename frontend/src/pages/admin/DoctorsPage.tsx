@@ -37,9 +37,9 @@ function slug(value: string) {
     .replace(/^\.+|\.+$/g, "");
 }
 
-function generatePassword() {
-  const stamp = Math.random().toString(36).slice(2, 7);
-  return `MDS-Dr-${stamp}@26`;
+function generatePassword(phone = "") {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 8 ? digits : "MDS12345";
 }
 
 function doctorAccountMessage(user: AppUser, password: string) {
@@ -57,7 +57,7 @@ function doctorAccountMessage(user: AppUser, password: string) {
     `Password: ${password}`,
     "Login: http://127.0.0.1:5173/login",
     "",
-    "Please change your password after your first login when password management is enabled.",
+    "Please change your password from Account Settings after your first login.",
   ].join("\n");
 }
 
@@ -101,6 +101,20 @@ export default function DoctorsPage() {
 
   const updateField = (field: keyof CreateDoctorAccountValues, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updatePhone = (value: string) => {
+    setForm((current) => {
+      const currentAutoPassword = generatePassword(current.phone);
+      const shouldRefreshPassword =
+        !current.password || current.password === currentAutoPassword;
+
+      return {
+        ...current,
+        phone: value,
+        password: shouldRefreshPassword ? generatePassword(value) : current.password,
+      };
+    });
   };
 
   const suggestUsername = () => {
@@ -193,7 +207,7 @@ export default function DoctorsPage() {
                 </label>
                 <label>
                   Phone
-                  <input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} />
+                  <input value={form.phone} onChange={(event) => updatePhone(event.target.value)} />
                 </label>
                 <label>
                   Service area
@@ -222,9 +236,14 @@ export default function DoctorsPage() {
                 <label>
                   Password
                   <span className="credential-input-row">
-                    <input value={form.password} onChange={(event) => updateField("password", event.target.value)} required />
-                    <button type="button" className="icon-text-btn" onClick={() => updateField("password", generatePassword())}>
-                      Generate
+                    <input
+                      value={form.password}
+                      onChange={(event) => updateField("password", event.target.value)}
+                      placeholder="Uses phone number by default"
+                      required
+                    />
+                    <button type="button" className="icon-text-btn" onClick={() => updateField("password", generatePassword(form.phone))}>
+                      Use phone
                     </button>
                   </span>
                 </label>

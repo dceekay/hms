@@ -56,6 +56,11 @@ const menus: MenuItem[] = [
     path: "/dashboard",
   },
   {
+    title: "Account",
+    icon: <FiSettings />,
+    path: "/settings",
+  },
+  {
     title: "Patients",
     icon: <FaUserInjured />,
     children: [
@@ -164,6 +169,11 @@ export function Sidebar({ collapsed, toggle }: Props) {
                   path: "/security/logs",
                   icon: <FiFileText />,
                   requiredPermissions: ["security.entry.read"],
+                },
+                {
+                  title: "Account",
+                  path: "/settings",
+                  icon: <FiSettings />,
                 },
               ],
             },

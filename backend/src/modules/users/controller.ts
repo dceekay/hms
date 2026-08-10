@@ -82,6 +82,15 @@ export class UserController extends BaseController {
     }
   };
 
+  updateMe = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.userService.updateOwnAccount(req.user?.sub, req.body);
+      this.ok(res, "Account settings updated successfully", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   assignRoles = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = getParamId(req);

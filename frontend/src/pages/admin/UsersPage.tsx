@@ -71,9 +71,9 @@ function roleNames(user: AppUser) {
   return user.roles?.map((entry) => entry.role.name).join(", ") || "No role";
 }
 
-function generatePassword() {
-  const stamp = Math.random().toString(36).slice(2, 7);
-  return `MDS-Staff-${stamp}@26`;
+function generatePassword(phone = "") {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 8 ? digits : "MDS12345";
 }
 
 function accountMessage(user: AppUser, password: string) {
@@ -85,6 +85,8 @@ function accountMessage(user: AppUser, password: string) {
     `Username: ${user.username}`,
     `Password: ${password}`,
     "Login: http://127.0.0.1:5173/login",
+    "",
+    "Please change your password from Account Settings after your first login.",
   ].join("\n");
 }
 
@@ -229,6 +231,21 @@ export default function UsersPage() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const updatePhone = (value: string) => {
+    setForm((current) => {
+      const currentAutoPassword = generatePassword(current.phone);
+      const shouldRefreshPassword =
+        !editingUser &&
+        (!current.password || current.password === currentAutoPassword);
+
+      return {
+        ...current,
+        phone: value,
+        password: shouldRefreshPassword ? generatePassword(value) : current.password,
+      };
+    });
+  };
+
   const toggleRole = (roleId: string) => {
     setForm((current) => ({
       ...current,
@@ -282,6 +299,8 @@ export default function UsersPage() {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
+        username: form.username,
+        ...(form.password ? { password: form.password } : {}),
         phone: form.phone,
         serviceAreaId: form.serviceAreaId || null,
         photoUrl: form.photoUrl || null,
@@ -478,7 +497,7 @@ export default function UsersPage() {
                 <label>First name<input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required /></label>
                 <label>Last name<input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required /></label>
                 <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required /></label>
-                <label>Phone<input value={form.phone} onChange={(event) => updateField("phone", event.target.value)} /></label>
+                <label>Phone<input value={form.phone} onChange={(event) => updatePhone(event.target.value)} /></label>
                 <label>
                   Service area
                   <select value={form.serviceAreaId} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
@@ -490,16 +509,19 @@ export default function UsersPage() {
                     ))}
                   </select>
                 </label>
-                <label>Username<input value={form.username} onChange={(event) => updateField("username", event.target.value)} required disabled={!!editingUser} /></label>
-                {!editingUser && (
-                  <label>
-                    Password
-                    <span className="credential-input-row">
-                      <input value={form.password} onChange={(event) => updateField("password", event.target.value)} required />
-                      <button className="icon-text-btn" type="button" onClick={() => updateField("password", generatePassword())}>Generate</button>
-                    </span>
-                  </label>
-                )}
+                <label>Username<input value={form.username} onChange={(event) => updateField("username", event.target.value)} required /></label>
+                <label>
+                  {editingUser ? "New password" : "Password"}
+                  <span className="credential-input-row">
+                    <input
+                      value={form.password}
+                      onChange={(event) => updateField("password", event.target.value)}
+                      required={!editingUser}
+                      placeholder={editingUser ? "Leave blank to keep current password" : "Uses phone number by default"}
+                    />
+                    <button className="icon-text-btn" type="button" onClick={() => updateField("password", generatePassword(form.phone))}>Use phone</button>
+                  </span>
+                </label>
               </div>
 
               <div className="rbac-check-list">

@@ -14,6 +14,8 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1).optional(),
   phone: z.string().trim().min(7).max(30).optional().or(z.literal("")),
   email: z.string().email().optional(),
+  username: z.string().trim().min(3).max(100).optional(),
+  password: z.string().min(8).max(100).optional().or(z.literal("")),
   serviceAreaId: z.string().uuid().optional().nullable(),
   ...photoFields,
 }).superRefine((data, context) => {
@@ -30,6 +32,24 @@ export const updateUserSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: "Staff photos must be compressed to a WebP data URL.",
       path: ["photoDataUrl"],
+    });
+  }
+});
+
+export const updateOwnAccountSchema = z.object({
+  firstName: z.string().trim().min(1).max(100).optional(),
+  lastName: z.string().trim().min(1).max(100).optional(),
+  email: z.string().email().max(150).optional(),
+  username: z.string().trim().min(3).max(100).optional(),
+  phone: z.string().trim().min(7).max(30).optional().or(z.literal("")),
+  currentPassword: z.string().min(8).max(100).optional().or(z.literal("")),
+  newPassword: z.string().min(8).max(100).optional().or(z.literal("")),
+}).superRefine((data, context) => {
+  if (data.newPassword && !data.currentPassword) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Current password is required before changing password.",
+      path: ["currentPassword"],
     });
   }
 });
@@ -86,6 +106,7 @@ export const listUsersQuerySchema = z.object({
 });
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
+export type UpdateOwnAccountDto = z.infer<typeof updateOwnAccountSchema>;
 export type AssignRolesDto = z.infer<typeof assignRolesSchema>;
 export type CreateUserDto = z.infer<typeof createUserSchema>;
 export type CreateDoctorDto = z.infer<typeof createDoctorSchema>;

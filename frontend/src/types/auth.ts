@@ -24,6 +24,7 @@ export type User = {
   username: string;
   firstName?: string;
   lastName?: string;
+  phone?: string | null;
   roles?: string[];
   permissions?: string[];
 };
