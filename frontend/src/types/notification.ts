@@ -25,3 +25,8 @@ export type NotificationListResult = {
   };
   unreadCount: number;
 };
+
+export type PushPublicKeyResult = {
+  enabled: boolean;
+  publicKey: string | null;
+};

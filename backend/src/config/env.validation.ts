@@ -128,6 +128,15 @@ const envSchema = z.object({
   SMTP_FROM: z.string().optional(),
 
   /**
+   * Push Notifications
+   */
+  VAPID_PUBLIC_KEY: z.string().optional(),
+
+  VAPID_PRIVATE_KEY: z.string().optional(),
+
+  VAPID_SUBJECT: z.string().optional(),
+
+  /**
    * Redis
    */
   REDIS_HOST: z.string(),

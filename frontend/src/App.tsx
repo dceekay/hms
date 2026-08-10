@@ -29,6 +29,7 @@ import UsersPage from "./pages/admin/UsersPage";
 import DoctorsPage from "./pages/admin/DoctorsPage";
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import OfflineSyncBridge from "./components/OfflineSyncBridge";
 import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
 import { FaBed, FaCapsules } from "react-icons/fa";
 import { FiDatabase, FiPieChart, FiTruck } from "react-icons/fi";
@@ -54,6 +55,7 @@ export default function App() {
   return (
     <>
       <SessionExpiryWatcher />
+      <OfflineSyncBridge />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />

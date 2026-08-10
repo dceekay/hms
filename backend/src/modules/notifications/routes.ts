@@ -8,6 +8,9 @@ const controller = new NotificationController();
 router.use(authenticate);
 
 router.get("/", controller.list);
+router.get("/push/public-key", controller.publicKey);
+router.post("/push/subscribe", controller.subscribe);
+router.post("/push/unsubscribe", controller.unsubscribe);
 router.post("/:id/read", controller.markRead);
 router.post("/read-all", controller.markAllRead);
 

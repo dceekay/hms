@@ -8,6 +8,7 @@ import {
   createSecurityEntry,
   fetchSecurityEntries,
 } from "../../services/security/securityService";
+import { lookupStaffByCardNumber } from "../../services/userService";
 import { SecurityEntryFormValues, SecurityEntryLog } from "../../types/security";
 
 const initialForm: SecurityEntryFormValues = {
@@ -27,6 +28,10 @@ const personTypeLabels: Record<SecurityEntryFormValues["personType"], string> = 
   staff: "Staff",
   guest: "Guest",
 };
+
+function normalizeStaffId(value?: string) {
+  return (value ?? "").trim().toUpperCase().replace(/[\s-]/g, "");
+}
 
 function cleanPayload(values: SecurityEntryFormValues): SecurityEntryFormValues {
   return Object.fromEntries(
@@ -81,11 +86,16 @@ export default function SecurityEntryPage() {
   const [loading, setLoading] = useState(false);
   const [loadingEntries, setLoadingEntries] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [staffLookupState, setStaffLookupState] = useState<
+    "idle" | "searching" | "found" | "not_found"
+  >("idle");
+  const [staffLookupMessage, setStaffLookupMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const requiresIdentity = form.personType !== "guest";
+  const requiresIdentity = form.personType === "patient_relative" || form.personType === "staff";
   const requiresStaffId = form.personType === "staff";
+  const patientIdentityOptional = form.personType === "patient";
   const photoPreview = form.photoDataUrl;
 
   const activeCount = useMemo(
@@ -97,9 +107,12 @@ export default function SecurityEntryPage() {
   field: keyof SecurityEntryFormValues,
   value: string
     ) => {
+      const nextValue =
+        field === "staffIdCardNumber" ? normalizeStaffId(value) : value;
+
       setForm((current) => ({
         ...current,
-        [field]: value,
+        [field]: nextValue,
 
         ...(field === "personType" && value !== "staff"
           ? { staffIdCardNumber: "" }
@@ -110,6 +123,74 @@ export default function SecurityEntryPage() {
           : {}),
       }));
     };
+
+  useEffect(() => {
+    if (form.personType !== "staff") {
+      setStaffLookupState("idle");
+      setStaffLookupMessage(null);
+      return;
+    }
+
+    const staffId = normalizeStaffId(form.staffIdCardNumber);
+
+    if (!staffId) {
+      setStaffLookupState("idle");
+      setStaffLookupMessage("Scan or type the staff ID card number.");
+      return;
+    }
+
+    if (staffId.length < 15) {
+      setStaffLookupState("idle");
+      setStaffLookupMessage("Keep typing the staff ID.");
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      setStaffLookupState("searching");
+      setStaffLookupMessage("Checking staff card...");
+
+      void lookupStaffByCardNumber(staffId).then((staff) => {
+        if (!active) return;
+
+        if (!staff) {
+          setStaffLookupState("not_found");
+          setStaffLookupMessage("Staff ID not found or inactive.");
+          return;
+        }
+
+        setForm((current) => {
+          if (
+            current.personType !== "staff" ||
+            normalizeStaffId(current.staffIdCardNumber) !== staff.staffId
+          ) {
+            return current;
+          }
+
+          return {
+            ...current,
+            staffIdCardNumber: staff.staffId,
+            name: staff.fullName,
+            phone: staff.phone ?? "",
+            destination: staff.serviceArea?.name ?? current.destination,
+            notes:
+              current.notes ||
+              `Verified staff: ${staff.roles.join(", ") || staff.username}`,
+          };
+        });
+
+        setStaffLookupState("found");
+        setStaffLookupMessage(
+          `${staff.fullName} verified${staff.serviceArea?.name ? ` - ${staff.serviceArea.name}` : ""}.`
+        );
+      });
+    }, 450);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [form.personType, form.staffIdCardNumber]);
 
   const loadEntries = async (searchTerm = search) => {
     setLoadingEntries(true);
@@ -165,8 +246,17 @@ export default function SecurityEntryPage() {
     setError(null);
     setSuccess(null);
 
-    if (requiresIdentity && (!form.name || !form.phone)) {
-      setError("Name and phone are required for this entry type.");
+    if (requiresIdentity && !form.name) {
+      setError(
+        form.personType === "staff"
+          ? "Enter a valid staff ID so the staff name can be filled."
+          : "Name is required for patient relatives."
+      );
+      return;
+    }
+
+    if (form.personType === "patient_relative" && !form.phone) {
+      setError("Phone is required for patient relatives.");
       return;
     }
 
@@ -209,10 +299,9 @@ export default function SecurityEntryPage() {
         <section className="security-hero">
           <div>
             <p className="eyebrow">Security desk</p>
-            <h1>Record entry point movement.</h1>
+            <h1>Gate entry.</h1>
             <p>
-              Capture patients, relatives, staff, and guests with quick identity checks,
-              optional photo evidence, and checkout tracking.
+              Fast entry logging for patients, relatives, staff, and guests.
             </p>
           </div>
           <div className="security-live-count">
@@ -241,11 +330,23 @@ export default function SecurityEntryPage() {
             <div className="form-grid">
               <label>
                 Name {requiresIdentity && <span>*</span>}
-                <input value={form.name ?? ""} onChange={(event) => update("name", event.target.value)} />
+                {patientIdentityOptional && <small>Optional for emergency patients</small>}
+                <input
+                  value={form.name ?? ""}
+                  onChange={(event) => update("name", event.target.value)}
+                  placeholder={patientIdentityOptional ? "Can be added later" : ""}
+                />
               </label>
               <label>
-                Phone {requiresIdentity && <span>*</span>}
-                <input value={form.phone ?? ""} onChange={(event) => update("phone", event.target.value)} />
+                Phone {form.personType === "patient_relative" && <span>*</span>}
+                {(patientIdentityOptional || form.personType === "staff") && (
+                  <small>{form.personType === "staff" ? "Filled from staff record when available" : "Optional for emergency patients"}</small>
+                )}
+                <input
+                  value={form.phone ?? ""}
+                  onChange={(event) => update("phone", event.target.value)}
+                  placeholder={patientIdentityOptional ? "Can be added later" : ""}
+                />
               </label>
               {form.personType === "patient" && (
                 <label>
@@ -254,12 +355,19 @@ export default function SecurityEntryPage() {
                 </label>
               )}
               {requiresStaffId && (
-                <label>
+                <label className="staff-lookup-field">
                   Staff ID card number <span>*</span>
                   <input
                     value={form.staffIdCardNumber ?? ""}
                     onChange={(event) => update("staffIdCardNumber", event.target.value)}
+                    placeholder="MDS2026XXXXXXXX"
+                    autoCapitalize="characters"
                   />
+                  {staffLookupMessage && (
+                    <small className={`staff-lookup-message ${staffLookupState}`}>
+                      {staffLookupMessage}
+                    </small>
+                  )}
                 </label>
               )}
               <label>

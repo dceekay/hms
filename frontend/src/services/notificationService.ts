@@ -1,5 +1,8 @@
 import api from "./api";
-import type { NotificationListResult } from "../types/notification";
+import type {
+  NotificationListResult,
+  PushPublicKeyResult,
+} from "../types/notification";
 
 function getErrorMessage(error: any, fallback: string) {
   return error?.response?.data?.message ?? fallback;
@@ -44,6 +47,51 @@ export async function markAllNotificationsRead() {
     console.error(error);
     return {
       error: getErrorMessage(error, "Unable to mark notifications as read."),
+    };
+  }
+}
+
+export async function fetchPushPublicKey() {
+  try {
+    const response = await api.get<{ data: PushPublicKeyResult }>(
+      "/notifications/push/public-key"
+    );
+
+    return { result: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      result: null,
+      error: getErrorMessage(error, "Unable to load push setup."),
+    };
+  }
+}
+
+export async function subscribeToPush(subscription: PushSubscription) {
+  try {
+    const response = await api.post<{ data: { subscribed: boolean } }>(
+      "/notifications/push/subscribe",
+      subscription.toJSON()
+    );
+
+    return { result: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      result: null,
+      error: getErrorMessage(error, "Unable to save push subscription."),
+    };
+  }
+}
+
+export async function unsubscribeFromPush(endpoint: string) {
+  try {
+    await api.post("/notifications/push/unsubscribe", { endpoint });
+    return { error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      error: getErrorMessage(error, "Unable to remove push subscription."),
     };
   }
 }

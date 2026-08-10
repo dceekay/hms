@@ -2,6 +2,7 @@ import axios, { CanceledError } from "axios";
 import { isJwtExpired } from "../utils/session";
 import { queryClient, queryKeys } from "../lib/queryClient";
 import { expireSession } from "./sessionManager";
+import { notifyDataMutated } from "../utils/appEvents";
 
 const api = axios.create({
   baseURL: (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1",
@@ -31,6 +32,11 @@ api.interceptors.response.use(
 
     if (method && ["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview });
+      notifyDataMutated({
+        method,
+        url: response.config.url,
+        source: "api",
+      });
     }
 
     return response;

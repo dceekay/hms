@@ -109,6 +109,14 @@
   text-transform: capitalize;
 }
 
+.sync-queue-status {
+  min-width: 126px;
+}
+
+.sync-queue-status svg {
+  animation: spinSoft 1.1s linear infinite;
+}
+
 .backend-status strong,
 .backend-status small {
   display: block;
@@ -148,6 +156,12 @@
   background: currentColor;
   box-shadow: 0 0 0 0 currentColor;
   animation: pulseStatus 1.6s infinite;
+}
+
+@keyframes spinSoft {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-btn {

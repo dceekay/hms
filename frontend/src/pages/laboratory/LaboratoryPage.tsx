@@ -12,6 +12,7 @@ import {
 } from "react-icons/fi";
 import { FaFlask } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
+import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import mdsLogo from "../../assets/logo.png";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
@@ -36,6 +37,10 @@ import type {
   LaboratoryTemplateFormValues,
   LaboratorySummary,
 } from "../../types/laboratory";
+import {
+  HMS_DATA_MUTATED_EVENT,
+  HMS_SYNC_FLUSHED_EVENT,
+} from "../../utils/appEvents";
 
 const emptyTemplateField: LaboratoryTemplateField = {
   key: "",
@@ -134,6 +139,10 @@ export default function LaboratoryPage() {
   const canCreate = permissions.includes("laboratory.create");
   const canUpdate = permissions.includes("laboratory.update");
   const canComplete = permissions.includes("laboratory.result");
+  const {
+    pendingCount: offlinePendingCount,
+    isBrowserOnline,
+  } = useOfflineQueueCount();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
   const [requests, setRequests] = useState<LaboratoryRequest[]>([]);
@@ -194,6 +203,25 @@ export default function LaboratoryPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadData();
+    };
+
+    window.addEventListener(HMS_DATA_MUTATED_EVENT, refresh);
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, refresh);
+    window.addEventListener("online", refresh);
+
+    const timer = window.setInterval(refresh, 20000);
+
+    return () => {
+      window.removeEventListener(HMS_DATA_MUTATED_EVENT, refresh);
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, refresh);
+      window.removeEventListener("online", refresh);
+      window.clearInterval(timer);
+    };
+  }, [requestSearch, statusFilter, templateSearch]);
 
   const handlePatientPick = (value: string) => {
     setPatientPicker(value);
@@ -311,6 +339,13 @@ export default function LaboratoryPage() {
     const result = await completeLaboratoryRequest(activeResult.id, resultForm);
     setSaving(false);
 
+    if (result.queued) {
+      setSuccess("Result saved offline. It will sync automatically when internet returns.");
+      setActiveResult(null);
+      setResultForm(emptyResultForm);
+      return;
+    }
+
     if (!result.request) {
       setError(result.error ?? "Unable to complete result.");
       return;
@@ -397,6 +432,11 @@ export default function LaboratoryPage() {
 
           {error && <p className="registration-error">{error}</p>}
           {success && <p className="security-success">{success}</p>}
+          {offlinePendingCount > 0 && (
+            <p className={`sync-inline-notice ${isBrowserOnline ? "online" : "offline"}`}>
+              {offlinePendingCount} offline item{offlinePendingCount === 1 ? "" : "s"} waiting to sync.
+            </p>
+          )}
 
           {activeTab === "requests" && (
             <section className="laboratory-request-layout">

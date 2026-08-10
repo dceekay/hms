@@ -135,6 +135,19 @@ export const env = {
   LOG_LEVEL: process.env.LOG_LEVEL || "info",
 
   // ==========================================================================
+  // PUSH NOTIFICATIONS
+  // ==========================================================================
+
+  VAPID_PUBLIC_KEY:
+    process.env.VAPID_PUBLIC_KEY || "",
+
+  VAPID_PRIVATE_KEY:
+    process.env.VAPID_PRIVATE_KEY || "",
+
+  VAPID_SUBJECT:
+    process.env.VAPID_SUBJECT || "mailto:admin@mdshospital.local",
+
+  // ==========================================================================
   // FILE UPLOADS
   // ==========================================================================
 

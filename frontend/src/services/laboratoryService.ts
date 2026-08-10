@@ -8,6 +8,10 @@ import type {
   LaboratoryTemplate,
   LaboratoryTemplateFormValues,
 } from "../types/laboratory";
+import {
+  enqueueOfflineOperation,
+  isLikelyNetworkError,
+} from "../utils/offlineQueue";
 
 type TemplateListResponse = {
   data: {
@@ -178,21 +182,41 @@ export async function updateLaboratoryRequestStatus(
 }
 
 export async function completeLaboratoryRequest(id: string, values: LaboratoryResultFormValues) {
+  const payload = {
+    resultValues: values.resultValues,
+    interpretation: values.interpretation.trim() || undefined,
+    technicianNote: values.technicianNote.trim() || undefined,
+  };
+
   try {
     const response = await api.post<{ data: LaboratoryRequest }>(
       `/laboratory/requests/${id}/complete`,
-      {
-        resultValues: values.resultValues,
-        interpretation: values.interpretation.trim() || undefined,
-        technicianNote: values.technicianNote.trim() || undefined,
-      }
+      payload
     );
 
-    return { request: response.data.data, error: undefined };
+    return { request: response.data.data, error: undefined, queued: false };
   } catch (error: any) {
     console.error(error);
+
+    if (isLikelyNetworkError(error)) {
+      enqueueOfflineOperation({
+        type: "laboratory.complete_result",
+        label: `Lab result ${id}`,
+        method: "POST",
+        path: `/laboratory/requests/${id}/complete`,
+        body: payload,
+      });
+
+      return {
+        request: null,
+        queued: true,
+        error: "Saved offline. This result will sync when the internet returns.",
+      };
+    }
+
     return {
       request: null,
+      queued: false,
       error: getErrorMessage(error, "Unable to complete laboratory result."),
     };
   }

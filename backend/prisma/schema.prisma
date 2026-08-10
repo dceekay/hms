@@ -276,6 +276,8 @@ model User {
 
   notificationReads NotificationRead[]
 
+  pushSubscriptions PushSubscription[]
+
   @@index([serviceAreaId])
   @@map("users")
 }
@@ -1131,6 +1133,27 @@ model NotificationRead {
   @@unique([notificationId, userId])
   @@index([userId])
   @@map("notification_reads")
+}
+
+model PushSubscription {
+  id String @id @default(uuid()) @db.Char(36)
+
+  userId String @db.Char(36)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint String @unique @db.VarChar(1000)
+  p256dh   String @db.VarChar(255)
+  auth     String @db.VarChar(255)
+
+  userAgent String? @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([lastSeenAt])
+  @@map("push_subscriptions")
 }
 
 model InsuranceProvider {

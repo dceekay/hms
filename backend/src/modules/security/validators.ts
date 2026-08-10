@@ -26,10 +26,18 @@ function validateSecurityEntryRules(
     const hasName = Boolean(data.name);
     const hasPhone = Boolean(data.phone);
 
-    if (data.personType !== "guest" && (!hasName || !hasPhone)) {
+    if (data.personType === "patient_relative" && (!hasName || !hasPhone)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Name and phone are required for patients, patient relatives, and staff.",
+        message: "Name and phone are required for patient relatives. Emergency patient details can be added later.",
+        path: ["name"],
+      });
+    }
+
+    if (data.personType === "staff" && !hasName) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Staff name is required. Use the staff ID lookup to fill it automatically.",
         path: ["name"],
       });
     }

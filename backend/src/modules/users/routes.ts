@@ -12,6 +12,11 @@ router.get("/verify/:id", userController.verifyStaff);
 router.use(authenticate);
 
 router.get("/", authorizePermissions(["users.read"]), userController.list);
+router.get(
+  "/staff-lookup/:staffId",
+  authorizePermissions(["security.entry.create"]),
+  userController.lookupStaff
+);
 router.post(
   "/",
   authorizeRoles(["Super Admin"]),

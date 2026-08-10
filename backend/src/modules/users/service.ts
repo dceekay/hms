@@ -28,6 +28,25 @@ function makeStaffId(user: { id: string; createdAt: Date }) {
   return `MDS${year}${code}`;
 }
 
+function parseStaffCardNumber(staffId: string) {
+  const normalized = staffId.trim().toUpperCase().replace(/[\s-]/g, "");
+  const match = normalized.match(/^MDS(\d{4})([A-F0-9]{8})$/);
+
+  if (!match) {
+    throw new ApiError(HttpStatus.BAD_REQUEST, "Enter a valid MDS staff ID card number");
+  }
+
+  const year = Number(match[1]);
+  const idPrefix = match[2].toLowerCase();
+
+  return {
+    normalized,
+    idPrefix,
+    createdFrom: new Date(year, 0, 1),
+    createdTo: new Date(year + 1, 0, 1),
+  };
+}
+
 export class UserService {
   constructor(
     private readonly userRepository = new UserRepository(),
@@ -146,6 +165,70 @@ export class UserService {
       doctorProfile: user.doctorProfile,
       ...getStaffIssueDates(user.createdAt),
       verifiedAt: new Date().toISOString(),
+      recordUpdatedAt: user.updatedAt,
+    };
+  }
+
+  async lookupStaffByCardNumber(staffId: string) {
+    const parsed = parseStaffCardNumber(staffId);
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: {
+          startsWith: parsed.idPrefix,
+        },
+        createdAt: {
+          gte: parsed.createdFrom,
+          lt: parsed.createdTo,
+        },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        isActive: true,
+        createdAt: true,
+        serviceArea: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
+        roles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        updatedAt: true,
+      },
+    });
+
+    if (!user || makeStaffId(user) !== parsed.normalized) {
+      throw new ApiError(HttpStatus.NOT_FOUND, "Staff ID card was not found");
+    }
+
+    if (!user.isActive) {
+      throw new ApiError(HttpStatus.FORBIDDEN, "This staff account is inactive");
+    }
+
+    return {
+      id: user.id,
+      staffId: makeStaffId(user),
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: `${user.firstName} ${user.lastName}`,
+      phone: user.phone,
+      serviceArea: user.serviceArea,
+      roles: user.roles.map((entry) => entry.role.name),
+      ...getStaffIssueDates(user.createdAt),
       recordUpdatedAt: user.updatedAt,
     };
   }

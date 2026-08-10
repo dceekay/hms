@@ -3,10 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { FiBell, FiCheckCircle, FiRefreshCw, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import {
   fetchNotifications,
+  fetchPushPublicKey,
   markAllNotificationsRead,
   markNotificationRead,
+  subscribeToPush,
 } from "../../services/notificationService";
 import type { AppNotification } from "../../types/notification";
+import {
+  HMS_DATA_MUTATED_EVENT,
+  HMS_SYNC_FLUSHED_EVENT,
+} from "../../utils/appEvents";
 
 function formatTime(value: string) {
   const date = new Date(value);
@@ -72,6 +78,56 @@ function playNotificationSound() {
   }, 700);
 }
 
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const output = new Uint8Array(rawData.length);
+
+  for (let index = 0; index < rawData.length; index += 1) {
+    output[index] = rawData.charCodeAt(index);
+  }
+
+  return output;
+}
+
+async function registerPushDevice() {
+  if (
+    typeof window === "undefined" ||
+    typeof Notification === "undefined" ||
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ) {
+    return false;
+  }
+
+  if (Notification.permission !== "granted") {
+    return false;
+  }
+
+  const setup = await fetchPushPublicKey();
+
+  if (!setup.result?.enabled || !setup.result.publicKey) {
+    return false;
+  }
+
+  const registration =
+    (await navigator.serviceWorker.getRegistration()) ??
+    (await navigator.serviceWorker.register("/sw.js"));
+  const existingSubscription =
+    await registration.pushManager.getSubscription();
+
+  const subscription =
+    existingSubscription ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(setup.result.publicKey),
+    }));
+
+  const result = await subscribeToPush(subscription);
+  return Boolean(result.result?.subscribed);
+}
+
 export default function NotificationCenter() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -81,6 +137,9 @@ export default function NotificationCenter() {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(() =>
     typeof Notification === "undefined" ? "unsupported" : Notification.permission
   );
+  const [pushStatus, setPushStatus] = useState<
+    "idle" | "saving" | "subscribed" | "unavailable"
+  >("idle");
   const [soundEnabled, setSoundEnabled] = useState(getStoredSoundPreference);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
@@ -147,18 +206,43 @@ export default function NotificationCenter() {
     }, 15000);
 
     const handleFocus = () => void loadNotifications();
+    const handleAppUpdate = () => void loadNotifications();
     window.addEventListener("focus", handleFocus);
+    window.addEventListener(HMS_DATA_MUTATED_EVENT, handleAppUpdate);
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, handleAppUpdate);
 
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener(HMS_DATA_MUTATED_EVENT, handleAppUpdate);
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleAppUpdate);
     };
+  }, []);
+
+  useEffect(() => {
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      void registerPushDevice().then((subscribed) => {
+        setPushStatus(subscribed ? "subscribed" : "unavailable");
+      });
+    }
   }, []);
 
   const requestPermission = async () => {
     if (typeof Notification === "undefined") return;
+    setPushStatus("saving");
     const nextPermission = await Notification.requestPermission();
     setPermission(nextPermission);
+
+    if (nextPermission === "granted") {
+      const subscribed = await registerPushDevice();
+      setPushStatus(subscribed ? "subscribed" : "unavailable");
+      return;
+    }
+
+    setPushStatus("unavailable");
   };
 
   const toggleSound = () => {
@@ -213,7 +297,11 @@ export default function NotificationCenter() {
           <div className="notification-tools">
             <button type="button" onClick={requestPermission}>
               <FiBell />
-              {permissionLabel(permission)}
+              {pushStatus === "saving"
+                ? "Saving"
+                : pushStatus === "subscribed"
+                  ? "Subscribed"
+                  : permissionLabel(permission)}
             </button>
             <button type="button" onClick={toggleSound}>
               {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}

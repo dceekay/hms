@@ -190,6 +190,36 @@ export type StaffVerification = {
   recordUpdatedAt: string;
 };
 
+export type StaffCardLookup = {
+  id: string;
+  staffId: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  phone?: string | null;
+  serviceArea?: {
+    name: string;
+    code?: string | null;
+  } | null;
+  roles: string[];
+  issueDate: string;
+  expiresAt: string;
+  recordUpdatedAt: string;
+};
+
+export async function lookupStaffByCardNumber(staffId: string): Promise<StaffCardLookup | null> {
+  try {
+    const response = await api.get<{ data: StaffCardLookup }>(
+      `/users/staff-lookup/${encodeURIComponent(staffId)}`
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
 export async function verifyStaffPublic(id: string): Promise<StaffVerification | null> {
   try {
     const baseURL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:5000/api/v1";

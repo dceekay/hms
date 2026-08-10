@@ -10,6 +10,10 @@ function getParamId(req: AuthRequest): string {
   return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 }
 
+function getParamStaffId(req: AuthRequest): string {
+  return Array.isArray(req.params.staffId) ? req.params.staffId[0] : req.params.staffId;
+}
+
 export class UserController extends BaseController {
   constructor(private readonly userService = new UserService()) {
     super();
@@ -37,6 +41,15 @@ export class UserController extends BaseController {
     try {
       const user = await this.userService.verifyStaff(getParamId(req));
       this.ok(res, "Staff verification fetched successfully", user);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  lookupStaff = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = await this.userService.lookupStaffByCardNumber(getParamStaffId(req));
+      this.ok(res, "Staff card lookup fetched successfully", user);
     } catch (error) {
       next(error);
     }

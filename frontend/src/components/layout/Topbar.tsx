@@ -5,6 +5,7 @@ import {
   FiMoon,
   FiSearch,
   FiSun,
+  FiRefreshCw,
   FiWifi,
   FiWifiOff,
 } from "react-icons/fi";
@@ -14,11 +15,13 @@ import { useThemeMode } from "../../hooks/useThemeMode";
 import NotificationCenter from "./NotificationCenter";
 import { endSession } from "../../services/sessionManager";
 import { getUserDisplayName } from "../../utils/userDisplay";
+import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { status, latencyMs } = useBackendHealth();
+  const { pendingCount, isBrowserOnline } = useOfflineQueueCount();
   const { isDark, toggleTheme } = useThemeMode();
 
   const primaryRole = user?.roles?.[0] ?? "Care team";
@@ -61,6 +64,20 @@ export default function Topbar() {
             <small>{latencyMs ? `${latencyMs} ms` : "API status"}</small>
           </div>
         </div>
+
+        {pendingCount > 0 && (
+          <div
+            className={`backend-status sync-queue-status ${isBrowserOnline ? "online" : "offline"}`}
+            title={`${pendingCount} item${pendingCount === 1 ? "" : "s"} waiting to sync`}
+          >
+            <FiRefreshCw />
+            <span className="status-pulse" />
+            <div>
+              <strong>{pendingCount} queued</strong>
+              <small>{isBrowserOnline ? "Syncing soon" : "Offline"}</small>
+            </div>
+          </div>
+        )}
 
         <button
           className="icon-btn theme-toggle"

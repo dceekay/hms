@@ -1,8 +1,19 @@
-import { NotificationPriority, Prisma } from "@prisma/client";
+import {
+  AppNotification,
+  NotificationPriority,
+  Prisma,
+  PushSubscription,
+} from "@prisma/client";
+import webpush from "web-push";
 import { prisma } from "../../database/prisma";
 import { HttpStatus } from "../../core/HttpStatus";
 import { ApiError } from "../../shared/errors/ApiError";
-import { ListNotificationsQueryDto } from "./dto";
+import { env } from "../../config/env";
+import {
+  ListNotificationsQueryDto,
+  PushSubscriptionDto,
+  PushUnsubscribeDto,
+} from "./dto";
 
 type CreateNotificationInput = {
   title: string;
@@ -20,7 +31,102 @@ function cleanText(value?: string | null) {
   return value?.trim() ? value.trim() : null;
 }
 
+function pushEnabled() {
+  return Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
+}
+
+if (pushEnabled()) {
+  webpush.setVapidDetails(
+    env.VAPID_SUBJECT,
+    env.VAPID_PUBLIC_KEY,
+    env.VAPID_PRIVATE_KEY
+  );
+}
+
+function toWebPushSubscription(subscription: PushSubscription) {
+  return {
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: subscription.p256dh,
+      auth: subscription.auth,
+    },
+  };
+}
+
+function notificationPayload(notification: AppNotification) {
+  return JSON.stringify({
+    id: notification.id,
+    title: notification.title,
+    message: notification.message,
+    body: notification.message,
+    priority: notification.priority,
+    eventKey: notification.eventKey,
+    linkUrl: notification.linkUrl ?? "/",
+    url: notification.linkUrl ?? "/",
+    createdAt: notification.createdAt,
+  });
+}
+
 export class NotificationService {
+  getPushPublicKey() {
+    return {
+      enabled: pushEnabled(),
+      publicKey: env.VAPID_PUBLIC_KEY || null,
+    };
+  }
+
+  async subscribeDevice(
+    userId: string,
+    payload: PushSubscriptionDto,
+    userAgent?: string
+  ) {
+    if (!pushEnabled()) {
+      return {
+        enabled: false,
+        subscribed: false,
+        message: "Push notifications are not configured on this server.",
+      };
+    }
+
+    await prisma.pushSubscription.upsert({
+      where: {
+        endpoint: payload.endpoint,
+      },
+      update: {
+        userId,
+        p256dh: payload.keys.p256dh,
+        auth: payload.keys.auth,
+        userAgent: cleanText(userAgent),
+        lastSeenAt: new Date(),
+      },
+      create: {
+        userId,
+        endpoint: payload.endpoint,
+        p256dh: payload.keys.p256dh,
+        auth: payload.keys.auth,
+        userAgent: cleanText(userAgent),
+      },
+    });
+
+    return {
+      enabled: true,
+      subscribed: true,
+    };
+  }
+
+  async unsubscribeDevice(userId: string, payload: PushUnsubscribeDto) {
+    await prisma.pushSubscription.deleteMany({
+      where: {
+        userId,
+        endpoint: payload.endpoint,
+      },
+    });
+
+    return {
+      unsubscribed: true,
+    };
+  }
+
   async listForUser(params: ListNotificationsQueryDto, userId: string, roles: string[]) {
     const page = params.page ?? 1;
     const limit = params.limit ?? 30;
@@ -165,7 +271,7 @@ export class NotificationService {
   }
 
   static async create(input: CreateNotificationInput) {
-    return prisma.appNotification.create({
+    const notification = await prisma.appNotification.create({
       data: {
         title: input.title,
         message: input.message,
@@ -176,6 +282,90 @@ export class NotificationService {
         linkUrl: cleanText(input.linkUrl),
         metadata: input.metadata,
         expiresAt: input.expiresAt ?? null,
+      },
+    });
+
+    void NotificationService.dispatchPush(notification);
+
+    return notification;
+  }
+
+  private static async dispatchPush(notification: AppNotification) {
+    if (!pushEnabled()) return;
+
+    try {
+      const subscriptions = await NotificationService.findTargetSubscriptions(notification);
+
+      if (subscriptions.length === 0) return;
+
+      const payload = notificationPayload(notification);
+
+      await Promise.all(
+        subscriptions.map(async (subscription) => {
+          try {
+            await webpush.sendNotification(
+              toWebPushSubscription(subscription),
+              payload
+            );
+
+            await prisma.pushSubscription.update({
+              where: { id: subscription.id },
+              data: { lastSeenAt: new Date() },
+            });
+          } catch (error: any) {
+            if ([404, 410].includes(Number(error?.statusCode))) {
+              await prisma.pushSubscription.delete({
+                where: { id: subscription.id },
+              });
+              return;
+            }
+
+            console.error("Unable to send push notification", error);
+          }
+        })
+      );
+    } catch (error) {
+      console.error("Unable to dispatch push notifications", error);
+    }
+  }
+
+  private static async findTargetSubscriptions(notification: AppNotification) {
+    if (notification.targetUserId) {
+      return prisma.pushSubscription.findMany({
+        where: {
+          userId: notification.targetUserId,
+          user: {
+            isActive: true,
+            deletedAt: null,
+          },
+        },
+      });
+    }
+
+    if (notification.targetRole) {
+      return prisma.pushSubscription.findMany({
+        where: {
+          user: {
+            isActive: true,
+            deletedAt: null,
+            roles: {
+              some: {
+                role: {
+                  name: notification.targetRole,
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    return prisma.pushSubscription.findMany({
+      where: {
+        user: {
+          isActive: true,
+          deletedAt: null,
+        },
       },
     });
   }
