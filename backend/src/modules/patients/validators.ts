@@ -77,6 +77,8 @@ export const patientBaseSchema = z.object({
     .nullable(),
 
   insurancePolicyNumber: insurancePolicySchema,
+  insurancePrincipalName: optionalText(150),
+  insuranceMemberNumber: optionalText(100),
   insuranceCoverageStatus: optionalText(80),
 });
 
@@ -84,6 +86,8 @@ function validateInsurance(
   data: {
     insuranceProviderId?: string | null;
     insurancePolicyNumber?: string | null;
+    insurancePrincipalName?: string | null;
+    insuranceMemberNumber?: string | null;
     insuranceCoverageStatus?: string | null;
   },
   context: z.RefinementCtx
@@ -92,22 +96,28 @@ function validateInsurance(
   const hasPolicyNumber = Boolean(
     data.insurancePolicyNumber?.trim()
   );
+  const hasMemberNumber = Boolean(
+    data.insuranceMemberNumber?.trim()
+  );
+  const hasPrincipalName = Boolean(
+    data.insurancePrincipalName?.trim()
+  );
 
-  if (hasProvider && !hasPolicyNumber) {
+  if (hasProvider && !hasPolicyNumber && !hasMemberNumber) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["insurancePolicyNumber"],
+      path: ["insuranceMemberNumber"],
       message:
-        "Insurance policy number is required when an insurance provider is selected.",
+        "Enter a policy number or member number when an insurance provider is selected.",
     });
   }
 
-  if (!hasProvider && hasPolicyNumber) {
+  if (!hasProvider && (hasPolicyNumber || hasMemberNumber || hasPrincipalName)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["insuranceProviderId"],
       message:
-        "Select an insurance provider before entering a policy number.",
+        "Select an insurance provider before entering insurance details.",
     });
   }
 }

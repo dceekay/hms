@@ -71,6 +71,8 @@ export class PatientRepository extends BaseRepository<Patient> {
               { phone: { contains: params.search } },
               { emergencyContactName: { contains: params.search } },
               { insurancePolicyNumber: { contains: params.search } },
+              { insurancePrincipalName: { contains: params.search } },
+              { insuranceMemberNumber: { contains: params.search } },
             ],
           }
         : {}),

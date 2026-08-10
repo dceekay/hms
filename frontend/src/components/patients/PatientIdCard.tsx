@@ -31,6 +31,14 @@ function getInsuranceName(patient: Patient) {
   return patient.insuranceProvider.name;
 }
 
+function getInsuranceNumber(patient: Patient) {
+  return (
+    patient.insuranceMemberNumber ||
+    patient.insurancePolicyNumber ||
+    "Not provided"
+  );
+}
+
 function getQrValue(patientQr: PatientQr) {
   if (/^https?:\/\//i.test(patientQr.lookupPath)) {
     return patientQr.lookupPath;
@@ -169,8 +177,12 @@ export function PatientIdCard({
             <strong>{getInsuranceName(patient)}</strong>
           </div>
           <div>
-            <small>Policy Number</small>
-            <strong>{patient.insurancePolicyNumber || "Not provided"}</strong>
+            <small>Principal Owner</small>
+            <strong>{patient.insurancePrincipalName || "Not provided"}</strong>
+          </div>
+          <div>
+            <small>Member Number</small>
+            <strong>{getInsuranceNumber(patient)}</strong>
           </div>
           <div>
             <small>Coverage</small>

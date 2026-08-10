@@ -324,6 +324,8 @@ model Patient {
   insuranceProviderId     String?            @db.Char(36)
   insuranceProvider       InsuranceProvider? @relation(fields: [insuranceProviderId], references: [id], onDelete: SetNull)
   insurancePolicyNumber   String?            @db.VarChar(100)
+  insurancePrincipalName  String?            @db.VarChar(150)
+  insuranceMemberNumber   String?            @db.VarChar(100)
   insuranceCoverageStatus String?            @db.VarChar(80)
 
   semsasTransfers SemsasTransfer[]

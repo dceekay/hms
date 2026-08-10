@@ -218,6 +218,8 @@ export class PatientService {
         ? {
             provider: patient.insuranceProvider.name,
             policyNumber: patient.insurancePolicyNumber,
+            principalName: patient.insurancePrincipalName,
+            memberNumber: patient.insuranceMemberNumber,
             coverageStatus: patient.insuranceCoverageStatus,
           }
         : null,
@@ -260,6 +262,8 @@ export class PatientService {
       patientCategory: patient.patientCategory,
       phone: patient.phone,
       insuranceProvider: patient.insuranceProvider?.name ?? null,
+      insurancePrincipalName: patient.insurancePrincipalName,
+      insuranceMemberNumber: patient.insuranceMemberNumber,
     };
   }
 

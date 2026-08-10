@@ -51,6 +51,8 @@ const initialForm: PatientFormValues = {
   allergies: "",
   insuranceProviderId: "",
   insurancePolicyNumber: "",
+  insurancePrincipalName: "",
+  insuranceMemberNumber: "",
   insuranceCoverageStatus: "",
 };
 
@@ -160,6 +162,8 @@ export default function PatientRegistrationPage() {
             ? {}
             : {
                 insurancePolicyNumber: "",
+                insurancePrincipalName: "",
+                insuranceMemberNumber: "",
                 insuranceCoverageStatus: "",
               }),
         };
@@ -614,7 +618,7 @@ export default function PatientRegistrationPage() {
 
                   <label>
                     Insurance policy number
-                    {form.insuranceProviderId && <span> *</span>}
+                    <span className="optional-field">optional</span>
                     <input
                       value={form.insurancePolicyNumber ?? ""}
                       onChange={(event) =>
@@ -625,9 +629,41 @@ export default function PatientRegistrationPage() {
                       }
                       placeholder="Example: CXHP-0001"
                       disabled={!form.insuranceProviderId}
-                      required={Boolean(form.insuranceProviderId)}
                       pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9/-]+"
                       title="Use at least one letter and one number. Hyphens and slashes are allowed."
+                    />
+                  </label>
+
+                  <label>
+                    Principal insurance owner{" "}
+                    <span className="optional-field">optional</span>
+                    <input
+                      value={form.insurancePrincipalName ?? ""}
+                      onChange={(event) =>
+                        update("insurancePrincipalName", event.target.value)
+                      }
+                      placeholder="Example: Aisha Musa"
+                      disabled={!form.insuranceProviderId}
+                    />
+                  </label>
+
+                  <label>
+                    Member / dependent number{" "}
+                    {form.insuranceProviderId && <span> *</span>}
+                    <input
+                      value={form.insuranceMemberNumber ?? ""}
+                      onChange={(event) =>
+                        update(
+                          "insuranceMemberNumber",
+                          event.target.value.toUpperCase()
+                        )
+                      }
+                      placeholder="Example: NHIA-DEP-02"
+                      disabled={!form.insuranceProviderId}
+                      required={Boolean(
+                        form.insuranceProviderId &&
+                          !form.insurancePolicyNumber
+                      )}
                     />
                   </label>
 

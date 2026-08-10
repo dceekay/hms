@@ -169,6 +169,26 @@ export const patientSchema = z
       .optional()
       .or(z.literal("")),
 
+    insurancePrincipalName: z
+      .string()
+      .trim()
+      .max(
+        150,
+        "Principal insurance owner cannot exceed 150 characters."
+      )
+      .optional()
+      .or(z.literal("")),
+
+    insuranceMemberNumber: z
+      .string()
+      .trim()
+      .max(
+        100,
+        "Insurance member number cannot exceed 100 characters."
+      )
+      .optional()
+      .or(z.literal("")),
+
     insuranceCoverageStatus: z
       .string()
       .trim()
@@ -182,28 +202,35 @@ export const patientSchema = z
 
     const insurancePolicyNumber =
       data.insurancePolicyNumber?.trim() ?? "";
+    const insuranceMemberNumber =
+      data.insuranceMemberNumber?.trim() ?? "";
+    const insurancePrincipalName =
+      data.insurancePrincipalName?.trim() ?? "";
 
     if (
       insuranceProviderId &&
-      !insurancePolicyNumber
+      !insurancePolicyNumber &&
+      !insuranceMemberNumber
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["insurancePolicyNumber"],
+        path: ["insuranceMemberNumber"],
         message:
-          "Insurance policy number is required when an insurance provider is selected.",
+          "Enter a policy number or member number when an insurance provider is selected.",
       });
     }
 
     if (
       !insuranceProviderId &&
-      insurancePolicyNumber
+      (insurancePolicyNumber ||
+        insuranceMemberNumber ||
+        insurancePrincipalName)
     ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["insuranceProviderId"],
         message:
-          "Select an insurance provider before entering a policy number.",
+          "Select an insurance provider before entering insurance details.",
       });
     }
 
@@ -284,6 +311,8 @@ export type Patient = {
     | null;
 
   insurancePolicyNumber?: string | null;
+  insurancePrincipalName?: string | null;
+  insuranceMemberNumber?: string | null;
   insuranceCoverageStatus?: string | null;
 
   version?: number;

@@ -300,6 +300,12 @@ function patientToForm(
     insurancePolicyNumber:
       patient.insurancePolicyNumber ?? "",
 
+    insurancePrincipalName:
+      patient.insurancePrincipalName ?? "",
+
+    insuranceMemberNumber:
+      patient.insuranceMemberNumber ?? "",
+
     insuranceCoverageStatus:
       patient.insuranceCoverageStatus ??
       "",
@@ -631,6 +637,12 @@ export function PatientListPage() {
             ? {}
             : {
                 insurancePolicyNumber:
+                  "",
+
+                insurancePrincipalName:
+                  "",
+
+                insuranceMemberNumber:
                   "",
 
                 insuranceCoverageStatus:
@@ -1110,10 +1122,17 @@ export function PatientListPage() {
 
                         <small>
                           {provider
-                            ? patient.insurancePolicyNumber ||
-                              "Policy number not set"
+                            ? patient.insuranceMemberNumber ||
+                              patient.insurancePolicyNumber ||
+                              "Member number not set"
                             : "Self pay / not provided"}
                         </small>
+
+                        {provider && patient.insurancePrincipalName && (
+                          <small title={patient.insurancePrincipalName}>
+                            Holder: {patient.insurancePrincipalName}
+                          </small>
+                        )}
                       </div>
 
                       <div className="patient-row-actions patient-compact-actions">
@@ -1909,13 +1928,6 @@ export function PatientListPage() {
                             Insurance
                             policy number
 
-                            {editForm.insuranceProviderId && (
-                              <span>
-                                {" "}
-                                *
-                              </span>
-                            )}
-
                             <input
                               value={
                                 editForm.insurancePolicyNumber ??
@@ -1933,11 +1945,69 @@ export function PatientListPage() {
                               disabled={
                                 !editForm.insuranceProviderId
                               }
-                              required={Boolean(
-                                editForm.insuranceProviderId
-                              )}
                               pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9/-]+"
                               title="Use at least one letter and one number. Hyphens and slashes are allowed."
+                            />
+                          </label>
+
+                          <label>
+                            Principal
+                            insurance owner
+
+                            <input
+                              value={
+                                editForm.insurancePrincipalName ??
+                                ""
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                updateEditField(
+                                  "insurancePrincipalName",
+                                  event
+                                    .target
+                                    .value
+                                )
+                              }
+                              placeholder="Example: Aisha Musa"
+                              disabled={
+                                !editForm.insuranceProviderId
+                              }
+                            />
+                          </label>
+
+                          <label>
+                            Member /
+                            dependent number
+
+                            {editForm.insuranceProviderId && (
+                              <span>
+                                {" "}
+                                *
+                              </span>
+                            )}
+
+                            <input
+                              value={
+                                editForm.insuranceMemberNumber ??
+                                ""
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                updateEditField(
+                                  "insuranceMemberNumber",
+                                  event.target.value.toUpperCase()
+                                )
+                              }
+                              placeholder="Example: NHIA-DEP-02"
+                              disabled={
+                                !editForm.insuranceProviderId
+                              }
+                              required={Boolean(
+                                editForm.insuranceProviderId &&
+                                  !editForm.insurancePolicyNumber
+                              )}
                             />
                           </label>
 
