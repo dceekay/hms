@@ -92,7 +92,19 @@ npm run build
 Apply the database schema. If this is the first production setup and you are not using migrations yet:
 
 ```bash
-npx prisma db push
+npm run prisma:push
+```
+
+If login or another endpoint returns `500` and the PM2 log says a Prisma column does not exist, for example
+`The column hms.users.photoUrl does not exist in the current database`, the VPS MySQL schema is behind
+`prisma/schema.prisma`. Re-upload or pull the latest backend code, then run:
+
+```bash
+cd /var/www/hms/backend
+npm run prisma:generate
+npm run prisma:push
+npm run build
+pm2 restart mds-hms-api
 ```
 
 Seed initial roles/users only when you want demo/admin accounts created:
