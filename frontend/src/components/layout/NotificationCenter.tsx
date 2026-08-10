@@ -184,7 +184,8 @@ export default function NotificationCenter() {
             body: latest.message,
             tag: latest.id,
             data: { url: latest.linkUrl || "/" },
-            icon: "/mds-notification.svg",
+            icon: "/android-chrome-192x192.png",
+            badge: "/favicon-32x32.png",
           })
         )
         .catch(() => {

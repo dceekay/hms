@@ -1,5 +1,14 @@
 self.HMS_CACHE_NAME = "mds-hms-app-shell-v1";
-self.HMS_APP_SHELL = ["/", "/manifest.webmanifest", "/mds-notification.svg"];
+self.HMS_APP_SHELL = [
+  "/",
+  "/manifest.webmanifest",
+  "/favicon.ico",
+  "/favicon-16x16.png",
+  "/favicon-32x32.png",
+  "/apple-touch-icon.png",
+  "/android-chrome-192x192.png",
+  "/android-chrome-512x512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -96,7 +105,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || "MDS Hospital", {
       body: payload.message || payload.body || "You have a new hospital update.",
-      icon: "/mds-notification.svg",
+      icon: "/android-chrome-192x192.png",
+      badge: "/favicon-32x32.png",
       tag: payload.id || payload.eventKey || "mds-hms-update",
       renotify: true,
       requireInteraction: payload.priority === "critical",
