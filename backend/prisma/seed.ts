@@ -782,6 +782,10 @@ async function upsertTestUsers(
         phone: userData.phone,
         serviceAreaId,
         isActive: true,
+        isEmailVerified: true,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        deletedAt: null,
       },
       create: {
         email: userData.email,
@@ -791,6 +795,8 @@ async function upsertTestUsers(
         lastName: userData.lastName,
         phone: userData.phone,
         serviceAreaId,
+        isActive: true,
+        isEmailVerified: true,
       },
     });
 
