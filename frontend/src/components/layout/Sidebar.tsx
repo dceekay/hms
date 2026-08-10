@@ -2,9 +2,12 @@ import { type ReactNode, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FiActivity,
+  FiBell,
+  FiCalendar,
   FiChevronDown,
   FiChevronLeft,
   FiChevronRight,
+  FiClipboard,
   FiCreditCard,
   FiDatabase,
   FiDroplet,
@@ -16,13 +19,14 @@ import {
   FiPlusCircle,
   FiSettings,
   FiShield,
+  FiShare2,
   FiTool,
   FiTruck,
   FiUserCheck,
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
-import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserInjured } from "react-icons/fa";
+import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaNotesMedical, FaUserInjured } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 import mdsLogo from "../../assets/logo.png";
 import { getUserDisplayName } from "../../utils/userDisplay";
@@ -54,11 +58,6 @@ const menus: MenuItem[] = [
     title: "Dashboard",
     icon: <FiHome />,
     path: "/dashboard",
-  },
-  {
-    title: "Account",
-    icon: <FiSettings />,
-    path: "/settings",
   },
   {
     title: "Patients",
@@ -131,6 +130,11 @@ const menus: MenuItem[] = [
     path: "/api-tester",
     requiredRoles: ["Super Admin"],
   },
+  {
+    title: "Account",
+    icon: <FiSettings />,
+    path: "/settings",
+  },
 ];
 
 export function Sidebar({ collapsed, toggle }: Props) {
@@ -139,6 +143,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const securityOnly = roles.includes("Security") && roles.length === 1;
+  const doctorOnly = roles.includes("Doctor") && roles.length === 1;
 
   const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
     const hasRequiredRole = !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
@@ -178,6 +183,45 @@ export function Sidebar({ collapsed, toggle }: Props) {
               ],
             },
           ]
+        : doctorOnly
+          ? [
+              {
+                title: "Doctor Desk",
+                icon: <FaHospitalUser />,
+                path: "/doctor",
+              },
+              {
+                title: "Appointments",
+                icon: <FiCalendar />,
+                path: "/doctor#appointments",
+              },
+              {
+                title: "Patients",
+                icon: <FaUserInjured />,
+                path: "/doctor#patients",
+              },
+              {
+                title: "Care Tools",
+                icon: <FiClipboard />,
+                children: [
+                  { title: "Clinical Notes", path: "/doctor#notes", icon: <FaNotesMedical /> },
+                  { title: "Lab Requests", path: "/doctor#lab", icon: <FaFlask /> },
+                  { title: "Prescriptions", path: "/doctor#prescription", icon: <FaCapsules /> },
+                  { title: "Ward Requests", path: "/doctor#admission", icon: <FaBed /> },
+                  { title: "Referrals", path: "/doctor#referral", icon: <FiShare2 /> },
+                ],
+              },
+              {
+                title: "Reminders",
+                icon: <FiBell />,
+                path: "/doctor#reminders",
+              },
+              {
+                title: "Account",
+                icon: <FiSettings />,
+                path: "/settings",
+              },
+            ]
         : menus;
 
       return sourceMenus
@@ -187,7 +231,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
         }))
         .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
     },
-    [permissions, roles, securityOnly]
+    [permissions, roles, securityOnly, doctorOnly]
   );
 
   const initiallyOpen = useMemo(() => {
@@ -218,9 +262,13 @@ export function Sidebar({ collapsed, toggle }: Props) {
     });
   };
 
-  const isActive = (path?: string) => path === location.pathname;
+  const isMenuActive = (path?: string) => {
+    if (!path) return false;
+    const [itemPath, itemHash = ""] = path.split("#");
+    return itemPath === location.pathname && (!itemHash || `#${itemHash}` === location.hash);
+  };
   const isGroupActive = (item: MenuItem) =>
-    item.children?.some((child) => child.path === location.pathname) ?? false;
+    item.children?.some((child) => isMenuActive(child.path)) ?? false;
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -272,7 +320,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
                       <Link
                         key={child.path}
                         to={child.path}
-                        className={isActive(child.path) ? "sidebar-subitem active" : "sidebar-subitem"}
+                        className={isMenuActive(child.path) ? "sidebar-subitem active" : "sidebar-subitem"}
                       >
                         <span className="subitem-icon">{child.icon}</span>
                         <span>{child.title}</span>
@@ -288,7 +336,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
             <Link
               key={item.path}
               to={item.path ?? "/"}
-              className={isActive(item.path) ? "sidebar-item active" : "sidebar-item"}
+              className={isMenuActive(item.path) ? "sidebar-item active" : "sidebar-item"}
             >
               <span className="icon">{item.icon}</span>
               {!collapsed && <span>{item.title}</span>}

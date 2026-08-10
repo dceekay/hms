@@ -1,8 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  FiBell,
   FiCheckCircle,
   FiCalendar,
   FiClipboard,
+  FiClock,
   FiFileText,
   FiHome,
   FiPrinter,
@@ -11,8 +13,10 @@ import {
   FiSearch,
   FiSend,
   FiShare2,
+  FiTrash2,
   FiUser,
 } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
 import { FaFlask, FaNotesMedical, FaPills, FaUserMd } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/logo.png";
@@ -49,6 +53,24 @@ import type { Patient } from "../../types/patient";
 import type { Medication } from "../../types/pharmacy";
 
 type DoctorTool = "note" | "lab" | "prescription" | "admission" | "referral";
+
+type DoctorReminder = {
+  id: string;
+  title: string;
+  dateTime: string;
+  patientId?: string;
+  patientName?: string;
+  note?: string;
+  notifiedAt?: string;
+};
+
+type ReminderForm = {
+  title: string;
+  date: string;
+  time: string;
+  patientId: string;
+  note: string;
+};
 
 const priorityOptions: ClinicalRequestPriority[] = ["routine", "urgent", "emergency"];
 
@@ -200,7 +222,71 @@ function requestsForPatient<T extends { patientId: string }>(requests: T[], pati
   return requests.filter((request) => request.patientId === patientId);
 }
 
+function dateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function timeInputValue(date = new Date()) {
+  return date.toTimeString().slice(0, 5);
+}
+
+function defaultReminderForm(): ReminderForm {
+  const nextSlot = new Date(Date.now() + 30 * 60 * 1000);
+  return {
+    title: "",
+    date: dateInputValue(nextSlot),
+    time: timeInputValue(nextSlot),
+    patientId: "",
+    note: "",
+  };
+}
+
+function reminderStorageKey(userId?: string) {
+  return `mds:doctor-reminders:${userId || "local"}`;
+}
+
+function createReminderId() {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `reminder-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function sameDay(first: Date, second: Date) {
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
+}
+
+function playReminderSound() {
+  try {
+    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    const context = new AudioContextCtor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = 880;
+    gain.gain.setValueAtTime(0.001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.24, context.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.65);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.7);
+  } catch {
+    // Browser audio can be blocked until the user interacts with the page.
+  }
+}
+
 export default function DoctorDashboardPage() {
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const [workspace, setWorkspace] = useState<ClinicalWorkspace | null>(null);
   const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
@@ -222,6 +308,10 @@ export default function DoctorDashboardPage() {
   const [admissionForm, setAdmissionForm] =
     useState<AdmissionRequestFormValues>(emptyAdmissionForm);
   const [referralForm, setReferralForm] = useState<ReferralFormValues>(emptyReferralForm);
+  const [reminderForm, setReminderForm] = useState<ReminderForm>(() => defaultReminderForm());
+  const [reminders, setReminders] = useState<DoctorReminder[]>([]);
+  const [remindersReady, setRemindersReady] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [printingEncounter, setPrintingEncounter] = useState<ClinicalEncounter | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -273,6 +363,45 @@ export default function DoctorDashboardPage() {
     [workspace?.availableBeds, admissionForm.wardId]
   );
 
+  const upcomingReminders = useMemo(
+    () =>
+      [...reminders]
+        .filter((reminder) => new Date(reminder.dateTime).getTime() >= Date.now() - 60 * 1000)
+        .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
+        .slice(0, 6),
+    [reminders]
+  );
+
+  const nextAppointment = useMemo(
+    () =>
+      [...(workspace?.assignedAppointments ?? [])].sort(
+        (a, b) => new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime()
+      )[0],
+    [workspace?.assignedAppointments]
+  );
+
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const leadingSpaces = firstDay.getDay();
+
+    return [
+      ...Array.from({ length: leadingSpaces }, () => null),
+      ...Array.from({ length: daysInMonth }, (_, index) => new Date(year, month, index + 1)),
+    ];
+  }, [calendarMonth]);
+
+  const calendarTitle = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-NG", {
+        month: "long",
+        year: "numeric",
+      }).format(calendarMonth),
+    [calendarMonth]
+  );
+
   async function loadWorkspace() {
     setLoading(true);
     setError(null);
@@ -321,6 +450,77 @@ export default function DoctorDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const toolByHash: Partial<Record<string, DoctorTool>> = {
+      "#notes": "note",
+      "#lab": "lab",
+      "#prescription": "prescription",
+      "#admission": "admission",
+      "#referral": "referral",
+    };
+
+    const nextTool = toolByHash[location.hash];
+    if (nextTool) {
+      setActiveTool(nextTool);
+    }
+
+    if (location.hash) {
+      window.setTimeout(() => {
+        document.querySelector(location.hash)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 60);
+    }
+  }, [location.hash]);
+
+  useEffect(() => {
+    setRemindersReady(false);
+    try {
+      const saved = window.localStorage.getItem(reminderStorageKey(user?.id));
+      setReminders(saved ? JSON.parse(saved) : []);
+    } catch {
+      setReminders([]);
+    }
+    setRemindersReady(true);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!remindersReady) return;
+    window.localStorage.setItem(reminderStorageKey(user?.id), JSON.stringify(reminders));
+  }, [reminders, remindersReady, user?.id]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      const dueReminders = reminders.filter(
+        (reminder) => !reminder.notifiedAt && new Date(reminder.dateTime).getTime() <= now
+      );
+
+      if (dueReminders.length === 0) return;
+
+      dueReminders.forEach((reminder) => {
+        playReminderSound();
+
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("Doctor reminder", {
+            body: `${reminder.title}${reminder.patientName ? ` - ${reminder.patientName}` : ""}`,
+          });
+        }
+      });
+
+      setReminders((current) =>
+        current.map((reminder) =>
+          dueReminders.some((item) => item.id === reminder.id)
+            ? { ...reminder, notifiedAt: new Date().toISOString() }
+            : reminder
+        )
+      );
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [reminders]);
+
   async function selectPatient(
     patient: Patient,
     historySeed = patientHistory,
@@ -338,6 +538,7 @@ export default function DoctorDashboardPage() {
     setPrescriptionNotes("");
     setAdmissionForm({ ...emptyAdmissionForm, patientId: patient.id });
     setReferralForm({ ...emptyReferralForm, patientId: patient.id });
+    setReminderForm((current) => ({ ...current, patientId: patient.id }));
     setActiveEncounter(null);
     setActiveTool("note");
 
@@ -628,6 +829,53 @@ export default function DoctorDashboardPage() {
     window.setTimeout(() => window.print(), 80);
   }
 
+  async function handleAddReminder(event: FormEvent) {
+    event.preventDefault();
+
+    if (!reminderForm.title.trim() || !reminderForm.date || !reminderForm.time) {
+      setError("Add a reminder title, date, and time.");
+      return;
+    }
+
+    const patient =
+      reminderForm.patientId
+        ? (workspace?.patients ?? []).find((item) => item.id === reminderForm.patientId) ?? null
+        : null;
+    const dateTime = new Date(`${reminderForm.date}T${reminderForm.time}`);
+
+    if (Number.isNaN(dateTime.getTime())) {
+      setError("Choose a valid reminder date and time.");
+      return;
+    }
+
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      await Notification.requestPermission();
+    }
+
+    setReminders((current) => [
+      {
+        id: createReminderId(),
+        title: reminderForm.title.trim(),
+        dateTime: dateTime.toISOString(),
+        patientId: patient?.id,
+        patientName: patient ? patientName(patient) : undefined,
+        note: reminderForm.note.trim() || undefined,
+      },
+      ...current,
+    ]);
+    setReminderForm(defaultReminderForm());
+    setMessage("Reminder saved.");
+    setError(null);
+  }
+
+  function removeReminder(id: string) {
+    setReminders((current) => current.filter((reminder) => reminder.id !== id));
+  }
+
+  function moveCalendar(monthOffset: number) {
+    setCalendarMonth((current) => new Date(current.getFullYear(), current.getMonth() + monthOffset, 1));
+  }
+
   const stats = workspace?.summary ?? defaultWorkspaceSummary;
   const assignedAppointments = workspace?.assignedAppointments ?? [];
   const patients = workspace?.patients ?? [];
@@ -637,7 +885,7 @@ export default function DoctorDashboardPage() {
   return (
     <AdminLayout>
       <div className="doctor-page">
-        <section className="doctor-command">
+        <section className="doctor-command" id="overview">
           <div className="doctor-command-title">
             <span className="doctor-icon">
               <FaUserMd />
@@ -676,7 +924,46 @@ export default function DoctorDashboardPage() {
             <span>Ward requests</span>
             <strong>{stats.pendingAdmissionRequests}</strong>
           </article>
+          <article>
+            <FaPills />
+            <span>Prescriptions</span>
+            <strong>{stats.prescriptionsSent}</strong>
+          </article>
+          <article>
+            <FiShare2 />
+            <span>Referrals</span>
+            <strong>{stats.referralsSent}</strong>
+          </article>
         </div>
+
+        <section className="doctor-focus-grid">
+          <article className="doctor-focus-card">
+            <div>
+              <span>Next patient</span>
+              <strong>{nextAppointment ? patientName(nextAppointment.patient) : "No queue yet"}</strong>
+              <small>
+                {nextAppointment
+                  ? `${formatDate(nextAppointment.scheduledFor)} | ${nextAppointment.reason || "Consultation"}`
+                  : "Reception assignments will appear here."}
+              </small>
+            </div>
+            <FiCalendar />
+          </article>
+          <article className="doctor-focus-card">
+            <div>
+              <span>Next reminder</span>
+              <strong>{upcomingReminders[0]?.title ?? "Nothing pending"}</strong>
+              <small>
+                {upcomingReminders[0]
+                  ? `${formatDate(upcomingReminders[0].dateTime)}${
+                      upcomingReminders[0].patientName ? ` | ${upcomingReminders[0].patientName}` : ""
+                    }`
+                  : "Add a clinical follow-up reminder below."}
+              </small>
+            </div>
+            <FiBell />
+          </article>
+        </section>
 
         {(message || error) && (
           <div className={error ? "doctor-alert error" : "doctor-alert"}>
@@ -684,7 +971,7 @@ export default function DoctorDashboardPage() {
           </div>
         )}
 
-        <section className="doctor-panel doctor-queue-panel">
+        <section className="doctor-panel doctor-queue-panel" id="appointments">
           <div className="doctor-panel-heading">
             <div>
               <span>Appointments</span>
@@ -753,7 +1040,7 @@ export default function DoctorDashboardPage() {
           </div>
         </section>
 
-        <section className="doctor-patient-strip">
+        <section className="doctor-patient-strip" id="patients">
           <div>
             <label htmlFor="doctor-patient-search">Patient</label>
             <div className="doctor-search-field">
@@ -824,7 +1111,7 @@ export default function DoctorDashboardPage() {
           </section>
         )}
 
-        <section className="doctor-panel doctor-workbench">
+        <section className="doctor-panel doctor-workbench" id="care-tools">
           <div className="doctor-panel-heading">
             <div>
               <span>Care actions</span>
@@ -854,7 +1141,7 @@ export default function DoctorDashboardPage() {
           </div>
 
           {activeTool === "note" && (
-            <form className="doctor-action-form" onSubmit={handleSaveEncounter}>
+            <form className="doctor-action-form" id="notes" onSubmit={handleSaveEncounter}>
               <div className="doctor-form-grid">
                 <label>
                   Visit type
@@ -968,7 +1255,7 @@ export default function DoctorDashboardPage() {
           )}
 
           {activeTool === "lab" && (
-            <form className="doctor-action-form" onSubmit={handleRequestLab}>
+            <form className="doctor-action-form" id="lab" onSubmit={handleRequestLab}>
               <div className="doctor-form-grid">
                 <label>
                   Test
@@ -1002,7 +1289,7 @@ export default function DoctorDashboardPage() {
           )}
 
           {activeTool === "prescription" && (
-            <form className="doctor-action-form" onSubmit={handleSendPrescription}>
+            <form className="doctor-action-form" id="prescription" onSubmit={handleSendPrescription}>
               <div className="doctor-form-grid">
                 <label>
                   Medicine
@@ -1117,7 +1404,7 @@ export default function DoctorDashboardPage() {
           )}
 
           {activeTool === "admission" && (
-            <form className="doctor-action-form" onSubmit={handleRequestAdmission}>
+            <form className="doctor-action-form" id="admission" onSubmit={handleRequestAdmission}>
               <div className="doctor-form-grid compact">
                 <label>
                   Priority
@@ -1217,7 +1504,7 @@ export default function DoctorDashboardPage() {
           )}
 
           {activeTool === "referral" && (
-            <form className="doctor-action-form" onSubmit={handleCreateReferral}>
+            <form className="doctor-action-form" id="referral" onSubmit={handleCreateReferral}>
               <div className="doctor-form-grid compact">
                 <label>
                   Priority
@@ -1308,6 +1595,177 @@ export default function DoctorDashboardPage() {
               </button>
             </form>
           )}
+        </section>
+
+        <section className="doctor-reminder-grid" id="reminders">
+          <div className="doctor-panel doctor-calendar-panel">
+            <div className="doctor-panel-heading">
+              <div>
+                <span>Calendar</span>
+                <h2>{calendarTitle}</h2>
+              </div>
+              <div className="doctor-calendar-actions">
+                <button className="command-btn" type="button" onClick={() => moveCalendar(-1)}>
+                  Prev
+                </button>
+                <button className="command-btn" type="button" onClick={() => setCalendarMonth(new Date())}>
+                  Today
+                </button>
+                <button className="command-btn" type="button" onClick={() => moveCalendar(1)}>
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <div className="doctor-calendar-weekdays">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <span key={day}>{day}</span>
+              ))}
+            </div>
+
+            <div className="doctor-calendar-month">
+              {calendarDays.map((day, index) => {
+                const dayAppointments = day
+                  ? assignedAppointments.filter((appointment) =>
+                      sameDay(new Date(appointment.scheduledFor), day)
+                    )
+                  : [];
+                const dayReminders = day
+                  ? reminders.filter((reminder) => sameDay(new Date(reminder.dateTime), day))
+                  : [];
+
+                return (
+                  <button
+                    key={day?.toISOString() ?? `blank-${index}`}
+                    className={
+                      day && sameDay(day, new Date())
+                        ? "doctor-calendar-day today"
+                        : "doctor-calendar-day"
+                    }
+                    type="button"
+                    disabled={!day}
+                    onClick={() =>
+                      day ? setReminderForm((current) => ({ ...current, date: dateInputValue(day) })) : undefined
+                    }
+                  >
+                    {day && (
+                      <>
+                        <strong>{day.getDate()}</strong>
+                        <span>
+                          {dayAppointments.length > 0 && <i className="appointment-dot" />}
+                          {dayReminders.length > 0 && <i className="reminder-dot" />}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="doctor-panel doctor-reminder-panel">
+            <div className="doctor-panel-heading">
+              <div>
+                <span>Reminders</span>
+                <h2>Clinical follow-ups</h2>
+              </div>
+              <FiClock />
+            </div>
+
+            <form className="doctor-reminder-form" onSubmit={handleAddReminder}>
+              <label>
+                Reminder
+                <input
+                  value={reminderForm.title}
+                  onChange={(event) =>
+                    setReminderForm((current) => ({ ...current, title: event.target.value }))
+                  }
+                  placeholder="Review lab result, call patient, ward round"
+                />
+              </label>
+
+              <div className="doctor-form-grid compact">
+                <label>
+                  Date
+                  <input
+                    type="date"
+                    value={reminderForm.date}
+                    onChange={(event) =>
+                      setReminderForm((current) => ({ ...current, date: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Time
+                  <input
+                    type="time"
+                    value={reminderForm.time}
+                    onChange={(event) =>
+                      setReminderForm((current) => ({ ...current, time: event.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <label>
+                Patient
+                <select
+                  value={reminderForm.patientId}
+                  onChange={(event) =>
+                    setReminderForm((current) => ({ ...current, patientId: event.target.value }))
+                  }
+                >
+                  <option value="">General reminder</option>
+                  {patients.map((patient) => (
+                    <option key={patient.id} value={patient.id}>
+                      {patientName(patient)}
+                      {patient.mrn ? ` | ${patient.mrn}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Note
+                <textarea
+                  rows={2}
+                  value={reminderForm.note}
+                  onChange={(event) =>
+                    setReminderForm((current) => ({ ...current, note: event.target.value }))
+                  }
+                />
+              </label>
+
+              <button className="command-btn primary" type="submit">
+                <FiBell />
+                Save reminder
+              </button>
+            </form>
+
+            <div className="doctor-reminder-list">
+              {upcomingReminders.length === 0 && <p>No upcoming reminders.</p>}
+              {upcomingReminders.map((reminder) => (
+                <article key={reminder.id} className="doctor-reminder-item">
+                  <div>
+                    <strong>{reminder.title}</strong>
+                    <span>
+                      {formatDate(reminder.dateTime)}
+                      {reminder.patientName ? ` | ${reminder.patientName}` : ""}
+                    </span>
+                    {reminder.note && <small>{reminder.note}</small>}
+                  </div>
+                  <button
+                    className="icon-btn"
+                    type="button"
+                    aria-label="Remove reminder"
+                    onClick={() => removeReminder(reminder.id)}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </article>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="doctor-history-grid">

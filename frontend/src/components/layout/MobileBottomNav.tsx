@@ -1,6 +1,18 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { type ReactNode, useMemo } from "react";
-import { FiCreditCard, FiFileText, FiHome, FiLogIn, FiPackage, FiSettings, FiShield, FiUsers } from "react-icons/fi";
+import {
+  FiBell,
+  FiCalendar,
+  FiClipboard,
+  FiCreditCard,
+  FiFileText,
+  FiHome,
+  FiLogIn,
+  FiPackage,
+  FiSettings,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
 import { FaCapsules, FaFlask, FaUserInjured, FaUserMd } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 
@@ -51,11 +63,24 @@ const securityMobileItems: MobileNavItem[] = [
   },
 ];
 
+const doctorMobileItems: MobileNavItem[] = [
+  { label: "Desk", path: "/doctor", icon: <FaUserMd /> },
+  { label: "Queue", path: "/doctor#appointments", icon: <FiCalendar /> },
+  { label: "Patient", path: "/doctor#patients", icon: <FaUserInjured /> },
+  { label: "Lab", path: "/doctor#lab", icon: <FaFlask /> },
+  { label: "Rx", path: "/doctor#prescription", icon: <FaCapsules /> },
+  { label: "Notes", path: "/doctor#notes", icon: <FiClipboard /> },
+  { label: "Remind", path: "/doctor#reminders", icon: <FiBell /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
 export default function MobileBottomNav() {
   const user = useAuthStore((state) => state.user);
+  const location = useLocation();
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
   const securityOnly = roles.includes("Security") && roles.length === 1;
+  const doctorOnly = roles.includes("Doctor") && roles.length === 1;
 
   const canAccess = (item: MobileNavItem) => {
     const hasRequiredRole =
@@ -73,7 +98,12 @@ export default function MobileBottomNav() {
     return hasRequiredRole && hasRequiredPermissions && hasAnyPermission;
   };
 
-  const visibleItems = (securityOnly ? securityMobileItems : mobileItems).filter(canAccess);
+  const sourceItems = securityOnly ? securityMobileItems : doctorOnly ? doctorMobileItems : mobileItems;
+  const visibleItems = sourceItems.filter(canAccess);
+  const isItemActive = (path: string, navIsActive: boolean) => {
+    const [itemPath, itemHash = ""] = path.split("#");
+    return navIsActive && itemPath === location.pathname && (!itemHash || `#${itemHash}` === location.hash);
+  };
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile app navigation">
@@ -81,7 +111,9 @@ export default function MobileBottomNav() {
         <NavLink
           key={item.path}
           to={item.path}
-          className={({ isActive }) => (isActive ? "mobile-nav-item active" : "mobile-nav-item")}
+          className={({ isActive }) =>
+            isItemActive(item.path, isActive) ? "mobile-nav-item active" : "mobile-nav-item"
+          }
         >
           {item.icon}
           <span>{item.label}</span>

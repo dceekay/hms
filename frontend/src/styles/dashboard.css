@@ -4898,7 +4898,7 @@
 
 .doctor-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -4926,6 +4926,58 @@
 
 .doctor-stats-grid strong {
   color: #ffffff;
+  font-size: 1.6rem;
+}
+
+.doctor-focus-grid,
+.doctor-reminder-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.doctor-focus-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.2), transparent 42%),
+    rgba(15, 23, 42, 0.76);
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.16);
+}
+
+.doctor-focus-card > div {
+  min-width: 0;
+}
+
+.doctor-focus-card span,
+.doctor-focus-card small {
+  display: block;
+  color: #94a3b8;
+}
+
+.doctor-focus-card span {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.doctor-focus-card strong {
+  display: block;
+  margin: 4px 0;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-focus-card svg {
+  flex: 0 0 auto;
+  color: #22d3ee;
   font-size: 1.6rem;
 }
 
@@ -5145,6 +5197,121 @@
   color: #f8fafc;
   background: rgba(15, 23, 42, 0.86);
   resize: vertical;
+}
+
+.doctor-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.doctor-calendar-actions .command-btn {
+  min-height: 36px;
+  padding: 0 11px;
+}
+
+.doctor-calendar-weekdays,
+.doctor-calendar-month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.doctor-calendar-weekdays span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.doctor-calendar-day {
+  aspect-ratio: 1 / 0.82;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  color: #e2e8f0;
+  background: rgba(2, 6, 23, 0.25);
+  cursor: pointer;
+}
+
+.doctor-calendar-day:disabled {
+  cursor: default;
+  opacity: 0;
+}
+
+.doctor-calendar-day.today {
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(14, 165, 233, 0.18);
+}
+
+.doctor-calendar-day strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.doctor-calendar-day span {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  min-height: 8px;
+}
+
+.doctor-calendar-day i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.appointment-dot {
+  background: #38bdf8;
+}
+
+.reminder-dot {
+  background: #f59e0b;
+}
+
+.doctor-reminder-form {
+  display: grid;
+  gap: 12px;
+}
+
+.doctor-reminder-list {
+  display: grid;
+  gap: 10px;
+}
+
+.doctor-reminder-list > p {
+  color: #94a3b8;
+}
+
+.doctor-reminder-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.24);
+}
+
+.doctor-reminder-item strong,
+.doctor-reminder-item span,
+.doctor-reminder-item small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.doctor-reminder-item strong {
+  color: #ffffff;
+}
+
+.doctor-reminder-item span,
+.doctor-reminder-item small {
+  color: #94a3b8;
 }
 
 .doctor-action-row {
@@ -5522,8 +5689,13 @@
 @media (max-width: 1120px) {
   .doctor-work-grid,
   .doctor-history-grid,
+  .doctor-reminder-grid,
   .appointments-grid {
     grid-template-columns: 1fr;
+  }
+
+  .doctor-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .doctor-appointment-queue,
@@ -5554,6 +5726,10 @@
 
   .doctor-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .doctor-focus-grid {
+    grid-template-columns: 1fr;
   }
 
   .doctor-selected-patient {
@@ -5594,6 +5770,20 @@
     justify-content: center;
   }
 
+  .doctor-calendar-actions {
+    justify-content: stretch;
+  }
+
+  .doctor-calendar-actions .command-btn {
+    flex: 1 1 80px;
+    justify-content: center;
+  }
+
+  .doctor-calendar-weekdays,
+  .doctor-calendar-month {
+    gap: 5px;
+  }
+
   .doctor-record-card > div:first-child,
   .doctor-record-card.slim {
     grid-template-columns: 1fr;
@@ -5614,6 +5804,19 @@
   .doctor-tool-tabs button {
     min-width: 96px;
     padding: 0 10px;
+  }
+
+  .doctor-calendar-day {
+    aspect-ratio: 1 / 1;
+    border-radius: 7px;
+  }
+
+  .doctor-calendar-weekdays span {
+    font-size: 0.68rem;
+  }
+
+  .doctor-reminder-item {
+    grid-template-columns: 1fr;
   }
 }
 
