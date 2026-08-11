@@ -14,6 +14,7 @@ import SemsasPage from "./pages/operations/SemsasPage";
 import PharmacyPage from "./pages/pharmacy/PharmacyPage";
 import LaboratoryPage from "./pages/laboratory/LaboratoryPage";
 import DoctorDashboardPage from "./pages/doctor/DoctorDashboardPage";
+import NurseDashboardPage from "./pages/nurse/NurseDashboardPage";
 import AppointmentsPage from "./pages/appointments/AppointmentsPage";
 import InventoryPage from "./pages/inventory/InventoryPage";
 import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
@@ -170,6 +171,24 @@ export default function App() {
           element={
             <ProtectedRoute requiredRoles={["Doctor"]}>
               <DoctorDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/nurse"
+          element={
+            <ProtectedRoute requiredRoles={["Nurse"]}>
+              <NurseDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/nurse/:view"
+          element={
+            <ProtectedRoute requiredRoles={["Nurse"]}>
+              <NurseDashboardPage />
             </ProtectedRoute>
           }
         />

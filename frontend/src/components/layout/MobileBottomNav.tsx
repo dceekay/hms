@@ -13,7 +13,7 @@ import {
   FiShield,
   FiUsers,
 } from "react-icons/fi";
-import { FaCapsules, FaFlask, FaUserInjured, FaUserMd } from "react-icons/fa";
+import { FaBed, FaCapsules, FaFlask, FaNotesMedical, FaUserInjured, FaUserMd, FaUserNurse } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 
 type MobileNavItem = {
@@ -74,6 +74,17 @@ const doctorMobileItems: MobileNavItem[] = [
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
+const nurseMobileItems: MobileNavItem[] = [
+  { label: "Desk", path: "/nurse", icon: <FaUserNurse /> },
+  { label: "Patients", path: "/nurse/patients", icon: <FaUserInjured /> },
+  { label: "Ward", path: "/nurse/ward", icon: <FaBed /> },
+  { label: "Meds", path: "/nurse/medications", icon: <FaCapsules /> },
+  { label: "Orders", path: "/nurse/orders", icon: <FiFileText /> },
+  { label: "Vitals", path: "/nurse/vitals", icon: <FiClipboard /> },
+  { label: "Notes", path: "/nurse/notes", icon: <FaNotesMedical /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
 export default function MobileBottomNav() {
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
@@ -81,6 +92,7 @@ export default function MobileBottomNav() {
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
   const securityOnly = roles.includes("Security") && roles.length === 1;
   const doctorOnly = roles.includes("Doctor") && roles.length === 1;
+  const nurseOnly = roles.includes("Nurse") && roles.length === 1;
 
   const canAccess = (item: MobileNavItem) => {
     const hasRequiredRole =
@@ -98,7 +110,13 @@ export default function MobileBottomNav() {
     return hasRequiredRole && hasRequiredPermissions && hasAnyPermission;
   };
 
-  const sourceItems = securityOnly ? securityMobileItems : doctorOnly ? doctorMobileItems : mobileItems;
+  const sourceItems = securityOnly
+    ? securityMobileItems
+    : doctorOnly
+      ? doctorMobileItems
+      : nurseOnly
+        ? nurseMobileItems
+        : mobileItems;
   const visibleItems = sourceItems.filter(canAccess);
   const isItemActive = (path: string, navIsActive: boolean) => {
     const [itemPath, itemHash = ""] = path.split("#");

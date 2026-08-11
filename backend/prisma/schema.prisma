@@ -147,6 +147,21 @@ enum PrescriptionStatus {
   cancelled
 }
 
+enum MedicationAdministrationStatus {
+  pending
+  given
+  held
+  missed
+  refused
+}
+
+enum NursingShift {
+  morning
+  afternoon
+  night
+  general
+}
+
 enum ClinicalRequestPriority {
   routine
   urgent
@@ -264,6 +279,14 @@ model User {
 
   referrals ClinicalReferral[] @relation("ClinicalReferralsDoctor")
 
+  medicationAdministrations MedicationAdministrationRecord[] @relation("MedicationAdministeredBy")
+
+  vitalSignsRecorded VitalSignRecord[] @relation("VitalSignsRecordedBy")
+
+  nursingNotesRecorded NursingNote[] @relation("NursingNotesRecordedBy")
+
+  nurseOrderAcknowledgements NurseOrderAcknowledgement[] @relation("NurseOrderAcknowledgements")
+
   wardAssignmentsAssigned WardBedAssignment[] @relation("WardAssignmentsAssignedBy")
 
   wardAssignmentsDoctor WardBedAssignment[] @relation("WardAssignmentsDoctor")
@@ -343,6 +366,16 @@ model Patient {
   clinicalEncounters ClinicalEncounter[]
 
   prescriptions Prescription[]
+
+  medicationSchedules MedicationAdministrationSchedule[]
+
+  medicationAdministrationRecords MedicationAdministrationRecord[]
+
+  vitalSigns VitalSignRecord[]
+
+  nursingNotes NursingNote[]
+
+  nurseOrderAcknowledgements NurseOrderAcknowledgement[]
 
   admissionRequests ClinicalAdmissionRequest[]
 
@@ -598,6 +631,8 @@ model Medication {
   saleItems      PharmacySaleItem[]
   prescriptionItems PrescriptionItem[]
 
+  medicationAdministrationSchedules MedicationAdministrationSchedule[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -786,6 +821,8 @@ model Prescription {
 
   items PrescriptionItem[]
 
+  medicationAdministrationSchedules MedicationAdministrationSchedule[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -815,11 +852,163 @@ model PrescriptionItem {
   quantity       Int?
   instructions   String? @db.VarChar(500)
 
+  medicationAdministrationSchedules MedicationAdministrationSchedule[]
+
   createdAt DateTime @default(now())
 
   @@index([prescriptionId])
   @@index([medicationId])
   @@map("prescription_items")
+}
+
+model MedicationAdministrationSchedule {
+  id String @id @default(uuid()) @db.Char(36)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  prescriptionId String       @db.Char(36)
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  prescriptionItemId String           @unique @db.Char(36)
+  prescriptionItem   PrescriptionItem @relation(fields: [prescriptionItemId], references: [id], onDelete: Cascade)
+
+  medicationId String?     @db.Char(36)
+  medication   Medication? @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+
+  doctorId String @db.Char(36)
+
+  medicationName String  @db.VarChar(150)
+  strength       String? @db.VarChar(80)
+  dosageForm     String? @db.VarChar(80)
+  dose           String  @db.VarChar(120)
+  route          String? @db.VarChar(80)
+  frequency      String  @db.VarChar(120)
+  duration       String  @db.VarChar(120)
+  instructions   String? @db.VarChar(500)
+
+  startAt       DateTime @default(now())
+  endAt         DateTime?
+  nextDueAt     DateTime?
+  intervalHours Int?
+  isActive      Boolean  @default(true)
+
+  records MedicationAdministrationRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([prescriptionId])
+  @@index([medicationId])
+  @@index([doctorId])
+  @@index([nextDueAt])
+  @@index([isActive])
+  @@map("medication_administration_schedules")
+}
+
+model MedicationAdministrationRecord {
+  id String @id @default(uuid()) @db.Char(36)
+
+  scheduleId String                           @db.Char(36)
+  schedule   MedicationAdministrationSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  nurseId String @db.Char(36)
+  nurse   User   @relation("MedicationAdministeredBy", fields: [nurseId], references: [id], onDelete: Restrict)
+
+  status MedicationAdministrationStatus
+
+  scheduledFor DateTime
+  administeredAt DateTime @default(now())
+  nurseInitials  String   @db.VarChar(20)
+  note           String?  @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+
+  @@index([scheduleId])
+  @@index([patientId])
+  @@index([nurseId])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([administeredAt])
+  @@map("medication_administration_records")
+}
+
+model VitalSignRecord {
+  id String @id @default(uuid()) @db.Char(36)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  recordedById String @db.Char(36)
+  recordedBy   User   @relation("VitalSignsRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  temperatureCelsius Decimal? @db.Decimal(5, 2)
+  systolicBp         Int?
+  diastolicBp        Int?
+  pulse              Int?
+  respiration        Int?
+  spo2               Int?
+  painScore          Int?
+  notes              String? @db.VarChar(500)
+
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId])
+  @@index([recordedById])
+  @@index([recordedAt])
+  @@map("vital_sign_records")
+}
+
+model NursingNote {
+  id String @id @default(uuid()) @db.Char(36)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  recordedById String @db.Char(36)
+  recordedBy   User   @relation("NursingNotesRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  shift NursingShift @default(general)
+
+  note String @db.VarChar(1500)
+
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([patientId])
+  @@index([recordedById])
+  @@index([shift])
+  @@index([recordedAt])
+  @@map("nursing_notes")
+}
+
+model NurseOrderAcknowledgement {
+  id String @id @default(uuid()) @db.Char(36)
+
+  orderType String @db.VarChar(80)
+  orderId   String @db.Char(36)
+
+  patientId String  @db.Char(36)
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  nurseId String @db.Char(36)
+  nurse   User   @relation("NurseOrderAcknowledgements", fields: [nurseId], references: [id], onDelete: Restrict)
+
+  note String? @db.VarChar(500)
+
+  acknowledgedAt DateTime @default(now())
+
+  @@unique([orderType, orderId, nurseId])
+  @@index([patientId])
+  @@index([nurseId])
+  @@index([orderType])
+  @@index([acknowledgedAt])
+  @@map("nurse_order_acknowledgements")
 }
 
 model ClinicalAdmissionRequest {

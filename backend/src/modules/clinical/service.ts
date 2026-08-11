@@ -536,6 +536,20 @@ export class ClinicalService {
       },
     });
 
+    await NotificationService.create({
+      title: "New medication order",
+      message: `${prescription.patient.firstName} ${prescription.patient.lastName} has medication orders ready for nursing rounds.`,
+      eventKey: "nursing.medication.order.created",
+      priority: "warning",
+      targetRole: "Nurse",
+      linkUrl: "/nurse/medications",
+      metadata: {
+        prescriptionId: prescription.id,
+        prescriptionNumber: prescription.prescriptionNumber,
+        patientId: prescription.patientId,
+      },
+    });
+
     return prescription;
   }
 

@@ -5740,6 +5740,269 @@
   display: none;
 }
 
+.nurse-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.nurse-command,
+.nurse-patient-card,
+.nurse-med-card {
+  border: 1px solid rgba(96, 165, 250, 0.22);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.76);
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.16);
+}
+
+.nurse-command {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+}
+
+.nurse-command h1,
+.nurse-patient-card h3,
+.nurse-med-card h3 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.nurse-command p:not(.eyebrow),
+.nurse-patient-card p,
+.nurse-patient-card small,
+.nurse-muted {
+  margin: 4px 0 0;
+  color: #94a3b8;
+}
+
+.nurse-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.nurse-stats-grid article {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.74);
+}
+
+.nurse-stats-grid svg {
+  color: #22d3ee;
+  font-size: 1.35rem;
+}
+
+.nurse-stats-grid span {
+  color: #94a3b8;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nurse-stats-grid strong {
+  color: #ffffff;
+  font-size: 1.55rem;
+}
+
+.nurse-card-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nurse-patient-card,
+.nurse-med-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px;
+}
+
+.nurse-med-card {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.nurse-med-card.overdue {
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.nurse-med-card.due {
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.nurse-med-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.nurse-med-meta span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  color: #cbd5e1;
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.nurse-med-meta strong {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.nurse-status {
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.2);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.nurse-status.admitted,
+.nurse-status.due {
+  color: #fde68a;
+  background: rgba(217, 119, 6, 0.22);
+}
+
+.nurse-status.overdue {
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.22);
+}
+
+.nurse-status.upcoming {
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.nurse-status.completed {
+  color: #bbf7d0;
+  background: rgba(22, 163, 74, 0.18);
+}
+
+.nurse-ward-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  border-radius: 8px;
+  color: #cbd5e1;
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.nurse-ward-chip span {
+  overflow-wrap: anywhere;
+}
+
+.nurse-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nurse-med-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.nurse-id-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.nurse-id-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(720px, 100%);
+  max-height: min(92vh, 760px);
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 8px;
+  background: #020617;
+}
+
+@media (max-width: 1120px) {
+  .nurse-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nurse-med-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .nurse-command {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .nurse-command .command-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nurse-stats-grid,
+  .nurse-med-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nurse-patient-card {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-action-row {
+    justify-content: stretch;
+  }
+
+  .nurse-action-row .command-btn,
+  .nurse-action-row a.command-btn {
+    flex: 1 1 120px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 460px) {
+  .nurse-stats-grid,
+  .nurse-med-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .nurse-command,
+  .nurse-patient-card,
+  .nurse-med-card,
+  .nurse-id-dialog {
+    padding: 12px;
+  }
+}
+
 @media (max-width: 1120px) {
   .doctor-work-grid,
   .doctor-history-grid,

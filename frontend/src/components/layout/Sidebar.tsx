@@ -26,7 +26,7 @@ import {
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
-import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaNotesMedical, FaUserInjured } from "react-icons/fa";
+import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaNotesMedical, FaUserInjured, FaUserNurse } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
 import mdsLogo from "../../assets/logo.png";
 import { getUserDisplayName } from "../../utils/userDisplay";
@@ -144,6 +144,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const securityOnly = roles.includes("Security") && roles.length === 1;
   const doctorOnly = roles.includes("Doctor") && roles.length === 1;
+  const nurseOnly = roles.includes("Nurse") && roles.length === 1;
 
   const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
     const hasRequiredRole = !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
@@ -222,6 +223,18 @@ export function Sidebar({ collapsed, toggle }: Props) {
                 path: "/settings",
               },
             ]
+          : nurseOnly
+            ? [
+                { title: "Nurse Desk", icon: <FaUserNurse />, path: "/nurse" },
+                { title: "Patients", icon: <FaUserInjured />, path: "/nurse/patients" },
+                { title: "Ward Patients", icon: <FaBed />, path: "/nurse/ward" },
+                { title: "Medication Rounds", icon: <FaCapsules />, path: "/nurse/medications" },
+                { title: "Doctor Orders", icon: <FiFileText />, path: "/nurse/orders" },
+                { title: "Vitals", icon: <FiActivity />, path: "/nurse/vitals" },
+                { title: "Nursing Notes", icon: <FaNotesMedical />, path: "/nurse/notes" },
+                { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
+                { title: "Account", icon: <FiSettings />, path: "/settings" },
+              ]
         : menus;
 
       return sourceMenus
@@ -231,7 +244,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
         }))
         .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
     },
-    [permissions, roles, securityOnly, doctorOnly]
+    [permissions, roles, securityOnly, doctorOnly, nurseOnly]
   );
 
   const initiallyOpen = useMemo(() => {
