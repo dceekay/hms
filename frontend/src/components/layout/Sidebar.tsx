@@ -193,28 +193,28 @@ export function Sidebar({ collapsed, toggle }: Props) {
               {
                 title: "Appointments",
                 icon: <FiCalendar />,
-                path: "/doctor#appointments",
+                path: "/doctor/appointments",
               },
               {
                 title: "Patients",
                 icon: <FaUserInjured />,
-                path: "/doctor#patients",
+                path: "/doctor/patients",
               },
               {
                 title: "Care Tools",
                 icon: <FiClipboard />,
                 children: [
-                  { title: "Clinical Notes", path: "/doctor#notes", icon: <FaNotesMedical /> },
-                  { title: "Lab Requests", path: "/doctor#lab", icon: <FaFlask /> },
-                  { title: "Prescriptions", path: "/doctor#prescription", icon: <FaCapsules /> },
-                  { title: "Ward Requests", path: "/doctor#admission", icon: <FaBed /> },
-                  { title: "Referrals", path: "/doctor#referral", icon: <FiShare2 /> },
+                  { title: "Clinical Notes", path: "/doctor/notes", icon: <FaNotesMedical /> },
+                  { title: "Lab Requests", path: "/doctor/lab", icon: <FaFlask /> },
+                  { title: "Prescriptions", path: "/doctor/prescription", icon: <FaCapsules /> },
+                  { title: "Ward Requests", path: "/doctor/admission", icon: <FaBed /> },
+                  { title: "Referrals", path: "/doctor/referral", icon: <FiShare2 /> },
                 ],
               },
               {
                 title: "Reminders",
                 icon: <FiBell />,
-                path: "/doctor#reminders",
+                path: "/doctor/reminders",
               },
               {
                 title: "Account",

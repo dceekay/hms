@@ -4981,6 +4981,56 @@
   font-size: 1.6rem;
 }
 
+.doctor-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.doctor-workspace-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  min-height: 132px;
+  padding: 16px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  background: rgba(15, 23, 42, 0.74);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.doctor-workspace-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 211, 238, 0.42);
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.doctor-workspace-card > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+}
+
+.doctor-workspace-card strong {
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doctor-workspace-card small {
+  color: #94a3b8;
+}
+
 .doctor-alert {
   padding: 12px 14px;
   border: 1px solid rgba(34, 197, 94, 0.32);
@@ -5092,7 +5142,8 @@
   background: rgba(2, 6, 23, 0.22);
 }
 
-.doctor-tool-tabs button {
+.doctor-tool-tabs button,
+.doctor-tool-tabs a {
   min-height: 42px;
   display: inline-flex;
   align-items: center;
@@ -5106,6 +5157,7 @@
   color: #cbd5e1;
   background: transparent;
   font-weight: 900;
+  text-decoration: none;
   cursor: pointer;
   transition:
     transform 0.18s ease,
@@ -5114,7 +5166,9 @@
 }
 
 .doctor-tool-tabs button:hover,
-.doctor-tool-tabs button.active {
+.doctor-tool-tabs button.active,
+.doctor-tool-tabs a:hover,
+.doctor-tool-tabs a.active {
   transform: translateY(-1px);
   border-color: rgba(34, 211, 238, 0.36);
   color: #ffffff;
@@ -5698,6 +5752,10 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .doctor-workspace-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .doctor-appointment-queue,
   .doctor-patient-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5732,6 +5790,10 @@
     grid-template-columns: 1fr;
   }
 
+  .doctor-workspace-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .doctor-selected-patient {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -5759,7 +5821,8 @@
     display: none;
   }
 
-  .doctor-tool-tabs button {
+  .doctor-tool-tabs button,
+  .doctor-tool-tabs a {
     flex: 0 0 auto;
     min-width: 112px;
   }
@@ -5801,7 +5864,8 @@
     padding: 12px;
   }
 
-  .doctor-tool-tabs button {
+  .doctor-tool-tabs button,
+  .doctor-tool-tabs a {
     min-width: 96px;
     padding: 0 10px;
   }
@@ -5809,6 +5873,10 @@
   .doctor-calendar-day {
     aspect-ratio: 1 / 1;
     border-radius: 7px;
+  }
+
+  .doctor-workspace-grid {
+    grid-template-columns: 1fr;
   }
 
   .doctor-calendar-weekdays span {

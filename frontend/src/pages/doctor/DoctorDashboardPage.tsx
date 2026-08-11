@@ -16,7 +16,7 @@ import {
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { FaFlask, FaNotesMedical, FaPills, FaUserMd } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/logo.png";
@@ -53,6 +53,16 @@ import type { Patient } from "../../types/patient";
 import type { Medication } from "../../types/pharmacy";
 
 type DoctorTool = "note" | "lab" | "prescription" | "admission" | "referral";
+type DoctorView =
+  | "overview"
+  | "appointments"
+  | "patients"
+  | "notes"
+  | "lab"
+  | "prescription"
+  | "admission"
+  | "referral"
+  | "reminders";
 
 type DoctorReminder = {
   id: string;
@@ -73,6 +83,62 @@ type ReminderForm = {
 };
 
 const priorityOptions: ClinicalRequestPriority[] = ["routine", "urgent", "emergency"];
+
+const toolByView: Partial<Record<DoctorView, DoctorTool>> = {
+  notes: "note",
+  lab: "lab",
+  prescription: "prescription",
+  admission: "admission",
+  referral: "referral",
+};
+
+const doctorViewMeta: Record<DoctorView, { title: string; label: string; description: string }> = {
+  overview: {
+    title: "Doctor overview",
+    label: "Doctor Desk",
+    description: "Today at a glance.",
+  },
+  appointments: {
+    title: "Appointment queue",
+    label: "Queue",
+    description: "Patients assigned by reception.",
+  },
+  patients: {
+    title: "Patient workspace",
+    label: "Patients",
+    description: "Find a patient and review key details.",
+  },
+  notes: {
+    title: "Clinical notes",
+    label: "Notes",
+    description: "Record remarks, diagnosis, plan, and print notes.",
+  },
+  lab: {
+    title: "Lab requests",
+    label: "Laboratory",
+    description: "Request tests and view patient lab history.",
+  },
+  prescription: {
+    title: "Prescriptions",
+    label: "Pharmacy",
+    description: "Prepare medicines and send prescriptions.",
+  },
+  admission: {
+    title: "Ward requests",
+    label: "Admission",
+    description: "Request beds and ward review.",
+  },
+  referral: {
+    title: "Referrals",
+    label: "Referral",
+    description: "Create internal or external referral notes.",
+  },
+  reminders: {
+    title: "Calendar and reminders",
+    label: "Reminders",
+    description: "Plan follow-ups and personal clinical reminders.",
+  },
+};
 
 const emptyEncounterForm: ClinicalEncounterFormValues = {
   patientId: "",
@@ -254,6 +320,23 @@ function createReminderId() {
     : `reminder-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function normalizeDoctorView(value?: string): DoctorView {
+  if (
+    value === "appointments" ||
+    value === "patients" ||
+    value === "notes" ||
+    value === "lab" ||
+    value === "prescription" ||
+    value === "admission" ||
+    value === "referral" ||
+    value === "reminders"
+  ) {
+    return value;
+  }
+
+  return "overview";
+}
+
 function sameDay(first: Date, second: Date) {
   return (
     first.getFullYear() === second.getFullYear() &&
@@ -287,6 +370,9 @@ function playReminderSound() {
 
 export default function DoctorDashboardPage() {
   const location = useLocation();
+  const { view } = useParams();
+  const currentView = normalizeDoctorView(view);
+  const pageMeta = doctorViewMeta[currentView];
   const user = useAuthStore((state) => state.user);
   const [workspace, setWorkspace] = useState<ClinicalWorkspace | null>(null);
   const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
@@ -402,6 +488,15 @@ export default function DoctorDashboardPage() {
     [calendarMonth]
   );
 
+  const activeRouteTool = toolByView[currentView];
+  const showPatientContext =
+    currentView === "patients" ||
+    currentView === "notes" ||
+    currentView === "lab" ||
+    currentView === "prescription" ||
+    currentView === "admission" ||
+    currentView === "referral";
+
   async function loadWorkspace() {
     setLoading(true);
     setError(null);
@@ -473,6 +568,12 @@ export default function DoctorDashboardPage() {
       }, 60);
     }
   }, [location.hash]);
+
+  useEffect(() => {
+    if (activeRouteTool) {
+      setActiveTool(activeRouteTool);
+    }
+  }, [activeRouteTool]);
 
   useEffect(() => {
     setRemindersReady(false);
@@ -881,6 +982,50 @@ export default function DoctorDashboardPage() {
   const patients = workspace?.patients ?? [];
   const recentPrescriptions = workspace?.recentPrescriptions ?? [];
   const pendingLabRequests = workspace?.pendingLabRequests ?? [];
+  const doctorWorkspaceCards = [
+    {
+      title: "Appointment queue",
+      detail: `${stats.assignedAppointments} assigned`,
+      path: "/doctor/appointments",
+      icon: <FiCalendar />,
+    },
+    {
+      title: "Patient workspace",
+      detail: `${patients.length} available records`,
+      path: "/doctor/patients",
+      icon: <FiUser />,
+    },
+    {
+      title: "Clinical notes",
+      detail: `${stats.todayEncounters} today`,
+      path: "/doctor/notes",
+      icon: <FaNotesMedical />,
+    },
+    {
+      title: "Lab requests",
+      detail: `${stats.pendingLabRequests} pending`,
+      path: "/doctor/lab",
+      icon: <FaFlask />,
+    },
+    {
+      title: "Prescriptions",
+      detail: `${stats.prescriptionsSent} sent`,
+      path: "/doctor/prescription",
+      icon: <FaPills />,
+    },
+    {
+      title: "Wards and referrals",
+      detail: `${stats.pendingAdmissionRequests + stats.referralsSent} handoffs`,
+      path: "/doctor/admission",
+      icon: <FiHome />,
+    },
+    {
+      title: "Reminders",
+      detail: `${upcomingReminders.length} upcoming`,
+      path: "/doctor/reminders",
+      icon: <FiBell />,
+    },
+  ];
 
   return (
     <AdminLayout>
@@ -891,9 +1036,12 @@ export default function DoctorDashboardPage() {
               <FaUserMd />
             </span>
             <div>
-              <p className="eyebrow">Doctor Desk</p>
-              <h1>Clinical work queue</h1>
-              <p>{user?.firstName ? `Dr. ${user.firstName} ${user.lastName}` : "Medical team"}</p>
+              <p className="eyebrow">{pageMeta.label}</p>
+              <h1>{pageMeta.title}</h1>
+              <p>
+                {pageMeta.description}{" "}
+                {user?.firstName ? `Dr. ${user.firstName} ${user.lastName}` : "Medical team"}
+              </p>
             </div>
           </div>
 
@@ -903,67 +1051,81 @@ export default function DoctorDashboardPage() {
           </button>
         </section>
 
-        <div className="doctor-stats-grid">
-          <article>
-            <FiUser />
-            <span>Queue</span>
-            <strong>{stats.assignedAppointments}</strong>
-          </article>
-          <article>
-            <FaNotesMedical />
-            <span>Notes today</span>
-            <strong>{stats.todayEncounters}</strong>
-          </article>
-          <article>
-            <FaFlask />
-            <span>Pending labs</span>
-            <strong>{stats.pendingLabRequests}</strong>
-          </article>
-          <article>
-            <FiHome />
-            <span>Ward requests</span>
-            <strong>{stats.pendingAdmissionRequests}</strong>
-          </article>
-          <article>
-            <FaPills />
-            <span>Prescriptions</span>
-            <strong>{stats.prescriptionsSent}</strong>
-          </article>
-          <article>
-            <FiShare2 />
-            <span>Referrals</span>
-            <strong>{stats.referralsSent}</strong>
-          </article>
-        </div>
+        {currentView === "overview" && (
+          <>
+            <div className="doctor-stats-grid">
+              <article>
+                <FiUser />
+                <span>Queue</span>
+                <strong>{stats.assignedAppointments}</strong>
+              </article>
+              <article>
+                <FaNotesMedical />
+                <span>Notes today</span>
+                <strong>{stats.todayEncounters}</strong>
+              </article>
+              <article>
+                <FaFlask />
+                <span>Pending labs</span>
+                <strong>{stats.pendingLabRequests}</strong>
+              </article>
+              <article>
+                <FiHome />
+                <span>Ward requests</span>
+                <strong>{stats.pendingAdmissionRequests}</strong>
+              </article>
+              <article>
+                <FaPills />
+                <span>Prescriptions</span>
+                <strong>{stats.prescriptionsSent}</strong>
+              </article>
+              <article>
+                <FiShare2 />
+                <span>Referrals</span>
+                <strong>{stats.referralsSent}</strong>
+              </article>
+            </div>
 
-        <section className="doctor-focus-grid">
-          <article className="doctor-focus-card">
-            <div>
-              <span>Next patient</span>
-              <strong>{nextAppointment ? patientName(nextAppointment.patient) : "No queue yet"}</strong>
-              <small>
-                {nextAppointment
-                  ? `${formatDate(nextAppointment.scheduledFor)} | ${nextAppointment.reason || "Consultation"}`
-                  : "Reception assignments will appear here."}
-              </small>
-            </div>
-            <FiCalendar />
-          </article>
-          <article className="doctor-focus-card">
-            <div>
-              <span>Next reminder</span>
-              <strong>{upcomingReminders[0]?.title ?? "Nothing pending"}</strong>
-              <small>
-                {upcomingReminders[0]
-                  ? `${formatDate(upcomingReminders[0].dateTime)}${
-                      upcomingReminders[0].patientName ? ` | ${upcomingReminders[0].patientName}` : ""
-                    }`
-                  : "Add a clinical follow-up reminder below."}
-              </small>
-            </div>
-            <FiBell />
-          </article>
-        </section>
+            <section className="doctor-focus-grid">
+              <article className="doctor-focus-card">
+                <div>
+                  <span>Next patient</span>
+                  <strong>{nextAppointment ? patientName(nextAppointment.patient) : "No queue yet"}</strong>
+                  <small>
+                    {nextAppointment
+                      ? `${formatDate(nextAppointment.scheduledFor)} | ${nextAppointment.reason || "Consultation"}`
+                      : "Reception assignments will appear here."}
+                  </small>
+                </div>
+                <FiCalendar />
+              </article>
+              <article className="doctor-focus-card">
+                <div>
+                  <span>Next reminder</span>
+                  <strong>{upcomingReminders[0]?.title ?? "Nothing pending"}</strong>
+                  <small>
+                    {upcomingReminders[0]
+                      ? `${formatDate(upcomingReminders[0].dateTime)}${
+                          upcomingReminders[0].patientName ? ` | ${upcomingReminders[0].patientName}` : ""
+                        }`
+                      : "Add a clinical follow-up reminder below."}
+                  </small>
+                </div>
+                <FiBell />
+              </article>
+            </section>
+
+            <section className="doctor-workspace-grid" aria-label="Doctor workspace shortcuts">
+              {doctorWorkspaceCards.map((card) => (
+                <Link key={card.path} className="doctor-workspace-card" to={card.path}>
+                  <span>{card.icon}</span>
+                  <strong>{card.title}</strong>
+                  <small>{card.detail}</small>
+                </Link>
+              ))}
+            </section>
+          </>
+        )}
 
         {(message || error) && (
           <div className={error ? "doctor-alert error" : "doctor-alert"}>
@@ -971,6 +1133,7 @@ export default function DoctorDashboardPage() {
           </div>
         )}
 
+        {currentView === "appointments" && (
         <section className="doctor-panel doctor-queue-panel" id="appointments">
           <div className="doctor-panel-heading">
             <div>
@@ -1039,7 +1202,9 @@ export default function DoctorDashboardPage() {
             ))}
           </div>
         </section>
+        )}
 
+        {showPatientContext && (
         <section className="doctor-patient-strip" id="patients">
           <div>
             <label htmlFor="doctor-patient-search">Patient</label>
@@ -1082,8 +1247,9 @@ export default function DoctorDashboardPage() {
             </div>
           )}
         </section>
+        )}
 
-        {selectedPatient && (
+        {showPatientContext && selectedPatient && (
           <section className="doctor-patient-details">
             <article>
               <span>Contact</span>
@@ -1111,6 +1277,7 @@ export default function DoctorDashboardPage() {
           </section>
         )}
 
+        {activeRouteTool && (
         <section className="doctor-panel doctor-workbench" id="care-tools">
           <div className="doctor-panel-heading">
             <div>
@@ -1122,21 +1289,20 @@ export default function DoctorDashboardPage() {
 
           <div className="doctor-tool-tabs" role="tablist" aria-label="Doctor actions">
             {[
-              { key: "note", label: "Note", icon: <FaNotesMedical /> },
-              { key: "lab", label: "Lab", icon: <FaFlask /> },
-              { key: "prescription", label: "Rx", icon: <FaPills /> },
-              { key: "admission", label: "Ward", icon: <FiHome /> },
-              { key: "referral", label: "Referral", icon: <FiShare2 /> },
+              { key: "note", label: "Note", icon: <FaNotesMedical />, path: "/doctor/notes" },
+              { key: "lab", label: "Lab", icon: <FaFlask />, path: "/doctor/lab" },
+              { key: "prescription", label: "Rx", icon: <FaPills />, path: "/doctor/prescription" },
+              { key: "admission", label: "Ward", icon: <FiHome />, path: "/doctor/admission" },
+              { key: "referral", label: "Referral", icon: <FiShare2 />, path: "/doctor/referral" },
             ].map((tool) => (
-              <button
+              <Link
                 key={tool.key}
                 className={activeTool === tool.key ? "active" : ""}
-                type="button"
-                onClick={() => setActiveTool(tool.key as DoctorTool)}
+                to={tool.path}
               >
                 {tool.icon}
                 {tool.label}
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -1596,7 +1762,9 @@ export default function DoctorDashboardPage() {
             </form>
           )}
         </section>
+        )}
 
+        {currentView === "reminders" && (
         <section className="doctor-reminder-grid" id="reminders">
           <div className="doctor-panel doctor-calendar-panel">
             <div className="doctor-panel-heading">
@@ -1767,7 +1935,9 @@ export default function DoctorDashboardPage() {
             </div>
           </div>
         </section>
+        )}
 
+        {currentView === "patients" && (
         <section className="doctor-history-grid">
           <div className="doctor-panel">
             <div className="doctor-panel-heading">
@@ -1900,6 +2070,7 @@ export default function DoctorDashboardPage() {
             </div>
           </div>
         </section>
+        )}
 
         {printingEncounter && (
           <section className="doctor-print-template">

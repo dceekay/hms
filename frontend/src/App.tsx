@@ -166,6 +166,15 @@ export default function App() {
         />
 
         <Route
+          path="/doctor/:view"
+          element={
+            <ProtectedRoute requiredRoles={["Doctor"]}>
+              <DoctorDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/laboratory"
           element={
             <ProtectedRoute requiredPermissions={["laboratory.read"]}>

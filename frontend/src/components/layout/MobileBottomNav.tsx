@@ -65,12 +65,12 @@ const securityMobileItems: MobileNavItem[] = [
 
 const doctorMobileItems: MobileNavItem[] = [
   { label: "Desk", path: "/doctor", icon: <FaUserMd /> },
-  { label: "Queue", path: "/doctor#appointments", icon: <FiCalendar /> },
-  { label: "Patient", path: "/doctor#patients", icon: <FaUserInjured /> },
-  { label: "Lab", path: "/doctor#lab", icon: <FaFlask /> },
-  { label: "Rx", path: "/doctor#prescription", icon: <FaCapsules /> },
-  { label: "Notes", path: "/doctor#notes", icon: <FiClipboard /> },
-  { label: "Remind", path: "/doctor#reminders", icon: <FiBell /> },
+  { label: "Queue", path: "/doctor/appointments", icon: <FiCalendar /> },
+  { label: "Patient", path: "/doctor/patients", icon: <FaUserInjured /> },
+  { label: "Lab", path: "/doctor/lab", icon: <FaFlask /> },
+  { label: "Rx", path: "/doctor/prescription", icon: <FaCapsules /> },
+  { label: "Notes", path: "/doctor/notes", icon: <FiClipboard /> },
+  { label: "Remind", path: "/doctor/reminders", icon: <FiBell /> },
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
