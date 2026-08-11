@@ -275,12 +275,18 @@ export class PatientService {
     }
 
     return {
+      id: patient.id,
       mrn: patient.mrn,
       fullName: `${patient.firstName} ${patient.lastName}`,
       gender: patient.gender,
       status: patient.status,
       patientCategory: patient.patientCategory,
+      phone: patient.phone,
       insuranceProvider: patient.insuranceProvider?.name ?? null,
+      insurancePrincipalName: patient.insurancePrincipalName,
+      insuranceMemberNumber: patient.insuranceMemberNumber,
+      insurancePolicyNumber: patient.insurancePolicyNumber,
+      insuranceCoverageStatus: patient.insuranceCoverageStatus,
     };
   }
 

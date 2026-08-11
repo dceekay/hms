@@ -120,6 +120,7 @@ export function PatientIdCard({
             <strong>MDS Hospital</strong>
             <span>Patient Identification Card</span>
           </div>
+          <em>Patient</em>
         </div>
 
         <div className="patient-id-body">
@@ -146,6 +147,10 @@ export function PatientIdCard({
                 <small>Gender</small>
                 <strong>{formatGender(patient.gender)}</strong>
               </span>
+              <span>
+                <small>Phone</small>
+                <strong>{patient.phone || "Not provided"}</strong>
+              </span>
             </div>
           </div>
 
@@ -153,7 +158,7 @@ export function PatientIdCard({
             {patientQr ? (
               <>
                 <PatientQrImage patientQr={patientQr} />
-                <small>Scan to verify</small>
+                <small>Scan for details</small>
               </>
             ) : (
               <div className="id-empty-qr">
@@ -185,7 +190,7 @@ export function PatientIdCard({
 
         <div className="patient-id-footer">
           <span>{patientQr?.qrCode || patient.qrCode || "QR pending"}</span>
-          <small>{patient.phone || patient.email || "No contact on file"}</small>
+          <small>Powered by CeekayX</small>
         </div>
       </article>
     </div>

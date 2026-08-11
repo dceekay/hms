@@ -649,6 +649,7 @@ export default function UsersPage() {
                         <strong>MDS Hospital</strong>
                         <span>Staff Identification Card</span>
                       </div>
+                      <em>Staff</em>
                     </div>
 
                     <div className="employee-id-body">
@@ -663,17 +664,21 @@ export default function UsersPage() {
                       <div className="patient-id-info">
                         <p>Employee name</p>
                         <h3>{staffFullName(idCardUser)}</h3>
-                        <div className="patient-id-grid">
+                        <div className="patient-id-grid employee-id-primary-grid">
                           <span>
                             <small>Staff ID</small>
                             <strong>{staffId(idCardUser)}</strong>
                           </span>
                           <span>
-                            <small>Issue Date</small>
-                            <strong>{formatIdDate(getStaffIssueDate(idCardUser))}</strong>
+                            <small>Service</small>
+                            <strong>{idCardUser.serviceArea?.name || "General"}</strong>
                           </span>
                         </div>
                         <div className="patient-id-grid employee-id-date-grid">
+                          <span>
+                            <small>Issue Date</small>
+                            <strong>{formatIdDate(getStaffIssueDate(idCardUser))}</strong>
+                          </span>
                           <span>
                             <small>Expires</small>
                             <strong>{formatIdDate(getStaffExpiryDate(idCardUser))}</strong>
@@ -685,8 +690,8 @@ export default function UsersPage() {
                             <strong>{roleNames(idCardUser)}</strong>
                           </div>
                           <div>
-                            <small>Service</small>
-                            <strong>{idCardUser.serviceArea?.name || "General"}</strong>
+                            <small>Phone</small>
+                            <strong>{idCardUser.phone || "Not provided"}</strong>
                           </div>
                         </div>
                       </div>
@@ -712,7 +717,7 @@ export default function UsersPage() {
 
                     <div className="patient-id-footer">
                       <span>{staffId(idCardUser)}</span>
-                      <small>{idCardUser.phone || idCardUser.username}</small>
+                      <small>Powered by CeekayX</small>
                     </div>
                   </article>
                 </div>

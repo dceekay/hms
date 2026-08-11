@@ -1009,41 +1009,65 @@
 }
 
 .patient-id-card {
-  width: min(100%, 430px);
+  width: min(100%, 472px);
   aspect-ratio: 1.586 / 1;
+  position: relative;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 9px;
-  padding: 13px;
-  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #0f4c81;
   border-radius: 8px;
   background:
-    linear-gradient(90deg, #0f4c81 0 10px, transparent 10px),
-    radial-gradient(circle at 96% 12%, rgba(37, 99, 235, 0.16), transparent 30%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 255, 0.94)),
+    radial-gradient(circle at 95% 14%, rgba(20, 184, 166, 0.18), transparent 26%),
+    radial-gradient(circle at 8% 92%, rgba(37, 99, 235, 0.16), transparent 26%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.96) 54%, rgba(236, 253, 245, 0.92)),
     #ffffff;
   box-shadow: 0 18px 40px rgba(2, 8, 23, 0.22);
   color: #0f172a;
   overflow: hidden;
 }
 
+.patient-id-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -42px -48px auto;
+  width: 150px;
+  height: 150px;
+  border: 18px solid rgba(14, 165, 233, 0.1);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.patient-id-card > * {
+  position: relative;
+  z-index: 1;
+}
+
 .patient-id-brand {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #0f4c81;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #082f49, #0f4c81 56%, #0f766e);
+  color: #ffffff;
 }
 
 .patient-id-brand img {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
+  padding: 3px;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 .patient-id-brand strong,
 .patient-id-brand span,
+.patient-id-brand em,
 .patient-id-info h3,
 .patient-id-grid strong,
 .patient-id-insurance strong,
@@ -1053,34 +1077,47 @@
 
 .patient-id-brand strong {
   display: block;
-  color: #0f172a;
+  color: #ffffff;
   font-size: 1rem;
   line-height: 1.1;
 }
 
 .patient-id-brand span {
   display: block;
-  color: #2563eb;
+  color: #bae6fd;
   font-size: 0.63rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
+.patient-id-brand em {
+  justify-self: end;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .patient-id-body {
   min-height: 0;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) 86px;
-  gap: 9px;
+  grid-template-columns: 86px minmax(0, 1fr) 84px;
+  gap: 8px;
 }
 
 .patient-id-photo {
-  min-height: 104px;
+  min-height: 100px;
   display: grid;
   place-items: center;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #bfdbfe;
   border-radius: 8px;
-  background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+  background: linear-gradient(135deg, #dbeafe, #ecfeff 56%, #ffffff);
   overflow: hidden;
 }
 
@@ -1091,8 +1128,14 @@
 }
 
 .patient-id-photo span {
-  color: #1d4ed8;
-  font-size: 1.65rem;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  font-size: 1.45rem;
   font-weight: 900;
 }
 
@@ -1100,7 +1143,7 @@
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: 7px;
+  gap: 6px;
 }
 
 .patient-id-info p,
@@ -1108,7 +1151,7 @@
 .patient-id-insurance small {
   margin: 0;
   color: #64748b;
-  font-size: 0.55rem;
+  font-size: 0.52rem;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1117,14 +1160,18 @@
 .patient-id-info h3 {
   margin: 0;
   color: #0f172a;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.05;
 }
 
 .patient-id-grid {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.patient-id-card:not(.employee-id-card) .patient-id-info .patient-id-grid span:first-child {
+  grid-column: 1 / -1;
 }
 
 .patient-id-grid span,
@@ -1132,16 +1179,16 @@
   min-width: 0;
   display: grid;
   gap: 2px;
-  padding: 5px 6px;
-  border: 1px solid #e2e8f0;
+  padding: 5px 7px;
+  border: 1px solid #dbeafe;
   border-radius: 7px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .patient-id-grid strong,
 .patient-id-insurance strong {
   color: #0f172a;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   line-height: 1.15;
 }
 
@@ -1150,20 +1197,21 @@
   display: grid;
   align-content: start;
   justify-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .patient-id-qr-block small {
-  color: #475569;
-  font-size: 0.58rem;
+  color: #0f4c81;
+  font-size: 0.55rem;
   font-weight: 900;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .patient-id-insurance {
   display: grid;
-  grid-template-columns: 1.2fr 1.1fr 1fr 0.85fr;
-  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
 }
 
 .patient-id-footer {
@@ -1171,9 +1219,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding-top: 7px;
-  border-top: 1px solid #cbd5e1;
-  color: #334155;
+  min-height: 22px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #082f49, #0f4c81);
+  color: #ffffff;
   font-size: 0.58rem;
 }
 
@@ -1187,7 +1237,8 @@
 }
 
 .patient-id-footer small {
-  color: #64748b;
+  color: #dbeafe;
+  font-weight: 800;
   overflow-wrap: anywhere;
 }
 
@@ -2159,7 +2210,7 @@
 }
 
 .employee-id-modal-panel {
-  width: min(620px, calc(100vw - 28px));
+  width: min(660px, calc(100vw - 28px));
 }
 
 .employee-id-print-area {
@@ -2168,21 +2219,21 @@
 
 .employee-id-card {
   position: relative;
-  width: min(100%, 460px);
+  width: min(100%, 488px);
   background:
-    linear-gradient(90deg, #0f4c81 0 12px, transparent 12px),
-    radial-gradient(circle at 92% 16%, rgba(6, 182, 212, 0.2), transparent 27%),
-    radial-gradient(circle at 10% 95%, rgba(37, 99, 235, 0.18), transparent 28%),
-    linear-gradient(135deg, #ffffff, #eff6ff 58%, #ffffff);
+    radial-gradient(circle at 92% 16%, rgba(34, 197, 94, 0.18), transparent 27%),
+    radial-gradient(circle at 10% 95%, rgba(14, 165, 233, 0.18), transparent 28%),
+    linear-gradient(135deg, #ffffff, #f0fdf4 42%, #eff6ff);
+  border-color: #047857;
 }
 
 .employee-id-card::before {
   content: "";
   position: absolute;
-  inset: auto -34px -42px auto;
-  width: 150px;
-  height: 150px;
-  border: 16px solid rgba(15, 76, 129, 0.08);
+  inset: auto -36px -44px auto;
+  width: 158px;
+  height: 158px;
+  border: 17px solid rgba(4, 120, 87, 0.09);
   border-radius: 50%;
 }
 
@@ -2194,29 +2245,46 @@
 .employee-id-body {
   min-height: 0;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr) 86px;
-  gap: 9px;
+  grid-template-columns: 88px minmax(0, 1fr) 86px;
+  gap: 8px;
 }
 
 .employee-id-photo {
-  min-height: 108px;
-  background: linear-gradient(135deg, #dbeafe, #f8fafc);
+  min-height: 112px;
+  border-color: #bbf7d0;
+  background: linear-gradient(135deg, #dcfce7, #ecfeff 58%, #ffffff);
 }
 
 .employee-id-photo span {
   color: #ffffff;
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  background: linear-gradient(135deg, #047857, #0ea5e9);
 }
 
 .employee-id-role-strip {
-  margin-top: 8px;
+  margin-top: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 0;
   border: 0;
 }
 
 .employee-id-date-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.employee-id-primary-grid {
+  grid-template-columns: 1.35fr 0.9fr;
+}
+
+.employee-id-card .patient-id-brand {
+  background: linear-gradient(135deg, #064e3b, #0f766e 54%, #0f4c81);
+}
+
+.employee-id-card .patient-id-brand span {
+  color: #ccfbf1;
+}
+
+.employee-id-card .patient-id-footer {
+  background: linear-gradient(90deg, #064e3b, #0f766e);
 }
 
 .staff-photo-control {
@@ -4690,8 +4758,26 @@
     padding-right: 0;
   }
 
-  .employee-id-body,
-  .employee-id-role-strip {
+  .patient-id-card {
+    aspect-ratio: auto;
+  }
+
+  .patient-id-body,
+  .employee-id-body {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  .patient-id-qr-block {
+    grid-column: 1 / -1;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+  }
+
+  .patient-id-insurance,
+  .employee-id-role-strip,
+  .employee-id-primary-grid,
+  .employee-id-date-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -6188,7 +6274,7 @@
     width: 85.6mm;
     height: 54mm;
     aspect-ratio: auto;
-    padding: 3.2mm;
+    padding: 2.8mm;
     border: 0.25mm solid #0f4c81;
     border-radius: 2.5mm;
     box-shadow: none;
@@ -6197,31 +6283,67 @@
   }
 
   .patient-id-brand {
-    grid-template-columns: 10mm minmax(0, 1fr) auto;
-    gap: 2.2mm;
-    padding-bottom: 1.6mm;
+    grid-template-columns: 8.5mm minmax(0, 1fr) auto;
+    gap: 1.8mm;
+    padding: 1.4mm 1.8mm;
   }
 
   .patient-id-brand img {
-    width: 10mm;
-    height: 10mm;
+    width: 8.2mm;
+    height: 8.2mm;
+  }
+
+  .patient-id-brand strong {
+    font-size: 8pt;
+  }
+
+  .patient-id-brand span,
+  .patient-id-brand em {
+    font-size: 4.8pt;
   }
 
   .patient-id-body {
-    grid-template-columns: 19mm minmax(0, 1fr) 18mm;
-    gap: 2mm;
+    grid-template-columns: 18mm minmax(0, 1fr) 17.5mm;
+    gap: 1.6mm;
   }
 
   .patient-id-photo {
-    min-height: 24mm;
+    min-height: 22mm;
+  }
+
+  .patient-id-info h3 {
+    font-size: 7.2pt;
+  }
+
+  .patient-id-info p,
+  .patient-id-grid small,
+  .patient-id-insurance small,
+  .patient-id-qr-block small {
+    font-size: 4.4pt;
+  }
+
+  .patient-id-grid,
+  .patient-id-insurance {
+    gap: 1mm;
+  }
+
+  .patient-id-grid span,
+  .patient-id-insurance div {
+    padding: 1mm 1.2mm;
+  }
+
+  .patient-id-grid strong,
+  .patient-id-insurance strong,
+  .patient-id-footer {
+    font-size: 5pt;
   }
 
   .patient-id-card .patient-qr-image,
   .patient-id-card .patient-qr-loading,
   .patient-id-card .id-empty-qr {
-    width: 17mm;
-    height: 17mm;
-    min-height: 17mm;
+    width: 16.5mm;
+    height: 16.5mm;
+    min-height: 16.5mm;
   }
 
   .patient-id-print-note {

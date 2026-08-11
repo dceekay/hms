@@ -181,6 +181,8 @@ export type PatientVerification = {
   insuranceProvider?: string | null;
   insurancePrincipalName?: string | null;
   insuranceMemberNumber?: string | null;
+  insurancePolicyNumber?: string | null;
+  insuranceCoverageStatus?: string | null;
 };
 
 export async function verifyPatientPublic(

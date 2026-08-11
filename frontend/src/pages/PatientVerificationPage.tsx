@@ -107,6 +107,14 @@ export default function PatientVerificationPage() {
                 <strong>{patient.insuranceMemberNumber || "Not provided"}</strong>
               </span>
               <span>
+                <small>Policy Number</small>
+                <strong>{patient.insurancePolicyNumber || "Not provided"}</strong>
+              </span>
+              <span>
+                <small>Coverage</small>
+                <strong>{formatLabel(patient.insuranceCoverageStatus)}</strong>
+              </span>
+              <span>
                 <small>Principal Owner</small>
                 <strong>{patient.insurancePrincipalName || "Not provided"}</strong>
               </span>
