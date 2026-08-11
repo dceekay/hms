@@ -13,6 +13,8 @@ import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
 } from "../../utils/appEvents";
+import { playClinicalAlertSound } from "../../utils/alertSound";
+import type { ClinicalAlertLevel } from "../../utils/alertSound";
 
 function formatTime(value: string) {
   const date = new Date(value);
@@ -45,39 +47,6 @@ function getStoredSoundPreference() {
   return localStorage.getItem("hms_notification_sound") === "on";
 }
 
-function playNotificationSound() {
-  if (typeof window === "undefined") return;
-
-  const AudioContextClass =
-    window.AudioContext ||
-    (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-  if (!AudioContextClass) return;
-
-  const audioContext = new AudioContextClass();
-  const gain = audioContext.createGain();
-
-  gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.42);
-  gain.connect(audioContext.destination);
-
-  [660, 880].forEach((frequency, index) => {
-    const oscillator = audioContext.createOscillator();
-    const start = audioContext.currentTime + index * 0.13;
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, start);
-    oscillator.connect(gain);
-    oscillator.start(start);
-    oscillator.stop(start + 0.16);
-  });
-
-  window.setTimeout(() => {
-    void audioContext.close();
-  }, 700);
-}
-
 function urlBase64ToUint8Array(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -89,6 +58,12 @@ function urlBase64ToUint8Array(value: string) {
   }
 
   return output;
+}
+
+function notificationAlertLevel(items: AppNotification[]): ClinicalAlertLevel {
+  if (items.some((item) => item.priority === "critical")) return "critical";
+  if (items.some((item) => item.priority === "warning")) return "urgent";
+  return "standard";
 }
 
 async function registerPushDevice() {
@@ -167,7 +142,7 @@ export default function NotificationCenter() {
     nextItems.forEach((item) => seenIdsRef.current.add(item.id));
 
     if (!firstLoadRef.current && newUnread.length > 0 && soundEnabled) {
-      playNotificationSound();
+      playClinicalAlertSound(notificationAlertLevel(newUnread));
     }
 
     if (
@@ -252,7 +227,7 @@ export default function NotificationCenter() {
     localStorage.setItem("hms_notification_sound", nextValue ? "on" : "off");
 
     if (nextValue) {
-      playNotificationSound();
+      playClinicalAlertSound("urgent");
     }
   };
 

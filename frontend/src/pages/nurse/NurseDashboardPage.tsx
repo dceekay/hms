@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   FiBell,
@@ -33,6 +33,10 @@ import type {
   NursingWorkspace,
 } from "../../types/nursing";
 import type { PatientQr } from "../../types/patient";
+import {
+  CLINICAL_ALERT_REPEAT_MS,
+  playClinicalAlertSound,
+} from "../../utils/alertSound";
 
 const nurseViewMeta: Record<NurseView, { title: string; label: string; description: string }> = {
   overview: {
@@ -155,26 +159,6 @@ function scheduleState(schedule: MedicationAdministrationSchedule) {
   return "upcoming";
 }
 
-function playNurseAlert() {
-  try {
-    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextCtor) return;
-    const context = new AudioContextCtor();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.frequency.value = 660;
-    gain.gain.setValueAtTime(0.001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, context.currentTime + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.55);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.6);
-  } catch {
-    // Some browsers block audio until user interaction.
-  }
-}
-
 export default function NurseDashboardPage() {
   const { view } = useParams();
   const currentView = normalizeNurseView(view);
@@ -191,6 +175,7 @@ export default function NurseDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const lastMedicationAlertRef = useRef(0);
 
   const patients = workspace?.patients ?? [];
   const admittedPatients = patients.filter((patient) => patient.isAdmitted);
@@ -248,8 +233,34 @@ export default function NurseDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (dueSchedules.length === 0 && overdueSchedules.length === 0) return;
-    playNurseAlert();
+    const alertCount = dueSchedules.length + overdueSchedules.length;
+    if (alertCount === 0) {
+      lastMedicationAlertRef.current = 0;
+      return;
+    }
+
+    function runMedicationAlert() {
+      const now = Date.now();
+      if (now - lastMedicationAlertRef.current < CLINICAL_ALERT_REPEAT_MS) return;
+
+      lastMedicationAlertRef.current = now;
+      playClinicalAlertSound(overdueSchedules.length > 0 ? "critical" : "urgent");
+
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        new Notification("Medication round reminder", {
+          body:
+            overdueSchedules.length > 0
+              ? `${overdueSchedules.length} medication task(s) overdue.`
+              : `${dueSchedules.length} medication task(s) due now.`,
+          tag: "nurse-medication-round",
+        });
+      }
+    }
+
+    runMedicationAlert();
+    const interval = window.setInterval(runMedicationAlert, CLINICAL_ALERT_REPEAT_MS);
+
+    return () => window.clearInterval(interval);
   }, [dueSchedules.length, overdueSchedules.length]);
 
   function selectPatient(patient: NursingPatient) {

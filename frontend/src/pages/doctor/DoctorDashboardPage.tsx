@@ -51,6 +51,10 @@ import type {
 import type { LaboratoryRequest, LaboratoryTemplate } from "../../types/laboratory";
 import type { Patient } from "../../types/patient";
 import type { Medication } from "../../types/pharmacy";
+import {
+  CLINICAL_ALERT_REPEAT_MS,
+  playClinicalAlertSound,
+} from "../../utils/alertSound";
 
 type DoctorTool = "note" | "lab" | "prescription" | "admission" | "referral";
 type DoctorView =
@@ -72,6 +76,7 @@ type DoctorReminder = {
   patientName?: string;
   note?: string;
   notifiedAt?: string;
+  lastAlertAt?: string;
 };
 
 type ReminderForm = {
@@ -345,29 +350,6 @@ function sameDay(first: Date, second: Date) {
   );
 }
 
-function playReminderSound() {
-  try {
-    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextCtor) return;
-
-    const context = new AudioContextCtor();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.value = 880;
-    gain.gain.setValueAtTime(0.001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.24, context.currentTime + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.65);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.7);
-  } catch {
-    // Browser audio can be blocked until the user interacts with the page.
-  }
-}
-
 export default function DoctorDashboardPage() {
   const location = useLocation();
   const { view } = useParams();
@@ -595,29 +577,45 @@ export default function DoctorDashboardPage() {
     const interval = window.setInterval(() => {
       const now = Date.now();
       const dueReminders = reminders.filter(
-        (reminder) => !reminder.notifiedAt && new Date(reminder.dateTime).getTime() <= now
+        (reminder) => {
+          const dueAt = new Date(reminder.dateTime).getTime();
+          const lastAlertAt = reminder.lastAlertAt
+            ? new Date(reminder.lastAlertAt).getTime()
+            : 0;
+
+          return (
+            dueAt <= now &&
+            (!lastAlertAt || now - lastAlertAt >= CLINICAL_ALERT_REPEAT_MS)
+          );
+        }
       );
 
       if (dueReminders.length === 0) return;
 
       dueReminders.forEach((reminder) => {
-        playReminderSound();
+        playClinicalAlertSound("urgent");
 
         if (typeof Notification !== "undefined" && Notification.permission === "granted") {
           new Notification("Doctor reminder", {
             body: `${reminder.title}${reminder.patientName ? ` - ${reminder.patientName}` : ""}`,
+            tag: `doctor-reminder-${reminder.id}`,
           });
         }
       });
 
+      const alertTime = new Date().toISOString();
       setReminders((current) =>
         current.map((reminder) =>
           dueReminders.some((item) => item.id === reminder.id)
-            ? { ...reminder, notifiedAt: new Date().toISOString() }
+            ? {
+                ...reminder,
+                notifiedAt: reminder.notifiedAt ?? alertTime,
+                lastAlertAt: alertTime,
+              }
             : reminder
         )
       );
-    }, 10000);
+    }, 30000);
 
     return () => window.clearInterval(interval);
   }, [reminders]);
