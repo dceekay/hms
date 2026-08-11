@@ -652,7 +652,7 @@ img {
 .showcase-grid {
   margin-top: 36px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 16px;
 }
 
@@ -669,6 +669,16 @@ img {
   height: 220px;
   display: block;
   object-fit: cover;
+}
+
+.showcase-card:nth-child(1),
+.showcase-card:nth-child(3) {
+  grid-column: span 2;
+}
+
+.showcase-card:nth-child(1) img,
+.showcase-card:nth-child(3) img {
+  height: 260px;
 }
 
 .showcase-card-body {
@@ -2196,6 +2206,16 @@ img {
 
   .showcase-grid {
     grid-template-columns: 1fr;
+  }
+
+  .showcase-card:nth-child(1),
+  .showcase-card:nth-child(3) {
+    grid-column: auto;
+  }
+
+  .showcase-card:nth-child(1) img,
+  .showcase-card:nth-child(3) img {
+    height: 220px;
   }
 
   .service-card {

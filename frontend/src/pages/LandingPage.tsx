@@ -32,27 +32,32 @@ import { useState } from "react";
 
 import mdsHospital from "../assets/mds.png";
 import mdsLogo from "../assets/logo.png";
-import medicalDirector from "../assets/dr.jpg";
+import medicalDirector from "../assets/dr2.jpeg";
 import patientJourneyBilingual from "../assets/patient-journey-bilingual.png";
-import consultantPhoto from "../assets/consult.png";
+import consultantPhoto from "../assets/cons.jpeg";
 import specialistPhoto from "../assets/specialist.png";
 import laparoscopyPhoto from "../assets/lapo.png";
-import surgeryPhoto from "../assets/lab.png";
+import surgeryPhoto from "../assets/surrr.jpg";
+import nurseTeamPhoto from "../assets/team.jpeg";
+import eyeCheckPhoto from "../assets/eye.jpeg";
+import pharmacyPhoto from "../assets/pharm.jpeg";
+import laboratoryPhoto from "../assets/lab.jpeg";
 import mriPhoto from "../assets/mri.png";
 import nhiaLogo from "../assets/NHIA.png";
 import kachimaLogo from "../assets/kschmalogo.png";
 import jichimaLogo from "../assets/jichima.png";
+import hygeiaLogo from "../assets/hygeia.png";
 
 import "../styles/landing.css";
 
 const hospitalAddress =
   "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu, Kano 700213, Kano";
-const whatsappDisplay = "0806 225 5150";
+const whatsappDisplay = "0706 225 5150";
 const whatsappUrl =
   "https://wa.me/2348062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
 const emergencyDisplay = "0708 229 7430";
 const emergencyTel = "tel:+2347082297430";
-const receptionTel = "tel:+2348062255150";
+const receptionTel = "tel:+2347062255150";
 const googleMapsUrl =
   "https://www.google.com/maps/place/MDS+HOSPITAL/@11.9926965,8.5865612,17z/data=!3m1!4b1!4m6!3m5!1s0x11ae833f2e4d110f:0x916e22c7202b3a5!8m2!3d11.9926965!4d8.5865612!16s%2Fg%2F11hz_lk_v0";
 const googleMapsEmbedUrl =
@@ -178,6 +183,7 @@ const schemes = [
   "NHIA",
   "KSCHIMA",
   "JICHMA",
+  "Hygeia HMO",
   "HMOs",
   "Retainership",
   "Wallet",
@@ -227,9 +233,7 @@ const partnerLogos = [
   { src: nhiaLogo, alt: "NHIA" },
   { src: kachimaLogo, alt: "KACHIMA" },
   { src: jichimaLogo, alt: "JICHIMA" },
-  { src: nhiaLogo, alt: "NHIA" },
-  { src: kachimaLogo, alt: "KACHIMA" },
-  { src: jichimaLogo, alt: "JICHIMA" },
+  { src: hygeiaLogo, alt: "Hygeia HMO" },
 ];
 
 const showcaseCards = [
@@ -239,24 +243,44 @@ const showcaseCards = [
     image: consultantPhoto,
   },
   {
-    title: "Specialist clinics",
-    description: "Focused expertise for complex, multi-disciplinary patient pathways.",
-    image: specialistPhoto,
+    title: "Nursing care",
+    description: "Attentive ward support from nurses who keep patients comfortable and monitored.",
+    image: nurseTeamPhoto,
   },
   {
-    title: "Laparoscopy",
-    description: "Modern minimal-access surgery with careful perioperative support.",
-    image: laparoscopyPhoto,
-  },
-  {
-    title: "Surgery",
-    description: "Safe theatre workflows and restorative recovery planning.",
+    title: "Operating theatre",
+    description: "Structured surgical workflows with focused theatre teams and safe recovery planning.",
     image: surgeryPhoto,
+  },
+  {
+    title: "Eye clinic",
+    description: "Focused eye checks and specialist review for clearer clinical direction.",
+    image: eyeCheckPhoto,
+  },
+  {
+    title: "Pharmacy",
+    description: "Medication dispensing, counselling, and treatment continuity from one care team.",
+    image: pharmacyPhoto,
+  },
+  {
+    title: "Laboratory",
+    description: "Reliable sample handling and investigations that support timely decisions.",
+    image: laboratoryPhoto,
   },
   {
     title: "MRI diagnostics",
     description: "High-resolution imaging support for clear clinical direction.",
     image: mriPhoto,
+  },
+  {
+    title: "Minimal access surgery",
+    description: "Modern laparoscopic procedures with careful perioperative support.",
+    image: laparoscopyPhoto,
+  },
+  {
+    title: "Specialist clinics",
+    description: "Focused expertise for complex, multi-disciplinary patient pathways.",
+    image: specialistPhoto,
   },
 ];
 
