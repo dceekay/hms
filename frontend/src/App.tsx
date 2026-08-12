@@ -36,6 +36,7 @@ import DoctorsPage from "./pages/admin/DoctorsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfflineSyncBridge from "./components/OfflineSyncBridge";
 import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { FiDatabase, FiPieChart } from "react-icons/fi";
 import { useAuthStore } from "./store/authStore";
 import { isJwtExpired } from "./utils/session";
@@ -60,6 +61,7 @@ export default function App() {
     <>
       <SessionExpiryWatcher />
       <OfflineSyncBridge />
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
