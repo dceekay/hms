@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
+import ServiceDetailPage from "./pages/ServiceDetailPage";
+import ServicesIndexPage from "./pages/ServicesIndexPage";
 import StaffVerificationPage from "./pages/StaffVerificationPage";
 import PatientVerificationPage from "./pages/PatientVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -34,8 +36,7 @@ import DoctorsPage from "./pages/admin/DoctorsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfflineSyncBridge from "./components/OfflineSyncBridge";
 import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
-import { FaBed, FaCapsules } from "react-icons/fa";
-import { FiDatabase, FiPieChart, FiTruck } from "react-icons/fi";
+import { FiDatabase, FiPieChart } from "react-icons/fi";
 import { useAuthStore } from "./store/authStore";
 import { isJwtExpired } from "./utils/session";
 
@@ -62,6 +63,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/services" element={<ServicesIndexPage />} />
+        <Route path="/services/:slug" element={<ServiceDetailPage />} />
         <Route path="/verify/staff/:id" element={<StaffVerificationPage />} />
         <Route path="/verify/patient/:qrCode" element={<PatientVerificationPage />} />
 

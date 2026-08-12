@@ -2,11 +2,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FaAmbulance,
-  FaBed,
   FaCapsules,
   FaCheckCircle,
   FaChevronDown,
-  FaClinicMedical,
   FaFacebookF,
   FaHeartbeat,
   FaHospital,
@@ -14,10 +12,7 @@ import {
   FaMicroscope,
   FaPhoneAlt,
   FaShieldAlt,
-  FaStethoscope,
-  FaSyringe,
   FaUserMd,
-  FaUsers,
   FaWhatsapp,
 } from "react-icons/fa";
 import {
@@ -47,6 +42,7 @@ import nhiaLogo from "../assets/NHIA.png";
 import kachimaLogo from "../assets/kschmalogo.png";
 import jichimaLogo from "../assets/jichima.png";
 import hygeiaLogo from "../assets/hygeia.png";
+import { publicServices } from "../data/publicServices";
 
 import "../styles/landing.css";
 
@@ -62,83 +58,6 @@ const googleMapsUrl =
   "https://www.google.com/maps/place/MDS+HOSPITAL/@11.9926965,8.5865612,17z/data=!3m1!4b1!4m6!3m5!1s0x11ae833f2e4d110f:0x916e22c7202b3a5!8m2!3d11.9926965!4d8.5865612!16s%2Fg%2F11hz_lk_v0";
 const googleMapsEmbedUrl =
   "https://www.google.com/maps?q=MDS%20Hospital%2C%20Eastern%20Bypass%2C%20Giginyu%2C%20Kano&output=embed";
-
-const services = [
-  {
-    title: "General Surgery",
-    description:
-      "Comprehensive surgical assessment and treatment delivered by experienced specialists.",
-    icon: <FaUserMd />,
-    featured: true,
-  },
-  {
-    title: "Minimal Access Surgery",
-    description:
-      "Modern laparoscopic procedures designed to support smaller incisions and faster recovery.",
-    icon: <FaStethoscope />,
-    featured: true,
-  },
-  {
-    title: "General Outpatient Care",
-    description:
-      "Accessible consultations, diagnosis, treatment planning, and continuing care.",
-    icon: <FaClinicMedical />,
-  },
-  {
-    title: "Specialist Clinics",
-    description:
-      "Coordinated consultations with medical doctors, visiting consultants, and specialists.",
-    icon: <FaHospital />,
-  },
-  {
-    title: "Diagnostic Laboratory",
-    description:
-      "Reliable laboratory investigations supporting timely clinical decisions.",
-    icon: <FaMicroscope />,
-  },
-  {
-    title: "Medical Imaging",
-    description:
-      "Scanning and diagnostic imaging services supporting accurate evaluation.",
-    icon: <FaHeartbeat />,
-  },
-  {
-    title: "Pharmacy Services",
-    description:
-      "Safe medication dispensing, counselling, and continuity-of-care support.",
-    icon: <FaCapsules />,
-  },
-  {
-    title: "Maternal & Family Care",
-    description:
-      "Antenatal care, immunisation, family planning, and reproductive health support.",
-    icon: <FaUsers />,
-  },
-  {
-    title: "Admission & Ward Care",
-    description:
-      "Compassionate inpatient monitoring with coordinated nursing and medical support.",
-    icon: <FaBed />,
-  },
-  {
-    title: "Emergency Support",
-    description:
-      "Responsive assessment and stabilisation for patients requiring urgent medical attention.",
-    icon: <FaAmbulance />,
-  },
-  {
-    title: "Operating Theatre",
-    description:
-      "Structured theatre workflows supporting safe surgical and procedural care.",
-    icon: <FaSyringe />,
-  },
-  {
-    title: "Preventive Healthcare",
-    description:
-      "Screening, health education, immunisation, and wellness-focused interventions.",
-    icon: <FaShieldAlt />,
-  },
-];
 
 const patientSteps = [
   {
@@ -608,9 +527,9 @@ export default function LandingPage() {
           </div>
 
           <div className="services-grid">
-            {services.map((service, index) => (
+            {publicServices.slice(0, 12).map((service, index) => (
               <motion.article
-                key={service.title}
+                key={service.slug}
                 className={`service-card ${
                   service.featured ? "service-card-featured" : ""
                 }`}
@@ -630,14 +549,21 @@ export default function LandingPage() {
                 )}
 
                 <h3>{service.title}</h3>
-                <p>{service.description}</p>
+                <p>{service.summary}</p>
 
-                <a href="#contact">
-                  Enquire about service
+                <Link to={`/services/${service.slug}`}>
+                  View service
                   <FiArrowRight />
-                </a>
+                </Link>
               </motion.article>
             ))}
+          </div>
+
+          <div className="services-index-link">
+            <Link to="/services">
+              Explore all MDS Hospital services
+              <FiArrowRight />
+            </Link>
           </div>
         </section>
 
