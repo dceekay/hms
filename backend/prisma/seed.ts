@@ -338,6 +338,16 @@ const testUsers = [
     serviceCode: "ADMIN",
   },
   {
+    role: "Administrator",
+    email: "administrator@ceekayx.com",
+    username: "administrator",
+    password: "Administrator@123",
+    firstName: "Hospital",
+    lastName: "Administrator",
+    phone: "+2348070001000",
+    serviceCode: "ADMIN",
+  },
+  {
     role: "Doctor",
     email: "doctor@ceekayx.com",
     username: "drjohn",
