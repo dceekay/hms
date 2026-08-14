@@ -38,6 +38,8 @@ import {
   playClinicalAlertSound,
 } from "../../utils/alertSound";
 
+type NurseTool = "summary" | "medications" | "vitals" | "notes" | "orders";
+
 const nurseViewMeta: Record<NurseView, { title: string; label: string; description: string }> = {
   overview: {
     title: "Nurse dashboard",
@@ -171,11 +173,13 @@ export default function NurseDashboardPage() {
   const [search, setSearch] = useState("");
   const [vitalsForm, setVitalsForm] = useState(emptyVitalsForm);
   const [noteForm, setNoteForm] = useState(emptyNoteForm);
+  const [activeTool, setActiveTool] = useState<NurseTool>("summary");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const lastMedicationAlertRef = useRef(0);
+  const patientWorkspaceRef = useRef<HTMLElement | null>(null);
 
   const patients = workspace?.patients ?? [];
   const admittedPatients = patients.filter((patient) => patient.isAdmitted);
@@ -186,6 +190,13 @@ export default function NurseDashboardPage() {
   const acknowledgementKeys = new Set(
     (workspace?.acknowledgements ?? []).map((item) => `${item.orderType}:${item.orderId}`)
   );
+  const showPatientContext =
+    currentView === "patients" ||
+    currentView === "ward" ||
+    currentView === "medications" ||
+    currentView === "orders" ||
+    currentView === "vitals" ||
+    currentView === "notes";
 
   const visiblePatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -198,6 +209,41 @@ export default function NurseDashboardPage() {
         .includes(term)
     );
   }, [patients, search]);
+
+  const selectedSchedules = useMemo(
+    () => schedules.filter((schedule) => schedule.patientId === selectedPatient?.id),
+    [schedules, selectedPatient?.id]
+  );
+
+  const selectedVitals = useMemo(
+    () => (workspace?.recentVitals ?? []).filter((record) => record.patientId === selectedPatient?.id),
+    [workspace?.recentVitals, selectedPatient?.id]
+  );
+
+  const selectedNotes = useMemo(
+    () => (workspace?.recentNotes ?? []).filter((note) => note.patientId === selectedPatient?.id),
+    [workspace?.recentNotes, selectedPatient?.id]
+  );
+
+  const selectedPrescriptions = useMemo(
+    () => (workspace?.doctorOrders.prescriptions ?? []).filter((order) => order.patientId === selectedPatient?.id),
+    [workspace?.doctorOrders.prescriptions, selectedPatient?.id]
+  );
+
+  const selectedLabRequests = useMemo(
+    () => (workspace?.doctorOrders.labRequests ?? []).filter((order) => order.patientId === selectedPatient?.id),
+    [workspace?.doctorOrders.labRequests, selectedPatient?.id]
+  );
+
+  const selectedAdmissionRequests = useMemo(
+    () => (workspace?.doctorOrders.admissionRequests ?? []).filter((order) => order.patientId === selectedPatient?.id),
+    [workspace?.doctorOrders.admissionRequests, selectedPatient?.id]
+  );
+
+  const selectedReferrals = useMemo(
+    () => (workspace?.doctorOrders.referrals ?? []).filter((order) => order.patientId === selectedPatient?.id),
+    [workspace?.doctorOrders.referrals, selectedPatient?.id]
+  );
 
   const workspaceCards = [
     { title: "Patients", detail: `${patients.length} active`, path: "/nurse/patients", icon: <FiUser /> },
@@ -231,6 +277,14 @@ export default function NurseDashboardPage() {
     return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (currentView === "medications") setActiveTool("medications");
+    if (currentView === "orders") setActiveTool("orders");
+    if (currentView === "vitals") setActiveTool("vitals");
+    if (currentView === "notes") setActiveTool("notes");
+    if (currentView === "patients" || currentView === "ward") setActiveTool("summary");
+  }, [currentView]);
 
   useEffect(() => {
     const alertCount = dueSchedules.length + overdueSchedules.length;
@@ -267,6 +321,19 @@ export default function NurseDashboardPage() {
     setSelectedPatient(patient);
     setVitalsForm((current) => ({ ...current, patientId: patient.id }));
     setNoteForm((current) => ({ ...current, patientId: patient.id }));
+  }
+
+  function openPatientWorkspace(patient: NursingPatient, tool: NurseTool = "summary") {
+    selectPatient(patient);
+    setActiveTool(tool);
+    setError(null);
+
+    window.setTimeout(() => {
+      patientWorkspaceRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
   }
 
   async function openIdCard(patient: NursingPatient) {
@@ -366,6 +433,9 @@ export default function NurseDashboardPage() {
         </div>
         {schedule.instructions && <p className="nurse-muted">{schedule.instructions}</p>}
         <div className="nurse-action-row">
+          <button className="command-btn" type="button" onClick={() => openPatientWorkspace(schedule.patient, "medications")}>
+            Patient
+          </button>
           <button className="command-btn primary" disabled={saving} type="button" onClick={() => handleMedicationAction(schedule, "given")}>
             <FiCheck /> Given
           </button>
@@ -427,8 +497,8 @@ export default function NurseDashboardPage() {
           </>
         )}
 
-        {(currentView === "patients" || currentView === "vitals" || currentView === "notes") && (
-          <section className="doctor-patient-strip">
+        {showPatientContext && (
+          <section className="doctor-patient-strip" ref={patientWorkspaceRef}>
             <div>
               <label htmlFor="nurse-patient-search">Find patient</label>
               <div className="doctor-search-field">
@@ -470,10 +540,16 @@ export default function NurseDashboardPage() {
                 </div>
                 <div className="nurse-action-row">
                   <button className="command-btn" type="button" onClick={() => openIdCard(patient)}>
-                    <FiCreditCard /> ID
+                  <FiCreditCard /> ID
                   </button>
-                  <button className="command-btn primary" type="button" onClick={() => selectPatient(patient)}>
-                    Select
+                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "vitals")}>
+                    Vitals
+                  </button>
+                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "notes")}>
+                    Note
+                  </button>
+                  <button className="command-btn primary" type="button" onClick={() => openPatientWorkspace(patient, "summary")}>
+                    Open care
                   </button>
                 </div>
               </article>
@@ -492,20 +568,251 @@ export default function NurseDashboardPage() {
                   <small>{patient.currentAdmission?.diagnosis || patient.currentAdmission?.reason || "No diagnosis recorded"}</small>
                 </div>
                 <div className="nurse-action-row">
-                  <Link className="command-btn" to="/nurse/medications" onClick={() => selectPatient(patient)}>
+                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "medications")}>
                     Medication
-                  </Link>
-                  <Link className="command-btn" to="/nurse/vitals" onClick={() => selectPatient(patient)}>
+                  </button>
+                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "vitals")}>
                     Vitals
-                  </Link>
-                  <Link className="command-btn primary" to="/nurse/notes" onClick={() => selectPatient(patient)}>
+                  </button>
+                  <button className="command-btn primary" type="button" onClick={() => openPatientWorkspace(patient, "notes")}>
                     Note
-                  </Link>
+                  </button>
                 </div>
               </article>
             ))}
             {admittedPatients.length === 0 && <p className="nurse-muted">No admitted patients found.</p>}
           </section>
+        )}
+
+        {showPatientContext && selectedPatient && (
+          <>
+            <section className="doctor-patient-details nurse-patient-overview">
+              <article>
+                <span>Ward</span>
+                <strong>{wardLabel(selectedPatient)}</strong>
+                <small>{selectedPatient.isAdmitted ? "Currently admitted" : "Outpatient"}</small>
+              </article>
+              <article>
+                <span>Contact</span>
+                <strong>{selectedPatient.phone || "No phone"}</strong>
+                <small>{selectedPatient.email || "No email"}</small>
+              </article>
+              <article>
+                <span>Allergy</span>
+                <strong>{selectedPatient.allergies || "No allergy recorded"}</strong>
+                <small>
+                  {[selectedPatient.bloodGroup, selectedPatient.genotype].filter(Boolean).join(" / ") ||
+                    "Blood group not set"}
+                </small>
+              </article>
+              <article>
+                <span>Insurance</span>
+                <strong>{selectedPatient.insuranceProvider?.name || "Self pay"}</strong>
+                <small>{selectedPatient.insurancePolicyNumber || "No policy number"}</small>
+              </article>
+            </section>
+
+            <section className="doctor-panel doctor-workbench">
+              <div className="doctor-panel-heading">
+                <div>
+                  <span>Patient care</span>
+                  <h2>{patientName(selectedPatient)}</h2>
+                </div>
+                <FaUserNurse />
+              </div>
+
+              <div className="doctor-tool-tabs nurse-tool-tabs" role="tablist" aria-label="Nurse actions">
+                {[
+                  { key: "summary", label: "Summary", icon: <FiUser /> },
+                  { key: "medications", label: "Meds", icon: <FaCapsules /> },
+                  { key: "vitals", label: "Vitals", icon: <FiHeart /> },
+                  { key: "notes", label: "Notes", icon: <FaNotesMedical /> },
+                  { key: "orders", label: "Orders", icon: <FiFileText /> },
+                ].map((tool) => (
+                  <button
+                    key={tool.key}
+                    className={activeTool === tool.key ? "active" : ""}
+                    type="button"
+                    onClick={() => setActiveTool(tool.key as NurseTool)}
+                  >
+                    {tool.icon}
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTool === "summary" && (
+                <div className="nurse-summary-grid">
+                  <article>
+                    <strong>{selectedSchedules.length}</strong>
+                    <span>Medication schedules</span>
+                  </article>
+                  <article>
+                    <strong>{selectedVitals.length}</strong>
+                    <span>Recent vitals</span>
+                  </article>
+                  <article>
+                    <strong>{selectedNotes.length}</strong>
+                    <span>Nursing notes</span>
+                  </article>
+                  <article>
+                    <strong>
+                      {selectedPrescriptions.length +
+                        selectedLabRequests.length +
+                        selectedAdmissionRequests.length +
+                        selectedReferrals.length}
+                    </strong>
+                    <span>Doctor orders</span>
+                  </article>
+                  <button className="command-btn primary" type="button" onClick={() => openIdCard(selectedPatient)}>
+                    <FiCreditCard />
+                    View ID card
+                  </button>
+                </div>
+              )}
+
+              {activeTool === "medications" && (
+                <div className="nurse-card-list">
+                  {selectedSchedules.map((schedule) => (
+                    <MedicationCard key={schedule.id} schedule={schedule} />
+                  ))}
+                  {selectedSchedules.length === 0 && <p className="nurse-muted">No medication schedule for this patient.</p>}
+                </div>
+              )}
+
+              {activeTool === "vitals" && (
+                <form className="doctor-action-form" onSubmit={handleVitalsSubmit}>
+                  <div className="doctor-form-grid compact">
+                    <label>Temp C<input value={vitalsForm.temperatureCelsius} onChange={(event) => setVitalsForm((current) => ({ ...current, temperatureCelsius: event.target.value }))} /></label>
+                    <label>SYS<input value={vitalsForm.systolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, systolicBp: event.target.value }))} /></label>
+                    <label>DIA<input value={vitalsForm.diastolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, diastolicBp: event.target.value }))} /></label>
+                    <label>Pulse<input value={vitalsForm.pulse} onChange={(event) => setVitalsForm((current) => ({ ...current, pulse: event.target.value }))} /></label>
+                    <label>Resp<input value={vitalsForm.respiration} onChange={(event) => setVitalsForm((current) => ({ ...current, respiration: event.target.value }))} /></label>
+                    <label>SpO2<input value={vitalsForm.spo2} onChange={(event) => setVitalsForm((current) => ({ ...current, spo2: event.target.value }))} /></label>
+                    <label>Pain<input value={vitalsForm.painScore} onChange={(event) => setVitalsForm((current) => ({ ...current, painScore: event.target.value }))} /></label>
+                  </div>
+                  <label>Notes<textarea rows={3} value={vitalsForm.notes} onChange={(event) => setVitalsForm((current) => ({ ...current, notes: event.target.value }))} /></label>
+                  <button className="command-btn primary" disabled={saving || !vitalsForm.patientId} type="submit">Save vitals</button>
+
+                  <div className="nurse-card-list">
+                    {selectedVitals.slice(0, 4).map((record) => (
+                      <article key={record.id} className="doctor-record-card slim">
+                        <div>
+                          <strong>{formatDate(record.recordedAt)}</strong>
+                          <span>
+                            BP {record.systolicBp ?? "-"} / {record.diastolicBp ?? "-"} | Pulse {record.pulse ?? "-"} | SpO2 {record.spo2 ?? "-"}
+                          </span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </form>
+              )}
+
+              {activeTool === "notes" && (
+                <form className="doctor-action-form" onSubmit={handleNoteSubmit}>
+                  <label>Shift<select value={noteForm.shift} onChange={(event) => setNoteForm((current) => ({ ...current, shift: event.target.value as any }))}><option value="general">General</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="night">Night</option></select></label>
+                  <label>Note<textarea rows={5} value={noteForm.note} onChange={(event) => setNoteForm((current) => ({ ...current, note: event.target.value }))} /></label>
+                  <button className="command-btn primary" disabled={saving || !noteForm.patientId} type="submit">Save note</button>
+
+                  <div className="nurse-card-list">
+                    {selectedNotes.slice(0, 5).map((note) => (
+                      <article key={note.id} className="doctor-record-card">
+                        <div>
+                          <strong>{note.shift}</strong>
+                          <span>{formatDate(note.recordedAt)}</span>
+                        </div>
+                        <p>{note.note}</p>
+                      </article>
+                    ))}
+                    {selectedNotes.length === 0 && <p className="nurse-muted">No nursing notes for this patient yet.</p>}
+                  </div>
+                </form>
+              )}
+
+              {activeTool === "orders" && (
+                <div className="nurse-card-list">
+                  {selectedPrescriptions.map((order) => (
+                    <article key={order.id} className="nurse-patient-card nurse-order-card">
+                      <div>
+                        <span className="nurse-status">Prescription</span>
+                        <h3>{order.prescriptionNumber}</h3>
+                        <p>{order.items?.map((item: any) => item.medicationName).join(", ") || "No items listed"}</p>
+                      </div>
+                      <button
+                        className="command-btn primary"
+                        disabled={saving || acknowledgementKeys.has(`prescription:${order.id}`)}
+                        type="button"
+                        onClick={() => handleAcknowledge("prescription", order.id, order.patientId)}
+                      >
+                        {acknowledgementKeys.has(`prescription:${order.id}`) ? "Acknowledged" : "Acknowledge"}
+                      </button>
+                    </article>
+                  ))}
+
+                  {selectedLabRequests.map((order) => (
+                    <article key={order.id} className="nurse-patient-card nurse-order-card">
+                      <div>
+                        <span className="nurse-status">Lab</span>
+                        <h3>{order.template?.name ?? "Lab request"}</h3>
+                        <p>{order.requestNumber} | {order.status?.replaceAll("_", " ")}</p>
+                      </div>
+                      <button
+                        className="command-btn primary"
+                        disabled={saving || acknowledgementKeys.has(`lab_request:${order.id}`)}
+                        type="button"
+                        onClick={() => handleAcknowledge("lab_request", order.id, order.patientId)}
+                      >
+                        {acknowledgementKeys.has(`lab_request:${order.id}`) ? "Acknowledged" : "Acknowledge"}
+                      </button>
+                    </article>
+                  ))}
+
+                  {selectedAdmissionRequests.map((order) => (
+                    <article key={order.id} className="nurse-patient-card nurse-order-card">
+                      <div>
+                        <span className="nurse-status admitted">Admission</span>
+                        <h3>{order.requestNumber}</h3>
+                        <p>{order.ward?.name ?? "Ward pending"} | {order.reason}</p>
+                      </div>
+                      <button
+                        className="command-btn primary"
+                        disabled={saving || acknowledgementKeys.has(`admission_request:${order.id}`)}
+                        type="button"
+                        onClick={() => handleAcknowledge("admission_request", order.id, order.patientId)}
+                      >
+                        {acknowledgementKeys.has(`admission_request:${order.id}`) ? "Acknowledged" : "Acknowledge"}
+                      </button>
+                    </article>
+                  ))}
+
+                  {selectedReferrals.map((order) => (
+                    <article key={order.id} className="nurse-patient-card nurse-order-card">
+                      <div>
+                        <span className="nurse-status">Referral</span>
+                        <h3>{order.destinationFacility}</h3>
+                        <p>{order.reason}</p>
+                      </div>
+                      <button
+                        className="command-btn primary"
+                        disabled={saving || acknowledgementKeys.has(`referral:${order.id}`)}
+                        type="button"
+                        onClick={() => handleAcknowledge("referral", order.id, order.patientId)}
+                      >
+                        {acknowledgementKeys.has(`referral:${order.id}`) ? "Acknowledged" : "Acknowledge"}
+                      </button>
+                    </article>
+                  ))}
+
+                  {selectedPrescriptions.length +
+                    selectedLabRequests.length +
+                    selectedAdmissionRequests.length +
+                    selectedReferrals.length ===
+                    0 && <p className="nurse-muted">No active doctor orders for this patient.</p>}
+                </div>
+              )}
+            </section>
+          </>
         )}
 
         {currentView === "medications" && (
@@ -547,36 +854,6 @@ export default function NurseDashboardPage() {
                 </button>
               </article>
             ))}
-          </section>
-        )}
-
-        {currentView === "vitals" && (
-          <section className="doctor-panel">
-            <div className="doctor-panel-heading"><div><span>Vitals</span><h2>{selectedPatient ? patientName(selectedPatient) : "Select patient"}</h2></div><FiHeart /></div>
-            <form className="doctor-action-form" onSubmit={handleVitalsSubmit}>
-              <div className="doctor-form-grid compact">
-                <label>Temp C<input value={vitalsForm.temperatureCelsius} onChange={(event) => setVitalsForm((current) => ({ ...current, temperatureCelsius: event.target.value }))} /></label>
-                <label>SYS<input value={vitalsForm.systolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, systolicBp: event.target.value }))} /></label>
-                <label>DIA<input value={vitalsForm.diastolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, diastolicBp: event.target.value }))} /></label>
-                <label>Pulse<input value={vitalsForm.pulse} onChange={(event) => setVitalsForm((current) => ({ ...current, pulse: event.target.value }))} /></label>
-                <label>Resp<input value={vitalsForm.respiration} onChange={(event) => setVitalsForm((current) => ({ ...current, respiration: event.target.value }))} /></label>
-                <label>SpO2<input value={vitalsForm.spo2} onChange={(event) => setVitalsForm((current) => ({ ...current, spo2: event.target.value }))} /></label>
-                <label>Pain<input value={vitalsForm.painScore} onChange={(event) => setVitalsForm((current) => ({ ...current, painScore: event.target.value }))} /></label>
-              </div>
-              <label>Notes<textarea rows={3} value={vitalsForm.notes} onChange={(event) => setVitalsForm((current) => ({ ...current, notes: event.target.value }))} /></label>
-              <button className="command-btn primary" disabled={saving || !vitalsForm.patientId} type="submit">Save vitals</button>
-            </form>
-          </section>
-        )}
-
-        {currentView === "notes" && (
-          <section className="doctor-panel">
-            <div className="doctor-panel-heading"><div><span>Notes</span><h2>{selectedPatient ? patientName(selectedPatient) : "Select patient"}</h2></div><FiFileText /></div>
-            <form className="doctor-action-form" onSubmit={handleNoteSubmit}>
-              <label>Shift<select value={noteForm.shift} onChange={(event) => setNoteForm((current) => ({ ...current, shift: event.target.value as any }))}><option value="general">General</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="night">Night</option></select></label>
-              <label>Note<textarea rows={5} value={noteForm.note} onChange={(event) => setNoteForm((current) => ({ ...current, note: event.target.value }))} /></label>
-              <button className="command-btn primary" disabled={saving || !noteForm.patientId} type="submit">Save note</button>
-            </form>
           </section>
         )}
 

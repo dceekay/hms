@@ -5513,6 +5513,7 @@
 
 .doctor-appointment-card small,
 .doctor-appointment-card em,
+.doctor-click-hint,
 .appointment-selection-summary {
   color: #94a3b8;
 }
@@ -5520,6 +5521,21 @@
 .doctor-appointment-card em {
   font-style: normal;
   overflow-wrap: anywhere;
+}
+
+.doctor-click-hint {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 2px;
+  padding: 5px 9px;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.12);
+  color: #bfdbfe;
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .doctor-patient-details {
@@ -6005,6 +6021,51 @@
   gap: 8px;
 }
 
+.nurse-patient-overview {
+  margin-top: -2px;
+}
+
+.nurse-tool-tabs button {
+  min-width: 116px;
+}
+
+.nurse-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.nurse-summary-grid article {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.24);
+}
+
+.nurse-summary-grid strong {
+  color: #ffffff;
+  font-size: 1.45rem;
+}
+
+.nurse-summary-grid span {
+  color: #94a3b8;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nurse-summary-grid .command-btn {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.nurse-order-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .nurse-med-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
@@ -6056,7 +6117,8 @@
   }
 
   .nurse-stats-grid,
-  .nurse-med-meta {
+  .nurse-med-meta,
+  .nurse-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -6077,7 +6139,8 @@
 
 @media (max-width: 460px) {
   .nurse-stats-grid,
-  .nurse-med-meta {
+  .nurse-med-meta,
+  .nurse-summary-grid {
     grid-template-columns: 1fr;
   }
 

@@ -156,6 +156,19 @@ const emptyEncounterForm: ClinicalEncounterFormValues = {
   plan: "",
 };
 
+function encounterToForm(encounter: ClinicalEncounter): ClinicalEncounterFormValues {
+  return {
+    patientId: encounter.patientId,
+    visitType: encounter.visitType ?? "General consultation",
+    chiefComplaint: encounter.chiefComplaint ?? "",
+    history: encounter.history ?? "",
+    examination: encounter.examination ?? "",
+    diagnosis: encounter.diagnosis ?? "",
+    remarks: encounter.remarks ?? "",
+    plan: encounter.plan ?? "",
+  };
+}
+
 const emptyPrescriptionDraft: PrescriptionItemFormValues = {
   medicationId: "",
   medicationName: "",
@@ -386,6 +399,7 @@ export default function DoctorDashboardPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const selectedPatientRef = useRef<Patient | null>(null);
+  const patientWorkspaceRef = useRef<HTMLElement | null>(null);
 
   const selectedPatientHistory = useMemo(
     () =>
@@ -478,6 +492,7 @@ export default function DoctorDashboardPage() {
     currentView === "prescription" ||
     currentView === "admission" ||
     currentView === "referral";
+  const showClinicalWorkspace = showPatientContext || currentView === "appointments";
 
   async function loadWorkspace() {
     setLoading(true);
@@ -668,6 +683,35 @@ export default function DoctorDashboardPage() {
     }
   }
 
+  function openAppointmentPatient(
+    appointment: Appointment,
+    nextStatus?: AppointmentStatus
+  ) {
+    if (!appointment.patient) {
+      setError("This appointment has no patient record attached.");
+      return;
+    }
+
+    setError(null);
+    setActiveTool("note");
+    void selectPatient(
+      appointment.patient,
+      workspace?.recentEncounters ?? [],
+      appointment
+    );
+
+    if (nextStatus && appointment.status !== nextStatus) {
+      void handleAppointmentStatus(appointment, nextStatus);
+    }
+
+    window.setTimeout(() => {
+      patientWorkspaceRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  }
+
   function handlePatientSearch(value: string) {
     setPatientSearch(value);
     const patient = (workspace?.patients ?? []).find((item) => patientOptionLabel(item) === value);
@@ -722,7 +766,7 @@ export default function DoctorDashboardPage() {
     }
 
     setActiveEncounter(encounter);
-    setEncounterForm({ ...emptyEncounterForm, patientId: selectedPatient.id });
+    setEncounterForm(encounterToForm(encounter));
     setAdmissionForm((current) => ({ ...current, encounterId: current.encounterId || encounter.id }));
     setReferralForm((current) => ({ ...current, encounterId: current.encounterId || encounter.id }));
     setMessage("Clinical note saved.");
@@ -1156,15 +1200,7 @@ export default function DoctorDashboardPage() {
                 <button
                   type="button"
                   disabled={!appointment.patient}
-                  onClick={() =>
-                    appointment.patient
-                      ? void selectPatient(
-                          appointment.patient,
-                          workspace?.recentEncounters ?? [],
-                          appointment
-                        )
-                      : undefined
-                  }
+                  onClick={() => openAppointmentPatient(appointment)}
                 >
                   <span className={`doctor-status ${appointment.status}`}>
                     {appointmentStatusLabels[appointment.status] ?? appointment.status.replaceAll("_", " ")}
@@ -1172,6 +1208,7 @@ export default function DoctorDashboardPage() {
                   <strong>{patientName(appointment.patient)}</strong>
                   <small>{appointment.patient?.mrn ?? "MRN pending"}</small>
                   <em>{appointment.reason || "General consultation"}</em>
+                  <span className="doctor-click-hint">Open patient tools</span>
                 </button>
 
                 <div className="doctor-action-row">
@@ -1180,7 +1217,7 @@ export default function DoctorDashboardPage() {
                       className="command-btn"
                       type="button"
                       disabled={saving}
-                      onClick={() => handleAppointmentStatus(appointment, "checked_in")}
+                      onClick={() => openAppointmentPatient(appointment, "checked_in")}
                     >
                       Check in
                     </button>
@@ -1190,9 +1227,9 @@ export default function DoctorDashboardPage() {
                       className="command-btn primary"
                       type="button"
                       disabled={saving}
-                      onClick={() => handleAppointmentStatus(appointment, "in_consultation")}
+                      onClick={() => openAppointmentPatient(appointment, "in_consultation")}
                     >
-                      Start
+                      Start consultation
                     </button>
                   )}
                 </div>
@@ -1202,8 +1239,8 @@ export default function DoctorDashboardPage() {
         </section>
         )}
 
-        {showPatientContext && (
-        <section className="doctor-patient-strip" id="patients">
+        {showClinicalWorkspace && (
+        <section className="doctor-patient-strip" id="patients" ref={patientWorkspaceRef}>
           <div>
             <label htmlFor="doctor-patient-search">Patient</label>
             <div className="doctor-search-field">
@@ -1247,7 +1284,7 @@ export default function DoctorDashboardPage() {
         </section>
         )}
 
-        {showPatientContext && selectedPatient && (
+        {showClinicalWorkspace && selectedPatient && (
           <section className="doctor-patient-details">
             <article>
               <span>Contact</span>
@@ -1275,7 +1312,7 @@ export default function DoctorDashboardPage() {
           </section>
         )}
 
-        {activeRouteTool && (
+        {showClinicalWorkspace && (
         <section className="doctor-panel doctor-workbench" id="care-tools">
           <div className="doctor-panel-heading">
             <div>
@@ -1287,20 +1324,21 @@ export default function DoctorDashboardPage() {
 
           <div className="doctor-tool-tabs" role="tablist" aria-label="Doctor actions">
             {[
-              { key: "note", label: "Note", icon: <FaNotesMedical />, path: "/doctor/notes" },
-              { key: "lab", label: "Lab", icon: <FaFlask />, path: "/doctor/lab" },
-              { key: "prescription", label: "Rx", icon: <FaPills />, path: "/doctor/prescription" },
-              { key: "admission", label: "Ward", icon: <FiHome />, path: "/doctor/admission" },
-              { key: "referral", label: "Referral", icon: <FiShare2 />, path: "/doctor/referral" },
+              { key: "note", label: "Note", icon: <FaNotesMedical /> },
+              { key: "lab", label: "Lab", icon: <FaFlask /> },
+              { key: "prescription", label: "Medicine", icon: <FaPills /> },
+              { key: "admission", label: "Ward", icon: <FiHome /> },
+              { key: "referral", label: "Referral", icon: <FiShare2 /> },
             ].map((tool) => (
-              <Link
+              <button
                 key={tool.key}
                 className={activeTool === tool.key ? "active" : ""}
-                to={tool.path}
+                type="button"
+                onClick={() => setActiveTool(tool.key as DoctorTool)}
               >
                 {tool.icon}
                 {tool.label}
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -1935,7 +1973,7 @@ export default function DoctorDashboardPage() {
         </section>
         )}
 
-        {currentView === "patients" && (
+        {(currentView === "patients" || (currentView === "appointments" && selectedPatient)) && (
         <section className="doctor-history-grid">
           <div className="doctor-panel">
             <div className="doctor-panel-heading">
