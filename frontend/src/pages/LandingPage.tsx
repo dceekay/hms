@@ -25,19 +25,19 @@ import {
 } from "react-icons/fi";
 import { useState } from "react";
 
-import mdsHospital from "../assets/mds.png";
+import hospitalGate from "../assets/front1.png";
+import hospitalExterior from "../assets/outdoorwithcars.png";
 import mdsLogo from "../assets/logo.png";
 import medicalDirector from "../assets/dr2.jpeg";
 import patientJourneyBilingual from "../assets/patient-journey-bilingual.png";
 import consultantPhoto from "../assets/cons.jpeg";
-import specialistPhoto from "../assets/specialist.png";
-import laparoscopyPhoto from "../assets/lapo.png";
+import dentistPhoto from "../assets/dentist.png";
 import surgeryPhoto from "../assets/surrr.jpg";
-import nurseTeamPhoto from "../assets/team.jpeg";
-import eyeCheckPhoto from "../assets/eye.jpeg";
-import pharmacyPhoto from "../assets/pharm.jpeg";
-import laboratoryPhoto from "../assets/lab.jpeg";
-import mriPhoto from "../assets/mri.png";
+import laboratoryPhoto from "../assets/lab.png";
+import laboratoryRoomPhoto from "../assets/labrotory.png";
+import nursingPhoto from "../assets/nurse2.png";
+import pharmacyPhoto from "../assets/pharm.png";
+import receptionPhoto from "../assets/rec.png";
 import nhiaLogo from "../assets/NHIA.png";
 import kachimaLogo from "../assets/kschmalogo.png";
 import jichimaLogo from "../assets/jichima.png";
@@ -164,7 +164,7 @@ const showcaseCards = [
   {
     title: "Nursing care",
     description: "Attentive ward support from nurses who keep patients comfortable and monitored.",
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
   },
   {
     title: "Operating theatre",
@@ -172,9 +172,9 @@ const showcaseCards = [
     image: surgeryPhoto,
   },
   {
-    title: "Eye clinic",
-    description: "Focused eye checks and specialist review for clearer clinical direction.",
-    image: eyeCheckPhoto,
+    title: "Dental and eye care",
+    description: "Focused checks and specialist review for clearer clinical direction.",
+    image: dentistPhoto,
   },
   {
     title: "Pharmacy",
@@ -187,19 +187,19 @@ const showcaseCards = [
     image: laboratoryPhoto,
   },
   {
-    title: "MRI diagnostics",
-    description: "High-resolution imaging support for clear clinical direction.",
-    image: mriPhoto,
+    title: "Laboratory workspace",
+    description: "Structured spaces for sample processing and result preparation.",
+    image: laboratoryRoomPhoto,
   },
   {
-    title: "Minimal access surgery",
-    description: "Modern laparoscopic procedures with careful perioperative support.",
-    image: laparoscopyPhoto,
+    title: "Reception flow",
+    description: "A simple front-desk path for registration, enquiries, and patient direction.",
+    image: receptionPhoto,
   },
   {
-    title: "Specialist clinics",
-    description: "Focused expertise for complex, multi-disciplinary patient pathways.",
-    image: specialistPhoto,
+    title: "Hospital access",
+    description: "Real MDS Hospital surroundings for patients, families, and visitors.",
+    image: hospitalExterior,
   },
 ];
 
@@ -214,6 +214,7 @@ const reveal = {
 
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [schemesExpanded, setSchemesExpanded] = useState(false);
 
   const scrollToSection = () => {
     setMenuOpen(false);
@@ -371,8 +372,8 @@ export default function LandingPage() {
           >
             <div className="hero-image-wrapper">
               <img
-                src={mdsHospital}
-                alt="MDS Hospital clinical care environment"
+                src={hospitalGate}
+                alt="MDS Hospital entrance and service signage in Kano"
               />
 
               <div className="hero-image-overlay" />
@@ -461,7 +462,7 @@ export default function LandingPage() {
             viewport={{ once: true, amount: 0.25 }}
             variants={reveal}
           >
-            <img src={mdsHospital} alt="Healthcare services at MDS Hospital" />
+            <img src={hospitalExterior} alt="MDS Hospital exterior and access area" />
 
             <div className="about-image-card">
               <FaHospital />
@@ -679,13 +680,25 @@ export default function LandingPage() {
           </div>
 
           <div className="schemes-grid">
-            {schemes.map((scheme) => (
-              <div key={scheme}>
+            {schemes.map((scheme, index) => (
+              <div
+                key={scheme}
+                className={!schemesExpanded && index > 5 ? "scheme-extra" : ""}
+              >
                 <FaShieldAlt />
                 <span>{scheme}</span>
               </div>
             ))}
           </div>
+
+          <button
+            type="button"
+            className="schemes-toggle"
+            onClick={() => setSchemesExpanded((current) => !current)}
+          >
+            {schemesExpanded ? "Show fewer schemes" : "Show all schemes"}
+            <FiArrowRight />
+          </button>
 
           <div className="scheme-note">
             <FaCheckCircle />

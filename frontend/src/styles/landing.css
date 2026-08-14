@@ -1720,6 +1720,10 @@ img {
   line-height: 1.35;
 }
 
+.schemes-toggle {
+  display: none;
+}
+
 .scheme-note {
   margin-top: 22px;
   padding: 15px 17px;
@@ -2858,12 +2862,80 @@ img {
 
   .schemes-section {
     width: min(100% - 20px, 1320px);
-    padding: 60px 20px;
+    padding: 34px 18px;
     border-radius: 25px;
   }
 
+  .schemes-copy .eyebrow {
+    font-size: 0.63rem;
+  }
+
+  .schemes-copy h2 {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+    line-height: 1.05;
+  }
+
+  .schemes-copy > p:not(.eyebrow) {
+    margin-top: 10px;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
   .schemes-grid {
+    margin-top: 22px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .schemes-grid > div {
+    min-height: 48px;
+    padding: 9px 10px;
+    grid-template-columns: 20px minmax(0, 1fr);
+    align-content: center;
+    justify-items: start;
+    gap: 8px;
+    border-radius: 11px;
+    text-align: left;
+  }
+
+  .schemes-grid svg {
+    font-size: 0.9rem;
+  }
+
+  .schemes-grid span {
+    font-size: 0.68rem;
+    line-height: 1.2;
+  }
+
+  .schemes-grid .scheme-extra {
+    display: none;
+  }
+
+  .schemes-toggle {
+    min-height: 42px;
+    margin-top: 12px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(118, 227, 228, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #dffefe;
+    font-size: 0.74rem;
+    font-weight: 900;
+  }
+
+  .scheme-note {
+    margin-top: 14px;
+    padding: 11px 12px;
+    border-radius: 11px;
+  }
+
+  .scheme-note p {
+    font-size: 0.68rem;
+    line-height: 1.42;
   }
 
   .journey-preview-header {

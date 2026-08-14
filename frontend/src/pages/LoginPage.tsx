@@ -9,6 +9,18 @@ import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import "../styles/login.css";
 
+const testAccounts = [
+  { role: "Super Admin", username: "admin", password: "Admin@123" },
+  { role: "Administrator", username: "administrator", password: "Administrator@123" },
+  { role: "Doctor", username: "drjohn", password: "Doctor@123" },
+  { role: "Nurse", username: "nurseama", password: "Nurse@123" },
+  { role: "Receptionist", username: "reception", password: "Reception@123" },
+  { role: "Laboratory", username: "labtech", password: "Lab@12345" },
+  { role: "Pharmacist", username: "pharm", password: "Pharm@123" },
+  { role: "Billing Officer", username: "billing", password: "Billing@123" },
+  { role: "Security", username: "security", password: "Security@123" },
+];
+
 function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
   const normalizedRoles = roles.map((role) => role.toLowerCase());
 
@@ -40,6 +52,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showTestAccounts =
+    import.meta.env.DEV ||
+    ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -58,6 +73,12 @@ export default function LoginPage() {
     setUser(result.user);
     navigate(getPostLoginPath(result.user?.roles, result.user?.permissions), { replace: true });
   }
+
+  const fillTestAccount = (account: (typeof testAccounts)[number]) => {
+    setEmailOrUsername(account.username);
+    setPassword(account.password);
+    setError(null);
+  };
 
   return (
     <main className="login-page">
@@ -158,6 +179,28 @@ export default function LoginPage() {
             <FiArrowRight />
           </Link>
 
+          {showTestAccounts && (
+            <div className="test-login-panel">
+              <div>
+                <strong>Local test logins</strong>
+                <span>Click a role to autofill.</span>
+              </div>
+
+              <div className="test-login-grid">
+                {testAccounts.map((account) => (
+                  <button
+                    key={account.role}
+                    type="button"
+                    onClick={() => fillTestAccount(account)}
+                    className="test-login-btn"
+                  >
+                    <span>{account.role}</span>
+                    <small>{account.username}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </form>
       </section>
     </main>

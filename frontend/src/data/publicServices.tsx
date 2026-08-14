@@ -17,16 +17,14 @@ import {
   FaUsers,
 } from "react-icons/fa";
 
-import mdsHospital from "../assets/mds.png";
+import hospitalExterior from "../assets/outdoorwithcars.png";
 import consultantPhoto from "../assets/cons.jpeg";
-import specialistPhoto from "../assets/specialist.png";
-import laparoscopyPhoto from "../assets/lapo.png";
+import dentistPhoto from "../assets/dentist.png";
 import surgeryPhoto from "../assets/surrr.jpg";
-import nurseTeamPhoto from "../assets/team.jpeg";
-import eyeCheckPhoto from "../assets/eye.jpeg";
-import pharmacyPhoto from "../assets/pharm.jpeg";
-import laboratoryPhoto from "../assets/lab.jpeg";
-import mriPhoto from "../assets/mri.png";
+import laboratoryPhoto from "../assets/lab.png";
+import laboratoryRoomPhoto from "../assets/labrotory.png";
+import nursingPhoto from "../assets/nurse2.png";
+import pharmacyPhoto from "../assets/pharm.png";
 
 export type PublicService = {
   slug: string;
@@ -124,7 +122,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "minimal access surgery Kano, laparoscopic surgery Kano, keyhole surgery Kano, MDS Hospital laparoscopy",
     icon: <FaStethoscope />,
-    image: laparoscopyPhoto,
+    image: surgeryPhoto,
     imageAlt: "Minimal access surgery equipment and clinical setup",
     featured: true,
     offerings: [
@@ -209,7 +207,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "specialist clinic Kano, visiting consultants Kano, medical specialists Kano, MDS Hospital specialists",
     icon: <FaHospital />,
-    image: specialistPhoto,
+    image: consultantPhoto,
     imageAlt: "Specialist doctor reviewing patient care",
     offerings: [
       "Specialist consultation scheduling",
@@ -293,7 +291,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "radiology Kano, scan Kano, ECG Kano, medical imaging Giginyu, MDS Hospital scanning",
     icon: <FaHeartbeat />,
-    image: mriPhoto,
+    image: laboratoryRoomPhoto,
     imageAlt: "Medical imaging service at MDS Hospital",
     offerings: [
       "Doctor-requested scans and imaging support",
@@ -377,7 +375,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "maternity hospital Kano, labour room Kano, delivery hospital Giginyu, MDS Hospital maternity",
     icon: <FaUsers />,
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
     imageAlt: "MDS Hospital nursing team supporting patient care",
     offerings: [
       "Maternity assessment and labour room support",
@@ -419,7 +417,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "antenatal care Kano, ANC clinic Kano, pregnancy clinic Giginyu, MDS Hospital ANC",
     icon: <FaHeartbeat />,
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
     imageAlt: "Nursing team at MDS Hospital",
     offerings: [
       "Pregnancy review and routine monitoring",
@@ -461,7 +459,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "immunisation Kano, vaccination Kano, child immunisation Giginyu, MDS Hospital vaccines",
     icon: <FaShieldAlt />,
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
     imageAlt: "Nurses supporting preventive healthcare",
     offerings: [
       "Routine immunisation guidance",
@@ -503,7 +501,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "hospital admission Kano, ward care Kano, inpatient hospital Giginyu, MDS Hospital wards",
     icon: <FaBed />,
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
     imageAlt: "Ward nursing care at MDS Hospital",
     offerings: [
       "Ward and bed assignment",
@@ -545,7 +543,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "emergency hospital Kano, urgent care Kano, emergency support Giginyu, MDS Hospital emergency",
     icon: <FaAmbulance />,
-    image: mdsHospital,
+    image: hospitalExterior,
     imageAlt: "MDS Hospital building in Kano",
     offerings: [
       "Urgent assessment and triage",
@@ -638,7 +636,7 @@ export const publicServices: PublicService[] = [
         <FaEye />
       </>
     ),
-    image: eyeCheckPhoto,
+    image: dentistPhoto,
     imageAlt: "Eye check service at MDS Hospital",
     offerings: [
       "Eye checks and clinical review",
@@ -680,7 +678,7 @@ export const publicServices: PublicService[] = [
     keywords:
       "wound dressing Kano, wound care Kano, dressing clinic Giginyu, MDS Hospital dressing",
     icon: <FaFirstAid />,
-    image: nurseTeamPhoto,
+    image: nursingPhoto,
     imageAlt: "Nursing team providing patient care",
     offerings: [
       "Wound dressing and review support",
