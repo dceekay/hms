@@ -15,6 +15,8 @@ import SecurityLogsPage from "./pages/security/SecurityLogsPage";
 import SemsasPage from "./pages/operations/SemsasPage";
 import PharmacyPage from "./pages/pharmacy/PharmacyPage";
 import LaboratoryPage from "./pages/laboratory/LaboratoryPage";
+import LaboratoryTemplatesPage from "./pages/laboratory/LaboratoryTemplatesPage";
+import DeskOfficePage from "./pages/deskOffice/DeskOfficePage";
 import DoctorDashboardPage from "./pages/doctor/DoctorDashboardPage";
 import NurseDashboardPage from "./pages/nurse/NurseDashboardPage";
 import AppointmentsPage from "./pages/appointments/AppointmentsPage";
@@ -208,10 +210,28 @@ export default function App() {
         />
 
         <Route
+          path="/laboratory/templates"
+          element={
+            <ProtectedRoute requiredPermissions={["laboratory.read"]}>
+              <LaboratoryTemplatesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/pharmacy"
           element={
             <ProtectedRoute requiredPermissions={["pharmacy.read"]}>
               <PharmacyPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/desk-office"
+          element={
+            <ProtectedRoute requiredPermissions={["claims.read"]}>
+              <DeskOfficePage />
             </ProtectedRoute>
           }
         />

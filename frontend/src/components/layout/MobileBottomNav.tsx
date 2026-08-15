@@ -35,6 +35,7 @@ const mobileItems: MobileNavItem[] = [
     anyPermissions: ["patients.create", "patients.investigation.create"],
   },
   { label: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
+  { label: "Claims", path: "/desk-office", icon: <FiFileText />, requiredPermissions: ["claims.read"] },
   { label: "Doctor", path: "/doctor", icon: <FaUserMd />, requiredRoles: ["Doctor"] },
   { label: "Lab", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
@@ -85,6 +86,11 @@ const nurseMobileItems: MobileNavItem[] = [
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
+const deskOfficeMobileItems: MobileNavItem[] = [
+  { label: "Claims", path: "/desk-office", icon: <FiFileText />, requiredPermissions: ["claims.read"] },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
 export default function MobileBottomNav() {
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
@@ -93,6 +99,7 @@ export default function MobileBottomNav() {
   const securityOnly = roles.includes("Security") && roles.length === 1;
   const doctorOnly = roles.includes("Doctor") && roles.length === 1;
   const nurseOnly = roles.includes("Nurse") && roles.length === 1;
+  const deskOfficeOnly = roles.includes("Desk Office") && roles.length === 1;
 
   const canAccess = (item: MobileNavItem) => {
     const hasRequiredRole =
@@ -116,6 +123,8 @@ export default function MobileBottomNav() {
       ? doctorMobileItems
       : nurseOnly
         ? nurseMobileItems
+        : deskOfficeOnly
+          ? deskOfficeMobileItems
         : mobileItems;
   const visibleItems = sourceItems.filter(canAccess);
   const isItemActive = (path: string, navIsActive: boolean) => {

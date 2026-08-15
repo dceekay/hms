@@ -7,7 +7,7 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import {
   createPatientBill,
   fetchPatientBills,

@@ -5,10 +5,8 @@ import {
   FaCapsules,
   FaCheckCircle,
   FaChevronDown,
-  FaFacebookF,
   FaHeartbeat,
   FaHospital,
-  FaInstagram,
   FaMicroscope,
   FaPhoneAlt,
   FaShieldAlt,
@@ -16,6 +14,7 @@ import {
   FaWhatsapp,
 } from "react-icons/fa";
 import {
+  FiArrowUp,
   FiArrowRight,
   FiClock,
   FiExternalLink,
@@ -23,26 +22,26 @@ import {
   FiMenu,
   FiPhoneCall,
 } from "react-icons/fi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import hospitalGate from "../assets/front1.png";
-import hospitalExterior from "../assets/outdoorwithcars.png";
-import mdsLogo from "../assets/logo.png";
+import hospitalGate from "../assets/optimized/hospital-gate.jpg";
+import hospitalExterior from "../assets/optimized/hospital-exterior.jpg";
+import mdsLogo from "../assets/optimized/logo.png";
 import medicalDirector from "../assets/dr2.jpeg";
-import patientJourneyBilingual from "../assets/patient-journey-bilingual.png";
 import consultantPhoto from "../assets/cons.jpeg";
-import dentistPhoto from "../assets/dentist.png";
-import surgeryPhoto from "../assets/surrr.jpg";
-import laboratoryPhoto from "../assets/lab.png";
-import laboratoryRoomPhoto from "../assets/labrotory.png";
-import nursingPhoto from "../assets/nurse2.png";
-import pharmacyPhoto from "../assets/pharm.png";
-import receptionPhoto from "../assets/rec.png";
+import dentistPhoto from "../assets/optimized/dentist.jpg";
+import surgeryPhoto from "../assets/optimized/surgery.jpg";
+import laboratoryPhoto from "../assets/optimized/lab.jpg";
+import laboratoryRoomPhoto from "../assets/optimized/laboratory-room.jpg";
+import nursingPhoto from "../assets/optimized/nursing.jpg";
+import pharmacyPhoto from "../assets/optimized/pharmacy.jpg";
+import receptionPhoto from "../assets/optimized/reception.jpg";
 import nhiaLogo from "../assets/NHIA.png";
 import kachimaLogo from "../assets/kschmalogo.png";
 import jichimaLogo from "../assets/jichima.png";
 import hygeiaLogo from "../assets/hygeia.png";
 import { publicServices } from "../data/publicServices";
+import { applySeo, seoSiteUrl } from "../utils/seo";
 
 import "../styles/landing.css";
 
@@ -50,7 +49,7 @@ const hospitalAddress =
   "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu, Kano 700213, Kano";
 const whatsappDisplay = "0706 225 5150";
 const whatsappUrl =
-  "https://wa.me/2348062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
+  "https://wa.me/2347062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
 const emergencyDisplay = "0708 229 7430";
 const emergencyTel = "tel:+2347082297430";
 const receptionTel = "tel:+2347062255150";
@@ -58,45 +57,6 @@ const googleMapsUrl =
   "https://www.google.com/maps/place/MDS+HOSPITAL/@11.9926965,8.5865612,17z/data=!3m1!4b1!4m6!3m5!1s0x11ae833f2e4d110f:0x916e22c7202b3a5!8m2!3d11.9926965!4d8.5865612!16s%2Fg%2F11hz_lk_v0";
 const googleMapsEmbedUrl =
   "https://www.google.com/maps?q=MDS%20Hospital%2C%20Eastern%20Bypass%2C%20Giginyu%2C%20Kano&output=embed";
-
-const patientSteps = [
-  {
-    number: "01",
-    title: "Entry and security",
-    description:
-      "Patients and visitors receive guidance and identification support where applicable.",
-  },
-  {
-    number: "02",
-    title: "Reception and registration",
-    description:
-      "New, returning, investigation, and reactivated patients are processed efficiently.",
-  },
-  {
-    number: "03",
-    title: "Consultation",
-    description:
-      "Patients are directed to GOPD, general clinic, or an appropriate specialist.",
-  },
-  {
-    number: "04",
-    title: "Clinical services",
-    description:
-      "Laboratory, pharmacy, imaging, specialist investigations, and preventive services.",
-  },
-  {
-    number: "05",
-    title: "Admission or procedure",
-    description:
-      "Ward admission, surgery, or labour room support is arranged when required.",
-  },
-  {
-    number: "06",
-    title: "Discharge and follow-up",
-    description:
-      "Patients receive prescriptions, referrals, aftercare advice, and follow-up plans.",
-  },
-];
 
 const schemes = [
   "NHIA",
@@ -203,6 +163,389 @@ const showcaseCards = [
   },
 ];
 
+type LandingLanguage = "en" | "ha";
+
+const landingCopy: Record<
+  LandingLanguage,
+  {
+    emergencyBar: string;
+    emergencyLine: string;
+    brandTagline: string;
+    nav: {
+      about: string;
+      services: string;
+      ambulance: string;
+      leadership: string;
+      contact: string;
+      portal: string;
+    };
+    heroBadge: string;
+    heroEyebrow: string;
+    heroTitleLead: string;
+    heroTitleHighlight: string;
+    heroText: string;
+    book: string;
+    directions: string;
+    assurances: Array<{ title: string; text: string; icon: "doctor" | "clock" | "shield" }>;
+    discover: string;
+    quick: {
+      speakSmall: string;
+      speakStrong: string;
+      ambulanceSmall: string;
+      ambulanceStrong: string;
+      coverageSmall: string;
+      coverageStrong: string;
+    };
+    aboutEyebrow: string;
+    aboutTitle: string;
+    aboutP1: string;
+    aboutP2: string;
+    aboutLink: string;
+    servicesEyebrow: string;
+    servicesTitle: string;
+    servicesText: string;
+    serviceCta: string;
+    allServices: string;
+    emergencyEyebrow: string;
+    emergencyTitle: string;
+    emergencyText: string;
+    callEmergency: string;
+    ambulanceEyebrow: string;
+    ambulanceTitle: string;
+    ambulanceText: string;
+    ambulanceActions: {
+      call: string;
+      whatsapp: string;
+      directions: string;
+    };
+    ambulanceCards: Array<{ title: string; text: string }>;
+    schemesEyebrow: string;
+    schemesTitle: string;
+    schemesText: string;
+    showFewer: string;
+    showAll: string;
+    schemeNote: string;
+    showcaseEyebrow: string;
+    showcaseTitle: string;
+    showcaseText: string;
+    contactEyebrow: string;
+    contactTitle: string;
+    contactText: string;
+    contactLabels: {
+      call: string;
+      emergency: string;
+      address: string;
+      hours: string;
+      hoursValue: string;
+      maps: string;
+      appointments: string;
+      request: string;
+      appointmentText: string;
+      whatsapp: string;
+      phone: string;
+      notice: string;
+    };
+    footerText: string;
+    footerHospital: string;
+    footerServices: string;
+    footerQuick: string;
+    footerLinks: {
+      about: string;
+      leadership: string;
+      ambulance: string;
+      schemes: string;
+      surgery: string;
+      clinics: string;
+      diagnostics: string;
+      pharmacy: string;
+      portal: string;
+      appointments: string;
+      emergency: string;
+      directions: string;
+    };
+    backToTop: string;
+    floatingWhatsapp: string;
+  }
+> = {
+  en: {
+    emergencyBar: "24/7 Emergency and Ambulance Support",
+    emergencyLine: "Emergency line",
+    brandTagline: "Patient Care, Reimagined",
+    nav: {
+      about: "About",
+      services: "Services",
+      ambulance: "Ambulance",
+      leadership: "Leadership",
+      contact: "Contact",
+      portal: "Staff portal",
+    },
+    heroBadge: "NHIS, KACHMA and JICHMA accredited",
+    heroEyebrow: "Compassionate care. Modern precision.",
+    heroTitleLead: "MDS Hospital Kano: expert care for",
+    heroTitleHighlight: "every patient journey.",
+    heroText:
+      "MDS Hospital provides coordinated medical, surgical, diagnostic, pharmacy, emergency, and preventive healthcare services in a calm, safe, and patient-focused environment on Eastern Bypass, Giginyu, Kano.",
+    book: "Book an appointment",
+    directions: "Get directions",
+    assurances: [
+      { title: "Specialist-led care", text: "Experienced clinical professionals", icon: "doctor" },
+      { title: "Responsive service", text: "Emergency support available", icon: "clock" },
+      { title: "Secure coordination", text: "Protected digital patient workflows", icon: "shield" },
+    ],
+    discover: "Discover MDS Hospital",
+    quick: {
+      speakSmall: "Speak with our team",
+      speakStrong: "Contact reception",
+      ambulanceSmall: "Emergency movement",
+      ambulanceStrong: "Ambulance support",
+      coverageSmall: "Coverage and payment",
+      coverageStrong: "View accepted schemes",
+    },
+    aboutEyebrow: "Welcome to MDS Hospital",
+    aboutTitle:
+      "A modern care environment grounded in compassion, competence, and trust.",
+    aboutP1:
+      "Our teams work across outpatient care, specialist consultations, diagnostics, pharmacy, surgical services, admission, preventive healthcare, and aftercare to provide a smoother experience for patients and their families.",
+    aboutP2:
+      "Patients receive clear direction, practical support, and coordinated care from arrival to follow-up.",
+    aboutLink: "Need urgent transfer or ambulance support?",
+    servicesEyebrow: "Specialties and services",
+    servicesTitle:
+      "Healthcare support for every stage of the patient experience.",
+    servicesText:
+      "Integrated clinical services designed to improve access, diagnosis, treatment, recovery, and follow-up.",
+    serviceCta: "View service",
+    allServices: "Explore all MDS Hospital services",
+    emergencyEyebrow: "Emergency support",
+    emergencyTitle: "Need urgent medical assistance?",
+    emergencyText:
+      "Contact MDS Hospital immediately or visit the hospital for prompt assessment and clinical support.",
+    callEmergency: "Call",
+    ambulanceEyebrow: "Ambulance and emergency transfer",
+    ambulanceTitle: "Fast help when movement matters.",
+    ambulanceText:
+      "MDS Hospital supports ambulance movement into our facility, transfer from MDS to another hospital, and documented SEMSAS ambulance service records for patients who need urgent movement.",
+    ambulanceActions: {
+      call: "Call emergency line",
+      whatsapp: "Chat on WhatsApp",
+      directions: "Get directions",
+    },
+    ambulanceCards: [
+      {
+        title: "Bring a patient to MDS",
+        text: "Call for guidance when a patient needs urgent movement to our hospital for assessment and care.",
+      },
+      {
+        title: "Transfer to another hospital",
+        text: "When a referral is needed, the team can document the movement and support a cleaner handover.",
+      },
+      {
+        title: "Receive ambulance referrals",
+        text: "Incoming ambulance arrivals can be recorded clearly for reception, clinical teams, and accounts.",
+      },
+      {
+        title: "Monthly filing support",
+        text: "SEMSAS service notes, dates, destinations, and amounts can be kept ready for end-of-month filing.",
+      },
+    ],
+    schemesEyebrow: "Coverage and service schemes",
+    schemesTitle: "Multiple options for accessible healthcare.",
+    schemesText:
+      "MDS Hospital supports health insurance, government schemes, referrals, retainership, wallet, and direct-payment arrangements.",
+    showFewer: "Show fewer schemes",
+    showAll: "Show all schemes",
+    schemeNote:
+      "Coverage may depend on eligibility, authorisation, service type, and the patient scheme terms. Some specialised services may attract separate billing.",
+    showcaseEyebrow: "Modern clinical experience",
+    showcaseTitle: "Real care spaces, clearer expectations.",
+    showcaseText:
+      "See the people, departments, and service areas that support patient care at MDS Hospital.",
+    contactEyebrow: "Visit or contact MDS Hospital",
+    contactTitle: "Let our team guide you to the right care.",
+    contactText:
+      "Contact reception for appointments, specialist clinic schedules, coverage enquiries, referrals, ambulance support, and directions to our Giginyu, Kano facility.",
+    contactLabels: {
+      call: "Call MDS Hospital",
+      emergency: "Emergency contact",
+      address: "Hospital address",
+      hours: "Opening hours",
+      hoursValue: "Emergency services available 24/7",
+      maps: "Open in Google Maps",
+      appointments: "Appointments",
+      request: "Request a consultation",
+      appointmentText:
+        "Speak with our reception team to confirm clinic availability and prepare for your visit.",
+      whatsapp: "Chat with reception",
+      phone: "Call the hospital",
+      notice:
+        "WhatsApp connects you to reception. Use the emergency line for urgent medical assistance.",
+    },
+    footerText:
+      "Compassionate, specialist-led healthcare supported by coordinated clinical services and modern hospital systems.",
+    footerHospital: "Hospital",
+    footerServices: "Clinical services",
+    footerQuick: "Quick access",
+    footerLinks: {
+      about: "About MDS",
+      leadership: "Leadership",
+      ambulance: "Ambulance support",
+      schemes: "Coverage schemes",
+      surgery: "General surgery",
+      clinics: "Specialist clinics",
+      diagnostics: "Diagnostics",
+      pharmacy: "Pharmacy",
+      portal: "Staff portal",
+      appointments: "Appointments",
+      emergency: "Emergency contact",
+      directions: "Hospital directions",
+    },
+    backToTop: "Back to top",
+    floatingWhatsapp: "Chat with us",
+  },
+  ha: {
+    emergencyBar: "Agajin gaggawa da motar daukar marasa lafiya 24/7",
+    emergencyLine: "Layin gaggawa",
+    brandTagline: "Kulawar Mara Lafiya da Tsari",
+    nav: {
+      about: "Game da mu",
+      services: "Ayyuka",
+      ambulance: "Ambulance",
+      leadership: "Jagoranci",
+      contact: "Tuntube mu",
+      portal: "Shafin ma'aikata",
+    },
+    heroBadge: "An amince da NHIS, KACHMA da JICHMA",
+    heroEyebrow: "Kulawa da tausayi. Aiki da kwarewa.",
+    heroTitleLead: "MDS Hospital Kano: kwararrun likitoci domin",
+    heroTitleHighlight: "lafiyar kowa.",
+    heroText:
+      "MDS Hospital na Giginyu, Kano na ba da kulawar likita, tiyata, gwaje-gwaje, pharmacy, gaggawa, haihuwa, rigakafi da sauran ayyukan asibiti cikin tsari, natsuwa da aminci.",
+    book: "Nemi ganawa",
+    directions: "Duba hanya",
+    assurances: [
+      { title: "Kwararrun likitoci", text: "Kulawa daga masu kwarewa", icon: "doctor" },
+      { title: "Amsa cikin lokaci", text: "Akwai agajin gaggawa", icon: "clock" },
+      { title: "Tsarin bayanai mai tsaro", text: "Bayanan mara lafiya suna cikin kulawa", icon: "shield" },
+    ],
+    discover: "Sanin MDS Hospital",
+    quick: {
+      speakSmall: "Yi magana da mu",
+      speakStrong: "Tuntubi reception",
+      ambulanceSmall: "Daukar mara lafiya",
+      ambulanceStrong: "Agajin ambulance",
+      coverageSmall: "Inshora da biyan kudi",
+      coverageStrong: "Duba tsarin da muke karba",
+    },
+    aboutEyebrow: "Barka da zuwa MDS Hospital",
+    aboutTitle:
+      "Asibiti na zamani mai kulawa, kwarewa da amana.",
+    aboutP1:
+      "Muna da ayyukan OPD, kwararrun likitoci, gwaje-gwaje, pharmacy, tiyata, admission, rigakafi da bayanin kulawa bayan an tashi daga asibiti.",
+    aboutP2:
+      "Mara lafiya na samun jagora mai sauki, kulawa ta mutunci, da tsari daga shigowa har zuwa dawowa dubawa.",
+    aboutLink: "Kana bukatar ambulance ko tura mara lafiya?",
+    servicesEyebrow: "Ayyukan asibiti",
+    servicesTitle:
+      "Kulawar lafiya daga matakin farko har zuwa warkewa.",
+    servicesText:
+      "Ayyukanmu suna taimakawa wajen ganowa, magani, gwaji, karbar magani, admission da bin diddigin lafiyar mara lafiya.",
+    serviceCta: "Duba aiki",
+    allServices: "Duba duk ayyukan MDS Hospital",
+    emergencyEyebrow: "Agajin gaggawa",
+    emergencyTitle: "Ana bukatar taimakon gaggawa?",
+    emergencyText:
+      "A kira MDS Hospital nan da nan ko a zo asibiti domin a duba mara lafiya cikin lokaci.",
+    callEmergency: "Kira",
+    ambulanceEyebrow: "Motar daukar marasa lafiya",
+    ambulanceTitle: "Agaji cikin sauri idan motsa mara lafiya ya zama dole.",
+    ambulanceText:
+      "MDS Hospital na taimakawa wajen daukar mara lafiya zuwa asibitinmu, tura shi wani asibiti idan akwai bukatar kwararre ko kayan aiki na musamman, da kuma rubuta bayanan SEMSAS da kyau.",
+    ambulanceActions: {
+      call: "Kira layin gaggawa",
+      whatsapp: "Tura sako WhatsApp",
+      directions: "Duba hanya",
+    },
+    ambulanceCards: [
+      {
+        title: "Dauko mara lafiya zuwa MDS",
+        text: "A kira mu idan mara lafiya na bukatar a kawo shi asibiti cikin gaggawa domin duba lafiyarsa.",
+      },
+      {
+        title: "Tura mara lafiya wani asibiti",
+        text: "Idan ana bukatar referral, za a rubuta bayanin tura mara lafiya domin mika shi cikin tsari.",
+      },
+      {
+        title: "Karbar wanda aka kawo da ambulance",
+        text: "Bayanan wanda ambulance ta kawo za su shiga tsarin reception, likitoci da accounts cikin sauki.",
+      },
+      {
+        title: "Bayanan wata-wata",
+        text: "Bayanan tafiya, rana, inda aka kai mara lafiya da kudin aiki za su kasance a shirye domin filing.",
+      },
+    ],
+    schemesEyebrow: "Inshora da tsarin biyan kudi",
+    schemesTitle: "Hanyoyi daban-daban domin samun kulawa.",
+    schemesText:
+      "MDS Hospital na karbar inshora, tsarin gwamnati, referrals, retainership, wallet da biyan kudi kai tsaye.",
+    showFewer: "Rufe wasu",
+    showAll: "Nuna duka",
+    schemeNote:
+      "Karbar inshora na iya dogara da cancanta, amincewa, irin aikin da za a yi, da sharuddan tsarin mara lafiya. Wasu ayyuka na musamman na iya bukatar karin kudi.",
+    showcaseEyebrow: "Ainihin yanayin kulawa",
+    showcaseTitle: "Sassan asibiti da za ka iya gani a fili.",
+    showcaseText:
+      "Duba mutane, sassa da wuraren aiki da ke taimakawa kulawar marasa lafiya a MDS Hospital.",
+    contactEyebrow: "Ziyarci ko tuntubi MDS Hospital",
+    contactTitle: "Mu taimaka maka samun hanyar kulawa mafi dacewa.",
+    contactText:
+      "Tuntubi reception domin appointment, jadawalin kwararrun likitoci, inshora, referral, ambulance da hanyar zuwa asibitinmu a Giginyu, Kano.",
+    contactLabels: {
+      call: "Kira MDS Hospital",
+      emergency: "Layin gaggawa",
+      address: "Adireshin asibiti",
+      hours: "Lokacin aiki",
+      hoursValue: "Akwai agajin gaggawa 24/7",
+      maps: "Bude Google Maps",
+      appointments: "Appointment",
+      request: "Nemi ganin likita",
+      appointmentText:
+        "Yi magana da reception domin tabbatar da lokacin clinic da abin da ya kamata a shirya kafin zuwa.",
+      whatsapp: "Yi WhatsApp da reception",
+      phone: "Kira asibiti",
+      notice:
+        "WhatsApp zai hada ka da reception. Idan gaggawa ce, a kira layin emergency.",
+    },
+    footerText:
+      "Kwararrun ayyukan lafiya masu tausayi, tare da tsari na zamani domin kula da mara lafiya.",
+    footerHospital: "Asibiti",
+    footerServices: "Ayyukan lafiya",
+    footerQuick: "Hanyoyi masu sauri",
+    footerLinks: {
+      about: "Game da MDS",
+      leadership: "Jagoranci",
+      ambulance: "Agajin ambulance",
+      schemes: "Inshora da tsare-tsare",
+      surgery: "Tiyata",
+      clinics: "Clinics na kwararru",
+      diagnostics: "Gwaje-gwaje",
+      pharmacy: "Pharmacy",
+      portal: "Shafin ma'aikata",
+      appointments: "Appointment",
+      emergency: "Layin gaggawa",
+      directions: "Hanyar zuwa asibiti",
+    },
+    backToTop: "Koma sama",
+    floatingWhatsapp: "Turo sako",
+  },
+};
+
+const socialLinks = [
+  { label: "WhatsApp", href: whatsappUrl, icon: <FaWhatsapp />, external: true },
+  { label: "Google Maps", href: googleMapsUrl, icon: <FiMapPin />, external: true },
+  { label: "Call", href: receptionTel, icon: <FaPhoneAlt /> },
+  { label: "Emergency", href: emergencyTel, icon: <FaAmbulance /> },
+];
+
 const reveal = {
   hidden: { opacity: 0, y: 24 },
   visible: {
@@ -215,6 +558,45 @@ const reveal = {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [schemesExpanded, setSchemesExpanded] = useState(false);
+  const [language, setLanguage] = useState<LandingLanguage>("en");
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const copy = landingCopy[language];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 520);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    applySeo({
+      title: "MDS Hospital Kano | Emergency Care, Surgery, Diagnostics & Pharmacy",
+      description:
+        "MDS Hospital in Giginyu, Kano provides 24/7 emergency support, surgery, outpatient care, laboratory, scanning, ECG, pharmacy, maternity, ward admission, immunisation, dental and eye care.",
+      canonicalPath: "/",
+      keywords:
+        "MDS Hospital Kano, hospital in Kano, Giginyu hospital, emergency hospital Kano, surgery Kano, laboratory Kano, pharmacy Kano, maternity hospital Kano",
+      imageAlt: "MDS Hospital entrance in Giginyu, Kano",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "MDS Hospital Kano",
+        url: seoSiteUrl,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${seoSiteUrl}/services?search={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      },
+    });
+  }, []);
 
   const scrollToSection = () => {
     setMenuOpen(false);
@@ -227,12 +609,12 @@ export default function LandingPage() {
         <div className="emergency-bar-inner">
           <span>
             <FaAmbulance />
-            24/7 Emergency and Ambulance Support
+            {copy.emergencyBar}
           </span>
 
           <a href={emergencyTel}>
             <FiPhoneCall />
-            Emergency line: {emergencyDisplay}
+            {copy.emergencyLine}: {emergencyDisplay}
           </a>
         </div>
       </div>
@@ -240,11 +622,11 @@ export default function LandingPage() {
       {/* Navigation */}
       <header className="landing-header">
         <Link to="/" className="landing-brand">
-          <img src={mdsLogo} alt="MDS Hospital logo" />
+          <img src={mdsLogo} alt="MDS Hospital logo" decoding="async" />
 
           <div>
             <strong>MDS Hospital</strong>
-            <span>Patient Care, Reimagined</span>
+            <span>{copy.brandTagline}</span>
           </div>
         </Link>
 
@@ -259,27 +641,42 @@ export default function LandingPage() {
 
         <nav className={`landing-nav ${menuOpen ? "nav-open" : ""}`}>
           <a href="#about" onClick={scrollToSection}>
-            About
+            {copy.nav.about}
           </a>
           <a href="#services" onClick={scrollToSection}>
-            Services
+            {copy.nav.services}
           </a>
-          <a href="#journey" onClick={scrollToSection}>
-            Patient journey
+          <a href="#ambulance" onClick={scrollToSection}>
+            {copy.nav.ambulance}
           </a>
           <a href="#leadership" onClick={scrollToSection}>
-            Leadership
+            {copy.nav.leadership}
           </a>
           <a href="#contact" onClick={scrollToSection}>
-            Contact
+            {copy.nav.contact}
           </a>
+
+          <button
+            type="button"
+            className="language-toggle"
+            onClick={() =>
+              setLanguage((current) => (current === "en" ? "ha" : "en"))
+            }
+            aria-label={
+              language === "en"
+                ? "Switch landing page to Hausa"
+                : "Switch landing page to English"
+            }
+          >
+            {language === "en" ? "HA" : "EN"}
+          </button>
 
           <Link
             to="/login"
             className="landing-nav-cta"
             onClick={scrollToSection}
           >
-            Staff portal
+            {copy.nav.portal}
             <FiArrowRight />
           </Link>
         </nav>
@@ -299,22 +696,16 @@ export default function LandingPage() {
           >
             <div className="hero-badge">
               <FaCheckCircle />
-              NHIS, KACHMA and JICHMA accredited
+              {copy.heroBadge}
             </div>
 
-            <p className="eyebrow">Compassionate care. Modern precision.</p>
+            <p className="eyebrow">{copy.heroEyebrow}</p>
 
             <h1>
-              MDS Hospital Kano: expert care for{" "}
-              <span>every patient’s journey.</span>
+              {copy.heroTitleLead} <span>{copy.heroTitleHighlight}</span>
             </h1>
 
-            <p className="hero-text">
-              MDS Hospital provides coordinated medical, surgical, diagnostic,
-              pharmacy, emergency, and preventive healthcare services in a
-              calm, safe, and patient-focused environment on Eastern Bypass,
-              Giginyu, Kano.
-            </p>
+            <p className="hero-text">{copy.heroText}</p>
 
             <div className="hero-actions">
               <a
@@ -323,7 +714,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Book an appointment
+                {copy.book}
                 <FiArrowRight />
               </a>
 
@@ -333,34 +724,22 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Get directions
+                {copy.directions}
               </a>
             </div>
 
             <div className="hero-assurances">
-              <div>
-                <FaUserMd />
-                <span>
-                  <strong>Specialist-led care</strong>
-                  Experienced clinical professionals
-                </span>
-              </div>
-
-              <div>
-                <FiClock />
-                <span>
-                  <strong>Responsive service</strong>
-                  Emergency support available
-                </span>
-              </div>
-
-              <div>
-                <FaShieldAlt />
-                <span>
-                  <strong>Secure coordination</strong>
-                  Protected digital patient workflows
-                </span>
-              </div>
+              {copy.assurances.map((assurance) => (
+                <div key={assurance.title}>
+                  {assurance.icon === "doctor" && <FaUserMd />}
+                  {assurance.icon === "clock" && <FiClock />}
+                  {assurance.icon === "shield" && <FaShieldAlt />}
+                  <span>
+                    <strong>{assurance.title}</strong>
+                    {assurance.text}
+                  </span>
+                </div>
+              ))}
             </div>
           </motion.div>
 
@@ -374,6 +753,9 @@ export default function LandingPage() {
               <img
                 src={hospitalGate}
                 alt="MDS Hospital entrance and service signage in Kano"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
 
               <div className="hero-image-overlay" />
@@ -401,7 +783,7 @@ export default function LandingPage() {
           </motion.div>
 
           <a href="#about" className="scroll-indicator">
-            Discover MDS Hospital
+            {copy.discover}
             <FaChevronDown />
           </a>
         </section>
@@ -410,7 +792,7 @@ export default function LandingPage() {
           <div className="partners-track">
             {[...partnerLogos, ...partnerLogos].map((partner, index) => (
               <div className="partner-pill" key={`${partner.alt}-${index}`}>
-                <img src={partner.src} alt={partner.alt} />
+                <img src={partner.src} alt={partner.alt} loading="lazy" decoding="async" />
                 <span>{partner.alt}</span>
               </div>
             ))}
@@ -424,19 +806,19 @@ export default function LandingPage() {
               <FiPhoneCall />
             </span>
             <div>
-              <small>Speak with our team</small>
-              <strong>Contact reception</strong>
+              <small>{copy.quick.speakSmall}</small>
+              <strong>{copy.quick.speakStrong}</strong>
             </div>
             <FiArrowRight />
           </a>
 
-          <a href="#journey">
+          <a href="#ambulance">
             <span>
-              <FaHospital />
+              <FaAmbulance />
             </span>
             <div>
-              <small>Understand your visit</small>
-              <strong>View patient journey</strong>
+              <small>{copy.quick.ambulanceSmall}</small>
+              <strong>{copy.quick.ambulanceStrong}</strong>
             </div>
             <FiArrowRight />
           </a>
@@ -446,8 +828,8 @@ export default function LandingPage() {
               <FaShieldAlt />
             </span>
             <div>
-              <small>Coverage and payment</small>
-              <strong>View accepted schemes</strong>
+              <small>{copy.quick.coverageSmall}</small>
+              <strong>{copy.quick.coverageStrong}</strong>
             </div>
             <FiArrowRight />
           </a>
@@ -462,7 +844,12 @@ export default function LandingPage() {
             viewport={{ once: true, amount: 0.25 }}
             variants={reveal}
           >
-            <img src={hospitalExterior} alt="MDS Hospital exterior and access area" />
+            <img
+              src={hospitalExterior}
+              alt="MDS Hospital exterior and access area"
+              loading="lazy"
+              decoding="async"
+            />
 
             <div className="about-image-card">
               <FaHospital />
@@ -480,25 +867,13 @@ export default function LandingPage() {
             viewport={{ once: true, amount: 0.25 }}
             variants={reveal}
           >
-            <p className="eyebrow">Welcome to MDS Hospital</p>
+            <p className="eyebrow">{copy.aboutEyebrow}</p>
 
-            <h2>
-              A modern care environment grounded in compassion, competence,
-              and trust.
-            </h2>
+            <h2>{copy.aboutTitle}</h2>
 
-            <p>
-              Our teams work across outpatient care, specialist consultations,
-              diagnostics, pharmacy, surgical services, admission, preventive
-              healthcare, and aftercare to provide a smoother experience for
-              patients and their families.
-            </p>
+            <p>{copy.aboutP1}</p>
 
-            <p>
-              From the moment a patient enters the hospital, every stage is
-              carefully coordinated to reduce uncertainty, improve
-              communication, and support better clinical decisions.
-            </p>
+            <p>{copy.aboutP2}</p>
 
             <div className="trust-grid">
               {trustItems.map((item) => (
@@ -509,8 +884,8 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <a href="#journey" className="text-link">
-              See how patients move through our hospital
+            <a href="#ambulance" className="text-link">
+              {copy.aboutLink}
               <FiArrowRight />
             </a>
           </motion.div>
@@ -519,12 +894,9 @@ export default function LandingPage() {
         {/* Services */}
         <section id="services" className="services-section page-section">
           <div className="section-heading centered-heading">
-            <p className="eyebrow">Specialties and services</p>
-            <h2>Healthcare support for every stage of the patient experience.</h2>
-            <p>
-              Integrated clinical services designed to improve access,
-              diagnosis, treatment, recovery, and follow-up.
-            </p>
+            <p className="eyebrow">{copy.servicesEyebrow}</p>
+            <h2>{copy.servicesTitle}</h2>
+            <p>{copy.servicesText}</p>
           </div>
 
           <div className="services-grid">
@@ -553,7 +925,7 @@ export default function LandingPage() {
                 <p>{service.summary}</p>
 
                 <Link to={`/services/${service.slug}`}>
-                  View service
+                  {copy.serviceCta}
                   <FiArrowRight />
                 </Link>
               </motion.article>
@@ -562,7 +934,7 @@ export default function LandingPage() {
 
           <div className="services-index-link">
             <Link to="/services">
-              Explore all MDS Hospital services
+              {copy.allServices}
               <FiArrowRight />
             </Link>
           </div>
@@ -576,19 +948,16 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <p className="eyebrow">Emergency support</p>
-              <h2>Need urgent medical assistance?</h2>
-              <p>
-                Contact MDS Hospital immediately or visit the hospital for
-                prompt assessment and clinical support.
-              </p>
+              <p className="eyebrow">{copy.emergencyEyebrow}</p>
+              <h2>{copy.emergencyTitle}</h2>
+              <p>{copy.emergencyText}</p>
             </div>
           </div>
 
           <div className="emergency-actions">
             <a href={emergencyTel} className="emergency-call-btn">
               <FaPhoneAlt />
-              Call {emergencyDisplay}
+              {copy.callEmergency} {emergencyDisplay}
             </a>
 
             <a
@@ -598,72 +967,92 @@ export default function LandingPage() {
               rel="noreferrer"
             >
               <FiMapPin />
-              Get directions
+              {copy.directions}
             </a>
           </div>
         </section>
 
-        {/* Journey */}
-        <section id="journey" className="journey-section page-section">
+        {/* Ambulance */}
+        <section id="ambulance" className="ambulance-section page-section">
           <div className="section-heading">
-            <p className="eyebrow">Your visit, clearly explained</p>
-            <h2>A coordinated journey from entrance to follow-up.</h2>
-            <p>
-              Our service pathway helps patients and relatives understand what
-              to expect at every stage of their visit.
-            </p>
+            <p className="eyebrow">{copy.ambulanceEyebrow}</p>
+            <h2>{copy.ambulanceTitle}</h2>
+            <p>{copy.ambulanceText}</p>
           </div>
 
-          <div className="journey-layout">
-            <div className="journey-steps">
-              {patientSteps.map((step, index) => (
+          <div className="ambulance-layout">
+            <div className="ambulance-callout">
+              <span>
+                <FaAmbulance />
+              </span>
+              <div>
+                <strong>{emergencyDisplay}</strong>
+                <small>{copy.emergencyLine}</small>
+              </div>
+            </div>
+
+            <div className="ambulance-cards">
+              {copy.ambulanceCards.map((card, index) => (
                 <motion.article
-                  key={step.number}
-                  initial={{ opacity: 0, x: -24 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.25 }}
+                  key={card.title}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.18 }}
                   transition={{ duration: 0.4, delay: index * 0.06 }}
                 >
-                  <span>{step.number}</span>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
 
                   <div>
-                    <h3>{step.title}</h3>
-                    <p>{step.description}</p>
+                    <h3>{card.title}</h3>
+                    <p>{card.text}</p>
                   </div>
                 </motion.article>
               ))}
             </div>
 
             <motion.div
-              className="journey-preview"
+              className="ambulance-panel"
               initial={{ opacity: 0, x: 24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55 }}
             >
-              <div className="journey-preview-header">
+              <div className="ambulance-panel-header">
+                <FaHospital />
                 <div>
-                  <small>Patient service guide</small>
-                  <strong>English and Hausa</strong>
+                  <small>SEMSAS</small>
+                  <strong>{copy.ambulanceTitle}</strong>
                 </div>
               </div>
 
-              <a
-                href={patientJourneyBilingual}
-                target="_blank"
-                rel="noreferrer"
-                className="journey-image-link"
-              >
-                <img
-                  src={patientJourneyBilingual}
-                  alt="MDS Hospital patient journey and service map"
-                />
+              <p>{copy.ambulanceText}</p>
 
-                <span>
-                  Open full service map
-                  <FiExternalLink />
-                </span>
-              </a>
+              <div className="ambulance-actions">
+                <a href={emergencyTel} className="emergency-call-btn">
+                  <FaPhoneAlt />
+                  {copy.ambulanceActions.call}
+                </a>
+
+                <a
+                  href={whatsappUrl}
+                  className="whatsapp-btn"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FaWhatsapp />
+                  {copy.ambulanceActions.whatsapp}
+                </a>
+
+                <a
+                  href={googleMapsUrl}
+                  className="emergency-location-btn"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FiMapPin />
+                  {copy.ambulanceActions.directions}
+                </a>
+              </div>
             </motion.div>
           </div>
         </section>
@@ -671,12 +1060,9 @@ export default function LandingPage() {
         {/* Coverage schemes */}
         <section id="schemes" className="schemes-section">
           <div className="schemes-copy">
-            <p className="eyebrow">Coverage and service schemes</p>
-            <h2>Multiple options for accessible healthcare.</h2>
-            <p>
-              MDS Hospital supports a range of health insurance, government,
-              referral, retainership, and direct-payment arrangements.
-            </p>
+            <p className="eyebrow">{copy.schemesEyebrow}</p>
+            <h2>{copy.schemesTitle}</h2>
+            <p>{copy.schemesText}</p>
           </div>
 
           <div className="schemes-grid">
@@ -696,27 +1082,21 @@ export default function LandingPage() {
             className="schemes-toggle"
             onClick={() => setSchemesExpanded((current) => !current)}
           >
-            {schemesExpanded ? "Show fewer schemes" : "Show all schemes"}
+            {schemesExpanded ? copy.showFewer : copy.showAll}
             <FiArrowRight />
           </button>
 
           <div className="scheme-note">
             <FaCheckCircle />
-            <p>
-              Coverage may depend on eligibility, authorisation, service type,
-              and the terms of the patient’s scheme. Some specialised services
-              may attract separate billing.
-            </p>
+            <p>{copy.schemeNote}</p>
           </div>
         </section>
 
         <section className="showcase-section page-section">
           <div className="section-heading centered-heading">
-            <p className="eyebrow">Modern clinical experience</p>
-            <h2>Care pathways presented with clarity, motion, and confidence.</h2>
-            <p>
-              From consultant-led reviews to surgical and imaging services, every experience is crafted to feel calm, modern, and reassuring.
-            </p>
+            <p className="eyebrow">{copy.showcaseEyebrow}</p>
+            <h2>{copy.showcaseTitle}</h2>
+            <p>{copy.showcaseText}</p>
           </div>
 
           <div className="showcase-grid">
@@ -730,7 +1110,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.45, delay: index * 0.05 }}
                 whileHover={{ y: -8, scale: 1.01 }}
               >
-                <img src={card.image} alt={card.title} />
+                <img src={card.image} alt={card.title} loading="lazy" decoding="async" />
                 <div className="showcase-card-body">
                   <h3>{card.title}</h3>
                   <p>{card.description}</p>
@@ -753,6 +1133,8 @@ export default function LandingPage() {
               <img
                 src={medicalDirector}
                 alt="Director Abdulkadir Yakubu, Chief Executive Officer of MDS Hospital"
+                loading="lazy"
+                decoding="async"
               />
 
               <div className="director-photo-overlay">
@@ -852,7 +1234,7 @@ export default function LandingPage() {
             <div className="dashboard-card dashboard-main-card">
               <div className="dashboard-card-header">
                 <span className="dashboard-logo">
-                  <img src={mdsLogo} alt="" />
+                  <img src={mdsLogo} alt="" loading="lazy" decoding="async" />
                 </span>
 
                 <div>
@@ -862,7 +1244,7 @@ export default function LandingPage() {
               </div>
 
               <div className="dashboard-progress">
-                <span>Patient journey progress</span>
+                <span>Care coordination status</span>
                 <strong>Coordinated</strong>
               </div>
 
@@ -899,15 +1281,11 @@ export default function LandingPage() {
         {/* Contact */}
         <section id="contact" className="contact-section">
           <div className="contact-copy">
-            <p className="eyebrow">Visit or contact MDS Hospital</p>
+            <p className="eyebrow">{copy.contactEyebrow}</p>
 
-            <h2>Let our team guide you to the right care.</h2>
+            <h2>{copy.contactTitle}</h2>
 
-            <p>
-              Contact reception for appointments, specialist clinic schedules,
-              coverage enquiries, referrals, and directions to our Giginyu,
-              Kano facility.
-            </p>
+            <p>{copy.contactText}</p>
 
             <div className="contact-details">
               <a href={receptionTel}>
@@ -916,7 +1294,7 @@ export default function LandingPage() {
                 </span>
 
                 <div>
-                  <small>Call MDS Hospital</small>
+                  <small>{copy.contactLabels.call}</small>
                   <strong>{whatsappDisplay}</strong>
                 </div>
               </a>
@@ -927,7 +1305,7 @@ export default function LandingPage() {
                 </span>
 
                 <div>
-                  <small>Emergency contact</small>
+                  <small>{copy.contactLabels.emergency}</small>
                   <strong>{emergencyDisplay}</strong>
                 </div>
               </a>
@@ -938,7 +1316,7 @@ export default function LandingPage() {
                 </span>
 
                 <div>
-                  <small>Hospital address</small>
+                  <small>{copy.contactLabels.address}</small>
                   <strong>{hospitalAddress}</strong>
                 </div>
               </a>
@@ -949,8 +1327,8 @@ export default function LandingPage() {
                 </span>
 
                 <div>
-                  <small>Opening hours</small>
-                  <strong>Emergency services available 24/7</strong>
+                  <small>{copy.contactLabels.hours}</small>
+                  <strong>{copy.contactLabels.hoursValue}</strong>
                 </div>
               </div>
             </div>
@@ -964,7 +1342,7 @@ export default function LandingPage() {
               />
 
               <a href={googleMapsUrl} target="_blank" rel="noreferrer">
-                Open in Google Maps
+                {copy.contactLabels.maps}
                 <FiExternalLink />
               </a>
             </div>
@@ -975,13 +1353,10 @@ export default function LandingPage() {
               <FaUserMd />
             </div>
 
-            <p className="eyebrow">Appointments</p>
-            <h3>Request a consultation</h3>
+            <p className="eyebrow">{copy.contactLabels.appointments}</p>
+            <h3>{copy.contactLabels.request}</h3>
 
-            <p>
-              Speak with our reception team to confirm clinic availability and
-              prepare for your visit.
-            </p>
+            <p>{copy.contactLabels.appointmentText}</p>
 
             <a
               href={whatsappUrl}
@@ -990,17 +1365,16 @@ export default function LandingPage() {
               rel="noreferrer"
             >
               <FaWhatsapp />
-              Chat with reception
+              {copy.contactLabels.whatsapp}
             </a>
 
             <a href={receptionTel} className="call-btn">
               <FaPhoneAlt />
-              Call the hospital
+              {copy.contactLabels.phone}
             </a>
 
             <small className="appointment-notice">
-              WhatsApp connects you to reception. Use the emergency line for
-              urgent medical assistance.
+              {copy.contactLabels.notice}
             </small>
           </div>
         </section>
@@ -1011,67 +1385,61 @@ export default function LandingPage() {
         <div className="footer-main">
           <div className="footer-brand">
             <Link to="/">
-              <img src={mdsLogo} alt="MDS Hospital" />
+              <img src={mdsLogo} alt="MDS Hospital" loading="lazy" decoding="async" />
 
               <div>
                 <strong>MDS Hospital</strong>
-                <span>Patient Care, Reimagined</span>
+                <span>{copy.brandTagline}</span>
               </div>
             </Link>
 
-            <p>
-              Compassionate, specialist-led healthcare supported by coordinated
-              clinical services and modern hospital systems.
-            </p>
+            <p>{copy.footerText}</p>
 
             <div className="social-links">
-              <a href="#facebook" aria-label="Facebook">
-                <FaFacebookF />
-              </a>
-              <a href="#instagram" aria-label="Instagram">
-                <FaInstagram />
-              </a>
-              <a
-                href={whatsappUrl}
-                aria-label="WhatsApp"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <FaWhatsapp />
-              </a>
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  aria-label={link.label}
+                  target={link.external ? "_blank" : undefined}
+                  rel={link.external ? "noreferrer" : undefined}
+                >
+                  {link.icon}
+                </a>
+              ))}
             </div>
           </div>
 
           <div className="footer-column">
-            <h4>Hospital</h4>
-            <a href="#about">About MDS</a>
-            <a href="#leadership">Leadership</a>
-            <a href="#journey">Patient journey</a>
-            <a href="#schemes">Coverage schemes</a>
+            <h4>{copy.footerHospital}</h4>
+            <a href="#about">{copy.footerLinks.about}</a>
+            <a href="#leadership">{copy.footerLinks.leadership}</a>
+            <a href="#ambulance">{copy.footerLinks.ambulance}</a>
+            <a href="#schemes">{copy.footerLinks.schemes}</a>
           </div>
 
           <div className="footer-column">
-            <h4>Clinical services</h4>
-            <a href="#services">General surgery</a>
-            <a href="#services">Specialist clinics</a>
-            <a href="#services">Diagnostics</a>
-            <a href="#services">Pharmacy</a>
+            <h4>{copy.footerServices}</h4>
+            <a href="#services">{copy.footerLinks.surgery}</a>
+            <a href="#services">{copy.footerLinks.clinics}</a>
+            <a href="#services">{copy.footerLinks.diagnostics}</a>
+            <a href="#services">{copy.footerLinks.pharmacy}</a>
           </div>
 
           <div className="footer-column">
-            <h4>Quick access</h4>
-            <Link to="/login">Staff portal</Link>
-            <a href="#contact">Appointments</a>
-            <a href={emergencyTel}>Emergency contact</a>
+            <h4>{copy.footerQuick}</h4>
+            <Link to="/login">{copy.footerLinks.portal}</Link>
+            <a href="#contact">{copy.footerLinks.appointments}</a>
+            <a href={emergencyTel}>{copy.footerLinks.emergency}</a>
             <a href={googleMapsUrl} target="_blank" rel="noreferrer">
-              Hospital directions
+              {copy.footerLinks.directions}
             </a>
           </div>
         </div>
 
         <div className="footer-bottom">
           <span>
-            © {new Date().getFullYear()} MDS Hospital. All rights reserved.
+            &copy; {new Date().getFullYear()} MDS Hospital. All rights reserved.
           </span>
 
           <span>NHIS / KACHMA / JICHMA Accredited</span>
@@ -1087,8 +1455,17 @@ export default function LandingPage() {
         aria-label="Contact MDS Hospital on WhatsApp"
       >
         <FaWhatsapp />
-        <span>Chat with us</span>
+        <span>{copy.floatingWhatsapp}</span>
       </a>
+
+      <button
+        type="button"
+        className={`back-to-top ${showBackToTop ? "visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label={copy.backToTop}
+      >
+        <FiArrowUp />
+      </button>
     </div>
   );
 }

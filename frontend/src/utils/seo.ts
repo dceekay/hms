@@ -7,6 +7,7 @@ type SeoInput = {
   canonicalPath: string;
   keywords?: string;
   image?: string;
+  imageAlt?: string;
   type?: "website" | "article";
   jsonLd?: Record<string, unknown>;
 };
@@ -63,6 +64,7 @@ export function applySeo({
   canonicalPath,
   keywords,
   image = defaultImage,
+  imageAlt = "MDS Hospital in Giginyu, Kano",
   type = "website",
   jsonLd,
 }: SeoInput) {
@@ -83,12 +85,19 @@ export function applySeo({
   upsertMeta("property", "og:title", title);
   upsertMeta("property", "og:description", description);
   upsertMeta("property", "og:image", image);
+  upsertMeta("property", "og:image:secure_url", image);
+  upsertMeta("property", "og:image:type", "image/jpeg");
+  upsertMeta("property", "og:image:width", "1200");
+  upsertMeta("property", "og:image:height", "630");
+  upsertMeta("property", "og:image:alt", imageAlt);
   upsertMeta("property", "og:site_name", "MDS Hospital");
+  upsertMeta("property", "og:locale", "en_NG");
 
   upsertMeta("name", "twitter:card", "summary_large_image");
   upsertMeta("name", "twitter:title", title);
   upsertMeta("name", "twitter:description", description);
   upsertMeta("name", "twitter:image", image);
+  upsertMeta("name", "twitter:image:alt", imageAlt);
 
   upsertJsonLd(jsonLd);
 }

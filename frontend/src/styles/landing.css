@@ -229,6 +229,28 @@ img {
   box-shadow: 0 12px 28px rgba(6, 53, 122, 0.18);
 }
 
+.language-toggle {
+  min-width: 46px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(6, 53, 122, 0.14);
+  border-radius: 999px;
+  background: white;
+  color: var(--mds-navy);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 24px rgba(3, 29, 73, 0.08);
+}
+
+.language-toggle:hover {
+  border-color: rgba(0, 138, 145, 0.35);
+  color: var(--mds-teal);
+}
+
 .landing-nav-cta:hover,
 .primary-btn:hover,
 .secondary-btn:hover,
@@ -1652,6 +1674,174 @@ img {
   backdrop-filter: blur(10px);
 }
 
+/* Ambulance and SEMSAS */
+
+.ambulance-section {
+  padding-bottom: 115px;
+}
+
+.ambulance-layout {
+  margin-top: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.75fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.ambulance-callout {
+  grid-column: 1 / -1;
+  min-height: 108px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid rgba(216, 59, 59, 0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(216, 59, 59, 0.1), rgba(0, 138, 145, 0.09)),
+    white;
+  box-shadow: 0 18px 45px rgba(3, 29, 73, 0.08);
+}
+
+.ambulance-callout > span {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  border-radius: 18px;
+  background: #d83b3b;
+  color: white;
+  font-size: 1.7rem;
+  place-items: center;
+}
+
+.ambulance-callout strong {
+  display: block;
+  color: var(--mds-deep-navy);
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.ambulance-callout small {
+  color: var(--mds-muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.ambulance-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ambulance-cards article {
+  min-height: 170px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 14px;
+  border: 1px solid var(--mds-border);
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 10px 26px rgba(3, 29, 73, 0.05);
+}
+
+.ambulance-cards article > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  border-radius: 15px;
+  background: var(--mds-deep-navy);
+  color: white;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 900;
+  place-items: center;
+}
+
+.ambulance-cards h3 {
+  margin: 0 0 8px;
+  color: var(--mds-deep-navy);
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.ambulance-cards p {
+  margin: 0;
+  color: var(--mds-muted);
+  font-size: 0.8rem;
+  line-height: 1.65;
+}
+
+.ambulance-panel {
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  border-radius: 24px;
+  background:
+    linear-gradient(145deg, rgba(3, 29, 73, 0.94), rgba(6, 53, 122, 0.94)),
+    var(--mds-deep-navy);
+  color: white;
+  box-shadow: var(--mds-shadow);
+}
+
+.ambulance-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ambulance-panel-header > svg {
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #76e3e4;
+}
+
+.ambulance-panel-header small {
+  display: block;
+  color: #76e3e4;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.ambulance-panel-header strong {
+  display: block;
+  color: white;
+  font-size: 1.15rem;
+  line-height: 1.22;
+}
+
+.ambulance-panel > p {
+  margin: 0;
+  color: #d6e7f6;
+  font-size: 0.88rem;
+  line-height: 1.75;
+}
+
+.ambulance-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.ambulance-actions .emergency-call-btn,
+.ambulance-actions .emergency-location-btn,
+.ambulance-actions .whatsapp-btn {
+  width: 100%;
+  min-height: 50px;
+}
+
+.ambulance-actions .whatsapp-btn {
+  margin: 0;
+  background: #109c68;
+  color: white;
+}
+
 /* Schemes */
 
 .schemes-section {
@@ -2402,6 +2592,40 @@ img {
   font-size: 1.2rem;
 }
 
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 88px;
+  z-index: 80;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+  background: var(--mds-deep-navy);
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  place-items: center;
+  box-shadow: 0 18px 38px rgba(3, 29, 73, 0.18);
+  transform: translateY(10px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  background: var(--mds-teal);
+}
+
 /* Tablet */
 
 @media (max-width: 1100px) {
@@ -2488,6 +2712,12 @@ img {
 
   .landing-nav > a {
     padding: 10px;
+  }
+
+  .language-toggle {
+    width: 100%;
+    min-height: 43px;
+    justify-content: center;
   }
 
   .landing-nav-cta {
@@ -2588,6 +2818,14 @@ img {
   }
 
   .journey-preview {
+    order: -1;
+  }
+
+  .ambulance-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ambulance-panel {
     order: -1;
   }
 
@@ -2953,6 +3191,70 @@ img {
     height: 42px;
   }
 
+  .ambulance-section {
+    padding-bottom: 78px;
+  }
+
+  .ambulance-layout {
+    margin-top: 28px;
+    gap: 14px;
+  }
+
+  .ambulance-callout {
+    min-height: 92px;
+    padding: 17px;
+    border-radius: 18px;
+  }
+
+  .ambulance-callout > span {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    font-size: 1.35rem;
+  }
+
+  .ambulance-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ambulance-cards article {
+    min-height: auto;
+    padding: 16px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    border-radius: 15px;
+  }
+
+  .ambulance-cards article > span {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .ambulance-cards h3 {
+    font-size: 0.92rem;
+  }
+
+  .ambulance-cards p {
+    font-size: 0.76rem;
+    line-height: 1.55;
+  }
+
+  .ambulance-panel {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .ambulance-panel-header {
+    align-items: flex-start;
+  }
+
+  .ambulance-panel-header > svg {
+    width: 42px;
+    height: 42px;
+    padding: 10px;
+  }
+
   .director-photo,
   .director-photo img {
     min-height: 500px;
@@ -3021,5 +3323,12 @@ img {
 
   .floating-whatsapp span {
     display: none;
+  }
+
+  .back-to-top {
+    right: 15px;
+    bottom: 78px;
+    width: 46px;
+    height: 46px;
   }
 }

@@ -17,14 +17,14 @@ import {
   FaUsers,
 } from "react-icons/fa";
 
-import hospitalExterior from "../assets/outdoorwithcars.png";
+import hospitalExterior from "../assets/optimized/hospital-exterior.jpg";
 import consultantPhoto from "../assets/cons.jpeg";
-import dentistPhoto from "../assets/dentist.png";
-import surgeryPhoto from "../assets/surrr.jpg";
-import laboratoryPhoto from "../assets/lab.png";
-import laboratoryRoomPhoto from "../assets/labrotory.png";
-import nursingPhoto from "../assets/nurse2.png";
-import pharmacyPhoto from "../assets/pharm.png";
+import dentistPhoto from "../assets/optimized/dentist.jpg";
+import surgeryPhoto from "../assets/optimized/surgery.jpg";
+import laboratoryPhoto from "../assets/optimized/lab.jpg";
+import laboratoryRoomPhoto from "../assets/optimized/laboratory-room.jpg";
+import nursingPhoto from "../assets/optimized/nursing.jpg";
+import pharmacyPhoto from "../assets/optimized/pharmacy.jpg";
 
 export type PublicService = {
   slug: string;

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { FaHospital, FaWhatsapp } from "react-icons/fa";
 import { FiArrowRight, FiMapPin, FiPhoneCall } from "react-icons/fi";
 
-import mdsLogo from "../assets/logo.png";
+import mdsLogo from "../assets/optimized/logo.png";
 import { publicServices } from "../data/publicServices";
 import { applySeo, seoSiteUrl } from "../utils/seo";
 
@@ -23,6 +23,7 @@ export default function ServicesIndexPage() {
       canonicalPath: "/services",
       keywords:
         "MDS Hospital services, hospital services Kano, medical services Giginyu, surgery Kano, lab Kano, pharmacy Kano",
+      imageAlt: "MDS Hospital entrance in Giginyu, Kano",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
@@ -44,7 +45,7 @@ export default function ServicesIndexPage() {
     <main className="landing-page service-page service-index-page">
       <header className="service-topbar">
         <Link to="/" className="landing-brand service-brand">
-          <img src={mdsLogo} alt="MDS Hospital logo" />
+          <img src={mdsLogo} alt="MDS Hospital logo" decoding="async" />
           <span>
             <strong>MDS Hospital</strong>
             <small>Giginyu, Kano</small>
@@ -97,7 +98,7 @@ export default function ServicesIndexPage() {
             viewport={{ once: true, amount: 0.14 }}
             transition={{ duration: 0.35, delay: Math.min(index * 0.025, 0.18) }}
           >
-            <img src={service.image} alt={service.imageAlt} loading="lazy" />
+            <img src={service.image} alt={service.imageAlt} loading="lazy" decoding="async" />
             <div>
               <span className="service-icon compact-service-icon">{service.icon}</span>
               <h2>{service.title}</h2>

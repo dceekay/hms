@@ -16,7 +16,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { compressImageToWebp } from "../../utils/imageCompression";
 import { getRoles } from "../../services/roleService";
 import {

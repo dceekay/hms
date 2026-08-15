@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiArchive, FiFileText, FiPrinter, FiRefreshCw, FiSave, FiSearch, FiTruck } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { createSemsasTransfer, fetchSemsasTransfers, fileSemsasMonth } from "../../services/semsasService";
 import { useAuthStore } from "../../store/authStore";
 import { SemsasTransfer, SemsasTransferFormValues, SemsasTransferType } from "../../types/semsas";

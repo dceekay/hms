@@ -5,6 +5,248 @@
   max-width: 100%;
 }
 
+.desk-office-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.desk-office-hero,
+.desk-office-summary-grid article,
+.desk-office-provider-grid article {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.1);
+}
+
+.desk-office-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #0891b2 18%, transparent), transparent),
+    var(--surface-strong);
+}
+
+.desk-office-hero h1 {
+  margin: 4px 0 8px;
+  color: var(--text-strong);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.desk-office-hero p:not(.eyebrow) {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.desk-office-hero-card {
+  width: 150px;
+  min-height: 126px;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.desk-office-hero-card svg {
+  color: var(--accent);
+  font-size: 1.5rem;
+}
+
+.desk-office-hero-card strong {
+  color: var(--text-strong);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.desk-office-hero-card span,
+.desk-office-summary-grid span,
+.desk-office-provider-grid span,
+.desk-office-claim-money small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.desk-office-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.desk-office-summary-grid article {
+  min-height: 112px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 18px;
+}
+
+.desk-office-summary-grid strong {
+  color: var(--text-strong);
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 1.05;
+}
+
+.desk-office-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.desk-office-provider-note,
+.desk-office-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.desk-office-provider-note span,
+.desk-office-balance span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.desk-office-provider-note strong,
+.desk-office-balance strong {
+  color: var(--text-strong);
+}
+
+.desk-office-filter {
+  flex-wrap: wrap;
+}
+
+.desk-office-filter select,
+.desk-office-filter input[type="date"] {
+  min-width: 150px;
+}
+
+.desk-office-claim-list,
+.desk-office-provider-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.desk-office-claim-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.desk-office-claim-card p {
+  margin: 8px 0 10px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.desk-office-claim-money {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.desk-office-claim-money span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+}
+
+.desk-office-claim-money strong {
+  color: var(--text-strong);
+  font-size: 0.98rem;
+  word-break: break-word;
+}
+
+.desk-office-provider-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.desk-office-provider-grid article {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+
+.desk-office-provider-grid strong {
+  color: var(--text-strong);
+  font-size: 1.25rem;
+}
+
+.desk-office-provider-grid small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 1120px) {
+  .desk-office-layout,
+  .desk-office-provider-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .desk-office-claim-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .desk-office-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .desk-office-hero-card {
+    width: 100%;
+    min-height: 94px;
+  }
+
+  .desk-office-summary-grid,
+  .desk-office-claim-money {
+    grid-template-columns: 1fr;
+  }
+
+  .desk-office-filter > *,
+  .desk-office-filter .patient-search-control,
+  .desk-office-filter select,
+  .desk-office-filter input[type="date"],
+  .desk-office-filter .icon-text-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .desk-office-claim-card .icon-text-btn {
+    width: 100%;
+  }
+}
+
 .dashboard-command {
   width: 100%;
   max-width: 100%;
@@ -2603,7 +2845,8 @@
   min-width: 0;
 }
 
-.pharmacy-tabs button {
+.pharmacy-tabs button,
+.pharmacy-tabs a {
   flex: 0 0 auto;
   min-height: 42px;
   display: inline-flex;
@@ -2616,12 +2859,19 @@
   color: var(--text);
   background: var(--surface-strong);
   cursor: pointer;
+  text-decoration: none;
 }
 
 .pharmacy-tabs button.active {
   color: #ffffff;
   border-color: transparent;
   background: linear-gradient(135deg, #0f766e, #2563eb);
+}
+
+.pharmacy-tabs a:hover,
+.pharmacy-tabs button:hover {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  color: var(--text-strong);
 }
 
 .pharmacy-sale-layout {
@@ -2898,6 +3148,13 @@
 
 .laboratory-hero {
   align-items: center;
+}
+
+.laboratory-template-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .laboratory-request-layout,
@@ -4604,7 +4861,8 @@
     display: none;
   }
 
-  .pharmacy-tabs button {
+  .pharmacy-tabs button,
+  .pharmacy-tabs a {
     flex: 0 0 auto;
     min-width: 108px;
     min-height: 44px;
@@ -4793,7 +5051,8 @@
     grid-template-columns: 1fr;
   }
 
-  .pharmacy-tabs button {
+  .pharmacy-tabs button,
+  .pharmacy-tabs a {
     min-width: 96px;
     font-size: 0.78rem;
   }
@@ -5747,6 +6006,12 @@
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
+:root:not([data-theme="light"]) .appointment-card {
+  border-color: rgba(125, 211, 252, 0.24);
+  background: linear-gradient(135deg, rgba(15, 31, 54, 0.94), rgba(8, 19, 35, 0.96));
+  box-shadow: 0 16px 36px rgba(2, 6, 23, 0.26);
+}
+
 .appointment-card-main,
 .appointment-card-meta {
   display: grid;
@@ -5763,6 +6028,14 @@
   overflow-wrap: anywhere;
 }
 
+:root:not([data-theme="light"]) .appointment-card-meta span {
+  color: #cbd5e1;
+}
+
+:root:not([data-theme="light"]) .appointment-card-meta svg {
+  color: #67e8f9;
+}
+
 .appointment-card strong {
   color: var(--text-strong);
   overflow: hidden;
@@ -5770,10 +6043,19 @@
   white-space: nowrap;
 }
 
+:root:not([data-theme="light"]) .appointment-card strong {
+  color: #ffffff;
+}
+
 .appointment-card small,
 .appointment-card p {
   margin: 0;
   color: var(--muted);
+}
+
+:root:not([data-theme="light"]) .appointment-card small,
+:root:not([data-theme="light"]) .appointment-card p {
+  color: #cbd5e1;
 }
 
 .appointment-card .doctor-status {
@@ -5804,23 +6086,27 @@
 }
 
 :root:not([data-theme="light"]) .appointment-card .doctor-status {
+  border-color: rgba(96, 165, 250, 0.45);
   color: #bfdbfe;
   background: rgba(37, 99, 235, 0.22);
 }
 
 :root:not([data-theme="light"]) .appointment-card .doctor-status.completed {
+  border-color: rgba(74, 222, 128, 0.45);
   color: #bbf7d0;
   background: rgba(22, 163, 74, 0.2);
 }
 
 :root:not([data-theme="light"]) .appointment-card .doctor-status.checked_in,
 :root:not([data-theme="light"]) .appointment-card .doctor-status.in_consultation {
+  border-color: rgba(251, 191, 36, 0.46);
   color: #fde68a;
   background: rgba(217, 119, 6, 0.22);
 }
 
 :root:not([data-theme="light"]) .appointment-card .doctor-status.cancelled,
 :root:not([data-theme="light"]) .appointment-card .doctor-status.no_show {
+  border-color: rgba(248, 113, 113, 0.48);
   color: #fecaca;
   background: rgba(220, 38, 38, 0.2);
 }

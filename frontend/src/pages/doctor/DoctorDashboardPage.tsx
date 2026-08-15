@@ -19,7 +19,7 @@ import {
 import { Link, useLocation, useParams } from "react-router-dom";
 import { FaFlask, FaNotesMedical, FaPills, FaUserMd } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import {
   completeClinicalEncounter,
   createAdmissionRequest,

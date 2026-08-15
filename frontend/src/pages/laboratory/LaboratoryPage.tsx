@@ -1,10 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FiCheckCircle,
   FiClipboard,
   FiEdit3,
   FiFileText,
-  FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiSave,
@@ -13,55 +13,29 @@ import {
 import { FaFlask } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
   completeLaboratoryRequest,
   createLaboratoryRequest,
-  createLaboratoryTemplate,
   fetchLaboratoryRequests,
   fetchLaboratoryTemplates,
   updateLaboratoryRequestStatus,
-  updateLaboratoryTemplate,
 } from "../../services/laboratoryService";
 import { useAuthStore } from "../../store/authStore";
 import type { Patient } from "../../types/patient";
 import type {
-  LaboratoryFieldType,
   LaboratoryRequest,
   LaboratoryRequestFormValues,
   LaboratoryRequestStatus,
   LaboratoryResultFormValues,
   LaboratoryTemplate,
-  LaboratoryTemplateField,
-  LaboratoryTemplateFormValues,
   LaboratorySummary,
 } from "../../types/laboratory";
 import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
 } from "../../utils/appEvents";
-
-const emptyTemplateField: LaboratoryTemplateField = {
-  key: "",
-  label: "",
-  type: "text",
-  unit: "",
-  referenceRange: "",
-  options: [],
-  required: false,
-};
-
-const emptyTemplateForm: LaboratoryTemplateFormValues = {
-  name: "",
-  code: "",
-  category: "",
-  specimen: "",
-  reportTitle: "",
-  notes: "",
-  isActive: true,
-  fields: [{ ...emptyTemplateField }],
-};
 
 const emptyRequestForm: LaboratoryRequestFormValues = {
   patientId: "",
@@ -116,19 +90,6 @@ function requestToResultForm(request: LaboratoryRequest): LaboratoryResultFormVa
   };
 }
 
-function formFromTemplate(template: LaboratoryTemplate): LaboratoryTemplateFormValues {
-  return {
-    name: template.name,
-    code: template.code ?? "",
-    category: template.category ?? "",
-    specimen: template.specimen ?? "",
-    reportTitle: template.reportTitle ?? "",
-    notes: template.notes ?? "",
-    isActive: template.isActive,
-    fields: template.fields.length > 0 ? template.fields : [{ ...emptyTemplateField }],
-  };
-}
-
 export default function LaboratoryPage() {
   const user = useAuthStore((state) => state.user);
   const permissions = user?.permissions ?? [];
@@ -147,15 +108,12 @@ export default function LaboratoryPage() {
   const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
   const [requests, setRequests] = useState<LaboratoryRequest[]>([]);
   const [summary, setSummary] = useState<LaboratorySummary>({});
-  const [activeTab, setActiveTab] = useState<"requests" | "results" | "templates">("requests");
+  const [activeTab, setActiveTab] = useState<"requests" | "results">("requests");
   const [requestSearch, setRequestSearch] = useState("");
-  const [templateSearch, setTemplateSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LaboratoryRequestStatus | "all">("all");
   const [patientPicker, setPatientPicker] = useState("");
   const [templatePicker, setTemplatePicker] = useState("");
   const [requestForm, setRequestForm] = useState<LaboratoryRequestFormValues>(emptyRequestForm);
-  const [templateForm, setTemplateForm] = useState<LaboratoryTemplateFormValues>(emptyTemplateForm);
-  const [editingTemplate, setEditingTemplate] = useState<LaboratoryTemplate | null>(null);
   const [activeResult, setActiveResult] = useState<LaboratoryRequest | null>(null);
   const [resultForm, setResultForm] = useState<LaboratoryResultFormValues>(emptyResultForm);
   const [selectedReport, setSelectedReport] = useState<LaboratoryRequest | null>(null);
@@ -183,7 +141,7 @@ export default function LaboratoryPage() {
 
     const [patientResult, templateResult, requestResult] = await Promise.all([
       fetchPatients({ status: "active" }),
-      fetchLaboratoryTemplates(templateSearch, false),
+      fetchLaboratoryTemplates("", false),
       fetchLaboratoryRequests({ search: requestSearch, status: statusFilter }),
     ]);
 
@@ -221,7 +179,7 @@ export default function LaboratoryPage() {
       window.removeEventListener("online", refresh);
       window.clearInterval(timer);
     };
-  }, [requestSearch, statusFilter, templateSearch]);
+  }, [requestSearch, statusFilter]);
 
   const handlePatientPick = (value: string) => {
     setPatientPicker(value);
@@ -253,64 +211,6 @@ export default function LaboratoryPage() {
     setRequestForm(emptyRequestForm);
     setPatientPicker("");
     setTemplatePicker("");
-    await loadData();
-  };
-
-  const handleTemplateFieldChange = (
-    index: number,
-    field: keyof LaboratoryTemplateField,
-    value: string | boolean | string[]
-  ) => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields: current.fields.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
-
-  const addTemplateField = () => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields: [...current.fields, { ...emptyTemplateField }],
-    }));
-  };
-
-  const removeTemplateField = (index: number) => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields: current.fields.length === 1
-        ? [{ ...emptyTemplateField }]
-        : current.fields.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  };
-
-  const startEditTemplate = (template: LaboratoryTemplate) => {
-    setEditingTemplate(template);
-    setTemplateForm(formFromTemplate(template));
-    setActiveTab("templates");
-  };
-
-  const handleTemplateSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    const result = editingTemplate
-      ? await updateLaboratoryTemplate(editingTemplate.id, templateForm)
-      : await createLaboratoryTemplate(templateForm);
-
-    setSaving(false);
-
-    if (!result.template) {
-      setError(result.error ?? "Unable to save laboratory template.");
-      return;
-    }
-
-    setSuccess(editingTemplate ? "Template updated." : "Template added.");
-    setEditingTemplate(null);
-    setTemplateForm(emptyTemplateForm);
     await loadData();
   };
 
@@ -412,7 +312,6 @@ export default function LaboratoryPage() {
             {[
               { id: "requests", label: "Requests", icon: <FiClipboard /> },
               { id: "results", label: "Results", icon: <FiCheckCircle /> },
-              ...(canManageTemplates ? [{ id: "templates", label: "Templates", icon: <FiFileText /> }] : []),
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -424,6 +323,12 @@ export default function LaboratoryPage() {
                 {tab.label}
               </button>
             ))}
+            {canManageTemplates && (
+              <Link to="/laboratory/templates">
+                <FiFileText />
+                Manage templates
+              </Link>
+            )}
             <button type="button" onClick={loadData}>
               <FiRefreshCw />
               Refresh
@@ -688,198 +593,6 @@ export default function LaboratoryPage() {
                       </span>
                       <b>{statusLabel(request.status)}</b>
                     </button>
-                  ))}
-                </div>
-              </section>
-            </section>
-          )}
-
-          {activeTab === "templates" && (
-            <section className="laboratory-template-layout">
-              {!canManageTemplates ? (
-                <div className="setup-form laboratory-template-form">
-                  <div className="panel-title">
-                    <div>
-                      <h2>Template Access</h2>
-                      <p>Only laboratory staff and super administrators can manage lab templates.</p>
-                    </div>
-                    <FiFileText />
-                  </div>
-                </div>
-              ) : (
-                <form className="setup-form laboratory-template-form" onSubmit={handleTemplateSubmit}>
-                  <div className="panel-title">
-                    <div>
-                      <h2>{editingTemplate ? "Edit Template" : "Add Template"}</h2>
-                      <p>Build the result form once, reuse it for each test.</p>
-                    </div>
-                    <FiFileText />
-                  </div>
-
-                  <div className="form-grid">
-                  <label>
-                    Test name
-                    <input value={templateForm.name} onChange={(event) => setTemplateForm((current) => ({ ...current, name: event.target.value }))} required />
-                  </label>
-                  <label>
-                    Code
-                    <input value={templateForm.code} onChange={(event) => setTemplateForm((current) => ({ ...current, code: event.target.value }))} placeholder="LAB-FBC" />
-                  </label>
-                  <label>
-                    Category
-                    <input value={templateForm.category} onChange={(event) => setTemplateForm((current) => ({ ...current, category: event.target.value }))} placeholder="Haematology" />
-                  </label>
-                  <label>
-                    Specimen
-                    <input value={templateForm.specimen} onChange={(event) => setTemplateForm((current) => ({ ...current, specimen: event.target.value }))} placeholder="Blood, urine, stool" />
-                  </label>
-                  <label>
-                    Report title
-                    <input value={templateForm.reportTitle} onChange={(event) => setTemplateForm((current) => ({ ...current, reportTitle: event.target.value }))} />
-                  </label>
-                </div>
-
-                  <div className="laboratory-fields-editor">
-                    <div className="setup-list-header">
-                      <strong>Result fields</strong>
-                      <button type="button" className="icon-text-btn" onClick={addTemplateField}>
-                        <FiPlus />
-                        Add field
-                      </button>
-                    </div>
-
-                    {templateForm.fields.map((field, index) => (
-                      <article className="laboratory-field-row" key={index}>
-                        <input
-                          value={field.label}
-                          onChange={(event) => handleTemplateFieldChange(index, "label", event.target.value)}
-                          placeholder="Field label"
-                          required
-                        />
-                        <input
-                          value={field.key}
-                          onChange={(event) => handleTemplateFieldChange(index, "key", event.target.value.replace(/\s+/g, "_").toLowerCase())}
-                          placeholder="field_key"
-                          required
-                        />
-                        <select
-                          value={field.type}
-                          onChange={(event) => handleTemplateFieldChange(index, "type", event.target.value as LaboratoryFieldType)}
-                        >
-                          <option value="text">Text</option>
-                          <option value="number">Number</option>
-                          <option value="select">Dropdown</option>
-                          <option value="textarea">Long text</option>
-                        </select>
-                        <input
-                          value={field.unit ?? ""}
-                          onChange={(event) => handleTemplateFieldChange(index, "unit", event.target.value)}
-                          placeholder="Unit"
-                        />
-                        <input
-                          value={field.referenceRange ?? ""}
-                          onChange={(event) => handleTemplateFieldChange(index, "referenceRange", event.target.value)}
-                          placeholder="Reference"
-                        />
-                        <input
-                          value={(field.options ?? []).join(", ")}
-                          onChange={(event) => handleTemplateFieldChange(index, "options", event.target.value.split(",").map((option) => option.trim()))}
-                          placeholder="Dropdown options"
-                        />
-                        <label className="setup-toggle laboratory-field-required">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(field.required)}
-                            onChange={(event) => handleTemplateFieldChange(index, "required", event.target.checked)}
-                          />
-                          Required
-                        </label>
-                        <button type="button" className="icon-text-btn" onClick={() => removeTemplateField(index)}>
-                          Remove
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-
-                  <label>
-                    Notes
-                    <textarea
-                      rows={3}
-                      value={templateForm.notes}
-                      onChange={(event) => setTemplateForm((current) => ({ ...current, notes: event.target.value }))}
-                      placeholder="Report note or processing instruction"
-                    />
-                  </label>
-
-                  <label className="setup-toggle">
-                    <input
-                      type="checkbox"
-                      checked={templateForm.isActive}
-                      onChange={(event) => setTemplateForm((current) => ({ ...current, isActive: event.target.checked }))}
-                    />
-                    Active template
-                  </label>
-
-                  <div className="setup-actions">
-                    {editingTemplate && (
-                      <button
-                        type="button"
-                        className="icon-text-btn"
-                        onClick={() => {
-                          setEditingTemplate(null);
-                          setTemplateForm(emptyTemplateForm);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    <button className="registration-submit" type="submit" disabled={saving || (!canCreate && !canUpdate)}>
-                      {saving ? "Saving..." : editingTemplate ? "Update Template" : "Add Template"}
-                      <FiSave />
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <section className="setup-list-panel">
-                <div className="setup-list-header">
-                  <div className="patient-search-control">
-                    <FiSearch />
-                    <input
-                      value={templateSearch}
-                      onChange={(event) => setTemplateSearch(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void loadData();
-                      }}
-                      placeholder="Search templates"
-                    />
-                  </div>
-                  <button type="button" className="icon-text-btn" onClick={loadData}>
-                    <FiRefreshCw />
-                    Search
-                  </button>
-                </div>
-
-                <div className="laboratory-template-list">
-                  {templates.map((template) => (
-                    <article className="laboratory-template-card" key={template.id}>
-                      <div>
-                        <div className="setup-provider-title">
-                          <strong>{template.name}</strong>
-                          <span className={`laboratory-status-badge ${template.isActive ? "completed" : "cancelled"}`}>
-                            {template.isActive ? "active" : "inactive"}
-                          </span>
-                        </div>
-                        <p>{template.category || "General"} | {template.specimen || "Specimen not set"}</p>
-                        <small>{template.fields.length} field(s) | {template.code || "No code"}</small>
-                      </div>
-                      {canManageTemplates && canUpdate && (
-                        <button type="button" className="icon-text-btn" onClick={() => startEditTemplate(template)}>
-                          <FiEdit3 />
-                          Edit
-                        </button>
-                      )}
-                    </article>
                   ))}
                 </div>
               </section>

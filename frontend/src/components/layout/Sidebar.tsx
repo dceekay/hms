@@ -28,7 +28,7 @@ import {
 } from "react-icons/fi";
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaNotesMedical, FaUserInjured, FaUserNurse } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { getUserDisplayName } from "../../utils/userDisplay";
 
 interface Props {
@@ -83,6 +83,7 @@ const menus: MenuItem[] = [
     icon: <FaHospitalUser />,
     children: [
       { title: "Laboratory", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
+      { title: "Lab Templates", path: "/laboratory/templates", icon: <FiFileText />, requiredPermissions: ["laboratory.read"] },
       { title: "Doctor Desk", path: "/doctor", icon: <FaHospitalUser />, requiredRoles: ["Doctor"] },
       { title: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
     ],
@@ -96,6 +97,7 @@ const menus: MenuItem[] = [
       { title: "SEMSAS", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
       { title: "Inventory", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
       { title: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
+      { title: "Desk Office", path: "/desk-office", icon: <FiFileText />, requiredPermissions: ["claims.read"] },
       { title: "Reports", path: "/reports", icon: <FiPieChart />, requiredPermissions: ["reports.read"] },
     ],
   },
@@ -145,6 +147,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
   const securityOnly = roles.includes("Security") && roles.length === 1;
   const doctorOnly = roles.includes("Doctor") && roles.length === 1;
   const nurseOnly = roles.includes("Nurse") && roles.length === 1;
+  const deskOfficeOnly = roles.includes("Desk Office") && roles.length === 1;
 
   const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
     const hasRequiredRole = !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
@@ -223,7 +226,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
                 path: "/settings",
               },
             ]
-          : nurseOnly
+        : nurseOnly
             ? [
                 { title: "Nurse Desk", icon: <FaUserNurse />, path: "/nurse" },
                 { title: "Patients", icon: <FaUserInjured />, path: "/nurse/patients" },
@@ -235,6 +238,11 @@ export function Sidebar({ collapsed, toggle }: Props) {
                 { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
                 { title: "Account", icon: <FiSettings />, path: "/settings" },
               ]
+            : deskOfficeOnly
+              ? [
+                  { title: "Desk Office", icon: <FiFileText />, path: "/desk-office" },
+                  { title: "Account", icon: <FiSettings />, path: "/settings" },
+                ]
         : menus;
 
       return sourceMenus
@@ -244,7 +252,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
         }))
         .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
     },
-    [permissions, roles, securityOnly, doctorOnly, nurseOnly]
+    [permissions, roles, securityOnly, doctorOnly, nurseOnly, deskOfficeOnly]
   );
 
   const initiallyOpen = useMemo(() => {

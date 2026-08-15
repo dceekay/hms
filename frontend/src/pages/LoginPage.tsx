@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { FaBed, FaHospital, FaUserMd } from "react-icons/fa";
-import mdsLogo from "../assets/logo.png";
-import mdsHospital from "../assets/mds.png";
+import mdsLogo from "../assets/optimized/logo.png";
+import mdsHospital from "../assets/optimized/hospital-gate.jpg";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import "../styles/login.css";
@@ -18,6 +18,7 @@ const testAccounts = [
   { role: "Laboratory", username: "labtech", password: "Lab@12345" },
   { role: "Pharmacist", username: "pharm", password: "Pharm@123" },
   { role: "Billing Officer", username: "billing", password: "Billing@123" },
+  { role: "Desk Office", username: "deskoffice", password: "Desk@123" },
   { role: "Security", username: "security", password: "Security@123" },
 ];
 
@@ -38,6 +39,10 @@ function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
 
   if (normalizedRoles.includes("security")) {
     return "/security/entry";
+  }
+
+  if (normalizedRoles.includes("desk office")) {
+    return "/desk-office";
   }
 
   return "/dashboard";
@@ -83,10 +88,18 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-visual" aria-label="MDS staff portal overview">
-        <img className="login-hospital-image" src={mdsHospital} alt="" aria-hidden="true" />
+        <img
+          className="login-hospital-image"
+          src={mdsHospital}
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
 
         <div className="login-brand">
-          <img className="login-logo" src={mdsLogo} alt="MDS Hospital" />
+          <img className="login-logo" src={mdsLogo} alt="MDS Hospital" decoding="async" />
           <div>
             <strong>MDS Hospital</strong>
             <small>Staff Portal</small>

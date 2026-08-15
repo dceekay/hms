@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa";
 import { FiArrowLeft, FiArrowRight, FiCheckCircle, FiMapPin, FiPhoneCall } from "react-icons/fi";
 
-import mdsLogo from "../assets/logo.png";
+import mdsLogo from "../assets/optimized/logo.png";
 import { findPublicService, getRelatedServices } from "../data/publicServices";
 import { applySeo, seoSiteUrl } from "../utils/seo";
 
@@ -33,6 +33,7 @@ export default function ServiceDetailPage() {
       description: service.description,
       canonicalPath: `/services/${service.slug}`,
       keywords: service.keywords,
+      imageAlt: service.imageAlt,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "MedicalBusiness",
@@ -82,7 +83,7 @@ export default function ServiceDetailPage() {
     <main className="landing-page service-page">
       <header className="service-topbar">
         <Link to="/" className="landing-brand service-brand">
-          <img src={mdsLogo} alt="MDS Hospital logo" />
+          <img src={mdsLogo} alt="MDS Hospital logo" decoding="async" />
           <span>
             <strong>MDS Hospital</strong>
             <small>Giginyu, Kano</small>
@@ -139,7 +140,13 @@ export default function ServiceDetailPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.46, delay: 0.1 }}
         >
-          <img src={service.image} alt={service.imageAlt} />
+          <img
+            src={service.image}
+            alt={service.imageAlt}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
           <figcaption>
             <FiMapPin />
             {hospitalAddress}

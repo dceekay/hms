@@ -24,7 +24,7 @@ import {
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 
 import "../../styles/patient-list.css";
 

@@ -17,6 +17,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
+window.requestAnimationFrame(() => {
+  const loader = document.getElementById("app-loader");
+  loader?.classList.add("app-loader-hidden");
+  window.setTimeout(() => loader?.remove(), 280);
+});
+
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch((error) => {

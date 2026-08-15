@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { FiCreditCard, FiRefreshCw, FiShield } from "react-icons/fi";
 import { Patient, PatientQr } from "../../types/patient";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { getAppUrl } from "../../utils/appUrl";
 
 function getInitials(patient: Patient) {

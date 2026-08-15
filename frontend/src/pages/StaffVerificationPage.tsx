@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FiCheckCircle, FiLoader, FiShield, FiSlash } from "react-icons/fi";
-import mdsLogo from "../assets/logo.png";
+import mdsLogo from "../assets/optimized/logo.png";
 import { StaffVerification, verifyStaffPublic } from "../services/userService";
 import "../styles/verification.css";
 

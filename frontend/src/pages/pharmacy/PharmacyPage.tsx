@@ -12,7 +12,7 @@ import {
 } from "react-icons/fi";
 import { FaCapsules } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
-import mdsLogo from "../../assets/logo.png";
+import mdsLogo from "../../assets/optimized/logo.png";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
   adjustMedicationStock,
