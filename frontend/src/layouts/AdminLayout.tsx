@@ -3,11 +3,13 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
 import MobileBottomNav from "../components/layout/MobileBottomNav";
+import RoleTour from "../components/tour/RoleTour";
 
 import "../styles/sidebar.css";
 import "../styles/topbar.css";
 import "../styles/dashboard.css";
 import "../styles/cards.css";
+import "../styles/tour.css";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -38,6 +40,7 @@ export default function AdminLayout({
       </main>
 
       <MobileBottomNav />
+      <RoleTour />
     </div>
   );
 }

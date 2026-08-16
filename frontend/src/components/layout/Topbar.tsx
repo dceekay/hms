@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import {
   FiClock,
+  FiHelpCircle,
   FiLogOut,
   FiMoon,
   FiSearch,
@@ -17,6 +18,7 @@ import NotificationCenter from "./NotificationCenter";
 import { endSession } from "../../services/sessionManager";
 import { getUserDisplayName } from "../../utils/userDisplay";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
+import { startRoleTour } from "../tour/RoleTour";
 
 export default function Topbar() {
   const navigate = useNavigate();
@@ -91,6 +93,17 @@ export default function Topbar() {
         </button>
 
         <NotificationCenter />
+
+        <button
+          className="icon-btn tour-trigger-btn"
+          type="button"
+          onClick={startRoleTour}
+          aria-label="Start guided tour"
+          title="Start guided tour"
+        >
+          <FiHelpCircle />
+          <span>Tour</span>
+        </button>
 
         <button
           className="icon-btn"

@@ -35,6 +35,8 @@ import clinicalRoutes from "../modules/clinical/routes";
 import appointmentRoutes from "../modules/appointments/routes";
 import wardRoutes from "../modules/wards/routes";
 import nursingRoutes from "../modules/nursing/routes";
+import deskOfficeRoutes from "../modules/deskOffice/routes";
+import onboardingRoutes from "../modules/onboarding/routes";
 
 const router = Router();
 
@@ -70,5 +72,7 @@ router.use("/clinical", clinicalRoutes);
 router.use("/appointments", appointmentRoutes);
 router.use("/wards", wardRoutes);
 router.use("/nursing", nursingRoutes);
+router.use("/desk-office", deskOfficeRoutes);
+router.use("/onboarding", onboardingRoutes);
 
 export default router;

@@ -57,6 +57,9 @@ const permissions = [
   "pharmacy.dispense",
   "billing.read",
   "billing.create",
+  "claims.read",
+  "claims.create",
+  "claims.update",
   "inventory.read",
   "inventory.create",
   "inventory.update",
@@ -80,6 +83,7 @@ const roles = [
   { name: "Laboratory", description: "Laboratory Staff" },
   { name: "Pharmacist", description: "Pharmacy Staff" },
   { name: "Billing Officer", description: "Billing and Accounts Staff" },
+  { name: "Desk Office", description: "Insurance filing and claims staff" },
   { name: "Security", description: "Entry Point Security Staff" },
 ] as const;
 
@@ -192,6 +196,12 @@ const hospitalServices = [
     description: "Entry point security desk",
     price: 0,
   },
+  {
+    name: "Desk Office",
+    code: "DESK",
+    description: "Insurance filing and claims desk",
+    price: 0,
+  },
 ] as const;
 
 type PermissionName = (typeof permissions)[number];
@@ -245,6 +255,9 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "nursing.orders.acknowledge",
     "billing.read",
     "billing.create",
+    "claims.read",
+    "claims.create",
+    "claims.update",
     "semsas.read",
     "semsas.create",
     "semsas.update",
@@ -323,6 +336,13 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "patients.read",
     "semsas.read",
     "semsas.file",
+  ],
+  "Desk Office": [
+    "claims.read",
+    "claims.create",
+    "claims.update",
+    "patients.read",
+    "reports.read",
   ],
   Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
 };
@@ -406,6 +426,16 @@ const testUsers = [
     lastName: "Ibrahim",
     phone: "+2348070001004",
     serviceCode: "CASH",
+  },
+  {
+    role: "Desk Office",
+    email: "deskoffice@ceekayx.com",
+    username: "deskoffice",
+    password: "Desk@123",
+    firstName: "Desk",
+    lastName: "Office",
+    phone: "+2348070001006",
+    serviceCode: "DESK",
   },
   {
     role: "Security",

@@ -26,6 +26,7 @@ import { useEffect, useState } from "react";
 
 import hospitalGate from "../assets/optimized/hospital-gate.jpg";
 import hospitalExterior from "../assets/optimized/hospital-exterior.jpg";
+import ambulancePhoto from "../assets/optimized/ambulance.jpg";
 import mdsLogo from "../assets/optimized/logo.png";
 import medicalDirector from "../assets/dr2.jpeg";
 import consultantPhoto from "../assets/cons.jpeg";
@@ -324,7 +325,7 @@ const landingCopy: Record<
     ambulanceEyebrow: "Ambulance and emergency transfer",
     ambulanceTitle: "Fast help when movement matters.",
     ambulanceText:
-      "MDS Hospital supports ambulance movement into our facility, transfer from MDS to another hospital, and documented SEMSAS ambulance service records for patients who need urgent movement.",
+      "MDS Hospital supports ambulance movement into our facility, transfer from MDS to another hospital, and urgent guidance for patients who need safe movement.",
     ambulanceActions: {
       call: "Call emergency line",
       whatsapp: "Chat on WhatsApp",
@@ -342,10 +343,6 @@ const landingCopy: Record<
       {
         title: "Receive ambulance referrals",
         text: "Incoming ambulance arrivals can be recorded clearly for reception, clinical teams, and accounts.",
-      },
-      {
-        title: "Monthly filing support",
-        text: "SEMSAS service notes, dates, destinations, and amounts can be kept ready for end-of-month filing.",
       },
     ],
     schemesEyebrow: "Coverage and service schemes",
@@ -459,7 +456,7 @@ const landingCopy: Record<
     ambulanceEyebrow: "Motar daukar marasa lafiya",
     ambulanceTitle: "Agaji cikin sauri idan motsa mara lafiya ya zama dole.",
     ambulanceText:
-      "MDS Hospital na taimakawa wajen daukar mara lafiya zuwa asibitinmu, tura shi wani asibiti idan akwai bukatar kwararre ko kayan aiki na musamman, da kuma rubuta bayanan SEMSAS da kyau.",
+      "MDS Hospital na taimakawa wajen daukar mara lafiya zuwa asibitinmu, ko tura shi wani asibiti idan akwai bukatar kwararre ko kayan aiki na musamman.",
     ambulanceActions: {
       call: "Kira layin gaggawa",
       whatsapp: "Tura sako WhatsApp",
@@ -477,10 +474,6 @@ const landingCopy: Record<
       {
         title: "Karbar wanda aka kawo da ambulance",
         text: "Bayanan wanda ambulance ta kawo za su shiga tsarin reception, likitoci da accounts cikin sauki.",
-      },
-      {
-        title: "Bayanan wata-wata",
-        text: "Bayanan tafiya, rana, inda aka kai mara lafiya da kudin aiki za su kasance a shirye domin filing.",
       },
     ],
     schemesEyebrow: "Inshora da tsarin biyan kudi",
@@ -668,7 +661,9 @@ export default function LandingPage() {
                 : "Switch landing page to English"
             }
           >
-            {language === "en" ? "HA" : "EN"}
+            <span className="language-toggle-pulse" />
+            <span>{language === "en" ? "Hausa" : "English"}</span>
+            <strong>{language === "en" ? "HA" : "EN"}</strong>
           </button>
 
           <Link
@@ -1017,6 +1012,14 @@ export default function LandingPage() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55 }}
             >
+              <img
+                src={ambulancePhoto}
+                alt="MDS Hospital ambulance for emergency patient transfer in Kano"
+                className="ambulance-photo"
+                loading="lazy"
+                decoding="async"
+              />
+
               <div className="ambulance-panel-header">
                 <FaHospital />
                 <div>

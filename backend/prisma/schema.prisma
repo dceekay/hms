@@ -301,6 +301,10 @@ model User {
 
   pushSubscriptions PushSubscription[]
 
+  tourProgress UserTourProgress[]
+
+  insuranceClaimsRecorded InsuranceClaim[] @relation("InsuranceClaimsRecorded")
+
   @@index([serviceAreaId])
   @@map("users")
 }
@@ -1324,6 +1328,41 @@ model NotificationRead {
   @@map("notification_reads")
 }
 
+model UserTourProgress {
+  id String @id @default(uuid()) @db.Char(36)
+
+  userId String @db.Char(36)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tourKey     String @db.VarChar(80)
+  tourVersion String @db.VarChar(30)
+  roleName    String @db.VarChar(80)
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  skippedAt   DateTime?
+  dismissedAt DateTime?
+  lastSeenAt  DateTime?
+
+  lastStepIndex  Int     @default(0)
+  totalSteps     Int     @default(0)
+  viewCount      Int     @default(0)
+  completedCount Int     @default(0)
+  skippedCount   Int     @default(0)
+  lastAction     String? @db.VarChar(40)
+  lastPath       String? @db.VarChar(255)
+  deviceType     String? @db.VarChar(30)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tourKey, tourVersion])
+  @@index([tourKey])
+  @@index([roleName])
+  @@index([dismissedAt])
+  @@map("user_tour_progress")
+}
+
 model PushSubscription {
   id String @id @default(uuid()) @db.Char(36)
 
@@ -1359,11 +1398,42 @@ model InsuranceProvider {
 
   patients Patient[]
 
+  claims InsuranceClaim[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@map("insurance_providers")
+}
+
+model InsuranceClaim {
+  id String @id @default(uuid()) @db.Char(36)
+
+  claimNumber String @unique @db.VarChar(60)
+
+  insuranceProviderId String            @db.Char(36)
+  insuranceProvider   InsuranceProvider @relation(fields: [insuranceProviderId], references: [id], onDelete: Cascade)
+
+  amountClaimed  Decimal @default(0) @db.Decimal(12, 2)
+  amountProvided Decimal @default(0) @db.Decimal(12, 2)
+
+  claimDate    DateTime
+  providedDate DateTime?
+
+  notes String? @db.VarChar(500)
+
+  recordedById String? @db.Char(36)
+  recordedBy   User?   @relation("InsuranceClaimsRecorded", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([insuranceProviderId])
+  @@index([claimDate])
+  @@index([recordedById])
+  @@map("insurance_claims")
 }
 
 model SemsasTransfer {
