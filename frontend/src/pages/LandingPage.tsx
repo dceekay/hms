@@ -977,13 +977,19 @@ export default function LandingPage() {
 
           <div className="ambulance-layout">
             <div className="ambulance-callout">
-              <span>
-                <FaAmbulance />
-              </span>
-              <div>
-                <strong>{emergencyDisplay}</strong>
-                <small>{copy.emergencyLine}</small>
+              <div className="ambulance-callout-info">
+                <span className="ambulance-callout-icon">
+                  <FaAmbulance />
+                </span>
+                <div>
+                  <small>{copy.emergencyLine} &bull; 24/7 Available</small>
+                  <strong>{emergencyDisplay}</strong>
+                </div>
               </div>
+              <a href={emergencyTel} className="ambulance-callout-btn">
+                <FaPhoneAlt />
+                <span>{copy.ambulanceActions.call}</span>
+              </a>
             </div>
 
             <div className="ambulance-cards">
@@ -993,11 +999,12 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.18 }}
-                  transition={{ duration: 0.4, delay: index * 0.06 }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  whileHover={{ y: -4 }}
                 >
-                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <span className="step-num">{String(index + 1).padStart(2, "0")}</span>
 
-                  <div>
+                  <div className="step-content">
                     <h3>{card.title}</h3>
                     <p>{card.text}</p>
                   </div>
@@ -1012,49 +1019,54 @@ export default function LandingPage() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.55 }}
             >
-              <img
-                src={ambulancePhoto}
-                alt="MDS Hospital ambulance for emergency patient transfer in Kano"
-                className="ambulance-photo"
-                loading="lazy"
-                decoding="async"
-              />
-
-              <div className="ambulance-panel-header">
-                <FaHospital />
-                <div>
-                  <small>SEMSAS</small>
-                  <strong>{copy.ambulanceTitle}</strong>
-                </div>
+              <div className="ambulance-photo-frame">
+                <img
+                  src={ambulancePhoto}
+                  alt="MDS Hospital ambulance for emergency patient transfer in Kano"
+                  className="ambulance-photo"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="ambulance-badge">SEMSAS Accredited</span>
               </div>
 
-              <p>{copy.ambulanceText}</p>
+              <div className="ambulance-panel-body">
+                <div className="ambulance-panel-header">
+                  <FaHospital />
+                  <div>
+                    <small>EMERGENCY & TRANSFER</small>
+                    <strong>{copy.ambulanceTitle}</strong>
+                  </div>
+                </div>
 
-              <div className="ambulance-actions">
-                <a href={emergencyTel} className="emergency-call-btn">
-                  <FaPhoneAlt />
-                  {copy.ambulanceActions.call}
-                </a>
+                <p>{copy.ambulanceText}</p>
 
-                <a
-                  href={whatsappUrl}
-                  className="whatsapp-btn"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaWhatsapp />
-                  {copy.ambulanceActions.whatsapp}
-                </a>
+                <div className="ambulance-actions">
+                  <a href={emergencyTel} className="emergency-call-btn">
+                    <FaPhoneAlt />
+                    {copy.ambulanceActions.call}
+                  </a>
 
-                <a
-                  href={googleMapsUrl}
-                  className="emergency-location-btn"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FiMapPin />
-                  {copy.ambulanceActions.directions}
-                </a>
+                  <a
+                    href={whatsappUrl}
+                    className="whatsapp-btn"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <FaWhatsapp />
+                    {copy.ambulanceActions.whatsapp}
+                  </a>
+
+                  <a
+                    href={googleMapsUrl}
+                    className="emergency-location-btn"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <FiMapPin />
+                    {copy.ambulanceActions.directions}
+                  </a>
+                </div>
               </div>
             </motion.div>
           </div>

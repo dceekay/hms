@@ -1746,125 +1746,234 @@ img {
 /* Ambulance and SEMSAS */
 
 .ambulance-section {
-  padding-bottom: 115px;
+  padding-bottom: 120px;
 }
 
 .ambulance-layout {
-  margin-top: 42px;
+  margin-top: 45px;
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.75fr);
-  gap: 28px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 32px;
   align-items: stretch;
 }
 
 .ambulance-callout {
   grid-column: 1 / -1;
-  min-height: 108px;
-  padding: 24px;
+  min-height: 92px;
+  padding: 20px 32px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  border: 1px solid rgba(216, 59, 59, 0.18);
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid rgba(216, 59, 59, 0.22);
   border-radius: 24px;
   background:
-    linear-gradient(135deg, rgba(216, 59, 59, 0.1), rgba(0, 138, 145, 0.09)),
-    white;
-  box-shadow: 0 18px 45px rgba(3, 29, 73, 0.08);
+    linear-gradient(135deg, rgba(216, 59, 59, 0.08) 0%, rgba(255, 255, 255, 0.98) 45%, rgba(0, 138, 145, 0.08) 100%);
+  box-shadow: 0 16px 40px rgba(3, 29, 73, 0.06);
+  flex-wrap: wrap;
 }
 
-.ambulance-callout > span {
-  width: 62px;
-  height: 62px;
+.ambulance-callout-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.ambulance-callout-icon {
+  width: 58px;
+  height: 58px;
   display: grid;
   border-radius: 18px;
   background: #d83b3b;
   color: white;
-  font-size: 1.7rem;
+  font-size: 1.65rem;
   place-items: center;
+  box-shadow: 0 8px 22px rgba(216, 59, 59, 0.28);
+  flex-shrink: 0;
+}
+
+.ambulance-callout small {
+  display: block;
+  color: #d83b3b;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
 }
 
 .ambulance-callout strong {
   display: block;
   color: var(--mds-deep-navy);
-  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.3rem);
   font-weight: 900;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
-.ambulance-callout small {
-  color: var(--mds-muted);
-  font-size: 0.85rem;
+.ambulance-callout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 16px;
+  background: #d83b3b;
+  color: white;
   font-weight: 800;
+  font-size: 0.96rem;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 20px rgba(216, 59, 59, 0.25);
+  margin-left: auto;
 }
+
+.ambulance-callout-btn:hover {
+  background: #b82828;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(216, 59, 59, 0.35);
+  color: white;
+}
+
+/* 3 Process Cards - Stacking Vertically & Full Width for Left Column */
 
 .ambulance-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  justify-content: space-between;
+  height: 100%;
 }
 
 .ambulance-cards article {
-  min-height: 170px;
-  padding: 20px;
+  flex: 1;
+  padding: 24px 28px;
   display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 14px;
-  border: 1px solid var(--mds-border);
-  border-radius: 18px;
-  background: white;
-  box-shadow: 0 10px 26px rgba(3, 29, 73, 0.05);
+  grid-template-columns: 56px 1fr;
+  gap: 20px;
+  align-items: flex-start;
+  border: 1px solid rgba(0, 138, 145, 0.14);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbfd 100%);
+  box-shadow: 0 8px 24px rgba(3, 29, 73, 0.04);
+  transition: all 0.28s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.ambulance-cards article > span {
-  width: 48px;
-  height: 48px;
+.ambulance-cards article::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #008a91, #76e3e4);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.ambulance-cards article:hover {
+  border-color: rgba(0, 138, 145, 0.35);
+  box-shadow: 0 16px 36px rgba(3, 29, 73, 0.09);
+  background: #ffffff;
+}
+
+.ambulance-cards article:hover::before {
+  opacity: 1;
+}
+
+.ambulance-cards .step-num {
+  width: 56px;
+  height: 56px;
   display: grid;
-  border-radius: 15px;
-  background: var(--mds-deep-navy);
-  color: white;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--mds-deep-navy), #06357a);
+  color: #76e3e4;
   font-family: "Manrope", sans-serif;
-  font-size: 0.8rem;
+  font-size: 1.15rem;
   font-weight: 900;
   place-items: center;
+  box-shadow: 0 6px 16px rgba(3, 29, 73, 0.15);
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
 }
 
-.ambulance-cards h3 {
+.ambulance-cards .step-content h3 {
   margin: 0 0 8px;
   color: var(--mds-deep-navy);
-  font-size: 0.98rem;
-  line-height: 1.25;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
-.ambulance-cards p {
+.ambulance-cards .step-content p {
   margin: 0;
-  color: var(--mds-muted);
-  font-size: 0.8rem;
+  color: #4b5563;
+  font-size: 0.96rem;
   line-height: 1.65;
+  font-weight: 500;
 }
+
+/* SEMSAS Right Panel */
 
 .ambulance-panel {
-  padding: 26px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 22px;
   border-radius: 24px;
   background:
-    linear-gradient(145deg, rgba(3, 29, 73, 0.94), rgba(6, 53, 122, 0.94)),
+    radial-gradient(circle at 100% 0%, rgba(118, 227, 228, 0.12), transparent 40%),
+    linear-gradient(145deg, rgba(3, 29, 73, 0.96), rgba(6, 53, 122, 0.96)),
     var(--mds-deep-navy);
   color: white;
-  box-shadow: var(--mds-shadow);
+  box-shadow: 0 20px 48px rgba(3, 29, 73, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ambulance-photo-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.25);
 }
 
 .ambulance-photo {
   width: 100%;
-  height: 240px;
+  height: 220px;
   display: block;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 18px;
   object-fit: cover;
-  object-position: center 58%;
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+  object-position: center 55%;
+  transition: transform 0.4s ease;
+}
+
+.ambulance-panel:hover .ambulance-photo {
+  transform: scale(1.02);
+}
+
+.ambulance-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(3, 29, 73, 0.88);
+  border: 1px solid rgba(118, 227, 228, 0.4);
+  color: #76e3e4;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.ambulance-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .ambulance-panel-header {
@@ -1877,43 +1986,49 @@ img {
   width: 48px;
   height: 48px;
   padding: 12px;
-  border-radius: 15px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.1);
   color: #76e3e4;
+  flex-shrink: 0;
 }
 
 .ambulance-panel-header small {
   display: block;
   color: #76e3e4;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 900;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .ambulance-panel-header strong {
   display: block;
   color: white;
-  font-size: 1.15rem;
-  line-height: 1.22;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
 }
 
-.ambulance-panel > p {
+.ambulance-panel-body > p {
   margin: 0;
   color: #d6e7f6;
-  font-size: 0.88rem;
-  line-height: 1.75;
+  font-size: 0.96rem;
+  line-height: 1.7;
 }
 
 .ambulance-actions {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .ambulance-actions .emergency-call-btn,
 .ambulance-actions .emergency-location-btn,
 .ambulance-actions .whatsapp-btn {
   width: 100%;
-  min-height: 50px;
+  min-height: 52px;
+  font-size: 0.96rem;
+  font-weight: 700;
 }
 
 .ambulance-actions .whatsapp-btn {
@@ -3281,43 +3396,53 @@ img {
   }
 
   .ambulance-callout {
-    min-height: 92px;
-    padding: 17px;
+    min-height: auto;
+    padding: 18px 20px;
     border-radius: 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 
-  .ambulance-callout > span {
-    width: 52px;
-    height: 52px;
-    border-radius: 15px;
-    font-size: 1.35rem;
+  .ambulance-callout-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 1.4rem;
+  }
+
+  .ambulance-callout-btn {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
   }
 
   .ambulance-cards {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 
   .ambulance-cards article {
     min-height: auto;
-    padding: 16px;
-    grid-template-columns: 42px minmax(0, 1fr);
-    border-radius: 15px;
+    padding: 18px 20px;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 16px;
+    border-radius: 16px;
   }
 
-  .ambulance-cards article > span {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
+  .ambulance-cards .step-num {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    font-size: 1rem;
   }
 
-  .ambulance-cards h3 {
+  .ambulance-cards .step-content h3 {
+    font-size: 1.08rem;
+  }
+
+  .ambulance-cards .step-content p {
     font-size: 0.92rem;
-  }
-
-  .ambulance-cards p {
-    font-size: 0.76rem;
-    line-height: 1.55;
+    line-height: 1.6;
   }
 
   .ambulance-panel {
