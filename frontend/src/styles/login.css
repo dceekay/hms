@@ -16,35 +16,76 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 32px;
-  padding: 40px;
+  gap: 20px;
+  padding: 36px 40px;
   overflow: hidden;
-}
-
-.login-visual::before {
-  content: "";
-  position: absolute;
-  inset: 0;
   background:
-    linear-gradient(90deg, rgba(2, 8, 23, 0.42), rgba(2, 8, 23, 0.88)),
-    linear-gradient(180deg, rgba(2, 8, 23, 0.14), rgba(2, 8, 23, 0.76));
-  pointer-events: none;
+    radial-gradient(circle at 18% 16%, rgba(14, 165, 233, 0.22), transparent 45%),
+    linear-gradient(135deg, rgba(6, 16, 29, 0.95), rgba(11, 24, 48, 0.9));
 }
 
 .login-brand,
+.login-showcase-card,
 .login-copy,
 .login-feature-grid {
   position: relative;
   z-index: 1;
 }
 
+.login-showcase-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 240px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  background: #020817;
+}
+
 .login-hospital-image {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center;
+  transition: transform 0.4s ease;
+}
+
+.login-showcase-card:hover .login-hospital-image {
+  transform: scale(1.03);
+}
+
+.showcase-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(2, 8, 23, 0.85);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  backdrop-filter: blur(10px);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.badge-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
 }
 
 .login-brand {
@@ -64,11 +105,12 @@
   width: 60px;
   height: 60px;
   flex: 0 0 60px;
-  border: 2px solid rgba(255, 255, 255, 0.74);
-  border-radius: 50%;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 14px;
   background: #ffffff;
-  object-fit: cover;
-  box-shadow: 0 18px 38px rgba(2, 8, 23, 0.4);
+  object-fit: contain;
+  padding: 5px;
+  box-shadow: 0 12px 30px rgba(2, 8, 23, 0.45);
 }
 
 .login-brand strong,
@@ -78,67 +120,110 @@
 
 .login-brand strong {
   color: #ffffff;
-  font-size: 1.06rem;
+  font-size: 1.1rem;
+  font-weight: 800;
 }
 
 .login-brand small {
-  margin-top: 4px;
+  margin-top: 2px;
   color: #9fb3c8;
+  font-size: 0.82rem;
 }
 
 .login-copy {
   max-width: 760px;
-  margin-top: auto;
-  padding: 28px;
+  padding: 20px 24px;
   border: 1px solid rgba(125, 211, 252, 0.16);
-  border-radius: 8px;
-  background: rgba(2, 8, 23, 0.42);
-  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(2, 8, 23, 0.78), rgba(15, 23, 42, 0.6));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(2, 8, 23, 0.35);
 }
 
 .login-copy h1 {
   max-width: 760px;
-  margin: 8px 0 16px;
+  margin: 6px 0 10px;
   color: #ffffff;
-  font-size: clamp(2.4rem, 4.8vw, 5.1rem);
-  line-height: 1;
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  line-height: 1.15;
 }
 
 .login-copy p:not(.eyebrow) {
   max-width: 680px;
   margin: 0;
   color: #cbd5e1;
-  font-size: 1.04rem;
-  line-height: 1.7;
+  font-size: 0.94rem;
+  line-height: 1.6;
 }
 
 .login-feature-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
-.login-feature-grid div {
-  min-height: 92px;
+.login-feature-card {
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 3px;
+  padding: 12px 8px;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 12px;
+  background: rgba(8, 19, 35, 0.82);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.login-feature-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(14, 165, 233, 0.12);
+}
+
+.feature-icon-wrap {
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  gap: 8px;
-  padding: 14px;
-  border: 1px solid rgba(125, 211, 252, 0.16);
-  border-radius: 8px;
-  background: rgba(8, 19, 35, 0.72);
-  text-align: center;
+  border-radius: 10px;
+  font-size: 1.15rem;
+  margin-bottom: 2px;
 }
 
-.login-feature-grid svg {
-  color: #67e8f9;
-  font-size: 1.35rem;
+.feature-icon-wrap.emergency {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
 }
 
-.login-feature-grid span {
+.feature-icon-wrap.clinical {
+  background: rgba(14, 165, 233, 0.18);
+  color: #38bdf8;
+}
+
+.feature-icon-wrap.lab {
+  background: rgba(139, 92, 246, 0.18);
+  color: #a78bfa;
+}
+
+.feature-icon-wrap.pharmacy {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.login-feature-card strong {
   color: #f8fafc;
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.login-feature-card small {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  line-height: 1.25;
 }
 
 .login-panel-wrap {
@@ -312,7 +397,7 @@
 
 .test-login-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
 }
 
@@ -355,6 +440,12 @@
   white-space: nowrap;
 }
 
+.test-login-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.66;
+  transform: none;
+}
+
 @media (max-width: 1080px) {
   .login-page {
     grid-template-columns: 1fr;
@@ -392,9 +483,12 @@
   }
 
   .login-logo {
-    width: 50px;
-    height: 50px;
-    flex-basis: 50px;
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 12px;
+    padding: 5px;
+    object-fit: contain;
   }
 
   .login-copy h1 {
@@ -447,7 +541,7 @@
   }
 
   .test-login-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 

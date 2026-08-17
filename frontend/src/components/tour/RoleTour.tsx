@@ -1,593 +1,1037 @@
-import { type CSSProperties, type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiArrowRight,
+  FiAward,
+  FiCheck,
   FiCheckCircle,
   FiChevronLeft,
   FiChevronRight,
+  FiCompass,
+  FiGrid,
   FiHelpCircle,
-  FiMap,
+  FiList,
+  FiMapPin,
+  FiShield,
+  FiUserCheck,
   FiX,
+  FiZap,
 } from "react-icons/fi";
-import { FaBed, FaCapsules, FaFlask, FaUserInjured, FaUserNurse } from "react-icons/fa";
+import {
+  FaBed,
+  FaCapsules,
+  FaClipboardList,
+  FaFileInvoiceDollar,
+  FaFlask,
+  FaHeartbeat,
+  FaHospitalUser,
+  FaKey,
+  FaPrescriptionBottleAlt,
+  FaStethoscope,
+  FaUserInjured,
+  FaUserNurse,
+  FaUserShield,
+} from "react-icons/fa";
 
 import { useAuthStore } from "../../store/authStore";
 import { getTourStatus, recordTourEvent, type TourAction } from "../../services/onboardingService";
 
-type TourStep = {
+export type OnboardingStep = {
+  id: string;
   title: string;
-  body: string;
-  detail: string;
-  menu?: string;
-  desktopTip?: string;
-  mobileTip?: string;
-  testTip?: string;
-  actionLabel?: string;
+  category: string;
+  icon: ReactElement;
+  summary: string;
+  highlights: string[];
   path?: string;
+  actionLabel?: string;
 };
 
-type TourProfile = {
+export type RoleOnboardingProfile = {
   id: string;
   roleLabel: string;
+  tagline: string;
   accent: string;
   icon: ReactElement;
-  intro: string;
-  steps: TourStep[];
+  description: string;
+  steps: OnboardingStep[];
 };
 
 const TOUR_EVENT = "mds:start-role-tour";
-const TOUR_VERSION = "2026.08";
+const TOUR_VERSION = "2026.08-v2";
 
-function hasRole(roles: string[], role: string) {
-  return roles.some((item) => item.toLowerCase() === role.toLowerCase());
+function hasRole(roles: string[], target: string) {
+  return roles.some((role) => role.toLowerCase() === target.toLowerCase());
 }
 
-function getDeviceType(): "desktop" | "mobile" | "tablet" | "unknown" {
-  if (typeof window === "undefined") return "unknown";
-  const width = window.innerWidth;
-  if (width <= 680) return "mobile";
-  if (width <= 1024) return "tablet";
-  return "desktop";
-}
-
-function defaultDesktopTip(step: TourStep) {
-  return step.path
-    ? "On PC, use the left sidebar to open this menu. If the sidebar is collapsed, use the icons or expand it."
-    : "On PC, use the left sidebar and top bar to move between the pages available to your role.";
-}
-
-function defaultMobileTip(step: TourStep) {
-  return step.path
-    ? "On mobile, use the bottom app menu. If the page has tabs or cards, scroll gently and tap the action you need."
-    : "On mobile, use the bottom navigation first, then the page buttons and tabs for the detailed actions.";
-}
-
-function defaultTestTip() {
-  return "During this test version, try the buttons with sample records and tell admin if a label or workflow is confusing.";
-}
-
-function menuNameForPath(path?: string) {
-  if (!path) return "Role menu";
-  if (path.startsWith("/doctor")) return "Doctor menu";
-  if (path.startsWith("/nurse")) return "Nurse menu";
-  if (path.startsWith("/security")) return "Security menu";
-  if (path.startsWith("/laboratory")) return "Clinical > Laboratory";
-  if (path.startsWith("/pharmacy")) return "Clinical > Pharmacy";
-  if (path.startsWith("/admin")) return "Administration";
-  if (path.startsWith("/setup")) return "Setup";
-  if (path.startsWith("/desk-office")) return "Operations > Desk Office";
-  if (path.startsWith("/inventory")) return "Operations > Inventory";
-  if (path.startsWith("/billing")) return "Operations > Billing";
-  if (path.startsWith("/appointments")) return "Appointments";
-  if (path.startsWith("/patients") || path.startsWith("/register-patient")) return "Patients";
-  if (path.startsWith("/dashboard")) return "Dashboard";
-  return "Role menu";
-}
-
-const profileMap: TourProfile[] = [
-  {
-    id: "super-admin",
-    roleLabel: "Super Admin",
-    accent: "#2563eb",
-    icon: <FiMap />,
-    intro: "This tour shows the command areas you will use to control the hospital system.",
-    steps: [
-      {
-        title: "Start from the dashboard",
-        body: "Use the dashboard to see patients, staff, claims, services, and operational activity at a glance.",
-        detail: "Numbers update from the live system so you can quickly notice what needs attention.",
-        path: "/dashboard",
-        actionLabel: "Open dashboard",
-      },
-      {
-        title: "Manage users and access",
-        body: "Create staff accounts, assign roles, generate passwords, and print employee ID cards from Administration.",
-        detail: "Give each user only the access they need for their department.",
-        path: "/admin/users",
-        actionLabel: "Open users",
-      },
-      {
-        title: "Set up hospital services",
-        body: "Add service areas, insurance providers, wards, beds, and other settings used by clinical and billing teams.",
-        detail: "Clean setup makes registration, billing, claims, and reporting easier later.",
-        path: "/setup/services",
-        actionLabel: "Open setup",
-      },
-      {
-        title: "Review departments",
-        body: "Check pharmacy, laboratory, inventory, SEMSAS, desk office claims, and security activity from their menus.",
-        detail: "Each module keeps its own records while still feeding the main admin view.",
-      },
-    ],
-  },
+const roleProfiles: RoleOnboardingProfile[] = [
   {
     id: "doctor",
     roleLabel: "Doctor",
+    tagline: "Outpatient Queue, Clinical Encounters & Inpatient Care",
     accent: "#0ea5e9",
-    icon: <FaUserInjured />,
-    intro: "This tour helps doctors move from appointment to clinical action without searching around.",
+    icon: <FaStethoscope />,
+    description:
+      "Welcome to your clinical consultation suite. Manage appointments, examine patients, request diagnostic tests, prescribe medications, and initiate admissions.",
     steps: [
       {
-        title: "Begin with your appointment queue",
-        body: "Appointments show the patients assigned to you by reception.",
-        detail: "Select a patient to open their clinical workspace and start reviewing their details.",
+        id: "doc-queue",
+        title: "Appointment Queue & Triage",
+        category: "Consultation",
+        icon: <FaClipboardList />,
+        summary:
+          "View patient appointments assigned to you in real time. Track triage priority, waiting durations, and check in patients ready for consultation.",
+        highlights: [
+          "Live outpatient waiting list with waiting duration",
+          "One-click check in and start consultation",
+          "Direct access to patient medical records",
+        ],
         path: "/doctor/appointments",
-        actionLabel: "Open queue",
+        actionLabel: "Open Doctor Queue",
       },
       {
-        title: "Review patient history",
-        body: "Check the patient profile, previous notes, lab requests, test results, prescriptions, and ward history.",
-        detail: "This keeps decisions connected across departments.",
+        id: "doc-patients",
+        title: "Patient Medical History",
+        category: "Patient Records",
+        icon: <FaUserInjured />,
+        summary:
+          "Access comprehensive patient histories including past consultation notes, vital sign charts, past laboratory reports, and previous medications.",
+        highlights: [
+          "Complete longitudinal clinical encounter history",
+          "Allergies, blood group, genotype, and emergency contacts",
+          "Printable medical summary reports",
+        ],
         path: "/doctor/patients",
-        actionLabel: "Open patients",
+        actionLabel: "View Patient List",
       },
       {
-        title: "Write clinical notes",
-        body: "Record complaints, examination findings, diagnosis, plan, and follow-up remarks.",
-        detail: "Saved notes remain available for later viewing and can be printed when needed.",
+        id: "doc-notes",
+        title: "Clinical Notes & Diagnosis",
+        category: "Documentation",
+        icon: <FaStethoscope />,
+        summary:
+          "Document presenting complaints, physical examination findings, provisional/confirmed diagnoses, and comprehensive treatment plans.",
+        highlights: [
+          "Structured clinical encounter documentation",
+          "Working and definitive diagnosis logging",
+          "Encrypted, audit-trailed clinical notes",
+        ],
         path: "/doctor/notes",
-        actionLabel: "Open notes",
+        actionLabel: "Write Clinical Notes",
       },
       {
-        title: "Request next steps",
-        body: "Request lab tests, prescribe medicine, request admission or ward review, and prepare referrals.",
-        detail: "The relevant department can act on your request from their own workspace.",
+        id: "doc-lab-rx",
+        title: "Lab Requests & E-Prescriptions",
+        category: "Orders",
+        icon: <FaPrescriptionBottleAlt />,
+        summary:
+          "Order diagnostic investigations with specialized lab templates and prescribe formulary medications routed instantly to the pharmacy.",
+        highlights: [
+          "Direct laboratory test requisitions with live status updates",
+          "Electronic prescription entry with dose, route, and frequency",
+          "Automated routing to lab workbench and pharmacy POS",
+        ],
+        path: "/doctor",
+        actionLabel: "Clinical Workspace",
       },
       {
-        title: "Use reminders",
-        body: "Add reminders for follow-ups, reviews, and tasks that should not be missed.",
-        detail: "Important reminders can work with the notification system as we expand it.",
-        path: "/doctor/reminders",
-        actionLabel: "Open reminders",
+        id: "doc-admissions",
+        title: "Inpatient Admissions & Referrals",
+        category: "Hospital Care",
+        icon: <FaBed />,
+        summary:
+          "Request immediate ward admissions with priority indicators or prepare external hospital transfer referrals with clinical summaries.",
+        highlights: [
+          "Ward & Bed allocation requests with clinical diagnosis",
+          "External referral letters with clinical handover summaries",
+          "Real-time bed availability tracking",
+        ],
+        path: "/doctor",
+        actionLabel: "Manage Care Plans",
       },
     ],
   },
   {
     id: "nurse",
     roleLabel: "Nurse",
+    tagline: "Ward Inpatients, Vitals Monitoring & Medication Administration",
     accent: "#14b8a6",
     icon: <FaUserNurse />,
-    intro: "This tour explains the nursing workflow for ward patients, medication rounds, vitals, and notes.",
+    description:
+      "Your digital nursing station for monitoring inpatients, recording vital signs, administering scheduled medications, and documenting shift handovers.",
     steps: [
       {
-        title: "Check your nursing desk",
-        body: "The nurse dashboard summarizes assigned patients, ward activity, medication tasks, and reminders.",
-        detail: "It is designed to work well on phones and tablets during rounds.",
+        id: "nurse-station",
+        title: "Nursing Station & Ward Overview",
+        category: "Ward Care",
+        icon: <FaHospitalUser />,
+        summary:
+          "Get a real-time overview of admitted patients, active ward occupancy, pending medication rounds, and doctor directives.",
+        highlights: [
+          "Inpatient bed list with admitted patient details",
+          "Quick alerts for overdue medications and vitals checks",
+          "Optimized for tablets and mobile devices during ward rounds",
+        ],
         path: "/nurse",
-        actionLabel: "Open nurse desk",
+        actionLabel: "Open Nursing Station",
       },
       {
-        title: "View patients and ID cards",
-        body: "Open the patient list to identify patients, view ID cards, and confirm ward status.",
-        detail: "If a patient is admitted, the ward or bed information should be visible from the patient context.",
-        path: "/nurse/patients",
-        actionLabel: "Open patients",
-      },
-      {
-        title: "Handle medication rounds",
-        body: "Use medication rounds to know what medicine is due, dose, route, frequency, and timing.",
-        detail: "After administration, record your initials so the digital chart replaces the paper signing process.",
-        path: "/nurse/medications",
-        actionLabel: "Open meds",
-      },
-      {
-        title: "Record vitals and notes",
-        body: "Capture vitals, nursing notes, and updates that doctors and other nurses need to see.",
-        detail: "Clear notes reduce handover mistakes.",
+        id: "nurse-vitals",
+        title: "Vital Signs Charting",
+        category: "Patient Care",
+        icon: <FaHeartbeat />,
+        summary:
+          "Record temperature, blood pressure, pulse rate, respiration rate, SpO2 oxygen saturation, and pain score with instant clinical alerts.",
+        highlights: [
+          "Fast numerical entry for standard clinical vitals",
+          "Instant abnormal range alerts for critical vitals",
+          "Historical vital sign trends visible to attending doctors",
+        ],
         path: "/nurse/vitals",
-        actionLabel: "Open vitals",
+        actionLabel: "Record Vitals",
+      },
+      {
+        id: "nurse-mar",
+        title: "Medication Administration (MAR)",
+        category: "Medication",
+        icon: <FaCapsules />,
+        summary:
+          "View digital medication administration schedules. Administer prescribed doses on time and sign off with your nurse initials.",
+        highlights: [
+          "Real-time due, upcoming, and overdue medication lists",
+          "Status tracking for Given, Held, Missed, and Refused doses",
+          "Replaces paper Kardex signing with secure digital records",
+        ],
+        path: "/nurse/medications",
+        actionLabel: "Open Medication Rounds",
+      },
+      {
+        id: "nurse-notes",
+        title: "Shift Notes & Handovers",
+        category: "Documentation",
+        icon: <FaClipboardList />,
+        summary:
+          "Document shift assessments, patient responses to treatment, fluid balance notes, and critical handover instructions.",
+        highlights: [
+          "Shift categorized documentation (Morning, Afternoon, Night)",
+          "Seamless handovers between incoming and outgoing nursing shifts",
+          "Directly accessible in patient clinical timelines",
+        ],
+        path: "/nurse/notes",
+        actionLabel: "Nursing Notes",
       },
     ],
   },
   {
-    id: "reception",
-    roleLabel: "Reception and Cashier",
-    accent: "#f59e0b",
-    icon: <FiCheckCircle />,
-    intro: "This tour covers front desk actions for patient flow, appointments, and billing support.",
+    id: "pharmacy",
+    roleLabel: "Pharmacist",
+    tagline: "Formulary Inventory, POS Dispensing & Stock Auditing",
+    accent: "#10b981",
+    icon: <FaCapsules />,
+    description:
+      "Manage hospital medications, fulfill electronic doctor prescriptions, conduct over-the-counter sales, and track batch expiries and stock levels.",
     steps: [
       {
-        title: "Register patients correctly",
-        body: "Use Register Patient for new patients, investigation patients, old patients, and reactivated patients.",
-        detail: "Reception handles hospital registration while lab can handle investigation-only patients where allowed.",
-        path: "/register-patient",
-        actionLabel: "Register patient",
+        id: "pharm-dispense",
+        title: "Prescription Dispensing",
+        category: "Dispensing",
+        icon: <FaPrescriptionBottleAlt />,
+        summary:
+          "Review electronic prescriptions transmitted from consultation rooms, verify drug interactions and dosage instructions, and dispense.",
+        highlights: [
+          "Real-time queue of pending electronic doctor prescriptions",
+          "Automatic stock level decrement upon dispensing",
+          "Integrated patient billing and payment status validation",
+        ],
+        path: "/pharmacy",
+        actionLabel: "Open Pharmacy Hub",
       },
       {
-        title: "Find patients fast",
-        body: "Search by MRN, name, phone, email, or policy number from the patient list.",
-        detail: "Use the ID card button when a patient needs a printable card or QR verification.",
-        path: "/patients",
-        actionLabel: "Open patients",
+        id: "pharm-pos",
+        title: "Point-of-Sale & Direct Sales",
+        category: "Billing",
+        icon: <FaFileInvoiceDollar />,
+        summary:
+          "Sell medications directly to walk-in patients, manage shopping carts, apply discounts where applicable, and generate receipts.",
+        highlights: [
+          "Fast medication search by generic name, brand, or category",
+          "Itemized invoice calculation with payment logging",
+          "Printable patient receipts with official hospital header",
+        ],
+        path: "/pharmacy",
+        actionLabel: "Direct Medicine Sale",
       },
       {
-        title: "Schedule appointments",
-        body: "Book and manage appointments, then assign patients to doctors.",
-        detail: "Doctors see assigned patients from their own dashboard.",
-        path: "/appointments",
-        actionLabel: "Open appointments",
-      },
-      {
-        title: "Support billing flow",
-        body: "Use billing to select services and create invoices when payment is needed.",
-        detail: "Insurance and service setup help make billing easier and more consistent.",
-        path: "/billing",
-        actionLabel: "Open billing",
+        id: "pharm-inventory",
+        title: "Formulary & Stock Inventory",
+        category: "Inventory",
+        icon: <FaClipboardList />,
+        summary:
+          "Keep track of stock balances, reorder alert thresholds, supplier costs, selling prices, batch numbers, and expiry dates.",
+        highlights: [
+          "Low-stock alerts when inventory drops below reorder point",
+          "Batch number and expiration date tracking",
+          "Stock-in, adjustment, and damage logs with audit notes",
+        ],
+        path: "/inventory",
+        actionLabel: "Check Stock Levels",
       },
     ],
   },
   {
     id: "laboratory",
     roleLabel: "Laboratory",
-    accent: "#7c3aed",
+    tagline: "Test Requisitions, Sample Management & Result Certification",
+    accent: "#8b5cf6",
     icon: <FaFlask />,
-    intro: "This tour explains lab requests, sample work, templates, and result reporting.",
+    description:
+      "Receive diagnostic requests from doctors, log specimen collections, input structured test results using templates, and certify lab reports.",
     steps: [
       {
-        title: "Review lab requests",
-        body: "Open Laboratory to see requested tests and patient information.",
-        detail: "Requests can come from doctors and should be processed with clear status updates.",
+        id: "lab-queue",
+        title: "Investigation Worklist",
+        category: "Requests",
+        icon: <FaFlask />,
+        summary:
+          "Receive incoming laboratory test requests from outpatient doctors, wards, and reception investigation patients.",
+        highlights: [
+          "Live test request queue with patient MRN and clinical notes",
+          "Priority flags for emergency and routine investigations",
+          "Status tracking from sample collection to completion",
+        ],
         path: "/laboratory",
-        actionLabel: "Open lab",
+        actionLabel: "Open Lab Workbench",
       },
       {
-        title: "Use result templates",
-        body: "Select the correct template for the test and fill only the result fields.",
-        detail: "Templates keep reports professional and consistent.",
-        path: "/laboratory",
-        actionLabel: "Open results",
-      },
-      {
-        title: "Manage templates separately",
-        body: "Lab administrators can open Lab Templates to create or update templates.",
-        detail: "Doctors can request tests but should not edit lab templates.",
+        id: "lab-templates",
+        title: "Dynamic Test Templates",
+        category: "Configuration",
+        icon: <FaClipboardList />,
+        summary:
+          "Configure standard laboratory templates (e.g. Full Blood Count, Malaria Parasite, Urinalysis, ChemPath) with custom fields and reference ranges.",
+        highlights: [
+          "Configurable numerical, select, and text result fields",
+          "Standard reference ranges and biological measurement units",
+          "Reusable test profiles for rapid technician entry",
+        ],
         path: "/laboratory/templates",
-        actionLabel: "Open templates",
+        actionLabel: "Manage Templates",
       },
       {
-        title: "Notify when done",
-        body: "When a result is completed, the relevant team can be notified and the result becomes available for review.",
-        detail: "This reduces waiting and phone calls between departments.",
+        id: "lab-results",
+        title: "Result Entry & Report Release",
+        category: "Reporting",
+        icon: <FiCheckCircle />,
+        summary:
+          "Input specimen findings, record technician interpretation, and certify results. Reports become instantly available to attending physicians.",
+        highlights: [
+          "Fast, structured result entry fields",
+          "Automated notification to ordering doctors upon completion",
+          "Official printable laboratory diagnostic report",
+        ],
+        path: "/laboratory",
+        actionLabel: "Enter Test Results",
       },
     ],
   },
   {
-    id: "pharmacy",
-    roleLabel: "Pharmacy",
-    accent: "#16a34a",
-    icon: <FaCapsules />,
-    intro: "This tour helps pharmacy staff manage medicine, stock, sales, invoices, and patient dispensing.",
+    id: "reception",
+    roleLabel: "Reception & Cashier",
+    tagline: "Patient Registration, Appointment Triage & Service Billing",
+    accent: "#f59e0b",
+    icon: <FaHospitalUser />,
+    description:
+      "Register new patients, manage medical records, book doctor appointments, issue hospital bills, and print verification ID cards.",
     steps: [
       {
-        title: "Search medicine quickly",
-        body: "Use Pharmacy to search inventory and select medicines for a patient.",
-        detail: "Keep names, prices, and stock levels clear so dispensing is fast.",
-        path: "/pharmacy",
-        actionLabel: "Open pharmacy",
+        id: "rec-register",
+        title: "Patient Registration",
+        category: "Registration",
+        icon: <FaHospitalUser />,
+        summary:
+          "Register new hospital patients, investigation-only clients, and reactivate archived accounts with automated MRN and QR code assignment.",
+        highlights: [
+          "Automated unique MRN (Medical Record Number) generation",
+          "Emergency contact, insurance policy, and demographic capture",
+          "Support for Investigation-only and Regular patient categories",
+        ],
+        path: "/register-patient",
+        actionLabel: "Register New Patient",
       },
       {
-        title: "Sell to a patient",
-        body: "Choose the patient, add items, confirm quantities, and complete the sale.",
-        detail: "The invoice should show patient details, medicine items, totals, and MDS branding.",
-        path: "/pharmacy",
-        actionLabel: "Start sale",
+        id: "rec-search",
+        title: "Patient Directory & ID Cards",
+        category: "Directory",
+        icon: <FiUserCheck />,
+        summary:
+          "Search patient records by MRN, name, phone number, or HMO insurance policy. Generate and print official QR-enabled patient ID cards.",
+        highlights: [
+          "Instant search across active and past patients",
+          "Printable patient ID card with verification QR code",
+          "One-click demographic updates and category conversions",
+        ],
+        path: "/patients",
+        actionLabel: "Search Patients",
       },
       {
-        title: "Watch stock movement",
-        body: "Stock added or removed should be recorded with useful notes.",
-        detail: "Important inventory changes can notify admin.",
-        path: "/inventory",
-        actionLabel: "Open inventory",
+        id: "rec-appointments",
+        title: "Appointment Scheduling",
+        category: "Scheduling",
+        icon: <FaClipboardList />,
+        summary:
+          "Schedule outpatient visits, book doctor consultations, and manage daily waiting queues with doctor assignment.",
+        highlights: [
+          "Doctor availability and specialty assignment",
+          "Scheduled, Checked-in, and Completed status management",
+          "Live consultation queue integration",
+        ],
+        path: "/appointments",
+        actionLabel: "Book Appointment",
       },
       {
-        title: "Print receipts",
-        body: "After billing or sale, print a clean receipt for the patient.",
-        detail: "The receipt should be easy to read and suitable for records.",
+        id: "rec-billing",
+        title: "Cashier Desk & Billing",
+        category: "Billing",
+        icon: <FaFileInvoiceDollar />,
+        summary:
+          "Issue invoices based on standard hospital service tariffs, record cash or digital payments, and print customer payment receipts.",
+        highlights: [
+          "Standard hospital service fee schedule selection",
+          "Invoice generation with Pending and Paid payment states",
+          "Printable cashier invoices with official hospital header",
+        ],
+        path: "/billing",
+        actionLabel: "Open Cashier Desk",
       },
     ],
   },
   {
     id: "security",
     roleLabel: "Security",
+    tagline: "Gate Entry Verification, Staff ID Lookup & Visitor Logs",
     accent: "#ef4444",
-    icon: <FiCheckCircle />,
-    intro: "This tour is built for phone use at the gate so visitor entry is quick and clear.",
+    icon: <FaUserShield />,
+    description:
+      "Control hospital perimeter security, log visitor and patient entries, verify staff badges, and monitor on-premises visitors.",
     steps: [
       {
-        title: "Log each entry",
-        body: "Select whether the person is a patient, patient relative, staff, or guest.",
-        detail: "For emergencies, patient name and phone can be completed later.",
+        id: "sec-entry",
+        title: "Gate Entry Logging",
+        category: "Gate Control",
+        icon: <FaUserShield />,
+        summary:
+          "Record incoming entries for patients, relatives, hospital staff, and delivery/guest visitors with destination tracking.",
+        highlights: [
+          "Categorized entry logging (Patient, Relative, Staff, Guest)",
+          "Emergency fast-track entry for urgent arrivals",
+          "Destination department and purpose recording",
+        ],
         path: "/security/entry",
-        actionLabel: "Open entry",
+        actionLabel: "Log Gate Entry",
       },
       {
-        title: "Use staff ID lookup",
-        body: "For staff, enter or scan the staff ID to auto-fill verified staff details.",
-        detail: "This avoids typing mistakes at the entrance.",
+        id: "sec-lookup",
+        title: "Staff Badge Verification",
+        category: "Verification",
+        icon: <FaKey />,
+        summary:
+          "Look up staff ID numbers or scan badges to auto-fill verified employee names, departments, and credentials instantly.",
+        highlights: [
+          "Instant staff ID number verification against active roster",
+          "Prevents manual typing errors at the main gate",
+          "Real-time validation of active staff status",
+        ],
         path: "/security/entry",
-        actionLabel: "Check staff",
+        actionLabel: "Staff ID Check",
       },
       {
-        title: "Capture photo when needed",
-        body: "Add an optional photo for visitors, relatives, guests, and patient arrivals.",
-        detail: "Keep photos light so mobile data and storage stay manageable.",
-      },
-      {
-        title: "Check time in and time out",
-        body: "Use All Entries to see who is still inside and mark time out when they leave.",
-        detail: "Long visits show day badges such as +1 day or +2 days.",
+        id: "sec-logs",
+        title: "Visitor Logs & Time-Out",
+        category: "Logs",
+        icon: <FaClipboardList />,
+        summary:
+          "Track who is currently inside the hospital facility and mark time-out when visitors exit through the gate.",
+        highlights: [
+          "Live list of visitors currently on hospital premises",
+          "Multi-day stay indicators (+1d, +2d) for ward relatives",
+          "One-tap exit timestamp registration",
+        ],
         path: "/security/logs",
-        actionLabel: "Open logs",
+        actionLabel: "View Entry Logs",
       },
     ],
   },
   {
     id: "desk-office",
-    roleLabel: "Desk Office",
-    accent: "#0891b2",
-    icon: <FiMap />,
-    intro: "This tour covers insurance claims and desk office follow-up work.",
+    roleLabel: "Desk Office & HMO",
+    tagline: "Insurance Providers, Co-pay Tariffs & HMO Claims",
+    accent: "#06b6d4",
+    icon: <FiShield />,
+    description:
+      "Manage health insurance schemes (HMOs, NHIA), verify patient coverage, process monthly insurance claims, and track payouts.",
     steps: [
       {
-        title: "Start with claims summary",
-        body: "Use Desk Office to see insurance claim totals and pending work.",
-        detail: "The dashboard helps you know which insurer needs attention.",
+        id: "desk-claims",
+        title: "HMO Claims Management",
+        category: "Claims",
+        icon: <FaFileInvoiceDollar />,
+        summary:
+          "File and track claims submitted to insurance providers. Record claimed amounts, received payouts, and discrepancies.",
+        highlights: [
+          "Monthly claim logging per insurance provider",
+          "Track claimed versus approved amount differences",
+          "Historical reconciliation reports for hospital accounts",
+        ],
         path: "/desk-office",
-        actionLabel: "Open claims",
+        actionLabel: "Open Claims Desk",
       },
       {
-        title: "Select the insurance",
-        body: "Choose the insurance provider before entering claim details.",
-        detail: "This keeps claims grouped correctly for reporting.",
-        path: "/desk-office",
-        actionLabel: "Add claim",
+        id: "desk-providers",
+        title: "Insurance Providers Setup",
+        category: "HMO Schemes",
+        icon: <FiShield />,
+        summary:
+          "Maintain the catalog of active insurance companies, NHIA programs, contact details, and patient co-pay percentage rates.",
+        highlights: [
+          "Provider contact, policy code, and address management",
+          "Patient co-pay percentage calculation",
+          "Active status management for approved providers",
+        ],
+        path: "/setup/insurance",
+        actionLabel: "Manage HMO Providers",
+      },
+    ],
+  },
+  {
+    id: "super-admin",
+    roleLabel: "Super Admin & Management",
+    tagline: "Executive KPIs, Staff RBAC & Hospital Infrastructure",
+    accent: "#3b82f6",
+    icon: <FiAward />,
+    description:
+      "Hospital executive control center: track operational KPIs, manage user accounts and security roles, and configure wards, beds, and service fees.",
+    steps: [
+      {
+        id: "admin-kpi",
+        title: "Executive Dashboard",
+        category: "Analytics",
+        icon: <FiZap />,
+        summary:
+          "Real-time visibility into daily patient volume, active admissions, pharmacy stock warnings, and department activities.",
+        highlights: [
+          "Live hospital operational indicators and patient counts",
+          "Bed occupancy status and ward availability metrics",
+          "Recent clinical and operational event streams",
+        ],
+        path: "/dashboard",
+        actionLabel: "Open Dashboard",
       },
       {
-        title: "Record claimed and provided amounts",
-        body: "Enter amount claimed, amount provided, date, and a short note.",
-        detail: "Keep notes simple and useful for later reconciliation.",
+        id: "admin-users",
+        title: "Staff Accounts & Security RBAC",
+        category: "Administration",
+        icon: <FaHospitalUser />,
+        summary:
+          "Create staff user accounts, assign primary roles, configure granular permissions, and print verified employee ID badges.",
+        highlights: [
+          "Fine-grained role and permission management",
+          "Secure password resets and account activation toggles",
+          "Printable employee ID cards with verification QR codes",
+        ],
+        path: "/admin/users",
+        actionLabel: "Manage Staff Users",
       },
       {
-        title: "Review claim history",
-        body: "Use the list to check previous submissions and payment differences.",
-        detail: "This helps the hospital track insurance performance clearly.",
+        id: "admin-setup",
+        title: "Hospital Setup & Infrastructure",
+        category: "Configuration",
+        icon: <FaBed />,
+        summary:
+          "Configure hospital service tariffs, departments, medical specialties, wards, rooms, and individual bed inventories.",
+        highlights: [
+          "Service catalog pricing and department code setup",
+          "Ward, room, and bed layout management with status controls",
+          "Insurance provider master configuration",
+        ],
+        path: "/setup/services",
+        actionLabel: "Hospital Setup",
       },
     ],
   },
 ];
 
-function getTourProfile(roles: string[]): TourProfile {
-  if (hasRole(roles, "Super Admin") || hasRole(roles, "Administrator")) return profileMap[0];
-  if (hasRole(roles, "Doctor")) return profileMap[1];
-  if (hasRole(roles, "Nurse")) return profileMap[2];
-  if (hasRole(roles, "Receptionist") || hasRole(roles, "Billing Officer") || hasRole(roles, "Cashier")) {
-    return profileMap[3];
+function getTourProfile(roles: string[]): RoleOnboardingProfile {
+  if (hasRole(roles, "Doctor")) return roleProfiles[0];
+  if (hasRole(roles, "Nurse")) return roleProfiles[1];
+  if (hasRole(roles, "Pharmacist") || hasRole(roles, "Pharmacy")) return roleProfiles[2];
+  if (hasRole(roles, "Laboratory")) return roleProfiles[3];
+  if (hasRole(roles, "Receptionist") || hasRole(roles, "Cashier") || hasRole(roles, "Billing Officer")) {
+    return roleProfiles[4];
   }
-  if (hasRole(roles, "Laboratory")) return profileMap[4];
-  if (hasRole(roles, "Pharmacist") || hasRole(roles, "Pharmacy")) return profileMap[5];
-  if (hasRole(roles, "Security")) return profileMap[6];
-  if (hasRole(roles, "Desk Office")) return profileMap[7];
+  if (hasRole(roles, "Security")) return roleProfiles[5];
+  if (hasRole(roles, "Desk Office")) return roleProfiles[6];
+  if (hasRole(roles, "Super Admin") || hasRole(roles, "Administrator")) return roleProfiles[7];
 
   return {
-    id: "general",
-    roleLabel: roles[0] ?? "Care Team",
-    accent: "#2563eb",
-    icon: <FiHelpCircle />,
-    intro: "This tour introduces the main areas available to your account.",
+    id: "care-team",
+    roleLabel: roles[0] || "Hospital Staff",
+    tagline: "CeekayX Hospital Management System",
+    accent: "#3b82f6",
+    icon: <FiCompass />,
+    description:
+      "Welcome to CeekayX HMS. Access your assigned workspaces, search patients, and manage your daily healthcare operations.",
     steps: [
       {
-        title: "Use the menu",
-        body: "Your sidebar and mobile bottom navigation only show areas your role can access.",
-        detail: "If something is missing, ask an administrator to review your permissions.",
+        id: "gen-dash",
+        title: "Role Workspace",
+        category: "Overview",
+        icon: <FiZap />,
+        summary:
+          "Your sidebar and bottom navigation automatically adapt to show only the clinical and administrative areas you have permissions to use.",
+        highlights: [
+          "Personalized workspace tailored to your medical credentials",
+          "Real-time notifications and system status monitoring",
+          "Accessible across desktop, tablet, and mobile devices",
+        ],
+        path: "/dashboard",
+        actionLabel: "Go to Workspace",
       },
       {
-        title: "Search before creating",
-        body: "Search patients and records before adding new information.",
-        detail: "This helps avoid duplicate records.",
-      },
-      {
-        title: "Keep records clear",
-        body: "Use short, accurate notes and fill required fields carefully.",
-        detail: "Good records help every department work faster.",
+        id: "gen-patients",
+        title: "Patient Information",
+        category: "Directory",
+        icon: <FaHospitalUser />,
+        summary:
+          "Look up patient records quickly before entering data to maintain accurate clinical continuity and avoid duplicate entries.",
+        highlights: [
+          "Fast search by MRN, name, phone, or policy number",
+          "Secure role-protected medical record access",
+          "Integrated ID card verification",
+        ],
+        path: "/patients",
+        actionLabel: "Search Directory",
       },
     ],
   };
 }
 
 function hiddenKey(userId: string, profileId: string) {
-  return `mds:role-tour:hidden:${userId}:${profileId}`;
+  return `mds:onboarding:hidden:${userId}:${profileId}`;
 }
 
 function sessionKey(userId: string, profileId: string) {
-  return `mds:role-tour:session:${userId}:${profileId}`;
+  return `mds:onboarding:session:${userId}:${profileId}`;
 }
 
 export default function RoleTour() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const profile = useMemo(() => getTourProfile(roles), [roles]);
-  const [open, setOpen] = useState(false);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [showWelcomePrompt, setShowWelcomePrompt] = useState(false);
+  const [viewMode, setViewMode] = useState<"step" | "overview">("step");
   const [stepIndex, setStepIndex] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const userId = user?.id ?? "guest";
-  const activeStep = profile.steps[stepIndex];
+  const activeStep = profile.steps[stepIndex] || profile.steps[0];
   const isLastStep = stepIndex === profile.steps.length - 1;
+
+  const sendEvent = useCallback(
+    (action: TourAction, overrides: Partial<{ stepIndex: number; path: string }> = {}) => {
+      if (!user?.id) return;
+
+      void recordTourEvent({
+        tourKey: profile.id,
+        tourVersion: TOUR_VERSION,
+        roleName: profile.roleLabel,
+        action,
+        stepIndex: overrides.stepIndex ?? stepIndex,
+        totalSteps: profile.steps.length,
+        path: overrides.path ?? activeStep?.path ?? location.pathname,
+        deviceType: typeof window !== "undefined" && window.innerWidth <= 768 ? "mobile" : "desktop",
+      }).catch(() => {});
+    },
+    [activeStep?.path, location.pathname, profile.id, profile.roleLabel, profile.steps.length, stepIndex, user?.id]
+  );
 
   useEffect(() => {
     if (!user?.id || typeof window === "undefined") return;
 
-    const permanentHidden = localStorage.getItem(hiddenKey(user.id, profile.id)) === "true";
+    const isHidden = localStorage.getItem(hiddenKey(user.id, profile.id)) === "true";
     const seenThisSession = sessionStorage.getItem(sessionKey(user.id, profile.id)) === "true";
 
-    if (!permanentHidden && !seenThisSession) {
-      const timer = window.setTimeout(() => {
-        setOpen(true);
-        setStepIndex(0);
-      }, 700);
+    if (!isHidden && !seenThisSession) {
+      let cancelled = false;
 
-      return () => window.clearTimeout(timer);
+      void getTourStatus(profile.id, TOUR_VERSION)
+        .then((status) => {
+          if (cancelled || status?.shouldShow === false) {
+            if (status?.shouldShow === false) {
+              localStorage.setItem(hiddenKey(user.id, profile.id), "true");
+            }
+            return;
+          }
+
+          const timer = window.setTimeout(() => {
+            setShowWelcomePrompt(true);
+          }, 1200);
+
+          return () => window.clearTimeout(timer);
+        })
+        .catch(() => {
+          const timer = window.setTimeout(() => {
+            setShowWelcomePrompt(true);
+          }, 1200);
+
+          return () => window.clearTimeout(timer);
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
   }, [profile.id, user?.id]);
 
   useEffect(() => {
-    const startTour = () => {
+    const handleStartTour = () => {
+      setShowWelcomePrompt(false);
       setDontShowAgain(false);
       setStepIndex(0);
-      setOpen(true);
+      setViewMode("step");
+      setIsOpen(true);
+      sendEvent("started", { stepIndex: 0 });
     };
 
-    window.addEventListener(TOUR_EVENT, startTour);
+    window.addEventListener(TOUR_EVENT, handleStartTour);
+    return () => window.removeEventListener(TOUR_EVENT, handleStartTour);
+  }, [sendEvent]);
 
-    return () => window.removeEventListener(TOUR_EVENT, startTour);
-  }, []);
+  useEffect(() => {
+    if (!isOpen) return;
+    sendEvent("step_viewed");
+  }, [isOpen, sendEvent, stepIndex]);
 
-  const closeTour = (savePreference: boolean) => {
+  const handleClose = (action: "skipped" | "completed" | "dont_show_again") => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem(sessionKey(userId, profile.id), "true");
 
-      if (savePreference || dontShowAgain) {
+      if (action === "dont_show_again" || dontShowAgain) {
         localStorage.setItem(hiddenKey(userId, profile.id), "true");
       }
     }
 
-    setOpen(false);
+    sendEvent(dontShowAgain ? "dont_show_again" : action);
+    setIsOpen(false);
+    setShowWelcomePrompt(false);
   };
 
-  const goToStepPath = () => {
-    if (!activeStep.path) return;
-    navigate(activeStep.path);
-    closeTour(false);
+  const handleNavigateToStep = (path?: string) => {
+    if (!path) return;
+    sendEvent("page_opened", { path });
+    handleClose("completed");
+    navigate(path);
   };
 
-  if (!open || !user) return null;
+  if (!user) return null;
+
+  const customStyle = {
+    "--onboard-accent": profile.accent,
+  } as CSSProperties;
 
   return (
-    <div className="role-tour-overlay" role="dialog" aria-modal="true" aria-labelledby="role-tour-title">
-      <div className="role-tour-backdrop" onClick={() => closeTour(false)} />
-
-      <section className="role-tour-card" style={{ "--tour-accent": profile.accent } as CSSProperties}>
-        <button
-          type="button"
-          className="role-tour-close"
-          onClick={() => closeTour(false)}
-          aria-label="Close tour"
+    <>
+      {/* 1. NON-AGGRESSIVE FLOATING WELCOME TOAST */}
+      {showWelcomePrompt && !isOpen && (
+        <aside
+          className="onboarding-welcome-toast"
+          style={customStyle}
+          role="region"
+          aria-label="Onboarding guide invitation"
         >
-          <FiX />
-        </button>
-
-        <div className="role-tour-hero">
-          <span className="role-tour-icon">{profile.icon}</span>
-          <div>
-            <p>Guided tour</p>
-            <h2 id="role-tour-title">{profile.roleLabel} workspace</h2>
-            <span>{profile.intro}</span>
-          </div>
-        </div>
-
-        <div className="role-tour-progress" aria-label={`Step ${stepIndex + 1} of ${profile.steps.length}`}>
-          {profile.steps.map((step, index) => (
-            <button
-              type="button"
-              key={step.title}
-              className={index === stepIndex ? "active" : ""}
-              onClick={() => setStepIndex(index)}
-              aria-label={`Go to step ${index + 1}: ${step.title}`}
-            />
-          ))}
-        </div>
-
-        <article className="role-tour-step">
-          <small>
-            Step {stepIndex + 1} of {profile.steps.length}
-          </small>
-          <h3>{activeStep.title}</h3>
-          <p>{activeStep.body}</p>
-          <div>
-            <FiCheckCircle />
-            <span>{activeStep.detail}</span>
-          </div>
-        </article>
-
-        <label className="role-tour-preference">
-          <input
-            type="checkbox"
-            checked={dontShowAgain}
-            onChange={(event) => setDontShowAgain(event.target.checked)}
-          />
-          <span>Don&apos;t show this tour again for my account.</span>
-        </label>
-
-        <div className="role-tour-actions">
-          <button
-            type="button"
-            className="role-tour-secondary"
-            onClick={() => closeTour(dontShowAgain)}
-          >
-            Skip for now
-          </button>
-
-          <div>
-            <button
-              type="button"
-              className="role-tour-icon-btn"
-              onClick={() => setStepIndex((current) => Math.max(current - 1, 0))}
-              disabled={stepIndex === 0}
-              aria-label="Previous tour step"
-            >
-              <FiChevronLeft />
-            </button>
-
-            {activeStep.path && (
-              <button type="button" className="role-tour-path-btn" onClick={goToStepPath}>
-                {activeStep.actionLabel ?? "Open page"}
-                <FiArrowRight />
+          <div className="toast-glow" />
+          <div className="toast-icon-badge">{profile.icon}</div>
+          <div className="toast-content">
+            <div className="toast-header">
+              <span className="toast-badge">{profile.roleLabel} Guide</span>
+              <button
+                type="button"
+                className="toast-close-btn"
+                onClick={() => {
+                  setShowWelcomePrompt(false);
+                  sessionStorage.setItem(sessionKey(userId, profile.id), "true");
+                }}
+                aria-label="Dismiss guide invitation"
+              >
+                <FiX />
               </button>
-            )}
+            </div>
+            <strong>New here? Take a 1-min walkthrough</strong>
+            <p>Learn key workflows and shortcuts tailored for your role.</p>
 
-            <button
-              type="button"
-              className="role-tour-primary"
-              onClick={() => {
-                if (isLastStep) {
-                  closeTour(dontShowAgain);
-                  return;
-                }
-
-                setStepIndex((current) => Math.min(current + 1, profile.steps.length - 1));
-              }}
-            >
-              {isLastStep ? "Finish tour" : "Next"}
-              {!isLastStep && <FiChevronRight />}
-            </button>
+            <div className="toast-actions">
+              <button
+                type="button"
+                className="toast-start-btn"
+                onClick={() => {
+                  setShowWelcomePrompt(false);
+                  setIsOpen(true);
+                  sendEvent("started", { stepIndex: 0 });
+                }}
+              >
+                <FiZap />
+                Start Walkthrough
+              </button>
+              <button
+                type="button"
+                className="toast-skip-btn"
+                onClick={() => {
+                  setShowWelcomePrompt(false);
+                  sessionStorage.setItem(sessionKey(userId, profile.id), "true");
+                }}
+              >
+                Explore on my own
+              </button>
+            </div>
           </div>
+        </aside>
+      )}
+
+      {/* 2. MODERN FULL ONBOARDING HUB MODAL */}
+      {isOpen && (
+        <div
+          className="onboarding-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboarding-modal-title"
+          style={customStyle}
+        >
+          <div
+            className="onboarding-backdrop"
+            onClick={() => handleClose(dontShowAgain ? "dont_show_again" : "skipped")}
+          />
+
+          <article className="onboarding-sheet">
+            {/* Modal Header */}
+            <header className="onboarding-header">
+              <div className="header-left">
+                <div className="role-avatar-badge">{profile.icon}</div>
+                <div>
+                  <div className="role-meta-row">
+                    <span className="role-chip">{profile.roleLabel} Workspace</span>
+                    <span className="step-counter">
+                      {viewMode === "step" ? `Step ${stepIndex + 1} of ${profile.steps.length}` : "All Capabilities"}
+                    </span>
+                  </div>
+                  <h2 id="onboarding-modal-title">{profile.tagline}</h2>
+                </div>
+              </div>
+
+              <div className="header-right">
+                <div className="view-mode-toggle" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === "step"}
+                    className={viewMode === "step" ? "active" : ""}
+                    onClick={() => setViewMode("step")}
+                    title="Step-by-step guided mode"
+                  >
+                    <FiList />
+                    <span>Guided</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={viewMode === "overview"}
+                    className={viewMode === "overview" ? "active" : ""}
+                    onClick={() => setViewMode("overview")}
+                    title="All capabilities overview"
+                  >
+                    <FiGrid />
+                    <span>Overview</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="close-modal-btn"
+                  onClick={() => handleClose(dontShowAgain ? "dont_show_again" : "skipped")}
+                  aria-label="Close onboarding guide"
+                >
+                  <FiX />
+                </button>
+              </div>
+            </header>
+
+            {/* Modal Body */}
+            <div className="onboarding-body">
+              {viewMode === "step" ? (
+                /* STEP-BY-STEP GUIDED VIEW */
+                <section className="guided-step-container">
+                  {/* Progress Indicator */}
+                  <div className="step-pills-bar" aria-label="Step navigation">
+                    {profile.steps.map((step, idx) => (
+                      <button
+                        key={step.id}
+                        type="button"
+                        className={`step-pill ${idx === stepIndex ? "active" : ""} ${idx < stepIndex ? "completed" : ""}`}
+                        onClick={() => setStepIndex(idx)}
+                        aria-label={`Jump to step ${idx + 1}: ${step.title}`}
+                      >
+                        <span className="pill-dot" />
+                        <span className="pill-title">{step.title}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active Step Card */}
+                  <div className="active-step-card">
+                    <div className="step-card-header">
+                      <div className="step-badge-group">
+                        <span className="step-category-tag">{activeStep.category}</span>
+                        <span className="step-number-tag">Step {stepIndex + 1}</span>
+                      </div>
+                      <div className="step-card-icon">{activeStep.icon}</div>
+                    </div>
+
+                    <h3>{activeStep.title}</h3>
+                    <p className="step-summary">{activeStep.summary}</p>
+
+                    <div className="highlights-box">
+                      <strong>
+                        <FiAward /> Key Capabilities & Highlights
+                      </strong>
+                      <ul>
+                        {activeStep.highlights.map((item) => (
+                          <li key={item}>
+                            <FiCheck className="check-icon" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {activeStep.path && (
+                      <div className="quick-action-bar">
+                        <div className="path-indicator">
+                          <FiMapPin />
+                          <span>Direct workspace: {activeStep.path}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="open-workspace-btn"
+                          onClick={() => handleNavigateToStep(activeStep.path)}
+                        >
+                          {activeStep.actionLabel || "Open this screen"}
+                          <FiArrowRight />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              ) : (
+                /* OVERVIEW GRID VIEW */
+                <section className="overview-grid-container">
+                  <p className="overview-intro">{profile.description}</p>
+                  <div className="overview-grid">
+                    {profile.steps.map((step, idx) => (
+                      <div
+                        key={step.id}
+                        className={`overview-card ${idx === stepIndex ? "highlighted" : ""}`}
+                        onClick={() => {
+                          setStepIndex(idx);
+                          setViewMode("step");
+                        }}
+                      >
+                        <div className="overview-card-top">
+                          <span className="overview-icon">{step.icon}</span>
+                          <span className="overview-step-tag">Step {idx + 1}</span>
+                        </div>
+                        <h4>{step.title}</h4>
+                        <p>{step.summary}</p>
+                        {step.path && (
+                          <span className="overview-link">
+                            {step.actionLabel || "View workflow"} <FiArrowRight />
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <footer className="onboarding-footer">
+              <label className="dont-show-checkbox">
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                />
+                <span>Don&apos;t show this guide automatically on login</span>
+              </label>
+
+              <div className="footer-actions">
+                <button
+                  type="button"
+                  className="footer-skip-btn"
+                  onClick={() => handleClose(dontShowAgain ? "dont_show_again" : "skipped")}
+                >
+                  Skip Tour
+                </button>
+
+                {viewMode === "step" && (
+                  <div className="step-stepper-btns">
+                    <button
+                      type="button"
+                      className="stepper-btn prev-btn"
+                      onClick={() => setStepIndex((prev) => Math.max(0, prev - 1))}
+                      disabled={stepIndex === 0}
+                      aria-label="Previous step"
+                    >
+                      <FiChevronLeft />
+                      <span>Back</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="stepper-btn next-btn"
+                      onClick={() => {
+                        if (isLastStep) {
+                          handleClose(dontShowAgain ? "dont_show_again" : "completed");
+                          return;
+                        }
+                        setStepIndex((prev) => Math.min(profile.steps.length - 1, prev + 1));
+                      }}
+                    >
+                      <span>{isLastStep ? "Finish Guide" : "Next Step"}</span>
+                      {isLastStep ? <FiCheckCircle /> : <FiChevronRight />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </footer>
+          </article>
         </div>
-      </section>
-    </div>
+      )}
+    </>
   );
 }
 
 export function startRoleTour() {
-  window.dispatchEvent(new CustomEvent(TOUR_EVENT));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(TOUR_EVENT));
+  }
 }

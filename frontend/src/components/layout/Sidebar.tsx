@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   FiActivity,
@@ -52,6 +52,14 @@ type MenuItem = {
     anyPermissions?: string[];
   }>;
 };
+
+function tourKey(value?: string) {
+  return (value || "menu")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 const menus: MenuItem[] = [
   {
@@ -269,6 +277,14 @@ export function Sidebar({ collapsed, toggle }: Props) {
 
   const [openGroups, setOpenGroups] = useState(initiallyOpen);
 
+  useEffect(() => {
+    setOpenGroups((current) => {
+      const next = new Set(current);
+      initiallyOpen.forEach((item) => next.add(item));
+      return next;
+    });
+  }, [initiallyOpen]);
+
   const toggleGroup = (title: string) => {
     setOpenGroups((current) => {
       const next = new Set(current);
@@ -292,7 +308,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
     item.children?.some((child) => isMenuActive(child.path)) ?? false;
 
   return (
-    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} data-tour-region="desktop-sidebar">
       <div className="sidebar-logo">
         <img className="logo-mark" src={mdsLogo} alt="MDS Hospital" />
 
@@ -309,6 +325,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
         onClick={toggle}
         type="button"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        data-tour-target="sidebar-collapse"
       >
         {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
       </button>
@@ -325,6 +342,7 @@ export function Sidebar({ collapsed, toggle }: Props) {
                   className="sidebar-item sidebar-group-trigger"
                   type="button"
                   onClick={() => toggleGroup(item.title)}
+                  data-tour-group={tourKey(item.title)}
                 >
                   <span className="icon">{item.icon}</span>
                   {!collapsed && (
@@ -342,6 +360,8 @@ export function Sidebar({ collapsed, toggle }: Props) {
                         key={child.path}
                         to={child.path}
                         className={isMenuActive(child.path) ? "sidebar-subitem active" : "sidebar-subitem"}
+                        data-tour-menu-path={child.path}
+                        data-tour-menu-title={tourKey(child.title)}
                       >
                         <span className="subitem-icon">{child.icon}</span>
                         <span>{child.title}</span>
@@ -358,6 +378,8 @@ export function Sidebar({ collapsed, toggle }: Props) {
               key={item.path}
               to={item.path ?? "/"}
               className={isMenuActive(item.path) ? "sidebar-item active" : "sidebar-item"}
+              data-tour-menu-path={item.path ?? "/"}
+              data-tour-menu-title={tourKey(item.title)}
             >
               <span className="icon">{item.icon}</span>
               {!collapsed && <span>{item.title}</span>}

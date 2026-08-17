@@ -25,6 +25,13 @@ type MobileNavItem = {
   anyPermissions?: string[];
 };
 
+function tourKey(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 const mobileItems: MobileNavItem[] = [
   { label: "Home", path: "/", icon: <FiHome /> },
   { label: "Patients", path: "/patients", icon: <FaUserInjured />, requiredPermissions: ["patients.read"] },
@@ -133,7 +140,7 @@ export default function MobileBottomNav() {
   };
 
   return (
-    <nav className="mobile-bottom-nav" aria-label="Mobile app navigation">
+    <nav className="mobile-bottom-nav" aria-label="Mobile app navigation" data-tour-region="mobile-bottom-nav">
       {visibleItems.map((item) => (
         <NavLink
           key={item.path}
@@ -141,6 +148,8 @@ export default function MobileBottomNav() {
           className={({ isActive }) =>
             isItemActive(item.path, isActive) ? "mobile-nav-item active" : "mobile-nav-item"
           }
+          data-tour-mobile-path={item.path}
+          data-tour-mobile-title={tourKey(item.label)}
         >
           {item.icon}
           <span>{item.label}</span>

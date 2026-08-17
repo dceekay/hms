@@ -154,7 +154,7 @@ export class BillingService {
         },
       });
 
-      await NotificationService.notifyRoles(["Billing Officer", "Receptionist", "Administrator", "Super Admin"], {
+      await NotificationService.notifyRoles(["Cashier", "Billing Officer", "Receptionist", "Administrator", "Super Admin"], {
         title: "Patient bill created",
         message: `${bill.invoiceNumber} was created for ${bill.patient.firstName} ${bill.patient.lastName}.`,
         eventKey: "billing.created",

@@ -2,9 +2,9 @@ import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { FaBed, FaHospital, FaUserMd } from "react-icons/fa";
+import { FaAmbulance, FaCapsules, FaFlask, FaUserMd } from "react-icons/fa";
 import mdsLogo from "../assets/optimized/logo.png";
-import mdsHospital from "../assets/optimized/hospital-gate.jpg";
+import mdsHospital from "../assets/optimized/login_back.png";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import "../styles/login.css";
@@ -17,6 +17,7 @@ const testAccounts = [
   { role: "Receptionist", username: "reception", password: "Reception@123" },
   { role: "Laboratory", username: "labtech", password: "Lab@12345" },
   { role: "Pharmacist", username: "pharm", password: "Pharm@123" },
+  { role: "Cashier", username: "cashier", password: "Cashier@123" },
   { role: "Billing Officer", username: "billing", password: "Billing@123" },
   { role: "Desk Office", username: "deskoffice", password: "Desk@123" },
   { role: "Security", username: "security", password: "Security@123" },
@@ -57,16 +58,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showTestAccounts =
-    import.meta.env.DEV ||
-    ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const showTestAccounts = import.meta.env.VITE_SHOW_TEST_LOGINS !== "false";
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function submitLogin(username: string, loginPassword: string) {
     setLoading(true);
     setError(null);
 
-    const result = await login({ emailOrUsername, password });
+    const result = await login({ emailOrUsername: username, password: loginPassword });
     setLoading(false);
 
     if (!result?.accessToken) {
@@ -79,55 +77,80 @@ export default function LoginPage() {
     navigate(getPostLoginPath(result.user?.roles, result.user?.permissions), { replace: true });
   }
 
-  const fillTestAccount = (account: (typeof testAccounts)[number]) => {
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    await submitLogin(emailOrUsername, password);
+  }
+
+  const loginWithTestAccount = async (account: (typeof testAccounts)[number]) => {
     setEmailOrUsername(account.username);
     setPassword(account.password);
-    setError(null);
+    await submitLogin(account.username, account.password);
   };
 
   return (
     <main className="login-page">
       <section className="login-visual" aria-label="MDS staff portal overview">
-        <img
-          className="login-hospital-image"
-          src={mdsHospital}
-          alt=""
-          aria-hidden="true"
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-        />
-
         <div className="login-brand">
-          <img className="login-logo" src={mdsLogo} alt="MDS Hospital" decoding="async" />
+          <img className="login-logo" src={mdsLogo} alt="MDS Hospital Logo" decoding="async" />
           <div>
-            <strong>MDS Hospital</strong>
-            <small>Staff Portal</small>
+            <strong>MDS Specialist Hospital</strong>
+            <small>Staff & Clinical Portal</small>
+          </div>
+        </div>
+
+        <div className="login-showcase-card">
+          <img
+            className="login-hospital-image"
+            src={mdsHospital}
+            alt="MDS Hospital Kano Facility"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="showcase-badge">
+            <span className="badge-pulse" />
+            <span>Eastern Bypass, Giginyu, Kano • 24/7 Care</span>
           </div>
         </div>
 
         <div className="login-copy">
-          <p className="eyebrow">MDS Hospital</p>
+          <p className="eyebrow">MDS Specialist Hospital</p>
           <h1>Welcome to MDS staff portal.</h1>
-          <p>Sign in to manage daily hospital work securely.</p>
+          <p>Secure clinical and administrative portal for doctors, nurses, specialists, and hospital staff.</p>
         </div>
 
         <div className="login-feature-grid">
-          <div>
-            <FaHospital />
-            <span>Operations</span>
+          <div className="login-feature-card">
+            <div className="feature-icon-wrap emergency">
+              <FaAmbulance />
+            </div>
+            <strong>24/7 Emergency</strong>
+            <small>Trauma & Ambulance</small>
           </div>
-          <div>
-            <FaUserMd />
-            <span>Clinical Care</span>
+
+          <div className="login-feature-card">
+            <div className="feature-icon-wrap clinical">
+              <FaUserMd />
+            </div>
+            <strong>Specialist Care</strong>
+            <small>Doctors & Clinics</small>
           </div>
-          <div>
-            <FaBed />
-            <span>Wards & Beds</span>
+
+          <div className="login-feature-card">
+            <div className="feature-icon-wrap lab">
+              <FaFlask />
+            </div>
+            <strong>Fast Laboratory</strong>
+            <small>Accurate Diagnostics</small>
           </div>
-          <div>
-            <FiShield />
-            <span>Secure RBAC</span>
+
+          <div className="login-feature-card">
+            <div className="feature-icon-wrap pharmacy">
+              <FaCapsules />
+            </div>
+            <strong>24hr Pharmacy</strong>
+            <small>Genuine Medications</small>
           </div>
         </div>
       </section>
@@ -195,8 +218,8 @@ export default function LoginPage() {
           {showTestAccounts && (
             <div className="test-login-panel">
               <div>
-                <strong>Local test logins</strong>
-                <span>Click a role to autofill.</span>
+                <strong>Trial role logins</strong>
+                <span>Click a role to sign in.</span>
               </div>
 
               <div className="test-login-grid">
@@ -204,11 +227,12 @@ export default function LoginPage() {
                   <button
                     key={account.role}
                     type="button"
-                    onClick={() => fillTestAccount(account)}
+                    onClick={() => loginWithTestAccount(account)}
                     className="test-login-btn"
+                    disabled={loading}
                   >
                     <span>{account.role}</span>
-                    <small>{account.username}</small>
+                    <small>{account.username} / {account.password}</small>
                   </button>
                 ))}
               </div>

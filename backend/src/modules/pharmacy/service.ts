@@ -299,7 +299,7 @@ export class PharmacyService {
       return dispense;
     });
 
-    await NotificationService.notifyRoles(["Pharmacist", "Billing Officer", "Administrator", "Super Admin"], {
+    await NotificationService.notifyRoles(["Pharmacist", "Cashier", "Billing Officer", "Administrator", "Super Admin"], {
       title: "Medication dispensed",
       message: `${dispense.medication.name} was dispensed to ${dispense.patient.firstName} ${dispense.patient.lastName}.`,
       eventKey: "pharmacy.dispensed",
@@ -514,7 +514,7 @@ export class PharmacyService {
       return sale;
     });
 
-    await NotificationService.notifyRoles(["Pharmacist", "Billing Officer", "Administrator", "Super Admin"], {
+    await NotificationService.notifyRoles(["Pharmacist", "Cashier", "Billing Officer", "Administrator", "Super Admin"], {
       title: "Pharmacy invoice generated",
       message: `${sale.invoiceNumber} was generated for ${sale.patient.firstName} ${sale.patient.lastName}.`,
       eventKey: "pharmacy.sale.created",
