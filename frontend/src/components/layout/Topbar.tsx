@@ -16,6 +16,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
 import NotificationCenter from "./NotificationCenter";
+import UserMenu from "./UserMenu";
 import { endSession } from "../../services/sessionManager";
 import { getUserDisplayName } from "../../utils/userDisplay";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
@@ -73,7 +74,8 @@ export default function Topbar() {
       </div>
 
       <div className="topbar-right">
-        <div className="topbar-status-group" aria-label="System status">
+        {/* Desktop-only System Status Group */}
+        <div className="topbar-status-group desktop-only" aria-label="System status">
           <div className="topbar-time-card" data-tour-target="topbar-time">
             <FiCalendar />
             <span>{today}</span>
@@ -107,6 +109,7 @@ export default function Topbar() {
           )}
         </div>
 
+        {/* Action Group */}
         <div className="topbar-action-group" aria-label="Workspace actions">
           <button
             className="icon-btn theme-toggle"
@@ -122,7 +125,7 @@ export default function Topbar() {
           <NotificationCenter />
 
           <button
-            className="icon-btn tour-trigger-btn"
+            className="icon-btn tour-trigger-btn desktop-only"
             type="button"
             onClick={startRoleTour}
             aria-label="Start guided tour"
@@ -134,7 +137,7 @@ export default function Topbar() {
           </button>
 
           <button
-            className="icon-btn"
+            className="icon-btn desktop-only"
             type="button"
             onClick={() => navigate("/settings")}
             aria-label="Open account settings"
@@ -145,23 +148,23 @@ export default function Topbar() {
           </button>
         </div>
 
+        {/* User Menu / Account Group */}
         <div className="topbar-account-group" aria-label="Account">
-          <div className="profile" data-tour-target="profile-card">
-            <div className="avatar">
-              {user?.firstName?.charAt(0) || "A"}
-              {user?.lastName?.charAt(0) || ""}
-            </div>
+          <UserMenu
+            status={status}
+            latencyMs={latencyMs}
+            pendingCount={pendingCount}
+            isBrowserOnline={isBrowserOnline}
+            today={today}
+            currentTime={currentTime}
+          />
 
-            <div>
-              <strong>
-                {displayName}
-              </strong>
-
-              <small>{user?.roles?.join(", ") || "Care team"}</small>
-            </div>
-          </div>
-
-          <button className="logout-btn" type="button" onClick={handleLogout} data-tour-target="logout-button">
+          <button
+            className="logout-btn desktop-only"
+            type="button"
+            onClick={handleLogout}
+            data-tour-target="logout-button"
+          >
             <FiLogOut />
             <span>Logout</span>
           </button>
@@ -170,3 +173,4 @@ export default function Topbar() {
     </header>
   );
 }
+
