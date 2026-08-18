@@ -5,6 +5,7 @@ import {
   FaCapsules,
   FaCheckCircle,
   FaChevronDown,
+  FaCreditCard,
   FaHeartbeat,
   FaHospital,
   FaMicroscope,
@@ -59,18 +60,22 @@ const googleMapsUrl =
 const googleMapsEmbedUrl =
   "https://www.google.com/maps?q=MDS%20Hospital%2C%20Eastern%20Bypass%2C%20Giginyu%2C%20Kano&output=embed";
 
-const schemes = [
-  "NHIA",
-  "KSCHIMA",
-  "JICHMA",
-  "Hygeia HMO",
-  "HMOs",
-  "Retainership",
-  "Wallet",
-  "Referrals",
-  "SEMSAS Hospital Services",
-  "SEMSAS Ambulance Service",
-  "BHCPP 2.0",
+const schemeItemsRow1 = [
+  { name: "NHIA", type: "National Insurance", icon: <FaShieldAlt /> },
+  { name: "KSCHIMA", type: "State Scheme", icon: <FaShieldAlt /> },
+  { name: "JICHMA", type: "State Scheme", icon: <FaShieldAlt /> },
+  { name: "Hygeia HMO", type: "Private HMO", icon: <FaShieldAlt /> },
+  { name: "Accredited HMOs", type: "Health Plans", icon: <FaShieldAlt /> },
+  { name: "BHCPP 2.0", type: "Basic Health Care", icon: <FaShieldAlt /> },
+];
+
+const schemeItemsRow2 = [
+  { name: "SEMSAS Hospital Care", type: "Emergency Care", icon: <FaAmbulance /> },
+  { name: "SEMSAS Ambulance", type: "Rapid Transport", icon: <FaAmbulance /> },
+  { name: "Corporate Retainership", type: "Institutional Care", icon: <FaHospital /> },
+  { name: "Hospital Wallet", type: "Direct & Family", icon: <FaCreditCard /> },
+  { name: "Clinical Referrals", type: "Hospital Network", icon: <FaCheckCircle /> },
+  { name: "Direct Settlement", type: "Flexible Billing", icon: <FaCreditCard /> },
 ];
 
 const qualifications = [
@@ -180,14 +185,17 @@ const landingCopy: Record<
       contact: string;
       portal: string;
     };
-    heroBadge: string;
-    heroEyebrow: string;
-    heroTitleLead: string;
-    heroTitleHighlight: string;
+    heroKicker: string;
+    heroTitle: string;
     heroText: string;
     book: string;
-    directions: string;
-    assurances: Array<{ title: string; text: string; icon: "doctor" | "clock" | "shield" }>;
+    exploreServices: string;
+    heroPillars: Array<{
+      title: string;
+      text: string;
+      href: string;
+      icon: "ambulance" | "doctor" | "lab";
+    }>;
     discover: string;
     quick: {
       speakSmall: string;
@@ -280,18 +288,31 @@ const landingCopy: Record<
       contact: "Contact",
       portal: "Staff portal",
     },
-    heroBadge: "NHIS, KACHMA and JICHMA accredited",
-    heroEyebrow: "Compassionate care. Modern precision.",
-    heroTitleLead: "MDS Hospital Kano: expert care for",
-    heroTitleHighlight: "every patient journey.",
+    heroKicker: "MDS HOSPITAL",
+    heroTitle: "Quality healthcare, closer to you.",
     heroText:
-      "MDS Hospital provides coordinated medical, surgical, diagnostic, pharmacy, emergency, and preventive healthcare services in a calm, safe, and patient-focused environment on Eastern Bypass, Giginyu, Kano.",
-    book: "Book an appointment",
-    directions: "Get directions",
-    assurances: [
-      { title: "Specialist-led care", text: "Experienced clinical professionals", icon: "doctor" },
-      { title: "Responsive service", text: "Emergency support available", icon: "clock" },
-      { title: "Secure coordination", text: "Protected digital patient workflows", icon: "shield" },
+      "Comprehensive medical care, diagnostics, surgery and specialist services delivered by experienced healthcare professionals in Kano.",
+    book: "Book an Appointment",
+    exploreServices: "Explore Services",
+    heroPillars: [
+      {
+        title: "24/7 Emergency Care",
+        text: "Ambulance & rapid clinical support",
+        href: "#ambulance",
+        icon: "ambulance",
+      },
+      {
+        title: "Specialist Services",
+        text: "Consultants, surgery & wards",
+        href: "#services",
+        icon: "doctor",
+      },
+      {
+        title: "Modern Diagnostics",
+        text: "Digital laboratory & accurate scans",
+        href: "#services",
+        icon: "lab",
+      },
     ],
     discover: "Discover MDS Hospital",
     quick: {
@@ -411,18 +432,31 @@ const landingCopy: Record<
       contact: "Tuntube mu",
       portal: "Shafin ma'aikata",
     },
-    heroBadge: "An amince da NHIS, KACHMA da JICHMA",
-    heroEyebrow: "Kulawa da tausayi. Aiki da kwarewa.",
-    heroTitleLead: "MDS Hospital Kano: kwararrun likitoci domin",
-    heroTitleHighlight: "lafiyar kowa.",
+    heroKicker: "MDS HOSPITAL",
+    heroTitle: "Ingantacciyar kulawa, kusa da ku.",
     heroText:
-      "MDS Hospital na Giginyu, Kano na ba da kulawar likita, tiyata, gwaje-gwaje, pharmacy, gaggawa, haihuwa, rigakafi da sauran ayyukan asibiti cikin tsari, natsuwa da aminci.",
-    book: "Nemi ganawa",
-    directions: "Duba hanya",
-    assurances: [
-      { title: "Kwararrun likitoci", text: "Kulawa daga masu kwarewa", icon: "doctor" },
-      { title: "Amsa cikin lokaci", text: "Akwai agajin gaggawa", icon: "clock" },
-      { title: "Tsarin bayanai mai tsaro", text: "Bayanan mara lafiya suna cikin kulawa", icon: "shield" },
+      "Cikakkiyar kulawar likita, gwaje-gwaje, tiyata da ayyukan kwararru daga kwararrun ma'aikatan lafiya a Kano.",
+    book: "Nemi Ganawa",
+    exploreServices: "Duba Ayyukanmu",
+    heroPillars: [
+      {
+        title: "Agajin Gaggawa 24/7",
+        text: "Ambulance da karbar mara lafiya",
+        href: "#ambulance",
+        icon: "ambulance",
+      },
+      {
+        title: "Ayyukan Kwararru",
+        text: "Likitoci, tiyata da dakunan kwantarwa",
+        href: "#services",
+        icon: "doctor",
+      },
+      {
+        title: "Gwajin Zamani",
+        text: "Binciken dakin gwaji na asibiti",
+        href: "#services",
+        icon: "lab",
+      },
     ],
     discover: "Sanin MDS Hospital",
     quick: {
@@ -683,101 +717,107 @@ export default function LandingPage() {
           <div className="hero-background-glow hero-glow-one" />
           <div className="hero-background-glow hero-glow-two" />
 
-          <motion.div
-            className="hero-copy"
-            initial="hidden"
-            animate="visible"
-            variants={reveal}
-          >
-            <div className="hero-badge">
-              <FaCheckCircle />
-              {copy.heroBadge}
-            </div>
-
-            <p className="eyebrow">{copy.heroEyebrow}</p>
-
-            <h1>
-              {copy.heroTitleLead} <span>{copy.heroTitleHighlight}</span>
-            </h1>
-
-            <p className="hero-text">{copy.heroText}</p>
-
-            <div className="hero-actions">
-              <a
-                href={whatsappUrl}
-                className="primary-btn"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {copy.book}
-                <FiArrowRight />
-              </a>
-
-              <a
-                href={googleMapsUrl}
-                className="secondary-btn"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {copy.directions}
-              </a>
-            </div>
-
-            <div className="hero-assurances">
-              {copy.assurances.map((assurance) => (
-                <div key={assurance.title}>
-                  {assurance.icon === "doctor" && <FaUserMd />}
-                  {assurance.icon === "clock" && <FiClock />}
-                  {assurance.icon === "shield" && <FaShieldAlt />}
-                  <span>
-                    <strong>{assurance.title}</strong>
-                    {assurance.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="hero-visual"
-            initial={{ opacity: 0, x: 36 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            <div className="hero-image-wrapper">
-              <img
-                src={hospitalGate}
-                alt="MDS Hospital entrance and service signage in Kano"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-              />
-
-              <div className="hero-image-overlay" />
-
-              <div className="hero-floating-card hero-floating-top">
-                <span className="floating-icon">
-                  <FaHeartbeat />
-                </span>
-
-                <div>
-                  <strong>Patient-first care</strong>
-                  <small>From arrival to recovery</small>
-                </div>
+          <div className="hero-grid">
+            <motion.div
+              className="hero-copy"
+              initial="hidden"
+              animate="visible"
+              variants={reveal}
+            >
+              <div className="hero-kicker-badge">
+                <span className="hero-kicker-dot" />
+                <span>{copy.heroKicker}</span>
               </div>
 
-              <div className="hero-floating-card hero-floating-bottom">
-                <span className="live-indicator" />
+              <h1 className="hero-headline">
+                {copy.heroTitle}
+              </h1>
 
-                <div>
-                  <strong>Emergency services</strong>
-                  <small>Responsive clinical support</small>
+              <p className="hero-text">{copy.heroText}</p>
+
+              <div className="hero-actions">
+                <a
+                  href={whatsappUrl}
+                  className="primary-btn hero-primary-btn"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <FaWhatsapp />
+                  <span>{copy.book}</span>
+                </a>
+
+                <a
+                  href="#services"
+                  className="secondary-btn hero-secondary-btn"
+                  onClick={scrollToSection}
+                >
+                  <span>{copy.exploreServices}</span>
+                  <FiArrowRight />
+                </a>
+              </div>
+
+              {/* 3 Choice Pillars for immediately understandable choices */}
+              <div className="hero-choice-pillars">
+                {copy.heroPillars.map((pillar) => (
+                  <a
+                    key={pillar.title}
+                    href={pillar.href}
+                    onClick={scrollToSection}
+                    className="hero-choice-card"
+                  >
+                    <span className="hero-choice-icon">
+                      {pillar.icon === "ambulance" && <FaAmbulance />}
+                      {pillar.icon === "doctor" && <FaUserMd />}
+                      {pillar.icon === "lab" && <FaMicroscope />}
+                    </span>
+                    <div className="hero-choice-info">
+                      <strong>{pillar.title}</strong>
+                      <small>{pillar.text}</small>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="hero-visual"
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="hero-cinematic-card">
+                <img
+                  src={hospitalExterior}
+                  alt="MDS Hospital facility building exterior on Eastern Bypass, Kano"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                />
+
+                <div className="hero-cinematic-overlay" />
+
+                {/* Physical trust location badge */}
+                <div className="hero-cinematic-badge hero-badge-location">
+                  <FiMapPin />
+                  <div>
+                    <strong>MDS Hospital Facility</strong>
+                    <small>Eastern Bypass, Giginyu, Kano</small>
+                  </div>
+                </div>
+
+                {/* 24/7 Live care active badge */}
+                <div className="hero-cinematic-badge hero-badge-live">
+                  <span className="live-care-pulse" />
+                  <div>
+                    <strong>24/7 Clinical Facility</strong>
+                    <small>Emergency, Inpatient & Outpatient</small>
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
 
-          <a href="#about" className="scroll-indicator">
+          <a href="#services" className="scroll-indicator" onClick={scrollToSection}>
             {copy.discover}
             <FaChevronDown />
           </a>
@@ -840,8 +880,8 @@ export default function LandingPage() {
             variants={reveal}
           >
             <img
-              src={hospitalExterior}
-              alt="MDS Hospital exterior and access area"
+              src={hospitalGate}
+              alt="MDS Hospital entrance and patient access area"
               loading="lazy"
               decoding="async"
             />
@@ -962,7 +1002,7 @@ export default function LandingPage() {
               rel="noreferrer"
             >
               <FiMapPin />
-              {copy.directions}
+              {copy.ambulanceActions.directions}
             </a>
           </div>
         </section>
@@ -1080,26 +1120,33 @@ export default function LandingPage() {
             <p>{copy.schemesText}</p>
           </div>
 
-          <div className="schemes-grid">
-            {schemes.map((scheme, index) => (
-              <div
-                key={scheme}
-                className={!schemesExpanded && index > 5 ? "scheme-extra" : ""}
-              >
-                <FaShieldAlt />
-                <span>{scheme}</span>
-              </div>
-            ))}
-          </div>
+          <div className="schemes-marquee-container" aria-label="Accepted health schemes and payment options">
+            {/* Track 1: Sliding Left */}
+            <div className="schemes-track schemes-track-left">
+              {[...schemeItemsRow1, ...schemeItemsRow1, ...schemeItemsRow1].map((scheme, idx) => (
+                <div key={`row1-${idx}`} className="scheme-pill">
+                  <span className="scheme-pill-icon">{scheme.icon}</span>
+                  <div className="scheme-pill-info">
+                    <span className="scheme-pill-name">{scheme.name}</span>
+                    <span className="scheme-pill-type">{scheme.type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-          <button
-            type="button"
-            className="schemes-toggle"
-            onClick={() => setSchemesExpanded((current) => !current)}
-          >
-            {schemesExpanded ? copy.showFewer : copy.showAll}
-            <FiArrowRight />
-          </button>
+            {/* Track 2: Sliding Right */}
+            <div className="schemes-track schemes-track-right">
+              {[...schemeItemsRow2, ...schemeItemsRow2, ...schemeItemsRow2].map((scheme, idx) => (
+                <div key={`row2-${idx}`} className="scheme-pill">
+                  <span className="scheme-pill-icon">{scheme.icon}</span>
+                  <div className="scheme-pill-info">
+                    <span className="scheme-pill-name">{scheme.name}</span>
+                    <span className="scheme-pill-type">{scheme.type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="scheme-note">
             <FaCheckCircle />

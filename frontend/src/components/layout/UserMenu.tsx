@@ -18,8 +18,8 @@ import { startRoleTour } from "../tour/RoleTour";
 
 interface UserMenuProps {
   status: "online" | "offline" | "checking";
-  latencyMs?: number;
-  pendingCount?: number;
+  latencyMs?: number | null;
+  pendingCount?: number | null;
   isBrowserOnline?: boolean;
   today?: string;
   currentTime?: string;
@@ -130,7 +130,7 @@ export default function UserMenu({
               </div>
             )}
 
-            {pendingCount > 0 && (
+            {Boolean(pendingCount && pendingCount > 0) && (
               <div className="user-menu-system-item sync-item">
                 <span className="system-status-indicator sync-indicator">
                   <FiRefreshCw className="spin-slow" />
