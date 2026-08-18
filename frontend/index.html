@@ -71,44 +71,88 @@
         display: grid;
         place-items: center;
         background:
-          radial-gradient(circle at 50% 38%, rgba(34, 211, 238, 0.16), transparent 32%),
-          linear-gradient(135deg, #06101d 0%, #0b1830 54%, #111827 100%);
+          radial-gradient(circle at 50% 45%, rgba(16, 170, 176, 0.15), transparent 45%),
+          linear-gradient(145deg, #050d18 0%, #071324 55%, #030810 100%);
         color: #ffffff;
-        transition: opacity 0.28s ease, visibility 0.28s ease;
+        transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.32s ease;
       }
 
       .app-loader-mark {
         position: relative;
-        display: grid;
-        gap: 14px;
-        place-items: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
+      .app-loader-ring-wrap {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        display: grid;
+        place-items: center;
+      }
+
       .app-loader-ring {
-        width: 98px;
-        height: 98px;
-        border: 2px solid rgba(125, 211, 252, 0.22);
-        border-top-color: #22d3ee;
-        border-radius: 50%;
-        animation: mdsSpin 0.9s linear infinite;
-      }
-
-      .app-loader-logo {
         position: absolute;
-        top: 24px;
-        color: #ffffff;
-        font-size: 1.55rem;
-        font-weight: 900;
-        letter-spacing: 0;
+        inset: 0;
+        border: 2.5px solid rgba(118, 227, 228, 0.14);
+        border-top-color: #10aab0;
+        border-right-color: #76e3e4;
+        border-radius: 50%;
+        animation: mdsSpin 0.9s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+        box-shadow: 0 0 24px rgba(16, 170, 176, 0.18);
       }
 
-      .app-loader-text {
-        color: #bfdbfe;
-        font-size: 0.78rem;
+      .app-loader-ring-pulse {
+        position: absolute;
+        inset: -6px;
+        border: 1px dashed rgba(118, 227, 228, 0.2);
+        border-radius: 50%;
+        animation: mdsSpinRev 8s linear infinite;
+      }
+
+      .app-loader-logo-img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+        border-radius: 12px;
+        filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.4));
+        animation: mdsPulse 2s ease-in-out infinite;
+        user-select: none;
+      }
+
+      .app-loader-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .app-loader-title {
+        color: #ffffff;
+        font-size: 1.05rem;
         font-weight: 800;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        animation: mdsPulse 1.15s ease-in-out infinite;
+      }
+
+      .app-loader-bar {
+        width: 48px;
+        height: 2.5px;
+        border-radius: 999px;
+        background: rgba(118, 227, 228, 0.18);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-loader-bar::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, #10aab0, #76e3e4, transparent);
+        animation: mdsBar 1.2s ease-in-out infinite;
       }
 
       .app-loader-hidden {
@@ -122,14 +166,29 @@
         }
       }
 
-      @keyframes mdsPulse {
-        0%,
-        100% {
-          opacity: 0.56;
+      @keyframes mdsSpinRev {
+        to {
+          transform: rotate(-360deg);
         }
+      }
 
+      @keyframes mdsPulse {
+        0%, 100% {
+          transform: scale(1);
+          opacity: 0.92;
+        }
         50% {
+          transform: scale(1.05);
           opacity: 1;
+        }
+      }
+
+      @keyframes mdsBar {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
         }
       }
     </style>
@@ -235,9 +294,15 @@
     <!-- End Google Tag Manager (noscript) -->
     <div id="app-loader" aria-label="Loading MDS Hospital">
       <div class="app-loader-mark">
-        <div class="app-loader-ring"></div>
-        <strong class="app-loader-logo">MDS</strong>
-        <span class="app-loader-text">Opening staff portal</span>
+        <div class="app-loader-ring-wrap">
+          <div class="app-loader-ring"></div>
+          <div class="app-loader-ring-pulse"></div>
+          <img src="/logo.png" alt="MDS Hospital" class="app-loader-logo-img" width="52" height="52" />
+        </div>
+        <div class="app-loader-brand">
+          <strong class="app-loader-title">MDS Hospital</strong>
+          <div class="app-loader-bar"></div>
+        </div>
       </div>
     </div>
     <div id="root"></div>

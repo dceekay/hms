@@ -768,3 +768,88 @@ pre {
     padding-inline: 6px;
   }
 }
+
+/* ==========================================================================
+   Lightweight MDS Brand Loader
+   ========================================================================== */
+
+.loader-wrapper {
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+  width: 100%;
+}
+
+.loader-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loader-ring-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+}
+
+.loader-ring {
+  position: absolute;
+  inset: 0;
+  border: 2.5px solid rgba(16, 170, 176, 0.16);
+  border-top-color: #10aab0;
+  border-right-color: #76e3e4;
+  border-radius: 50%;
+  animation: mdsLoaderSpin 0.9s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+  box-shadow: 0 0 20px rgba(16, 170, 176, 0.15);
+}
+
+.loader-logo-img {
+  object-fit: contain;
+  border-radius: 10px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.25));
+  animation: mdsLoaderPulse 2s ease-in-out infinite;
+  user-select: none;
+}
+
+.loader-caption {
+  color: var(--muted, #94a3b8);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.loader-sm .loader-ring-wrapper {
+  width: 54px;
+  height: 54px;
+}
+
+.loader-sm .loader-ring {
+  border-width: 2px;
+}
+
+.loader-lg .loader-ring-wrapper {
+  width: 110px;
+  height: 110px;
+}
+
+@keyframes mdsLoaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mdsLoaderPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
