@@ -787,8 +787,8 @@ export default function LandingPage() {
             >
               <div className="hero-cinematic-card">
                 <img
-                  src={hospitalExterior}
-                  alt="MDS Hospital facility building exterior on Eastern Bypass, Kano"
+                  src={hospitalGate}
+                  alt="MDS Hospital facility entrance and main access on Eastern Bypass, Kano"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -880,8 +880,8 @@ export default function LandingPage() {
             variants={reveal}
           >
             <img
-              src={hospitalGate}
-              alt="MDS Hospital entrance and patient access area"
+              src={hospitalExterior}
+              alt="MDS Hospital modern clinical facility and care environment"
               loading="lazy"
               decoding="async"
             />

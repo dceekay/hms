@@ -5,12 +5,17 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
+  FiCalendar,
   FiCamera,
   FiChevronDown,
   FiCreditCard,
+  FiDollarSign,
   FiEdit3,
+  FiMoreVertical,
+  FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiSave,
@@ -313,6 +318,7 @@ function patientToForm(
 }
 
 export function PatientListPage() {
+  const navigate = useNavigate();
   const permissions = useAuthStore(
     (state) =>
       state.user?.permissions ?? []
@@ -378,10 +384,17 @@ export function PatientListPage() {
     null
   );
 
+  const [activeMenuPatientId, setActiveMenuPatientId] = useState<string | null>(null);
+
   const [loading, setLoading] =
     useState(false);
 
+  const [savingPatient, setSavingPatient] = useState(false);
+
   const [loadingQr, setLoadingQr] =
+    useState(false);
+
+  const [photoLoading, setPhotoLoading] =
     useState(false);
 
   const [
@@ -390,22 +403,27 @@ export function PatientListPage() {
   ] = useState(false);
 
   const [
-    savingPatient,
-    setSavingPatient,
-  ] = useState(false);
+    activeActionPatientId,
+    setActiveActionPatientId,
+  ] = useState<string | null>(null);
 
   const [
-    photoLoading,
-    setPhotoLoading,
-  ] = useState(false);
+    activeActionType,
+    setActiveActionType,
+  ] = useState<
+    "convert" | "deactivate" | "reactivate" | null
+  >(null);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<
+    string | null
+  >(null);
 
-  const [qrError, setQrError] =
-    useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   const [editError, setEditError] =
+    useState<string | null>(null);
+
+  const [actionError, setActionError] =
     useState<string | null>(null);
 
   const [
@@ -413,45 +431,31 @@ export function PatientListPage() {
     setInsuranceProviderError,
   ] = useState<string | null>(null);
 
-  const loadPatients = async (
-    filters = {
-      searchTerm: search,
-      status: statusFilter,
-      category: categoryFilter,
-    }
-  ) => {
+  const loadPatients = async () => {
     setLoading(true);
     setError(null);
 
-    const response =
-      await fetchPatients({
-        search: filters.searchTerm,
-        status: filters.status,
-        patientCategory:
-          filters.category,
-      });
+    const data = await fetchPatients({
+      search,
+      status: statusFilter || undefined,
+      patientCategory:
+        categoryFilter || undefined,
+    });
 
-    if (!response) {
-      setError(
-        "Unable to load patients. Please try again."
-      );
+    if (data) {
+      setPatients(data);
     } else {
-      setPatients(response);
+      setError(
+        "Unable to load patients. Check your connection."
+      );
     }
 
     setLoading(false);
   };
 
   useEffect(() => {
-    void loadPatients({
-      searchTerm: search,
-      status: statusFilter,
-      category: categoryFilter,
-    });
-  }, [
-    statusFilter,
-    categoryFilter,
-  ]);
+    loadPatients();
+  }, [statusFilter, categoryFilter]);
 
   useEffect(() => {
     let mounted = true;
@@ -459,33 +463,26 @@ export function PatientListPage() {
     setLoadingInsuranceProviders(true);
     setInsuranceProviderError(null);
 
-    void fetchPatientInsuranceProviders()
-      .then(
-        ({
-          providers,
-          error:
-            providerLoadingError,
-        }) => {
-          if (!mounted) {
-            return;
-          }
+    void fetchPatientInsuranceProviders().then(
+      ({ providers, error }) => {
+        if (!mounted) {
+          return;
+        }
 
-          setInsuranceProviders(
-            providers ?? []
-          );
+        setLoadingInsuranceProviders(false);
 
+        if (providers) {
+          setInsuranceProviders(providers);
+          setInsuranceProviderError(null);
+        } else {
+          setInsuranceProviders([]);
           setInsuranceProviderError(
-            providers
-              ? null
-              : providerLoadingError ??
-                  "Unable to load insurance providers."
-          );
-
-          setLoadingInsuranceProviders(
-            false
+            error ??
+              "Unable to load insurance provider options."
           );
         }
-      );
+      }
+    );
 
     return () => {
       mounted = false;
@@ -496,106 +493,78 @@ export function PatientListPage() {
     event: FormEvent
   ) => {
     event.preventDefault();
-
-    void loadPatients({
-      searchTerm: search,
-      status: statusFilter,
-      category: categoryFilter,
-    });
+    loadPatients();
   };
 
   const clearSearch = () => {
     setSearch("");
     setStatusFilter("");
     setCategoryFilter("");
-
-    void loadPatients({
-      searchTerm: "",
-      status: "",
-      category: "",
-    });
   };
 
-  const handlePatientAction =
-    async (
-      patient: Patient,
-      action:
-        | "convert"
-        | "reactivate"
-        | "deactivate"
-    ) => {
-      setError(null);
+  const handleViewIdCard = async (
+    patient: Patient
+  ) => {
+    setSelectedPatient(patient);
+    setSelectedQr(null);
+    setQrError(null);
+    setLoadingQr(true);
 
-      const result =
-        action === "convert"
-          ? await convertInvestigationPatient(
-              patient.id
-            )
-          : action === "reactivate"
-            ? await reactivatePatient(
-                patient.id
-              )
-            : await deactivatePatient(
-                patient.id
-              );
+    const qr = await fetchPatientQr(patient.id);
 
-      if (!result) {
-        setError(
-          "Unable to update patient. Please confirm your permission and try again."
-        );
+    setLoadingQr(false);
 
-        return;
-      }
-
-      setPatients((current) =>
-        current.map((item) =>
-          item.id === result.id
-            ? {
-                ...item,
-                ...result,
-              }
-            : item
-        )
-      );
-
-      if (
-        selectedPatient?.id ===
-        result.id
-      ) {
-        setSelectedPatient({
-          ...selectedPatient,
-          ...result,
-        });
-      }
-    };
-
-  const handleViewIdCard =
-    async (patient: Patient) => {
-      setSelectedPatient(patient);
-      setSelectedQr(null);
-      setQrError(null);
-      setLoadingQr(true);
-
-      const qr =
-        await fetchPatientQr(
-          patient.id
-        );
-
-      setLoadingQr(false);
-
-      if (!qr) {
-        setQrError(
-          "Unable to load this patient's ID card."
-        );
-
-        return;
-      }
-
+    if (qr) {
       setSelectedQr(qr);
-    };
+    } else {
+      setQrError("Unable to load this patient's ID card.");
+    }
+  };
+
+  const closeIdCard = () => {
+    setSelectedPatient(null);
+    setSelectedQr(null);
+    setQrError(null);
+  };
 
   const handlePrintIdCard = () => {
     window.print();
+  };
+
+  const handlePatientAction = async (
+    patient: Patient,
+    action: "convert" | "reactivate" | "deactivate"
+  ) => {
+    setError(null);
+    setActiveActionPatientId(patient.id);
+    setActiveActionType(action);
+
+    const result =
+      action === "convert"
+        ? await convertInvestigationPatient(patient.id)
+        : action === "reactivate"
+          ? await reactivatePatient(patient.id)
+          : await deactivatePatient(patient.id);
+
+    setActiveActionPatientId(null);
+    setActiveActionType(null);
+    setActiveMenuPatientId(null);
+
+    if (!result) {
+      setError("Unable to update patient. Please confirm your permission and try again.");
+      return;
+    }
+
+    setPatients((current) =>
+      current.map((item) => (item.id === result.id ? { ...item, ...result } : item))
+    );
+
+    if (selectedPatient?.id === result.id) {
+      setSelectedPatient({
+        ...selectedPatient,
+        ...result,
+      });
+    }
   };
 
   const openEditPatient = (
@@ -753,41 +722,23 @@ export function PatientListPage() {
     setSavingPatient(true);
 
     const {
-      patient,
-      error: saveError,
+      patient: updatedPatient,
+      error: updateError,
     } = await updatePatient(
       editingPatient.id,
-      cleanEditPayload(
-        validation.data
-      )
+      cleanEditPayload(editForm)
     );
 
     setSavingPatient(false);
 
-    if (!patient) {
+    if (!updatedPatient) {
       setEditError(
-        saveError ??
-          "Unable to save patient changes."
+        updateError ??
+          "Unable to update patient record."
       );
 
       return;
     }
-
-    const selectedProvider =
-      insuranceProviders.find(
-        (provider) =>
-          provider.id ===
-          patient.insuranceProviderId
-      );
-
-    const updatedPatient: Patient = {
-      ...patient,
-
-      insuranceProvider:
-        selectedProvider ??
-        patient.insuranceProvider ??
-        null,
-    };
 
     setPatients((current) =>
       current.map((item) =>
@@ -812,7 +763,7 @@ export function PatientListPage() {
 
   return (
     <AdminLayout>
-      <main className="page-container patient-list-page">
+      <main className="page-container patient-list-page" onClick={() => setActiveMenuPatientId(null)}>
         <div className="card">
           <div className="page-header">
             <div className="patient-page-title">
@@ -822,13 +773,46 @@ export function PatientListPage() {
                 className="patient-page-logo"
               />
 
-              <h1>Patients</h1>
+              <div>
+                <h1>Patient Directory</h1>
+                <p>Register new patients, print ID cards, and assign directly to doctors.</p>
+              </div>
+            </div>
 
-              <p>
-                Find patients, update
-                their records, and print
-                ID cards when needed.
-              </p>
+            <div className="reception-quick-hub">
+              <button
+                type="button"
+                className="reception-hub-btn primary"
+                onClick={() => navigate("/register-patient")}
+              >
+                <FiPlus />
+                <span>Register Patient</span>
+              </button>
+              <button
+                type="button"
+                className="reception-hub-btn"
+                onClick={() => navigate("/appointments")}
+              >
+                <FiCalendar />
+                <span>Doctor Queue</span>
+              </button>
+              <button
+                type="button"
+                className="reception-hub-btn"
+                onClick={() => navigate("/billing")}
+              >
+                <FiDollarSign />
+                <span>Billing</span>
+              </button>
+              <button
+                type="button"
+                className="reception-hub-btn"
+                onClick={loadPatients}
+                disabled={loading}
+              >
+                <FiRefreshCw />
+                <span>Refresh</span>
+              </button>
             </div>
           </div>
 
@@ -1138,106 +1122,99 @@ export function PatientListPage() {
                       <div className="patient-row-actions patient-compact-actions">
                         <button
                           type="button"
-                          className="icon-text-btn"
+                          className="icon-text-btn id-action-btn"
                           aria-label="Open patient ID card"
-                          onClick={() =>
-                            handleViewIdCard(
-                              patient
-                            )
-                          }
-                          title="Open patient ID card"
+                          onClick={() => handleViewIdCard(patient)}
+                          title="Open & print patient ID card"
                         >
                           <FiCreditCard />
-                          <span className="patient-action-label">
-                            ID
-                          </span>
+                          <span className="patient-action-label">ID Card</span>
                         </button>
 
-                        {canUpdate && (
+                        <button
+                          type="button"
+                          className="icon-text-btn doctor-action-btn"
+                          aria-label="Assign to doctor"
+                          onClick={() => navigate("/appointments")}
+                          title="Assign or schedule with doctor"
+                        >
+                          <FiCalendar />
+                          <span className="patient-action-label">Book Doctor</span>
+                        </button>
+
+                        <div className="patient-more-menu-container">
                           <button
                             type="button"
-                            className="icon-text-btn"
-                            aria-label="Edit patient"
-                            onClick={() =>
-                              openEditPatient(
-                                patient
-                              )
-                            }
-                            title="Edit patient"
+                            className={`icon-text-btn more-actions-btn ${
+                              activeMenuPatientId === patient.id ? "active" : ""
+                            }`}
+                            aria-label="More actions"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuPatientId((curr) =>
+                                curr === patient.id ? null : patient.id
+                              );
+                            }}
+                            title="More actions"
                           >
-                            <FiEdit3 />
-                            <span className="patient-action-label">
-                              Edit
-                            </span>
+                            <FiMoreVertical />
                           </button>
-                        )}
 
-                        {canConvert &&
-                          patient.patientCategory ===
-                            "investigation_patient" && (
-                            <button
-                              type="button"
-                              className="icon-text-btn success"
-                              aria-label="Convert investigation patient"
-                              onClick={() =>
-                                handlePatientAction(
-                                  patient,
-                                  "convert"
-                                )
-                              }
-                              title="Convert investigation patient"
+                          {activeMenuPatientId === patient.id && (
+                            <div
+                              className="patient-action-popover"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <FiUserCheck />
-                              <span className="patient-action-label">
-                                Convert
-                              </span>
-                            </button>
-                          )}
+                              {canUpdate && (
+                                <button
+                                  type="button"
+                                  className="popover-action-item"
+                                  onClick={() => {
+                                    setActiveMenuPatientId(null);
+                                    openEditPatient(patient);
+                                  }}
+                                >
+                                  <FiEdit3 />
+                                  <span>Edit record</span>
+                                </button>
+                              )}
 
-                        {canReactivate &&
-                          patient.status ===
-                            "inactive" && (
-                            <button
-                              type="button"
-                              className="icon-text-btn success"
-                              aria-label="Reactivate patient"
-                              onClick={() =>
-                                handlePatientAction(
-                                  patient,
-                                  "reactivate"
-                                )
-                              }
-                              title="Reactivate patient"
-                            >
-                              <FiRefreshCw />
-                              <span className="patient-action-label">
-                                Active
-                              </span>
-                            </button>
-                          )}
+                              {canConvert &&
+                                patient.patientCategory === "investigation_patient" && (
+                                  <button
+                                    type="button"
+                                    className="popover-action-item success"
+                                    onClick={() => handlePatientAction(patient, "convert")}
+                                  >
+                                    <FiUserCheck />
+                                    <span>Convert to full patient</span>
+                                  </button>
+                                )}
 
-                        {canUpdate &&
-                          (patient.status ??
-                            "active") ===
-                            "active" && (
-                            <button
-                              type="button"
-                              className="icon-text-btn danger"
-                              aria-label="Mark patient inactive"
-                              onClick={() =>
-                                handlePatientAction(
-                                  patient,
-                                  "deactivate"
-                                )
-                              }
-                              title="Mark patient inactive"
-                            >
-                              <FiSlash />
-                              <span className="patient-action-label">
-                                Inactive
-                              </span>
-                            </button>
+                              {canReactivate && patient.status === "inactive" && (
+                                <button
+                                  type="button"
+                                  className="popover-action-item success"
+                                  onClick={() => handlePatientAction(patient, "reactivate")}
+                                >
+                                  <FiRefreshCw />
+                                  <span>Reactivate patient</span>
+                                </button>
+                              )}
+
+                              {canUpdate && (patient.status ?? "active") === "active" && (
+                                <button
+                                  type="button"
+                                  className="popover-action-item danger"
+                                  onClick={() => handlePatientAction(patient, "deactivate")}
+                                >
+                                  <FiSlash />
+                                  <span>Mark inactive</span>
+                                </button>
+                              )}
+                            </div>
                           )}
+                        </div>
                       </div>
                     </article>
                   );

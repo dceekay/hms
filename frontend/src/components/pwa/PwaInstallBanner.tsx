@@ -1,0 +1,160 @@
+import { useEffect, useState } from "react";
+import { FiDownload, FiInfo, FiShare, FiSmartphone, FiX } from "react-icons/fi";
+import mdsLogo from "../../assets/optimized/logo.png";
+import "../../styles/pwa.css";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+export default function PwaInstallBanner() {
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return Boolean(sessionStorage.getItem("mds_pwa_banner_dismissed"));
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Check if running as installed standalone PWA
+    const isStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes("android-app://");
+
+    setIsStandalone(isStandaloneMode);
+
+    // Detect iOS
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isAppleMobile = /iphone|ipad|ipod/.test(userAgent);
+    setIsIos(isAppleMobile);
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  if (isStandalone || dismissed) {
+    return null;
+  }
+
+  // Only show if prompt is available or on iOS mobile
+  if (!deferredPrompt && !isIos) {
+    return null;
+  }
+
+  const handleInstallClick = async () => {
+    if (isIos && !deferredPrompt) {
+      setShowIosGuide(true);
+      return;
+    }
+
+    if (!deferredPrompt) return;
+
+    await deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+
+    if (choice.outcome === "accepted") {
+      setDeferredPrompt(null);
+      setDismissed(true);
+    }
+  };
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem("mds_pwa_banner_dismissed", "true");
+  };
+
+  return (
+    <>
+      <aside className="pwa-install-banner" aria-label="Install App Banner">
+        <div className="pwa-banner-content">
+          <img src={mdsLogo} alt="MDS Hospital" className="pwa-app-icon" />
+          <div className="pwa-banner-text">
+            <strong>Install MDS Hospital App</strong>
+            <p>Add to your phone home screen for instant alerts & faster ward rounds.</p>
+          </div>
+        </div>
+
+        <div className="pwa-banner-actions">
+          <button type="button" className="pwa-install-btn" onClick={handleInstallClick}>
+            <FiDownload />
+            Install App
+          </button>
+          <button
+            type="button"
+            className="pwa-close-btn"
+            onClick={handleDismiss}
+            aria-label="Dismiss app install banner"
+          >
+            <FiX />
+          </button>
+        </div>
+      </aside>
+
+      {showIosGuide && (
+        <div className="pwa-ios-modal-overlay" onClick={() => setShowIosGuide(false)}>
+          <div className="pwa-ios-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pwa-ios-header">
+              <div className="pwa-ios-title">
+                <FiSmartphone />
+                <h3>Install on iPhone / iPad</h3>
+              </div>
+              <button
+                type="button"
+                className="pwa-modal-close"
+                onClick={() => setShowIosGuide(false)}
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <ol className="pwa-ios-steps">
+              <li>
+                <span className="step-num">1</span>
+                <div>
+                  Tap the <strong>Share</strong> button in Safari toolbar:
+                  <div className="share-icon-pill">
+                    <FiShare /> <span>Share</span>
+                  </div>
+                </div>
+              </li>
+              <li>
+                <span className="step-num">2</span>
+                <div>
+                  Scroll down and tap <strong>Add to Home Screen</strong>.
+                </div>
+              </li>
+              <li>
+                <span className="step-num">3</span>
+                <div>
+                  Tap <strong>Add</strong> at top-right. Launch from your home screen anytime!
+                </div>
+              </li>
+            </ol>
+
+            <button
+              type="button"
+              className="pwa-guide-confirm-btn"
+              onClick={() => setShowIosGuide(false)}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

@@ -5968,6 +5968,74 @@
   min-width: 0;
 }
 
+.doctor-field-container {
+  display: grid;
+  gap: 8px;
+}
+
+.doctor-availability-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.doctor-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.doctor-status-pill.online {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.doctor-status-pill.offline {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.doctor-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.doctor-filter-toggle input[type="checkbox"] {
+  accent-color: #0284c7;
+  cursor: pointer;
+}
+
+.doctor-field-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #fbbf24;
+  line-height: 1.4;
+}
+
+.inline-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #38bdf8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 600;
+}
+
 .appointments-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px;

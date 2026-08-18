@@ -16,12 +16,12 @@ import {
   fetchAppointmentDoctors,
   fetchAppointments,
   updateAppointmentStatus,
+  type AppointmentDoctor,
 } from "../../services/appointmentService";
 import { fetchPatients } from "../../services/patients/patientService";
 import { useAuthStore } from "../../store/authStore";
 import type { Appointment, AppointmentFormValues, AppointmentStatus } from "../../types/appointment";
 import type { Patient } from "../../types/patient";
-import type { AppUser } from "../../types/rbac";
 
 const emptyForm: AppointmentFormValues = {
   patientId: "",
@@ -48,8 +48,15 @@ function patientOptionLabel(patient: Patient) {
   return `${patientName(patient)}${patient.mrn ? ` | ${patient.mrn}` : ""}${patient.phone ? ` | ${patient.phone}` : ""}`;
 }
 
-function doctorName(doctor: AppUser) {
+function doctorName(doctor: AppointmentDoctor) {
   return `Dr. ${doctor.firstName} ${doctor.lastName}`;
+}
+
+function doctorOptionLabel(doctor: AppointmentDoctor) {
+  const statusIcon = doctor.isOnline ? "🟢 [Online]" : "⚪ [Offline]";
+  const specialty = doctor.doctorProfile?.specialty ? ` | ${doctor.doctorProfile.specialty}` : "";
+  const queue = doctor.activeQueueCount && doctor.activeQueueCount > 0 ? ` (${doctor.activeQueueCount} in queue)` : "";
+  return `${statusIcon} ${doctorName(doctor)}${specialty}${queue}`;
 }
 
 function formatDateTime(value?: string | null) {
@@ -71,7 +78,8 @@ export default function AppointmentsPage() {
   const canCreate = permissions.includes("appointments.create");
   const canUpdate = permissions.includes("appointments.update");
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [doctors, setDoctors] = useState<AppUser[]>([]);
+  const [doctors, setDoctors] = useState<AppointmentDoctor[]>([]);
+  const [onlyLoggedInDoctors, setOnlyLoggedInDoctors] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [form, setForm] = useState<AppointmentFormValues>({
     ...emptyForm,
@@ -84,6 +92,16 @@ export default function AppointmentsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const onlineDoctorsCount = useMemo(
+    () => doctors.filter((doc) => doc.isOnline).length,
+    [doctors]
+  );
+
+  const displayedDoctors = useMemo(
+    () => (onlyLoggedInDoctors ? doctors.filter((doc) => doc.isOnline) : doctors),
+    [doctors, onlyLoggedInDoctors]
+  );
 
   const selectedPatient = useMemo(
     () => patients.find((patient) => patient.id === form.patientId) ?? null,
@@ -238,23 +256,55 @@ export default function AppointmentsPage() {
               ))}
             </datalist>
 
-            <label>
-              Doctor
-              <select
-                value={form.doctorId}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, doctorId: event.target.value }))
-                }
-              >
-                <option value="">Select doctor</option>
-                {doctors.map((doctor) => (
-                  <option key={doctor.id} value={doctor.id}>
-                    {doctorName(doctor)}
-                    {doctor.doctorProfile?.specialty ? ` | ${doctor.doctorProfile.specialty}` : ""}
+            <div className="doctor-field-container">
+              <div className="doctor-availability-row">
+                <span className={`doctor-status-pill ${onlineDoctorsCount > 0 ? "online" : "offline"}`}>
+                  {onlineDoctorsCount > 0
+                    ? `🟢 ${onlineDoctorsCount} Doctor(s) Online in Clinic`
+                    : "⚪ 0 Doctors Currently Logged In"}
+                </span>
+                <label className="doctor-filter-toggle">
+                  <input
+                    type="checkbox"
+                    checked={onlyLoggedInDoctors}
+                    onChange={(e) => setOnlyLoggedInDoctors(e.target.checked)}
+                  />
+                  <span>Only logged-in</span>
+                </label>
+              </div>
+
+              <label>
+                Doctor
+                <select
+                  value={form.doctorId}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, doctorId: event.target.value }))
+                  }
+                >
+                  <option value="">
+                    {displayedDoctors.length > 0 ? "Select doctor..." : "No doctors match filter"}
                   </option>
-                ))}
-              </select>
-            </label>
+                  {displayedDoctors.map((doctor) => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctorOptionLabel(doctor)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {displayedDoctors.length === 0 && onlyLoggedInDoctors && (
+                <p className="doctor-field-hint">
+                  No doctors currently logged in.{" "}
+                  <button
+                    type="button"
+                    className="inline-link-btn"
+                    onClick={() => setOnlyLoggedInDoctors(false)}
+                  >
+                    Show all doctors to schedule ahead
+                  </button>
+                </p>
+              )}
+            </div>
 
             <label>
               Time

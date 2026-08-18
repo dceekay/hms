@@ -23,10 +23,10 @@ window.requestAnimationFrame(() => {
   window.setTimeout(() => loader?.remove(), 280);
 });
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("Service worker registration failed", error);
+      console.warn("Service worker registration:", error);
     });
   });
 }

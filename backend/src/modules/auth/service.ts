@@ -168,6 +168,11 @@ export class AuthService {
     console.log("User:", user.email);
     console.log("==================================");
 
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
     await prisma.refreshToken.updateMany({
       where: {
         userId: user.id,

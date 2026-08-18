@@ -13,9 +13,11 @@ export class AppointmentController extends BaseController {
     super();
   }
 
-  listDoctors = async (_req: AuthRequest, res: Response, next: NextFunction) => {
+  listDoctors = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const doctors = await this.appointmentService.listDoctors();
+      const onlyLoggedIn =
+        req.query.onlyLoggedIn === "true" || req.query.onlyOnline === "true";
+      const doctors = await this.appointmentService.listDoctors(onlyLoggedIn);
       this.ok(res, "Doctors fetched successfully", doctors);
     } catch (error) {
       next(error);

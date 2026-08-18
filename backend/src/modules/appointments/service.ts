@@ -110,8 +110,14 @@ function statusTimestamp(status: AppointmentStatus) {
 }
 
 export class AppointmentService {
-  async listDoctors() {
-    return prisma.user.findMany({
+  async listDoctors(onlyLoggedIn = false) {
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const doctors = await prisma.user.findMany({
       where: {
         deletedAt: null,
         isActive: true,
@@ -122,9 +128,57 @@ export class AppointmentService {
             },
           },
         },
+        ...(onlyLoggedIn
+          ? {
+              refreshTokens: {
+                some: {
+                  revoked: false,
+                  expiresAt: { gt: now },
+                },
+              },
+            }
+          : {}),
       },
       orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
-      select: userSelect,
+      select: {
+        ...userSelect,
+        lastLogin: true,
+        refreshTokens: {
+          where: {
+            revoked: false,
+            expiresAt: { gt: now },
+          },
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        },
+        appointmentsAsDoctor: {
+          where: {
+            deletedAt: null,
+            scheduledFor: { gte: today, lt: tomorrow },
+            status: { in: ["scheduled", "checked_in", "in_consultation"] },
+          },
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    return doctors.map((doc) => {
+      const isOnline = Boolean(doc.refreshTokens && doc.refreshTokens.length > 0);
+      const activeQueueCount = doc.appointmentsAsDoctor ? doc.appointmentsAsDoctor.length : 0;
+      const inConsultation = doc.appointmentsAsDoctor?.some((a) => a.status === "in_consultation") ?? false;
+      const { refreshTokens, appointmentsAsDoctor, ...rest } = doc;
+
+      return {
+        ...rest,
+        isOnline,
+        activeQueueCount,
+        inConsultation,
+      };
     });
   }
 
