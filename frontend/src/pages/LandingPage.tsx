@@ -21,9 +21,12 @@ import {
   FiExternalLink,
   FiMapPin,
   FiMenu,
+  FiMoon,
   FiPhoneCall,
+  FiSun,
 } from "react-icons/fi";
 import { useEffect, useState } from "react";
+import { useThemeMode } from "../hooks/useThemeMode";
 
 import hospitalGate from "../assets/optimized/hospital-gate.jpg";
 import hospitalExterior from "../assets/optimized/hospital-exterior.jpg";
@@ -583,6 +586,7 @@ const reveal = {
 };
 
 export default function LandingPage() {
+  const { isDark, toggleTheme } = useThemeMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [schemesExpanded, setSchemesExpanded] = useState(false);
   const [language, setLanguage] = useState<LandingLanguage>("en");
@@ -657,14 +661,31 @@ export default function LandingPage() {
           </div>
         </Link>
 
-        <button
-          type="button"
-          className="mobile-menu-button"
-          aria-label="Open navigation menu"
-          onClick={() => setMenuOpen((current) => !current)}
-        >
-          <FiMenu />
-        </button>
+        <div className="landing-header-controls">
+          <button
+            type="button"
+            className={`landing-theme-toggle ${isDark ? "dark" : "light"}`}
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            <span className="theme-toggle-track">
+              <span className="theme-toggle-icon sun"><FiSun /></span>
+              <span className="theme-toggle-icon moon"><FiMoon /></span>
+              <span className="theme-toggle-thumb" />
+            </span>
+            <span className="theme-toggle-text">{isDark ? "Dark" : "Light"}</span>
+          </button>
+
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label="Open navigation menu"
+            onClick={() => setMenuOpen((current) => !current)}
+          >
+            <FiMenu />
+          </button>
+        </div>
 
         <nav className={`landing-nav ${menuOpen ? "nav-open" : ""}`}>
           <a href="#about" onClick={scrollToSection}>
@@ -1507,6 +1528,17 @@ export default function LandingPage() {
           <span>NHIS / KACHMA / JICHMA Accredited</span>
         </div>
       </footer>
+
+      {/* Floating Theme Toggle (Mobile & Quick Access) */}
+      <button
+        type="button"
+        className="floating-theme-toggle"
+        onClick={toggleTheme}
+        aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      >
+        {isDark ? <FiSun /> : <FiMoon />}
+      </button>
 
       {/* Floating WhatsApp */}
       <a
