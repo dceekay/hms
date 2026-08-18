@@ -22,12 +22,15 @@ export default function AdminLayout({
   children,
 }: AdminLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="admin-layout">
       <Sidebar
         collapsed={collapsed}
         toggle={() => setCollapsed((prev) => !prev)}
+        mobileOpen={mobileOpen}
+        closeMobile={() => setMobileOpen(false)}
       />
 
       <main
@@ -35,7 +38,7 @@ export default function AdminLayout({
           collapsed ? "collapsed" : ""
         }`}
       >
-        <Topbar />
+        <Topbar onOpenMobileMenu={() => setMobileOpen(true)} />
 
         <section className="page-content">
           <PushAlertPrompt />
@@ -43,7 +46,7 @@ export default function AdminLayout({
         </section>
       </main>
 
-      <MobileBottomNav />
+      <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />
       <RoleTour />
       <PwaInstallBanner />
     </div>

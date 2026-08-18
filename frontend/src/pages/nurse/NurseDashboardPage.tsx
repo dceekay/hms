@@ -1,16 +1,21 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
+  FiAlertTriangle,
   FiBell,
   FiCheck,
+  FiCheckCircle,
   FiClock,
   FiCreditCard,
+  FiEdit3,
   FiFileText,
   FiHeart,
-  FiHome,
+  FiPhone,
+  FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiSearch,
+  FiShield,
   FiUser,
   FiX,
 } from "react-icons/fi";
@@ -37,51 +42,10 @@ import {
   CLINICAL_ALERT_REPEAT_MS,
   playClinicalAlertSound,
 } from "../../utils/alertSound";
+import "../../styles/nurse.css";
 
-type NurseTool = "summary" | "medications" | "vitals" | "notes" | "orders";
-
-const nurseViewMeta: Record<NurseView, { title: string; label: string; description: string }> = {
-  overview: {
-    title: "Nurse dashboard",
-    label: "Nurse Desk",
-    description: "Shift summary and urgent care tasks.",
-  },
-  patients: {
-    title: "Patients",
-    label: "Patients",
-    description: "Find patients, view ID cards, and confirm ward status.",
-  },
-  ward: {
-    title: "Ward patients",
-    label: "Ward",
-    description: "Admitted patients, ward, room, and bed details.",
-  },
-  medications: {
-    title: "Medication rounds",
-    label: "Medication",
-    description: "Due, overdue, and completed administrations.",
-  },
-  orders: {
-    title: "Doctor orders",
-    label: "Orders",
-    description: "Prescriptions, lab requests, admissions, and referrals.",
-  },
-  vitals: {
-    title: "Vitals",
-    label: "Vitals",
-    description: "Record and review patient observations.",
-  },
-  notes: {
-    title: "Nursing notes",
-    label: "Notes",
-    description: "Shift notes and handover records.",
-  },
-  reminders: {
-    title: "Reminders",
-    label: "Reminders",
-    description: "Medication alerts and follow-up reminders.",
-  },
-};
+type NurseTool = "vitals" | "medications" | "notes" | "orders" | "summary";
+type PatientFilter = "all" | "ward" | "outpatient";
 
 const emptyVitalsForm = {
   patientId: "",
@@ -97,25 +61,18 @@ const emptyVitalsForm = {
 
 const emptyNoteForm = {
   patientId: "",
-  shift: "general" as const,
+  shift: "morning" as "morning" | "afternoon" | "night" | "general",
   note: "",
 };
 
-function normalizeNurseView(value?: string): NurseView {
-  if (
-    value === "patients" ||
-    value === "ward" ||
-    value === "medications" ||
-    value === "orders" ||
-    value === "vitals" ||
-    value === "notes" ||
-    value === "reminders"
-  ) {
-    return value;
-  }
-
-  return "overview";
-}
+const quickNotePhrases = [
+  "Vitals stable, resting comfortably in bed.",
+  "Scheduled medication administered as prescribed.",
+  "Doctor orders reviewed and acknowledged.",
+  "Wound dressing inspected, clean and intact.",
+  "IV fluids running at prescribed rate.",
+  "Patient ambulatory and tolerating oral intake.",
+];
 
 function patientName(patient?: NursingPatient | null) {
   if (!patient) return "Unknown patient";
@@ -132,21 +89,31 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
-function nurseInitials(firstName?: string, lastName?: string) {
-  return `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() || "NS";
+function formatTime(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-NG", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function getInitials(firstName?: string, lastName?: string) {
+  return `${firstName?.charAt(0) ?? ""}${lastName?.charAt(0) ?? ""}`.toUpperCase() || "PT";
 }
 
 function wardLabel(patient?: NursingPatient | null) {
   const admission = patient?.currentAdmission;
-  if (!admission) return "Not admitted";
+  if (!admission) return "Outpatient";
 
   return [
     admission.ward?.name,
-    admission.room?.roomNumber || admission.room?.name,
+    admission.room?.roomNumber ? `Rm ${admission.room.roomNumber}` : "",
     admission.bed?.bedNumber ? `Bed ${admission.bed.bedNumber}` : "",
   ]
     .filter(Boolean)
-    .join(" / ");
+    .join(" • ");
 }
 
 function scheduleState(schedule: MedicationAdministrationSchedule) {
@@ -162,53 +129,51 @@ function scheduleState(schedule: MedicationAdministrationSchedule) {
 }
 
 export default function NurseDashboardPage() {
-  const { view } = useParams();
-  const currentView = normalizeNurseView(view);
-  const meta = nurseViewMeta[currentView];
   const user = useAuthStore((state) => state.user);
   const [workspace, setWorkspace] = useState<NursingWorkspace | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<NursingPatient | null>(null);
   const [patientQr, setPatientQr] = useState<PatientQr | null>(null);
   const [showIdCard, setShowIdCard] = useState(false);
   const [search, setSearch] = useState("");
+  const [patientFilter, setPatientFilter] = useState<PatientFilter>("all");
   const [vitalsForm, setVitalsForm] = useState(emptyVitalsForm);
   const [noteForm, setNoteForm] = useState(emptyNoteForm);
-  const [activeTool, setActiveTool] = useState<NurseTool>("summary");
+  const [activeTool, setActiveTool] = useState<NurseTool>("vitals");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const lastMedicationAlertRef = useRef(0);
-  const patientWorkspaceRef = useRef<HTMLElement | null>(null);
+  const workspaceTopRef = useRef<HTMLDivElement | null>(null);
 
   const patients = workspace?.patients ?? [];
-  const admittedPatients = patients.filter((patient) => patient.isAdmitted);
+  const admittedPatients = useMemo(() => patients.filter((p) => p.isAdmitted), [patients]);
+  const outpatientPatients = useMemo(() => patients.filter((p) => !p.isAdmitted), [patients]);
+
   const schedules = workspace?.medicationSchedules ?? [];
-  const dueSchedules = schedules.filter((schedule) => scheduleState(schedule) === "due");
-  const overdueSchedules = schedules.filter((schedule) => scheduleState(schedule) === "overdue");
-  const upcomingSchedules = schedules.filter((schedule) => scheduleState(schedule) === "upcoming");
+  const dueSchedules = useMemo(() => schedules.filter((s) => scheduleState(s) === "due"), [schedules]);
+  const overdueSchedules = useMemo(() => schedules.filter((s) => scheduleState(s) === "overdue"), [schedules]);
+
   const acknowledgementKeys = new Set(
     (workspace?.acknowledgements ?? []).map((item) => `${item.orderType}:${item.orderId}`)
   );
-  const showPatientContext =
-    currentView === "patients" ||
-    currentView === "ward" ||
-    currentView === "medications" ||
-    currentView === "orders" ||
-    currentView === "vitals" ||
-    currentView === "notes";
 
-  const visiblePatients = useMemo(() => {
+  const filteredPatients = useMemo(() => {
+    let list = patients;
+    if (patientFilter === "ward") list = admittedPatients;
+    if (patientFilter === "outpatient") list = outpatientPatients;
+
     const term = search.trim().toLowerCase();
-    if (!term) return patients;
-    return patients.filter((patient) =>
-      [patient.firstName, patient.lastName, patient.mrn, patient.phone]
+    if (!term) return list;
+
+    return list.filter((p) =>
+      [p.firstName, p.lastName, p.mrn, p.phone, p.currentAdmission?.ward?.name, p.currentAdmission?.bed?.bedNumber]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(term)
     );
-  }, [patients, search]);
+  }, [patients, patientFilter, search, admittedPatients, outpatientPatients]);
 
   const selectedSchedules = useMemo(
     () => schedules.filter((schedule) => schedule.patientId === selectedPatient?.id),
@@ -245,16 +210,16 @@ export default function NurseDashboardPage() {
     [workspace?.doctorOrders.referrals, selectedPatient?.id]
   );
 
-  const workspaceCards = [
-    { title: "Patients", detail: `${patients.length} active`, path: "/nurse/patients", icon: <FiUser /> },
-    { title: "Ward", detail: `${admittedPatients.length} admitted`, path: "/nurse/ward", icon: <FaBed /> },
-    { title: "Medication", detail: `${dueSchedules.length} due`, path: "/nurse/medications", icon: <FaCapsules /> },
-    { title: "Orders", detail: `${workspace?.summary.newDoctorOrders ?? 0} active`, path: "/nurse/orders", icon: <FiFileText /> },
-    { title: "Vitals", detail: `${workspace?.summary.pendingVitals ?? 0} pending`, path: "/nurse/vitals", icon: <FiHeart /> },
-    { title: "Notes", detail: `${workspace?.summary.nursingNotesToday ?? 0} today`, path: "/nurse/notes", icon: <FaNotesMedical /> },
-    { title: "Reminders", detail: `${overdueSchedules.length} overdue`, path: "/nurse/reminders", icon: <FiBell /> },
-  ];
+  const totalOrdersCount = useMemo(
+    () =>
+      selectedPrescriptions.length +
+      selectedLabRequests.length +
+      selectedAdmissionRequests.length +
+      selectedReferrals.length,
+    [selectedPrescriptions, selectedLabRequests, selectedAdmissionRequests, selectedReferrals]
+  );
 
+  // Load Nursing Workspace
   async function loadWorkspace() {
     setLoading(true);
     const result = await fetchNursingWorkspace();
@@ -275,17 +240,9 @@ export default function NurseDashboardPage() {
     void loadWorkspace();
     const interval = window.setInterval(loadWorkspace, 20000);
     return () => window.clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (currentView === "medications") setActiveTool("medications");
-    if (currentView === "orders") setActiveTool("orders");
-    if (currentView === "vitals") setActiveTool("vitals");
-    if (currentView === "notes") setActiveTool("notes");
-    if (currentView === "patients" || currentView === "ward") setActiveTool("summary");
-  }, [currentView]);
-
+  // Audio Alerts on Due / Overdue Meds
   useEffect(() => {
     const alertCount = dueSchedules.length + overdueSchedules.length;
     if (alertCount === 0) {
@@ -299,16 +256,6 @@ export default function NurseDashboardPage() {
 
       lastMedicationAlertRef.current = now;
       playClinicalAlertSound(overdueSchedules.length > 0 ? "critical" : "urgent");
-
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-        new Notification("Medication round reminder", {
-          body:
-            overdueSchedules.length > 0
-              ? `${overdueSchedules.length} medication task(s) overdue.`
-              : `${dueSchedules.length} medication task(s) due now.`,
-          tag: "nurse-medication-round",
-        });
-      }
     }
 
     runMedicationAlert();
@@ -323,17 +270,11 @@ export default function NurseDashboardPage() {
     setNoteForm((current) => ({ ...current, patientId: patient.id }));
   }
 
-  function openPatientWorkspace(patient: NursingPatient, tool: NurseTool = "summary") {
+  function handlePatientCardClick(patient: NursingPatient, tool?: NurseTool) {
     selectPatient(patient);
-    setActiveTool(tool);
+    if (tool) setActiveTool(tool);
     setError(null);
-
-    window.setTimeout(() => {
-      patientWorkspaceRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 80);
+    setMessage(null);
   }
 
   async function openIdCard(patient: NursingPatient) {
@@ -342,33 +283,53 @@ export default function NurseDashboardPage() {
     setShowIdCard(true);
   }
 
+  // Medication Administration
   async function handleMedicationAction(
     schedule: MedicationAdministrationSchedule,
     status: "given" | "held" | "missed" | "refused"
   ) {
     setSaving(true);
     setError(null);
+    setMessage(null);
+
     const result = await administerMedication(schedule.id, {
       status,
-      scheduledFor: schedule.nextDueAt ?? new Date().toISOString(),
-      nurseInitials: nurseInitials(user?.firstName, user?.lastName),
+      nurseInitials: `${user?.firstName?.charAt(0) ?? ""}${user?.lastName?.charAt(0) ?? ""}`.toUpperCase() || "RN",
+      note: status === "held" ? "Dose temporarily held per clinical evaluation" : undefined,
     });
+
     setSaving(false);
 
     if (!result.record) {
-      setError(result.error ?? "Unable to record medication.");
+      setError(result.error ?? "Unable to record medication administration.");
       return;
     }
 
-    setMessage(`Medication marked ${status}.`);
+    setMessage(`Medication marked as ${status}.`);
     await loadWorkspace();
   }
 
+  // Vitals Recording
   async function handleVitalsSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!vitalsForm.patientId) return;
+
     setSaving(true);
     setError(null);
-    const result = await recordVitals(vitalsForm);
+    setMessage(null);
+
+    const result = await recordVitals({
+      patientId: vitalsForm.patientId,
+      temperatureCelsius: vitalsForm.temperatureCelsius || undefined,
+      systolicBp: vitalsForm.systolicBp || undefined,
+      diastolicBp: vitalsForm.diastolicBp || undefined,
+      pulse: vitalsForm.pulse || undefined,
+      respiration: vitalsForm.respiration || undefined,
+      spo2: vitalsForm.spo2 || undefined,
+      painScore: vitalsForm.painScore || undefined,
+      notes: vitalsForm.notes.trim() || undefined,
+    });
+
     setSaving(false);
 
     if (!result.record) {
@@ -376,20 +337,44 @@ export default function NurseDashboardPage() {
       return;
     }
 
-    setMessage("Vitals recorded.");
+    setMessage("Vitals recorded successfully.");
     setVitalsForm({ ...emptyVitalsForm, patientId: vitalsForm.patientId });
     await loadWorkspace();
   }
 
+  // Quick fill normal vitals
+  function fillNormalVitals() {
+    setVitalsForm((current) => ({
+      ...current,
+      temperatureCelsius: "36.8",
+      systolicBp: "120",
+      diastolicBp: "80",
+      pulse: "72",
+      respiration: "18",
+      spo2: "98",
+      painScore: "0",
+    }));
+  }
+
+  // Nursing Note Submit
   async function handleNoteSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!noteForm.patientId || !noteForm.note.trim()) return;
+
     setSaving(true);
     setError(null);
-    const result = await createNursingNote(noteForm);
+    setMessage(null);
+
+    const result = await createNursingNote({
+      patientId: noteForm.patientId,
+      shift: noteForm.shift,
+      note: noteForm.note.trim(),
+    });
+
     setSaving(false);
 
     if (!result.note) {
-      setError(result.error ?? "Unable to save note.");
+      setError(result.error ?? "Unable to save nursing note.");
       return;
     }
 
@@ -398,6 +383,7 @@ export default function NurseDashboardPage() {
     await loadWorkspace();
   }
 
+  // Doctor Order Acknowledge
   async function handleAcknowledge(
     orderType: "prescription" | "lab_request" | "admission_request" | "referral",
     orderId: string,
@@ -412,482 +398,734 @@ export default function NurseDashboardPage() {
       return;
     }
 
-    setMessage("Order acknowledged.");
+    setMessage("Doctor order acknowledged.");
     await loadWorkspace();
   }
 
-  function MedicationCard({ schedule }: { schedule: MedicationAdministrationSchedule }) {
-    const state = scheduleState(schedule);
-    return (
-      <article className={`nurse-med-card ${state}`}>
-        <div>
-          <span className={`nurse-status ${state}`}>{state}</span>
-          <h3>{schedule.medicationName}</h3>
-          <p>{patientName(schedule.patient)} | {schedule.patient.mrn ?? "MRN pending"}</p>
-        </div>
-        <div className="nurse-med-meta">
-          <span><strong>Dose</strong>{schedule.dose}</span>
-          <span><strong>Frequency</strong>{schedule.frequency}</span>
-          <span><strong>Due</strong>{formatDate(schedule.nextDueAt)}</span>
-          <span><strong>Doctor</strong>Dr. {schedule.prescription?.doctor?.firstName ?? ""} {schedule.prescription?.doctor?.lastName ?? ""}</span>
-        </div>
-        {schedule.instructions && <p className="nurse-muted">{schedule.instructions}</p>}
-        <div className="nurse-action-row">
-          <button className="command-btn" type="button" onClick={() => openPatientWorkspace(schedule.patient, "medications")}>
-            Patient
-          </button>
-          <button className="command-btn primary" disabled={saving} type="button" onClick={() => handleMedicationAction(schedule, "given")}>
-            <FiCheck /> Given
-          </button>
-          <button className="command-btn" disabled={saving} type="button" onClick={() => handleMedicationAction(schedule, "held")}>Hold</button>
-          <button className="command-btn danger" disabled={saving} type="button" onClick={() => handleMedicationAction(schedule, "missed")}>
-            <FiX /> Missed
-          </button>
-          <button className="command-btn" disabled={saving} type="button" onClick={() => handleMedicationAction(schedule, "refused")}>Refused</button>
-        </div>
-        {schedule.records.length > 0 && (
-          <small className="nurse-muted">
-            Last: {schedule.records[0].status} by {schedule.records[0].nurseInitials} at {formatDate(schedule.records[0].administeredAt)}
-          </small>
-        )}
-      </article>
-    );
-  }
+  const latestVitals = selectedVitals[0];
 
   return (
     <AdminLayout>
-      <div className="nurse-page">
-        <section className="nurse-command">
-          <div className="doctor-command-title">
-            <span className="doctor-icon">
+      <div className="nurse-page-v2" ref={workspaceTopRef}>
+        {/* Top Nurse Profile & Shift Status Header */}
+        <section className="nurse-profile-header">
+          <div className="nurse-identity-block">
+            <div className="nurse-avatar-badge">
               <FaUserNurse />
-            </span>
+            </div>
             <div>
-              <p className="eyebrow">{meta.label}</p>
-              <h1>{meta.title}</h1>
-              <p>{meta.description}</p>
+              <div className="nurse-name-row">
+                <h1>{user ? `${user.firstName} ${user.lastName}` : "Nurse Desk"}</h1>
+                <span className="nurse-duty-pill">
+                  <span className="live-dot" /> On Duty
+                </span>
+              </div>
+              <p className="nurse-dept-subtitle">Inpatient Ward Rounds • Emergency Triage</p>
             </div>
           </div>
-          <button className="command-btn" type="button" disabled={loading} onClick={loadWorkspace}>
-            <FiRefreshCw /> Refresh
-          </button>
+
+          <div className="nurse-quick-metrics">
+            <button
+              type="button"
+              className="quick-metric-pill"
+              onClick={() => setPatientFilter("ward")}
+              title="Admitted in Wards"
+            >
+              <FaBed className="metric-icon ward" />
+              <span><strong>{admittedPatients.length}</strong> in Ward</span>
+            </button>
+            <button
+              type="button"
+              className={`quick-metric-pill ${dueSchedules.length + overdueSchedules.length > 0 ? "has-alert" : ""}`}
+              onClick={() => setActiveTool("medications")}
+              title="Medication doses due"
+            >
+              <FaCapsules className="metric-icon med" />
+              <span><strong>{dueSchedules.length + overdueSchedules.length}</strong> Due Meds</span>
+            </button>
+            <button
+              type="button"
+              className="nurse-refresh-btn"
+              onClick={loadWorkspace}
+              disabled={loading}
+              title="Refresh desk data"
+            >
+              <FiRefreshCw className={loading ? "spin" : ""} />
+            </button>
+          </div>
         </section>
 
-        {(message || error) && <div className={error ? "doctor-alert error" : "doctor-alert"}>{error ?? message}</div>}
-
-        {currentView === "overview" && (
-          <>
-            <div className="nurse-stats-grid">
-              <article><FiUser /><span>Patients</span><strong>{workspace?.summary.activePatients ?? 0}</strong></article>
-              <article><FaBed /><span>Admitted</span><strong>{workspace?.summary.admittedPatients ?? 0}</strong></article>
-              <article><FaCapsules /><span>Due meds</span><strong>{workspace?.summary.dueMedication ?? 0}</strong></article>
-              <article><FiBell /><span>Overdue</span><strong>{workspace?.summary.overdueMedication ?? 0}</strong></article>
-              <article><FiHeart /><span>Vitals</span><strong>{workspace?.summary.pendingVitals ?? 0}</strong></article>
-              <article><FaNotesMedical /><span>Notes</span><strong>{workspace?.summary.nursingNotesToday ?? 0}</strong></article>
-            </div>
-            <section className="doctor-workspace-grid">
-              {workspaceCards.map((card) => (
-                <Link key={card.path} className="doctor-workspace-card" to={card.path}>
-                  <span>{card.icon}</span>
-                  <strong>{card.title}</strong>
-                  <small>{card.detail}</small>
-                </Link>
-              ))}
-            </section>
-          </>
+        {/* Global Notifications */}
+        {(message || error) && (
+          <div className={`nurse-toast-alert ${error ? "error" : "success"}`}>
+            {error ? <FiAlertTriangle /> : <FiCheckCircle />}
+            <span>{error ?? message}</span>
+            <button type="button" onClick={() => { setMessage(null); setError(null); }}>
+              <FiX />
+            </button>
+          </div>
         )}
 
-        {showPatientContext && (
-          <section className="doctor-patient-strip" ref={patientWorkspaceRef}>
-            <div>
-              <label htmlFor="nurse-patient-search">Find patient</label>
-              <div className="doctor-search-field">
-                <FiSearch />
-                <input
-                  id="nurse-patient-search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Name, MRN, or phone"
-                />
-              </div>
+        {/* TOP PATIENT SELECTOR SECTION (Patient list right at the top!) */}
+        <section className="nurse-patient-selector-section">
+          <div className="patient-selector-header">
+            <div className="filter-chips-row">
+              <button
+                type="button"
+                className={`filter-chip ${patientFilter === "all" ? "active" : ""}`}
+                onClick={() => setPatientFilter("all")}
+              >
+                All Patients ({patients.length})
+              </button>
+              <button
+                type="button"
+                className={`filter-chip ${patientFilter === "ward" ? "active" : ""}`}
+                onClick={() => setPatientFilter("ward")}
+              >
+                <FaBed /> Ward ({admittedPatients.length})
+              </button>
+              <button
+                type="button"
+                className={`filter-chip ${patientFilter === "outpatient" ? "active" : ""}`}
+                onClick={() => setPatientFilter("outpatient")}
+              >
+                Outpatients ({outpatientPatients.length})
+              </button>
             </div>
-            {selectedPatient && (
-              <div className="doctor-selected-patient">
-                <div className="doctor-patient-avatar">{selectedPatient.firstName.charAt(0)}{selectedPatient.lastName.charAt(0)}</div>
-                <div>
-                  <strong>{patientName(selectedPatient)}</strong>
-                  <span>{selectedPatient.mrn ?? "MRN pending"}</span>
-                </div>
-                <small>{wardLabel(selectedPatient)}</small>
+
+            <div className="nurse-search-box">
+              <FiSearch />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search patient, MRN, Bed..."
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
+                  <FiX />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Horizontal / Compact Patient Cards Carousel */}
+          <div className="nurse-patient-carousel">
+            {filteredPatients.length === 0 && (
+              <div className="patient-empty-notice">
+                <FiUser />
+                <p>No patients match filter or search.</p>
               </div>
             )}
-          </section>
-        )}
 
-        {currentView === "patients" && (
-          <section className="nurse-card-list">
-            {visiblePatients.map((patient) => (
-              <article key={patient.id} className="nurse-patient-card">
-                <div>
-                  <span className={patient.isAdmitted ? "nurse-status admitted" : "nurse-status"}>{patient.isAdmitted ? "Admitted" : "Outpatient"}</span>
-                  <h3>{patientName(patient)}</h3>
-                  <p>{patient.mrn ?? "MRN pending"} | {patient.phone || "No phone"}</p>
-                  <small>{patient.allergies ? `Allergy: ${patient.allergies}` : "No allergy recorded"}</small>
-                </div>
-                <div className="nurse-ward-chip">
-                  <FaBed />
-                  <span>{wardLabel(patient)}</span>
-                </div>
-                <div className="nurse-action-row">
-                  <button className="command-btn" type="button" onClick={() => openIdCard(patient)}>
-                  <FiCreditCard /> ID
-                  </button>
-                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "vitals")}>
-                    Vitals
-                  </button>
-                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "notes")}>
-                    Note
-                  </button>
-                  <button className="command-btn primary" type="button" onClick={() => openPatientWorkspace(patient, "summary")}>
-                    Open care
-                  </button>
-                </div>
-              </article>
-            ))}
-          </section>
-        )}
+            {filteredPatients.map((patient) => {
+              const isSelected = selectedPatient?.id === patient.id;
+              const hasDueMed = schedules.some(
+                (s) => s.patientId === patient.id && (scheduleState(s) === "due" || scheduleState(s) === "overdue")
+              );
 
-        {currentView === "ward" && (
-          <section className="nurse-card-list">
-            {admittedPatients.map((patient) => (
-              <article key={patient.id} className="nurse-patient-card">
-                <div>
-                  <span className="nurse-status admitted">Admitted</span>
-                  <h3>{patientName(patient)}</h3>
-                  <p>{patient.mrn ?? "MRN pending"} | {wardLabel(patient)}</p>
-                  <small>{patient.currentAdmission?.diagnosis || patient.currentAdmission?.reason || "No diagnosis recorded"}</small>
-                </div>
-                <div className="nurse-action-row">
-                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "medications")}>
-                    Medication
-                  </button>
-                  <button className="command-btn" type="button" onClick={() => openPatientWorkspace(patient, "vitals")}>
-                    Vitals
-                  </button>
-                  <button className="command-btn primary" type="button" onClick={() => openPatientWorkspace(patient, "notes")}>
-                    Note
-                  </button>
-                </div>
-              </article>
-            ))}
-            {admittedPatients.length === 0 && <p className="nurse-muted">No admitted patients found.</p>}
-          </section>
-        )}
-
-        {showPatientContext && selectedPatient && (
-          <>
-            <section className="doctor-patient-details nurse-patient-overview">
-              <article>
-                <span>Ward</span>
-                <strong>{wardLabel(selectedPatient)}</strong>
-                <small>{selectedPatient.isAdmitted ? "Currently admitted" : "Outpatient"}</small>
-              </article>
-              <article>
-                <span>Contact</span>
-                <strong>{selectedPatient.phone || "No phone"}</strong>
-                <small>{selectedPatient.email || "No email"}</small>
-              </article>
-              <article>
-                <span>Allergy</span>
-                <strong>{selectedPatient.allergies || "No allergy recorded"}</strong>
-                <small>
-                  {[selectedPatient.bloodGroup, selectedPatient.genotype].filter(Boolean).join(" / ") ||
-                    "Blood group not set"}
-                </small>
-              </article>
-              <article>
-                <span>Insurance</span>
-                <strong>{selectedPatient.insuranceProvider?.name || "Self pay"}</strong>
-                <small>{selectedPatient.insurancePolicyNumber || "No policy number"}</small>
-              </article>
-            </section>
-
-            <section className="doctor-panel doctor-workbench">
-              <div className="doctor-panel-heading">
-                <div>
-                  <span>Patient care</span>
-                  <h2>{patientName(selectedPatient)}</h2>
-                </div>
-                <FaUserNurse />
-              </div>
-
-              <div className="doctor-tool-tabs nurse-tool-tabs" role="tablist" aria-label="Nurse actions">
-                {[
-                  { key: "summary", label: "Summary", icon: <FiUser /> },
-                  { key: "medications", label: "Meds", icon: <FaCapsules /> },
-                  { key: "vitals", label: "Vitals", icon: <FiHeart /> },
-                  { key: "notes", label: "Notes", icon: <FaNotesMedical /> },
-                  { key: "orders", label: "Orders", icon: <FiFileText /> },
-                ].map((tool) => (
-                  <button
-                    key={tool.key}
-                    className={activeTool === tool.key ? "active" : ""}
-                    type="button"
-                    onClick={() => setActiveTool(tool.key as NurseTool)}
-                  >
-                    {tool.icon}
-                    {tool.label}
-                  </button>
-                ))}
-              </div>
-
-              {activeTool === "summary" && (
-                <div className="nurse-summary-grid">
-                  <article>
-                    <strong>{selectedSchedules.length}</strong>
-                    <span>Medication schedules</span>
-                  </article>
-                  <article>
-                    <strong>{selectedVitals.length}</strong>
-                    <span>Recent vitals</span>
-                  </article>
-                  <article>
-                    <strong>{selectedNotes.length}</strong>
-                    <span>Nursing notes</span>
-                  </article>
-                  <article>
-                    <strong>
-                      {selectedPrescriptions.length +
-                        selectedLabRequests.length +
-                        selectedAdmissionRequests.length +
-                        selectedReferrals.length}
-                    </strong>
-                    <span>Doctor orders</span>
-                  </article>
-                  <button className="command-btn primary" type="button" onClick={() => openIdCard(selectedPatient)}>
-                    <FiCreditCard />
-                    View ID card
-                  </button>
-                </div>
-              )}
-
-              {activeTool === "medications" && (
-                <div className="nurse-card-list">
-                  {selectedSchedules.map((schedule) => (
-                    <MedicationCard key={schedule.id} schedule={schedule} />
-                  ))}
-                  {selectedSchedules.length === 0 && <p className="nurse-muted">No medication schedule for this patient.</p>}
-                </div>
-              )}
-
-              {activeTool === "vitals" && (
-                <form className="doctor-action-form" onSubmit={handleVitalsSubmit}>
-                  <div className="doctor-form-grid compact">
-                    <label>Temp C<input value={vitalsForm.temperatureCelsius} onChange={(event) => setVitalsForm((current) => ({ ...current, temperatureCelsius: event.target.value }))} /></label>
-                    <label>SYS<input value={vitalsForm.systolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, systolicBp: event.target.value }))} /></label>
-                    <label>DIA<input value={vitalsForm.diastolicBp} onChange={(event) => setVitalsForm((current) => ({ ...current, diastolicBp: event.target.value }))} /></label>
-                    <label>Pulse<input value={vitalsForm.pulse} onChange={(event) => setVitalsForm((current) => ({ ...current, pulse: event.target.value }))} /></label>
-                    <label>Resp<input value={vitalsForm.respiration} onChange={(event) => setVitalsForm((current) => ({ ...current, respiration: event.target.value }))} /></label>
-                    <label>SpO2<input value={vitalsForm.spo2} onChange={(event) => setVitalsForm((current) => ({ ...current, spo2: event.target.value }))} /></label>
-                    <label>Pain<input value={vitalsForm.painScore} onChange={(event) => setVitalsForm((current) => ({ ...current, painScore: event.target.value }))} /></label>
-                  </div>
-                  <label>Notes<textarea rows={3} value={vitalsForm.notes} onChange={(event) => setVitalsForm((current) => ({ ...current, notes: event.target.value }))} /></label>
-                  <button className="command-btn primary" disabled={saving || !vitalsForm.patientId} type="submit">Save vitals</button>
-
-                  <div className="nurse-card-list">
-                    {selectedVitals.slice(0, 4).map((record) => (
-                      <article key={record.id} className="doctor-record-card slim">
-                        <div>
-                          <strong>{formatDate(record.recordedAt)}</strong>
-                          <span>
-                            BP {record.systolicBp ?? "-"} / {record.diastolicBp ?? "-"} | Pulse {record.pulse ?? "-"} | SpO2 {record.spo2 ?? "-"}
-                          </span>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </form>
-              )}
-
-              {activeTool === "notes" && (
-                <form className="doctor-action-form" onSubmit={handleNoteSubmit}>
-                  <label>Shift<select value={noteForm.shift} onChange={(event) => setNoteForm((current) => ({ ...current, shift: event.target.value as any }))}><option value="general">General</option><option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="night">Night</option></select></label>
-                  <label>Note<textarea rows={5} value={noteForm.note} onChange={(event) => setNoteForm((current) => ({ ...current, note: event.target.value }))} /></label>
-                  <button className="command-btn primary" disabled={saving || !noteForm.patientId} type="submit">Save note</button>
-
-                  <div className="nurse-card-list">
-                    {selectedNotes.slice(0, 5).map((note) => (
-                      <article key={note.id} className="doctor-record-card">
-                        <div>
-                          <strong>{note.shift}</strong>
-                          <span>{formatDate(note.recordedAt)}</span>
-                        </div>
-                        <p>{note.note}</p>
-                      </article>
-                    ))}
-                    {selectedNotes.length === 0 && <p className="nurse-muted">No nursing notes for this patient yet.</p>}
-                  </div>
-                </form>
-              )}
-
-              {activeTool === "orders" && (
-                <div className="nurse-card-list">
-                  {selectedPrescriptions.map((order) => (
-                    <article key={order.id} className="nurse-patient-card nurse-order-card">
-                      <div>
-                        <span className="nurse-status">Prescription</span>
-                        <h3>{order.prescriptionNumber}</h3>
-                        <p>{order.items?.map((item: any) => item.medicationName).join(", ") || "No items listed"}</p>
-                      </div>
-                      <button
-                        className="command-btn primary"
-                        disabled={saving || acknowledgementKeys.has(`prescription:${order.id}`)}
-                        type="button"
-                        onClick={() => handleAcknowledge("prescription", order.id, order.patientId)}
-                      >
-                        {acknowledgementKeys.has(`prescription:${order.id}`) ? "Acknowledged" : "Acknowledge"}
-                      </button>
-                    </article>
-                  ))}
-
-                  {selectedLabRequests.map((order) => (
-                    <article key={order.id} className="nurse-patient-card nurse-order-card">
-                      <div>
-                        <span className="nurse-status">Lab</span>
-                        <h3>{order.template?.name ?? "Lab request"}</h3>
-                        <p>{order.requestNumber} | {order.status?.replaceAll("_", " ")}</p>
-                      </div>
-                      <button
-                        className="command-btn primary"
-                        disabled={saving || acknowledgementKeys.has(`lab_request:${order.id}`)}
-                        type="button"
-                        onClick={() => handleAcknowledge("lab_request", order.id, order.patientId)}
-                      >
-                        {acknowledgementKeys.has(`lab_request:${order.id}`) ? "Acknowledged" : "Acknowledge"}
-                      </button>
-                    </article>
-                  ))}
-
-                  {selectedAdmissionRequests.map((order) => (
-                    <article key={order.id} className="nurse-patient-card nurse-order-card">
-                      <div>
-                        <span className="nurse-status admitted">Admission</span>
-                        <h3>{order.requestNumber}</h3>
-                        <p>{order.ward?.name ?? "Ward pending"} | {order.reason}</p>
-                      </div>
-                      <button
-                        className="command-btn primary"
-                        disabled={saving || acknowledgementKeys.has(`admission_request:${order.id}`)}
-                        type="button"
-                        onClick={() => handleAcknowledge("admission_request", order.id, order.patientId)}
-                      >
-                        {acknowledgementKeys.has(`admission_request:${order.id}`) ? "Acknowledged" : "Acknowledge"}
-                      </button>
-                    </article>
-                  ))}
-
-                  {selectedReferrals.map((order) => (
-                    <article key={order.id} className="nurse-patient-card nurse-order-card">
-                      <div>
-                        <span className="nurse-status">Referral</span>
-                        <h3>{order.destinationFacility}</h3>
-                        <p>{order.reason}</p>
-                      </div>
-                      <button
-                        className="command-btn primary"
-                        disabled={saving || acknowledgementKeys.has(`referral:${order.id}`)}
-                        type="button"
-                        onClick={() => handleAcknowledge("referral", order.id, order.patientId)}
-                      >
-                        {acknowledgementKeys.has(`referral:${order.id}`) ? "Acknowledged" : "Acknowledge"}
-                      </button>
-                    </article>
-                  ))}
-
-                  {selectedPrescriptions.length +
-                    selectedLabRequests.length +
-                    selectedAdmissionRequests.length +
-                    selectedReferrals.length ===
-                    0 && <p className="nurse-muted">No active doctor orders for this patient.</p>}
-                </div>
-              )}
-            </section>
-          </>
-        )}
-
-        {currentView === "medications" && (
-          <section className="nurse-med-layout">
-            <div className="doctor-panel">
-              <div className="doctor-panel-heading"><div><span>Now</span><h2>Due and overdue</h2></div><FiClock /></div>
-              <div className="nurse-card-list">
-                {[...overdueSchedules, ...dueSchedules].map((schedule) => <MedicationCard key={schedule.id} schedule={schedule} />)}
-                {overdueSchedules.length + dueSchedules.length === 0 && <p className="nurse-muted">No medication due now.</p>}
-              </div>
-            </div>
-            <div className="doctor-panel">
-              <div className="doctor-panel-heading"><div><span>Later</span><h2>Upcoming</h2></div><FiBell /></div>
-              <div className="nurse-card-list">
-                {upcomingSchedules.slice(0, 8).map((schedule) => <MedicationCard key={schedule.id} schedule={schedule} />)}
-                {upcomingSchedules.length === 0 && <p className="nurse-muted">No upcoming medication rounds.</p>}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {currentView === "orders" && (
-          <section className="nurse-card-list">
-            {(workspace?.doctorOrders.prescriptions ?? []).map((order) => (
-              <article key={order.id} className="nurse-patient-card">
-                <div>
-                  <span className="nurse-status">Prescription</span>
-                  <h3>{patientName(order.patient)}</h3>
-                  <p>{order.prescriptionNumber} | Dr. {order.doctor?.firstName} {order.doctor?.lastName}</p>
-                  <small>{order.items?.map((item: any) => item.medicationName).join(", ")}</small>
-                </div>
+              return (
                 <button
-                  className="command-btn primary"
-                  disabled={saving || acknowledgementKeys.has(`prescription:${order.id}`)}
+                  key={patient.id}
                   type="button"
-                  onClick={() => handleAcknowledge("prescription", order.id, order.patientId)}
+                  className={`nurse-patient-pill-card ${isSelected ? "selected" : ""} ${patient.isAdmitted ? "ward-patient" : ""}`}
+                  onClick={() => handlePatientCardClick(patient)}
                 >
-                  {acknowledgementKeys.has(`prescription:${order.id}`) ? "Acknowledged" : "Acknowledge"}
+                  <div className="patient-pill-avatar">
+                    {getInitials(patient.firstName, patient.lastName)}
+                  </div>
+                  <div className="patient-pill-info">
+                    <strong className="patient-pill-name">{patientName(patient)}</strong>
+                    <div className="patient-pill-tags">
+                      <span className="patient-mrn">{patient.mrn || "No MRN"}</span>
+                      <span className={`patient-loc ${patient.isAdmitted ? "admitted" : "outpatient"}`}>
+                        {patient.isAdmitted ? wardLabel(patient) : "Outpatient"}
+                      </span>
+                    </div>
+                  </div>
+                  {hasDueMed && <span className="patient-due-indicator" title="Medication due" />}
                 </button>
-              </article>
-            ))}
-          </section>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ACTIVE PATIENT WORKSPACE */}
+        {selectedPatient ? (
+          <main className="nurse-active-patient-workspace">
+            {/* Patient Spotlight Hero Card */}
+            <div className="patient-spotlight-card">
+              <div className="patient-spotlight-main">
+                <div className="spotlight-avatar">
+                  {getInitials(selectedPatient.firstName, selectedPatient.lastName)}
+                </div>
+                <div className="spotlight-details">
+                  <div className="spotlight-name-line">
+                    <h2>{patientName(selectedPatient)}</h2>
+                    <span className={`admission-badge ${selectedPatient.isAdmitted ? "admitted" : "outpatient"}`}>
+                      {selectedPatient.isAdmitted ? "🏥 Admitted" : "🚶 Outpatient"}
+                    </span>
+                  </div>
+                  <div className="spotlight-meta-grid">
+                    <span><strong>MRN:</strong> {selectedPatient.mrn || "Pending"}</span>
+                    <span><strong>Location:</strong> {wardLabel(selectedPatient)}</span>
+                    {selectedPatient.bloodGroup && <span><strong>Blood:</strong> {selectedPatient.bloodGroup}</span>}
+                    {selectedPatient.allergies && (
+                      <span className="allergy-alert-pill">
+                        <FiAlertTriangle /> {selectedPatient.allergies}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Latest Vitals Snapshot Bar */}
+              {latestVitals && (
+                <div className="spotlight-vitals-snapshot">
+                  <span className="snapshot-label">Latest:</span>
+                  <span className="snapshot-item">BP: <strong>{latestVitals.systolicBp ?? "-"}/{latestVitals.diastolicBp ?? "-"}</strong></span>
+                  <span className="snapshot-item">Pulse: <strong>{latestVitals.pulse ?? "-"} bpm</strong></span>
+                  <span className="snapshot-item">Temp: <strong>{latestVitals.temperatureCelsius ?? "-"}°C</strong></span>
+                  <span className="snapshot-item">SpO2: <strong>{latestVitals.spo2 ?? "-"}%</strong></span>
+                  <span className="snapshot-time">{formatTime(latestVitals.recordedAt)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* BIG 1-TAP ACTION BUTTONS (Clean, Touch-Friendly Action Hub) */}
+            <nav className="nurse-action-hub-buttons" aria-label="Nurse patient tools">
+              <button
+                type="button"
+                className={`nurse-hub-action-btn vitals-btn ${activeTool === "vitals" ? "active" : ""}`}
+                onClick={() => setActiveTool("vitals")}
+              >
+                <FiHeart className="hub-btn-icon" />
+                <div>
+                  <strong>Record Vitals</strong>
+                  <small>{selectedVitals.length} recorded</small>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={`nurse-hub-action-btn meds-btn ${activeTool === "medications" ? "active" : ""} ${
+                  selectedSchedules.some((s) => scheduleState(s) === "due" || scheduleState(s) === "overdue")
+                    ? "has-due"
+                    : ""
+                }`}
+                onClick={() => setActiveTool("medications")}
+              >
+                <FaCapsules className="hub-btn-icon" />
+                <div>
+                  <strong>Medications</strong>
+                  <small>{selectedSchedules.length} schedules</small>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={`nurse-hub-action-btn notes-btn ${activeTool === "notes" ? "active" : ""}`}
+                onClick={() => setActiveTool("notes")}
+              >
+                <FaNotesMedical className="hub-btn-icon" />
+                <div>
+                  <strong>Shift Notes</strong>
+                  <small>{selectedNotes.length} notes</small>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={`nurse-hub-action-btn orders-btn ${activeTool === "orders" ? "active" : ""}`}
+                onClick={() => setActiveTool("orders")}
+              >
+                <FiFileText className="hub-btn-icon" />
+                <div>
+                  <strong>Doctor Orders</strong>
+                  <small>{totalOrdersCount} active</small>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="nurse-hub-action-btn id-btn"
+                onClick={() => openIdCard(selectedPatient)}
+                title="Print Patient ID"
+              >
+                <FiCreditCard className="hub-btn-icon" />
+                <div>
+                  <strong>ID Card</strong>
+                  <small>QR & Badge</small>
+                </div>
+              </button>
+            </nav>
+
+            {/* ACTION TOOL WORKBENCH CONTENT */}
+            <section className="nurse-tool-workbench">
+              {/* 1. VITALS OBSERVATION TOOL */}
+              {activeTool === "vitals" && (
+                <div className="nurse-workbench-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h3>Record Patient Observations</h3>
+                      <p>Enter current vital signs. Abnormal values are highlighted automatically.</p>
+                    </div>
+                    <button type="button" className="quick-fill-btn" onClick={fillNormalVitals}>
+                      ⚡ Normal Defaults
+                    </button>
+                  </div>
+
+                  <form className="nurse-vitals-form" onSubmit={handleVitalsSubmit}>
+                    <div className="vitals-inputs-grid">
+                      <label className="vital-input-card">
+                        <span className="vital-title">🌡️ Temperature (°C)</span>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="36.8"
+                          value={vitalsForm.temperatureCelsius}
+                          onChange={(e) => setVitalsForm((c) => ({ ...c, temperatureCelsius: e.target.value }))}
+                        />
+                        {Number(vitalsForm.temperatureCelsius) >= 38 && (
+                          <span className="vital-flag-pill hot">🔥 Fever Alert</span>
+                        )}
+                      </label>
+
+                      <label className="vital-input-card">
+                        <span className="vital-title">💓 Blood Pressure (SYS/DIA)</span>
+                        <div className="bp-input-split">
+                          <input
+                            type="number"
+                            placeholder="120"
+                            value={vitalsForm.systolicBp}
+                            onChange={(e) => setVitalsForm((c) => ({ ...c, systolicBp: e.target.value }))}
+                          />
+                          <span className="bp-slash">/</span>
+                          <input
+                            type="number"
+                            placeholder="80"
+                            value={vitalsForm.diastolicBp}
+                            onChange={(e) => setVitalsForm((c) => ({ ...c, diastolicBp: e.target.value }))}
+                          />
+                        </div>
+                        {Number(vitalsForm.systolicBp) >= 140 && (
+                          <span className="vital-flag-pill hot">⚠️ High BP</span>
+                        )}
+                      </label>
+
+                      <label className="vital-input-card">
+                        <span className="vital-title">❤️ Pulse Rate (bpm)</span>
+                        <input
+                          type="number"
+                          placeholder="72"
+                          value={vitalsForm.pulse}
+                          onChange={(e) => setVitalsForm((c) => ({ ...c, pulse: e.target.value }))}
+                        />
+                      </label>
+
+                      <label className="vital-input-card">
+                        <span className="vital-title">🫁 SpO2 Oxygen (%)</span>
+                        <input
+                          type="number"
+                          placeholder="98"
+                          value={vitalsForm.spo2}
+                          onChange={(e) => setVitalsForm((c) => ({ ...c, spo2: e.target.value }))}
+                        />
+                        {Number(vitalsForm.spo2) > 0 && Number(vitalsForm.spo2) < 95 && (
+                          <span className="vital-flag-pill hot">⚠️ Low SpO2</span>
+                        )}
+                      </label>
+
+                      <label className="vital-input-card">
+                        <span className="vital-title">💨 Respiration (/min)</span>
+                        <input
+                          type="number"
+                          placeholder="18"
+                          value={vitalsForm.respiration}
+                          onChange={(e) => setVitalsForm((c) => ({ ...c, respiration: e.target.value }))}
+                        />
+                      </label>
+
+                      <label className="vital-input-card">
+                        <span className="vital-title">⚡ Pain Score (0 - 10)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          placeholder="0"
+                          value={vitalsForm.painScore}
+                          onChange={(e) => setVitalsForm((c) => ({ ...c, painScore: e.target.value }))}
+                        />
+                      </label>
+                    </div>
+
+                    <label className="vitals-note-field">
+                      <span>Clinical Observation Note</span>
+                      <textarea
+                        rows={2}
+                        placeholder="Optional clinical observation notes..."
+                        value={vitalsForm.notes}
+                        onChange={(e) => setVitalsForm((c) => ({ ...c, notes: e.target.value }))}
+                      />
+                    </label>
+
+                    <button
+                      type="submit"
+                      className="nurse-submit-cta"
+                      disabled={saving || !vitalsForm.patientId}
+                    >
+                      <FiHeart />
+                      {saving ? "Saving Observation..." : "Save Vitals Observation"}
+                    </button>
+                  </form>
+
+                  {/* Vitals History List */}
+                  <div className="vitals-history-block">
+                    <h4>Recent Vitals History</h4>
+                    {selectedVitals.length === 0 && (
+                      <p className="empty-history-text">No previous vitals recorded for this patient.</p>
+                    )}
+                    <div className="vitals-timeline-list">
+                      {selectedVitals.map((v) => (
+                        <div key={v.id} className="vitals-history-card">
+                          <div className="vitals-history-time">
+                            <strong>{formatDate(v.recordedAt)}</strong>
+                            <small>{formatTime(v.recordedAt)}</small>
+                          </div>
+                          <div className="vitals-history-data">
+                            <span>BP: <strong>{v.systolicBp ?? "-"}/{v.diastolicBp ?? "-"}</strong></span>
+                            <span>Pulse: <strong>{v.pulse ?? "-"} bpm</strong></span>
+                            <span>Temp: <strong>{v.temperatureCelsius ?? "-"}°C</strong></span>
+                            <span>SpO2: <strong>{v.spo2 ?? "-"}%</strong></span>
+                            {v.painScore !== null && v.painScore !== undefined && (
+                              <span>Pain: <strong>{v.painScore}/10</strong></span>
+                            )}
+                          </div>
+                          {v.notes && <p className="vitals-history-note">"{v.notes}"</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. MEDICATION ROUNDS (MAR) TOOL */}
+              {activeTool === "medications" && (
+                <div className="nurse-workbench-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h3>Medication Administration Record (MAR)</h3>
+                      <p>Check due medications and log dose administrations.</p>
+                    </div>
+                  </div>
+
+                  {selectedSchedules.length === 0 ? (
+                    <div className="empty-meds-box">
+                      <FaCapsules />
+                      <p>No active prescription schedules for this patient.</p>
+                    </div>
+                  ) : (
+                    <div className="nurse-mar-cards-list">
+                      {selectedSchedules.map((schedule) => {
+                        const state = scheduleState(schedule);
+
+                        return (
+                          <article key={schedule.id} className={`nurse-mar-card ${state}`}>
+                            <div className="mar-card-top">
+                              <div>
+                                <span className={`mar-status-tag ${state}`}>{state.toUpperCase()}</span>
+                                <h4>{schedule.medicationName}</h4>
+                                <p className="mar-dosage-line">
+                                  <strong>Dose:</strong> {schedule.dose} • <strong>Freq:</strong> {schedule.frequency}
+                                </p>
+                              </div>
+                              <div className="mar-due-time">
+                                <span>Next Due:</span>
+                                <strong>{formatTime(schedule.nextDueAt) || "Completed"}</strong>
+                              </div>
+                            </div>
+
+                            {schedule.instructions && (
+                              <p className="mar-instructions">📌 {schedule.instructions}</p>
+                            )}
+
+                            {/* Large Touch-Target Action Buttons */}
+                            <div className="mar-action-buttons-row">
+                              <button
+                                type="button"
+                                className="mar-action-btn given"
+                                disabled={saving}
+                                onClick={() => handleMedicationAction(schedule, "given")}
+                              >
+                                <FiCheck /> Given (Now)
+                              </button>
+                              <button
+                                type="button"
+                                className="mar-action-btn hold"
+                                disabled={saving}
+                                onClick={() => handleMedicationAction(schedule, "held")}
+                              >
+                                Hold
+                              </button>
+                              <button
+                                type="button"
+                                className="mar-action-btn missed"
+                                disabled={saving}
+                                onClick={() => handleMedicationAction(schedule, "missed")}
+                              >
+                                Missed
+                              </button>
+                              <button
+                                type="button"
+                                className="mar-action-btn refused"
+                                disabled={saving}
+                                onClick={() => handleMedicationAction(schedule, "refused")}
+                              >
+                                Refused
+                              </button>
+                            </div>
+
+                            {schedule.records.length > 0 && (
+                              <small className="mar-last-record">
+                                Last logged: {schedule.records[0].status.toUpperCase()} at {formatDate(schedule.records[0].administeredAt)}
+                              </small>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 3. SHIFT NOTES TOOL */}
+              {activeTool === "notes" && (
+                <div className="nurse-workbench-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h3>Nursing Shift Notes & Handover</h3>
+                      <p>Log observations, patient condition, and ward handover notes.</p>
+                    </div>
+                  </div>
+
+                  <form className="nurse-note-form" onSubmit={handleNoteSubmit}>
+                    <div className="shift-selector-row">
+                      <span className="shift-label">Shift:</span>
+                      {(["morning", "afternoon", "night", "general"] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          className={`shift-pill ${noteForm.shift === s ? "active" : ""}`}
+                          onClick={() => setNoteForm((c) => ({ ...c, shift: s }))}
+                        >
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Quick Phrases */}
+                    <div className="quick-phrases-box">
+                      <span className="phrases-label">⚡ 1-Tap Quick Note:</span>
+                      <div className="phrases-pills">
+                        {quickNotePhrases.map((phrase, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="phrase-chip"
+                            onClick={() =>
+                              setNoteForm((c) => ({
+                                ...c,
+                                note: c.note ? `${c.note} ${phrase}` : phrase,
+                              }))
+                            }
+                          >
+                            + {phrase}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <label className="note-textarea-field">
+                      <span>Nursing Note Content</span>
+                      <textarea
+                        rows={4}
+                        placeholder="Write detailed patient care notes, reactions, or handovers..."
+                        value={noteForm.note}
+                        onChange={(e) => setNoteForm((c) => ({ ...c, note: e.target.value }))}
+                      />
+                    </label>
+
+                    <button
+                      type="submit"
+                      className="nurse-submit-cta"
+                      disabled={saving || !noteForm.patientId || !noteForm.note.trim()}
+                    >
+                      <FaNotesMedical />
+                      {saving ? "Saving Note..." : "Save Nursing Note"}
+                    </button>
+                  </form>
+
+                  {/* Notes Timeline */}
+                  <div className="notes-timeline-block">
+                    <h4>Previous Shift Notes</h4>
+                    {selectedNotes.length === 0 && (
+                      <p className="empty-history-text">No nursing notes logged for this patient yet.</p>
+                    )}
+                    <div className="notes-list">
+                      {selectedNotes.map((n) => (
+                        <article key={n.id} className="nurse-note-card">
+                          <div className="note-card-header">
+                            <span className="shift-badge">{n.shift.toUpperCase()}</span>
+                            <span className="note-date">{formatDate(n.recordedAt)}</span>
+                          </div>
+                          <p className="note-text">{n.note}</p>
+                          <small className="note-author">Logged by {n.recordedBy?.firstName ?? "Nurse"}</small>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. DOCTOR ORDERS TOOL */}
+              {activeTool === "orders" && (
+                <div className="nurse-workbench-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h3>Doctor Orders & Directives</h3>
+                      <p>Review and acknowledge prescriptions, lab orders, and admission directives.</p>
+                    </div>
+                  </div>
+
+                  {totalOrdersCount === 0 ? (
+                    <div className="empty-orders-box">
+                      <FiFileText />
+                      <p>No active doctor directives found for this patient.</p>
+                    </div>
+                  ) : (
+                    <div className="orders-cards-list">
+                      {selectedPrescriptions.map((order) => {
+                        const isAck = acknowledgementKeys.has(`prescription:${order.id}`);
+                        return (
+                          <article key={order.id} className="nurse-order-card">
+                            <div className="order-content">
+                              <span className="order-type-pill prescription">Prescription</span>
+                              <h4>{order.prescriptionNumber}</h4>
+                              <p>{order.items?.map((i: any) => `${i.medicationName} (${i.dosage})`).join(", ")}</p>
+                              <small>Ordered by Dr. {order.doctor?.firstName} {order.doctor?.lastName}</small>
+                            </div>
+                            <button
+                              type="button"
+                              className={`order-ack-btn ${isAck ? "acknowledged" : ""}`}
+                              disabled={saving || isAck}
+                              onClick={() => handleAcknowledge("prescription", order.id, order.patientId)}
+                            >
+                              <FiCheck /> {isAck ? "Acknowledged" : "Acknowledge"}
+                            </button>
+                          </article>
+                        );
+                      })}
+
+                      {selectedLabRequests.map((order: any) => {
+                        const isAck = acknowledgementKeys.has(`lab_request:${order.id}`);
+                        return (
+                          <article key={order.id} className="nurse-order-card">
+                            <div className="order-content">
+                              <span className="order-type-pill lab">Lab Investigation</span>
+                              <h4>{order.testType || order.testName || "Lab Requisition"}</h4>
+                              <p>{order.notes || "Routine sample collection requested"}</p>
+                            </div>
+                            <button
+                              type="button"
+                              className={`order-ack-btn ${isAck ? "acknowledged" : ""}`}
+                              disabled={saving || isAck}
+                              onClick={() => handleAcknowledge("lab_request", order.id, order.patientId)}
+                            >
+                              <FiCheck /> {isAck ? "Acknowledged" : "Acknowledge"}
+                            </button>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 5. SUMMARY TOOL */}
+              {activeTool === "summary" && (
+                <div className="nurse-workbench-panel">
+                  <div className="panel-header">
+                    <div>
+                      <h3>Patient Care Overview</h3>
+                      <p>Demographics, emergency contacts, and admission records.</p>
+                    </div>
+                  </div>
+
+                  <div className="nurse-summary-details-grid">
+                    <div className="summary-info-card">
+                      <span>Full Name</span>
+                      <strong>{patientName(selectedPatient)}</strong>
+                    </div>
+                    <div className="summary-info-card">
+                      <span>MRN</span>
+                      <strong>{selectedPatient.mrn || "Pending"}</strong>
+                    </div>
+                    <div className="summary-info-card">
+                      <span>Ward & Bed</span>
+                      <strong>{wardLabel(selectedPatient)}</strong>
+                    </div>
+                    <div className="summary-info-card">
+                      <span>Contact Phone</span>
+                      <strong>
+                        {selectedPatient.phone ? (
+                          <a href={`tel:${selectedPatient.phone}`} className="phone-dial-link">
+                            <FiPhone /> {selectedPatient.phone}
+                          </a>
+                        ) : (
+                          "No phone"
+                        )}
+                      </strong>
+                    </div>
+                    <div className="summary-info-card">
+                      <span>Insurance Provider</span>
+                      <strong>{selectedPatient.insuranceProvider?.name || "Self Pay"}</strong>
+                    </div>
+                    <div className="summary-info-card">
+                      <span>Emergency Contact</span>
+                      <strong>
+                        {selectedPatient.emergencyContactName || "Not set"}{" "}
+                        {selectedPatient.emergencyContactPhone && `(${selectedPatient.emergencyContactPhone})`}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          </main>
+        ) : (
+          <div className="nurse-no-patient-state">
+            <FiUser />
+            <h3>No Patient Selected</h3>
+            <p>Select a patient from the top list to record observations or manage medications.</p>
+          </div>
         )}
 
-        {currentView === "reminders" && (
-          <section className="nurse-med-layout">
-            <div className="doctor-panel">
-              <div className="doctor-panel-heading"><div><span>Alerts</span><h2>Medication reminders</h2></div><FiBell /></div>
-              <div className="nurse-card-list">
-                {[...overdueSchedules, ...dueSchedules, ...upcomingSchedules.slice(0, 6)].map((schedule) => <MedicationCard key={schedule.id} schedule={schedule} />)}
-              </div>
-            </div>
-            <div className="doctor-panel">
-              <div className="doctor-panel-heading"><div><span>Recent</span><h2>Nursing notes</h2></div><FiFileText /></div>
-              <div className="nurse-card-list">
-                {(workspace?.recentNotes ?? []).slice(0, 8).map((note) => (
-                  <article key={note.id} className="doctor-record-card slim">
-                    <div><strong>{patientName(note.patient)}</strong><span>{formatDate(note.recordedAt)} | {note.shift}</span></div>
-                    <p>{note.note}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
+        {/* Patient ID Card Modal */}
         {showIdCard && selectedPatient && (
-          <div className="nurse-id-modal">
-            <div className="nurse-id-dialog">
-              <div className="doctor-panel-heading">
-                <div><span>ID Card</span><h2>{patientName(selectedPatient)}</h2></div>
-                <button className="icon-btn" type="button" onClick={() => setShowIdCard(false)}><FiX /></button>
+          <div className="nurse-id-modal-backdrop" onClick={() => setShowIdCard(false)}>
+            <div className="nurse-id-modal-box" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-top">
+                <h3>Patient ID Card</h3>
+                <button type="button" onClick={() => setShowIdCard(false)} aria-label="Close ID card">
+                  <FiX />
+                </button>
               </div>
-              <PatientIdCard patient={selectedPatient} patientQr={patientQr} />
-              <button className="command-btn primary" type="button" onClick={() => window.print()}><FiPrinter /> Print</button>
+              <PatientIdCard
+                patient={selectedPatient}
+                patientQr={patientQr}
+              />
+              <button type="button" className="print-modal-btn" onClick={() => window.print()}>
+                <FiPrinter /> Print ID Card
+              </button>
             </div>
           </div>
         )}
