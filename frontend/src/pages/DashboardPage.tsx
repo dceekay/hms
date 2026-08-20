@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import AdminLayout from "../layouts/AdminLayout";
 import StatCard from "../components/dashboard/StatCard";
+import FrontDeskWorkspace from "../components/dashboard/FrontDeskWorkspace";
 import { useAuthStore } from "../store/authStore";
 import { queryKeys } from "../lib/queryClient";
 import {
@@ -759,122 +760,15 @@ export default function DashboardPage() {
 
         {isFrontDeskDashboard && (
           <motion.section
-            className="frontdesk-workspace-grid"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
           >
-            <article className="dashboard-panel frontdesk-doctors-panel">
-              <div className="panel-title">
-                <div>
-                  <h2>Doctors Available</h2>
-                  <p>Choose a doctor before scheduling a visit.</p>
-                </div>
-                <FiActivity />
-              </div>
-
-              <div className="doctor-availability-list">
-                {(overview?.users.availableDoctors ?? []).slice(0, 6).map((doctor) => (
-                  <div className="doctor-availability-card" key={doctor.id}>
-                    <span className="doctor-presence-dot" />
-                    <div>
-                      <strong>{doctor.name}</strong>
-                      <small>{doctor.specialty || doctor.serviceArea || "General consultation"}</small>
-                    </div>
-                    <Link to="/appointments" className="mini-action-link">
-                      Schedule
-                    </Link>
-                  </div>
-                ))}
-
-                {!overviewLoading && (overview?.users.availableDoctors.length ?? 0) === 0 && (
-                  <p className="muted-text">No active doctor account is available yet.</p>
-                )}
-              </div>
-            </article>
-
-            <article className="dashboard-panel frontdesk-actions-panel">
-              <div className="panel-title">
-                <div>
-                  <h2>Desk Actions</h2>
-                  <p>Fast actions for reception and cashier flow.</p>
-                </div>
-                <FiCheckCircle />
-              </div>
-
-              <div className="frontdesk-action-grid">
-                {(permissions.includes("patients.create") ||
-                  permissions.includes("patients.investigation.create")) && (
-                  <Link className="frontdesk-action-card primary" to="/register-patient">
-                    <FiUserPlus />
-                    <span>
-                      <strong>Register patient</strong>
-                      <small>Create profile and ID card</small>
-                    </span>
-                  </Link>
-                )}
-                <Link className="frontdesk-action-card" to="/patients">
-                  <FiUsers />
-                  <span>
-                    <strong>Find patient</strong>
-                    <small>Search MRN, name, or phone</small>
-                  </span>
-                </Link>
-                <Link className="frontdesk-action-card" to="/appointments">
-                  <FiCalendar />
-                  <span>
-                    <strong>Schedule visit</strong>
-                    <small>Book with an available doctor</small>
-                  </span>
-                </Link>
-                {permissions.includes("billing.read") && (
-                  <Link className="frontdesk-action-card" to="/billing">
-                    <FiCreditCard />
-                    <span>
-                      <strong>Receive bill</strong>
-                      <small>Open billing queue</small>
-                    </span>
-                  </Link>
-                )}
-              </div>
-
-              <div className="frontdesk-count-strip">
-                <span>
-                  <small>Active patients</small>
-                  <strong>{formatNumber(overview?.patients.active)}</strong>
-                </span>
-                <span>
-                  <small>Pending bills</small>
-                  <strong>{formatNumber(overview?.billing.pendingBills)}</strong>
-                </span>
-                <span>
-                  <small>New today</small>
-                  <strong>{formatNumber(overview?.patients.registeredToday)}</strong>
-                </span>
-              </div>
-            </article>
-
-            <article className="dashboard-panel frontdesk-flow-panel">
-              <div className="panel-title">
-                <div>
-                  <h2>Simple Visit Flow</h2>
-                  <p>Keep every patient handoff clear.</p>
-                </div>
-                <FiClock />
-              </div>
-
-              <div className="frontdesk-step-list">
-                {dashboard.tasks.map((task) => (
-                  <div className="frontdesk-step" key={task.label}>
-                    <span>{task.time}</span>
-                    <div>
-                      <strong>{task.label}</strong>
-                      <small>{task.detail}</small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
+            <FrontDeskWorkspace
+              overview={overview}
+              overviewLoading={overviewLoading}
+              permissions={permissions}
+            />
           </motion.section>
         )}
 

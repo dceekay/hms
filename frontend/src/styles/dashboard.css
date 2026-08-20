@@ -5968,74 +5968,6 @@
   min-width: 0;
 }
 
-.doctor-field-container {
-  display: grid;
-  gap: 8px;
-}
-
-.doctor-availability-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.doctor-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.doctor-status-pill.online {
-  background: rgba(16, 185, 129, 0.16);
-  color: #34d399;
-  border-color: rgba(52, 211, 153, 0.35);
-}
-
-.doctor-status-pill.offline {
-  background: rgba(148, 163, 184, 0.12);
-  color: #94a3b8;
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
-.doctor-filter-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: #cbd5e1;
-  cursor: pointer;
-}
-
-.doctor-filter-toggle input[type="checkbox"] {
-  accent-color: #0284c7;
-  cursor: pointer;
-}
-
-.doctor-field-hint {
-  margin: 0;
-  font-size: 0.78rem;
-  color: #fbbf24;
-  line-height: 1.4;
-}
-
-.inline-link-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #38bdf8;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: inherit;
-  font-weight: 600;
-}
-
 .appointments-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px;
@@ -6654,6 +6586,153 @@
   }
 }
 
+
+/* Standard CR80 ID card preview: 85.6mm x 54mm */
+:root {
+  --id-card-width: 85.6mm;
+  --id-card-height: 54mm;
+}
+
+.patient-id-print-area {
+  justify-items: center;
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+.patient-id-card,
+.employee-id-card {
+  width: var(--id-card-width);
+  height: var(--id-card-height);
+  max-width: none;
+  aspect-ratio: auto;
+  gap: 1.35mm;
+  padding: 2.4mm;
+  border-radius: 2.4mm;
+}
+
+.patient-id-brand {
+  grid-template-columns: 8.5mm minmax(0, 1fr) auto;
+  gap: 1.7mm;
+  padding: 1.3mm 1.7mm;
+  border-radius: 1.8mm;
+}
+
+.patient-id-brand img {
+  width: 8.2mm;
+  height: 8.2mm;
+  padding: 0.7mm;
+  border-radius: 1.5mm;
+}
+
+.patient-id-brand strong {
+  font-size: 8pt;
+}
+
+.patient-id-brand span,
+.patient-id-brand em {
+  font-size: 4.6pt;
+}
+
+.patient-id-brand em {
+  padding: 1mm 1.5mm;
+}
+
+.patient-id-body,
+.employee-id-body {
+  grid-template-columns: 18mm minmax(0, 1fr) 17.5mm;
+  gap: 1.5mm;
+}
+
+.patient-id-photo,
+.employee-id-photo {
+  min-height: 21.8mm;
+  border-width: 0.35mm;
+  border-radius: 1.8mm;
+}
+
+.patient-id-photo span {
+  width: 12mm;
+  height: 12mm;
+  font-size: 11pt;
+}
+
+.patient-id-info {
+  gap: 1.1mm;
+}
+
+.patient-id-info h3 {
+  font-size: 7.2pt;
+  line-height: 1.05;
+}
+
+.patient-id-info p,
+.patient-id-grid small,
+.patient-id-insurance small,
+.patient-id-qr-block small {
+  font-size: 4.3pt;
+}
+
+.patient-id-grid,
+.patient-id-insurance,
+.employee-id-date-grid,
+.employee-id-primary-grid,
+.employee-id-role-strip {
+  gap: 0.9mm;
+}
+
+.patient-id-grid span,
+.patient-id-insurance div {
+  padding: 0.85mm 1mm;
+  border-radius: 1.5mm;
+}
+
+.patient-id-grid strong,
+.patient-id-insurance strong {
+  font-size: 5.1pt;
+  line-height: 1.12;
+}
+
+.patient-id-card .patient-qr-image,
+.patient-id-card .patient-qr-loading,
+.patient-id-card .id-empty-qr {
+  width: 16.5mm;
+  height: 16.5mm;
+  min-height: 16.5mm;
+  padding: 1mm;
+  border-radius: 1.4mm;
+}
+
+.patient-id-qr-block {
+  gap: 0.8mm;
+}
+
+.patient-id-insurance {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.patient-id-footer {
+  min-height: 5mm;
+  padding: 1mm 1.5mm;
+  border-radius: 1.4mm;
+  font-size: 4.9pt;
+}
+
+.employee-id-modal-panel,
+.patient-id-modal-panel {
+  width: min(100%, 560px);
+}
+
+@media (max-width: 420px) {
+  .patient-id-modal-panel,
+  .employee-id-modal-panel {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .patient-id-print-area {
+    justify-items: start;
+  }
+}
 @media print {
   body {
     background: #ffffff;
@@ -6902,3 +6981,4 @@
     text-align: center;
   }
 }
+

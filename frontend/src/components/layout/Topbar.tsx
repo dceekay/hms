@@ -5,7 +5,6 @@ import {
   FiClock,
   FiHelpCircle,
   FiLogOut,
-  FiMenu,
   FiMoon,
   FiSettings,
   FiSun,
@@ -23,11 +22,7 @@ import { getUserDisplayName } from "../../utils/userDisplay";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import { startRoleTour } from "../tour/RoleTour";
 
-interface TopbarProps {
-  onOpenMobileMenu?: () => void;
-}
-
-export default function Topbar({ onOpenMobileMenu }: TopbarProps) {
+export default function Topbar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { status, latencyMs } = useBackendHealth();
@@ -70,16 +65,6 @@ export default function Topbar({ onOpenMobileMenu }: TopbarProps) {
   return (
     <header className="topbar" data-tour-region="topbar">
       <div className="topbar-left">
-        {onOpenMobileMenu && (
-          <button
-            type="button"
-            className="mobile-drawer-toggle"
-            onClick={onOpenMobileMenu}
-            aria-label="Open sidebar navigation"
-          >
-            <FiMenu />
-          </button>
-        )}
         <div>
           <p className="topbar-kicker">{primaryRole}</p>
           <h2>

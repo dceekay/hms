@@ -34,19 +34,9 @@ function cleanAppointmentPayload(values: AppointmentFormValues) {
   };
 }
 
-export type AppointmentDoctor = AppUser & {
-  isOnline?: boolean;
-  activeQueueCount?: number;
-  inConsultation?: boolean;
-};
-
-export async function fetchAppointmentDoctors(onlyLoggedIn = false) {
+export async function fetchAppointmentDoctors() {
   try {
-    const response = await api.get<{ data: AppointmentDoctor[] }>("/appointments/doctors", {
-      params: {
-        ...(onlyLoggedIn ? { onlyLoggedIn: true } : {}),
-      },
-    });
+    const response = await api.get<{ data: AppUser[] }>("/appointments/doctors");
     return { doctors: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);

@@ -29,9 +29,11 @@ export default function PwaInstallBanner() {
 
     setIsStandalone(isStandaloneMode);
 
-    // Detect iOS
+    // Detect iPhone/iPad Safari, including modern iPads that identify as Mac with touch.
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const isAppleMobile = /iphone|ipad|ipod/.test(userAgent);
+    const isAppleMobile =
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
     setIsIos(isAppleMobile);
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -79,11 +81,11 @@ export default function PwaInstallBanner() {
 
   return (
     <>
-      <aside className="pwa-install-banner" aria-label="Install App Banner">
+      <aside className="pwa-install-banner" aria-label="Add App Banner">
         <div className="pwa-banner-content">
           <img src={mdsLogo} alt="MDS Hospital" className="pwa-app-icon" />
           <div className="pwa-banner-text">
-            <strong>Install MDS Hospital App</strong>
+            <strong>Add MDS Hospital to Home Screen</strong>
             <p>Add to your phone home screen for instant alerts & faster ward rounds.</p>
           </div>
         </div>
@@ -91,7 +93,7 @@ export default function PwaInstallBanner() {
         <div className="pwa-banner-actions">
           <button type="button" className="pwa-install-btn" onClick={handleInstallClick}>
             <FiDownload />
-            Install App
+            Add App
           </button>
           <button
             type="button"
@@ -158,3 +160,4 @@ export default function PwaInstallBanner() {
     </>
   );
 }
+

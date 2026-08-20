@@ -2,12 +2,30 @@
   "name": "MDS Hospital Kano",
   "short_name": "MDS Hospital",
   "description": "MDS Hospital in Giginyu, Kano - emergency care, surgery, diagnostics, pharmacy and specialist clinics.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#07111f",
   "theme_color": "#0f4c81",
   "orientation": "portrait",
+  "categories": ["medical", "health", "productivity"],
+  "lang": "en-NG",
+  "shortcuts": [
+    {
+      "name": "Staff Portal",
+      "short_name": "Portal",
+      "url": "/login",
+      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Emergency Contact",
+      "short_name": "Emergency",
+      "url": "/#contact",
+      "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -29,3 +47,4 @@
     }
   ]
 }
+

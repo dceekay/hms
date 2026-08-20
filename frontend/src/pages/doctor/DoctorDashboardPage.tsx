@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { FaFlask, FaNotesMedical, FaPills, FaUserMd } from "react-icons/fa";
+import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
 import {
@@ -1241,23 +1242,21 @@ export default function DoctorDashboardPage() {
 
         {showClinicalWorkspace && (
         <section className="doctor-patient-strip" id="patients" ref={patientWorkspaceRef}>
-          <div>
-            <label htmlFor="doctor-patient-search">Patient</label>
-            <div className="doctor-search-field">
-              <FiSearch />
-              <input
-                id="doctor-patient-search"
-                list="doctor-patient-options"
-                value={patientSearch}
-                onChange={(event) => handlePatientSearch(event.target.value)}
-                placeholder="Search by name, MRN, or phone"
-              />
-            </div>
-            <datalist id="doctor-patient-options">
-              {patients.map((patient) => (
-                <option key={patient.id} value={patientOptionLabel(patient)} />
-              ))}
-            </datalist>
+          <div style={{ minWidth: 280, flex: "1 1 300px" }}>
+            <PatientSearchSelect
+              label="Select Patient"
+              patients={patients}
+              selectedPatientId={selectedPatient?.id}
+              onSelectPatient={(patient) => {
+                if (patient) {
+                  void selectPatient(patient);
+                } else {
+                  setSelectedPatient(null);
+                  selectedPatientRef.current = null;
+                }
+              }}
+              placeholder="Search by name, MRN, or phone"
+            />
           </div>
 
           {selectedPatient && (

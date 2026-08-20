@@ -34,3 +34,5 @@ tmp/
 temp/
 .vercel
 .env*.local
+.codex/
+*.timestamp-*.mjs

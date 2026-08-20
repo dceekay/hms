@@ -11,6 +11,7 @@ import {
   FiSearch,
 } from "react-icons/fi";
 import { FaFlask } from "react-icons/fa";
+import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import mdsLogo from "../../assets/optimized/logo.png";
@@ -354,21 +355,19 @@ export default function LaboratoryPage() {
                   <FaFlask />
                 </div>
 
-                <label>
-                  Patient
-                  <input
-                    list="lab-patient-options"
-                    value={patientPicker}
-                    onChange={(event) => handlePatientPick(event.target.value)}
-                    placeholder="Search patient by name, MRN or phone"
-                    required
-                  />
-                  <datalist id="lab-patient-options">
-                    {patients.map((patient) => (
-                      <option key={patient.id} value={patientOptionLabel(patient)} />
-                    ))}
-                  </datalist>
-                </label>
+                <PatientSearchSelect
+                  label="Patient"
+                  required
+                  patients={patients}
+                  selectedPatientId={requestForm.patientId}
+                  onSelectPatient={(patient) => {
+                    setRequestForm((current) => ({
+                      ...current,
+                      patientId: patient?.id ?? "",
+                    }));
+                  }}
+                  placeholder="Select or search patient..."
+                />
 
                 {selectedPatient && (
                   <div className="service-price-note">

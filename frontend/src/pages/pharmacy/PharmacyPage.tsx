@@ -11,6 +11,7 @@ import {
   FiShoppingCart,
 } from "react-icons/fi";
 import { FaCapsules } from "react-icons/fa";
+import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { fetchPatients } from "../../services/patients/patientService";
@@ -443,21 +444,19 @@ export default function PharmacyPage() {
                   <FiShoppingCart />
                 </div>
 
-                <label>
-                  Patient
-                  <input
-                    list="pharmacy-patient-options"
-                    value={patientPicker}
-                    onChange={(event) => handlePatientPick(event.target.value)}
-                    placeholder="Search patient by name, MRN or phone"
-                    required
-                  />
-                  <datalist id="pharmacy-patient-options">
-                    {patients.map((patient) => (
-                      <option key={patient.id} value={patientOptionLabel(patient)} />
-                    ))}
-                  </datalist>
-                </label>
+                <PatientSearchSelect
+                  label="Patient"
+                  required
+                  patients={patients}
+                  selectedPatientId={saleForm.patientId}
+                  onSelectPatient={(patient) => {
+                    setSaleForm((current) => ({
+                      ...current,
+                      patientId: patient?.id ?? "",
+                    }));
+                  }}
+                  placeholder="Select or search patient..."
+                />
 
                 {selectedPatient && (
                   <div className="service-price-note">

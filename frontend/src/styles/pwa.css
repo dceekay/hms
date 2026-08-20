@@ -2,9 +2,9 @@
 
 .pwa-install-banner {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  left: max(16px, env(safe-area-inset-left, 16px));
+  right: max(16px, env(safe-area-inset-right, 16px));
   max-width: 520px;
   margin: 0 auto;
   z-index: 9999;

@@ -1,0 +1,634 @@
+/* ==========================================================================
+   Front Desk & Receptionist Workspace Styles
+   Mobile-First & Premium Desktop Layout
+   ========================================================================== */
+
+.frontdesk-workspace-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Fast Lookup Quickbar Card */
+.frontdesk-quickbar-card {
+  padding: 18px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.frontdesk-quickbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quickbar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quickbar-icon {
+  font-size: 1.35rem;
+  color: var(--primary-color, #0f766e);
+  flex-shrink: 0;
+}
+
+.quickbar-title-wrap h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+.quickbar-title-wrap p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.quickbar-reg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 12px;
+  background: var(--primary-color, #0f766e);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+  transition: all 0.2s ease;
+}
+
+.quickbar-reg-btn:hover {
+  background: #0d635c;
+  transform: translateY(-1px);
+}
+
+.frontdesk-search-container {
+  width: 100%;
+}
+
+/* Main Grid (Doctors + Launchpad) */
+.frontdesk-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 20px;
+}
+
+.frontdesk-panel {
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.frontdesk-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+}
+
+.frontdesk-panel-heading h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+.frontdesk-panel-heading p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.live-count-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  font-size: 0.76rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* Doctors Roster List */
+.frontdesk-doctor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.frontdesk-doctor-card {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-subtle, #f8fafc);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.frontdesk-doctor-card:hover {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.doctor-avatar-box {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e, #0369a1);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.doctor-active-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid white;
+}
+
+.doctor-info-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doctor-info-box strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-info-box small {
+  font-size: 0.74rem;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-assign-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--text-primary, #0f172a);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.doctor-assign-btn:hover {
+  background: var(--primary-color, #0f766e);
+  color: white;
+  border-color: var(--primary-color, #0f766e);
+}
+
+/* Quick Launchpad */
+.frontdesk-launchpad-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.launchpad-card {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.launchpad-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.launchpad-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.launchpad-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.launchpad-text strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+.launchpad-text small {
+  font-size: 0.74rem;
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.launchpad-arrow {
+  color: var(--text-muted, #94a3b8);
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.launchpad-card:hover .launchpad-arrow {
+  transform: translateX(3px);
+  color: var(--text-primary, #0f172a);
+}
+
+/* Color theme accents */
+.launchpad-card.highlight-teal .launchpad-icon {
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+.launchpad-card.highlight-teal:hover {
+  border-color: rgba(15, 118, 110, 0.5);
+}
+
+.launchpad-card.highlight-blue .launchpad-icon {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+.launchpad-card.highlight-blue:hover {
+  border-color: rgba(37, 99, 235, 0.5);
+}
+
+.launchpad-card.highlight-purple .launchpad-icon {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+}
+.launchpad-card.highlight-purple:hover {
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.launchpad-card.highlight-rose .launchpad-icon {
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+}
+.launchpad-card.highlight-rose:hover {
+  border-color: rgba(225, 29, 72, 0.5);
+}
+
+/* Today's Queue Panel */
+.queue-heading {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.queue-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-subtle, #f1f5f9);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.queue-tab-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.queue-tab-btn.active {
+  background: white;
+  color: var(--text-primary, #0f172a);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.queue-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.queue-patient-row {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.queue-patient-row:hover {
+  border-color: rgba(15, 118, 110, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.queue-patient-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.queue-patient-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.queue-patient-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.queue-patient-header strong {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.appt-status-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.appt-status-pill.status-scheduled,
+.appt-status-pill.status-checked_in {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.appt-status-pill.status-in_consultation {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.appt-status-pill.status-completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.queue-patient-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: var(--text-secondary, #64748b);
+  flex-wrap: wrap;
+}
+
+.meta-doctor,
+.meta-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.queue-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--text-primary, #0f172a);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.queue-action-btn:hover {
+  background: var(--primary-color, #0f766e);
+  color: white;
+  border-color: var(--primary-color, #0f766e);
+}
+
+.empty-panel-msg {
+  padding: 30px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.empty-panel-msg svg {
+  font-size: 2rem;
+}
+
+.empty-cta-link {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary-color, #0f766e);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Mobile Responsiveness (< 900px and < 600px)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .frontdesk-main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .frontdesk-quickbar-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .quickbar-reg-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    font-size: 0.92rem;
+  }
+
+  .frontdesk-launchpad-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .launchpad-card {
+    min-height: 58px;
+    padding: 14px;
+  }
+
+  .queue-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .queue-filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .queue-tab-btn {
+    flex-shrink: 0;
+  }
+
+  .queue-patient-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .queue-patient-actions {
+    width: 100%;
+  }
+
+  .queue-action-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .frontdesk-quickbar-card,
+[data-theme="dark"] .frontdesk-panel,
+[data-theme="dark"] .launchpad-card,
+[data-theme="dark"] .queue-patient-row,
+.dark .frontdesk-quickbar-card,
+.dark .frontdesk-panel,
+.dark .launchpad-card,
+.dark .queue-patient-row {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .frontdesk-doctor-card,
+.dark .frontdesk-doctor-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .quickbar-title-wrap h3,
+[data-theme="dark"] .frontdesk-panel-heading h2,
+[data-theme="dark"] .doctor-info-box strong,
+[data-theme="dark"] .launchpad-text strong,
+[data-theme="dark"] .queue-patient-header strong,
+.dark .quickbar-title-wrap h3,
+.dark .frontdesk-panel-heading h2,
+.dark .doctor-info-box strong,
+.dark .launchpad-text strong,
+.dark .queue-patient-header strong {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .doctor-assign-btn,
+[data-theme="dark"] .queue-action-btn,
+.dark .doctor-assign-btn,
+.dark .queue-action-btn {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .queue-filter-tabs,
+.dark .queue-filter-tabs {
+  background: #1e293b;
+}
+
+[data-theme="dark"] .queue-tab-btn.active,
+.dark .queue-tab-btn.active {
+  background: #0f172a;
+  color: #f8fafc;
+}

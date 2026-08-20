@@ -25,7 +25,6 @@ import {
   FiUserCheck,
   FiUserPlus,
   FiUsers,
-  FiX,
 } from "react-icons/fi";
 import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaNotesMedical, FaUserInjured, FaUserNurse } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
@@ -35,15 +34,12 @@ import { getUserDisplayName } from "../../utils/userDisplay";
 interface Props {
   collapsed: boolean;
   toggle: () => void;
-  mobileOpen?: boolean;
-  closeMobile?: () => void;
 }
 
 type MenuItem = {
   title: string;
   icon: ReactNode;
   path?: string;
-  category?: string;
   requiredRoles?: string[];
   requiredPermissions?: string[];
   anyPermissions?: string[];
@@ -72,75 +68,86 @@ const menus: MenuItem[] = [
     path: "/dashboard",
   },
   {
-    title: "Clinical Care",
-    icon: <FaHospitalUser />,
-    category: "CLINICAL",
-    children: [
-      { title: "Doctor Desk", path: "/doctor", icon: <FaHospitalUser />, requiredRoles: ["Doctor", "Super Admin"] },
-      { title: "Nurse Desk", path: "/nurse", icon: <FaUserNurse />, requiredRoles: ["Nurse", "Administrator", "Super Admin"] },
-      { title: "Appointments Queue", path: "/appointments", icon: <FiCalendar />, requiredPermissions: ["appointments.read"] },
-      {
-        title: "Wards & Bed Admissions",
-        path: "/setup/wards",
-        icon: <FaBed />,
-        requiredRoles: ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"],
-      },
-      { title: "Pharmacy Dispensing", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
-      { title: "Laboratory Tests", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
-      { title: "Lab Templates", path: "/laboratory/templates", icon: <FiFileText />, requiredPermissions: ["laboratory.read"] },
-    ],
-  },
-  {
-    title: "Front Desk & Patients",
+    title: "Patients",
     icon: <FaUserInjured />,
-    category: "PATIENTS",
     children: [
-      { title: "Patient Directory", path: "/patients", icon: <FiUsers />, requiredPermissions: ["patients.read"] },
+      { title: "Patient List", path: "/patients", icon: <FiUsers />, requiredPermissions: ["patients.read"] },
       {
         title: "Register Patient",
         path: "/register-patient",
         icon: <FiPlusCircle />,
         anyPermissions: ["patients.create", "patients.investigation.create"],
       },
-      { title: "Desk Claims", path: "/desk-office", icon: <FiFileText />, requiredPermissions: ["claims.read"] },
     ],
   },
   {
-    title: "Operations & Finance",
+    title: "Appointments",
+    icon: <FiActivity />,
+    path: "/appointments",
+    requiredPermissions: ["appointments.read"],
+  },
+  {
+    title: "Clinical",
+    icon: <FaHospitalUser />,
+    children: [
+      { title: "Laboratory", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
+      { title: "Lab Templates", path: "/laboratory/templates", icon: <FiFileText />, requiredPermissions: ["laboratory.read"] },
+      { title: "Doctor Desk", path: "/doctor", icon: <FaHospitalUser />, requiredRoles: ["Doctor"] },
+      { title: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
+    ],
+  },
+  {
+    title: "Operations",
     icon: <FiLayers />,
-    category: "OPERATIONS",
     children: [
-      { title: "Billing & Cashier", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
-      { title: "Inventory & Stores", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
-      { title: "Security Gate Entry", path: "/security/entry", icon: <FiUserCheck />, requiredPermissions: ["security.entry.create"] },
-      { title: "Security Entry Logs", path: "/security/logs", icon: <FiFileText />, requiredPermissions: ["security.entry.read"] },
-      { title: "SEMSAS Emergency", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
-      { title: "Reports & Analytics", path: "/reports", icon: <FiPieChart />, requiredPermissions: ["reports.read"] },
+      { title: "Security Entry", path: "/security/entry", icon: <FiUserCheck />, requiredPermissions: ["security.entry.create"] },
+      { title: "All Entries", path: "/security/logs", icon: <FiFileText />, requiredPermissions: ["security.entry.read"] },
+      { title: "SEMSAS", path: "/operations/semsas", icon: <FiTruck />, requiredPermissions: ["semsas.read"] },
+      { title: "Inventory", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
+      { title: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
+      { title: "Desk Office", path: "/desk-office", icon: <FiFileText />, requiredPermissions: ["claims.read"] },
+      { title: "Reports", path: "/reports", icon: <FiPieChart />, requiredPermissions: ["reports.read"] },
     ],
   },
   {
-    title: "Administration & Setup",
-    icon: <FiShield />,
-    category: "ADMIN",
+    title: "Setup",
+    icon: <FiSettings />,
     children: [
-      { title: "Staff & Users", path: "/admin/users", icon: <FiUsers />, requiredPermissions: ["users.read"] },
-      { title: "Doctor Profiles", path: "/admin/doctors", icon: <FiUserPlus />, requiredRoles: ["Super Admin"] },
-      { title: "Roles & RBAC", path: "/admin/roles", icon: <FiShield />, requiredPermissions: ["roles.read"] },
-      { title: "Permissions", path: "/admin/permissions", icon: <FiTool />, requiredPermissions: ["permissions.read"] },
-      { title: "Hospital Services", path: "/setup/services", icon: <FiTool />, requiredRoles: ["Super Admin"] },
-      { title: "Insurance Plans", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
       { title: "Departments", path: "/departments", icon: <FiDatabase />, requiredPermissions: ["departments.read"] },
-      { title: "API Tester", path: "/api-tester", icon: <FiDatabase />, requiredRoles: ["Super Admin"] },
+      {
+        title: "Wards & Beds",
+        path: "/setup/wards",
+        icon: <FaBed />,
+        requiredRoles: ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"],
+      },
+      { title: "Services", path: "/setup/services", icon: <FiTool />, requiredRoles: ["Super Admin"] },
+      { title: "Insurance", path: "/setup/insurance", icon: <FiDroplet />, requiredRoles: ["Super Admin"] },
     ],
   },
   {
-    title: "Account & Settings",
+    title: "Administration",
+    icon: <FiShield />,
+    children: [
+      { title: "Users", path: "/admin/users", icon: <FiUsers />, requiredPermissions: ["users.read"] },
+      { title: "Doctors", path: "/admin/doctors", icon: <FiUserPlus />, requiredRoles: ["Super Admin"] },
+      { title: "Roles", path: "/admin/roles", icon: <FiShield />, requiredPermissions: ["roles.read"] },
+      { title: "Permissions", path: "/admin/permissions", icon: <FiTool />, requiredPermissions: ["permissions.read"] },
+    ],
+  },
+  {
+    title: "API Tester",
+    icon: <FiDatabase />,
+    path: "/api-tester",
+    requiredRoles: ["Super Admin"],
+  },
+  {
+    title: "Account",
     icon: <FiSettings />,
     path: "/settings",
   },
 ];
 
-export function Sidebar({ collapsed, toggle, mobileOpen, closeMobile }: Props) {
+export function Sidebar({ collapsed, toggle }: Props) {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
@@ -160,103 +167,101 @@ export function Sidebar({ collapsed, toggle, mobileOpen, closeMobile }: Props) {
     return hasRequiredRole && hasRequiredPermissions && hasAnyPermission;
   };
 
-  const visibleMenus = useMemo(() => {
-    const sourceMenus: MenuItem[] = securityOnly
-      ? [
-          {
-            title: "Security Gate",
-            icon: <FiShield />,
-            children: [
-              {
-                title: "Gate Entry Log",
-                path: "/security/entry",
-                icon: <FiUserCheck />,
-                requiredPermissions: ["security.entry.create"],
-              },
-              {
-                title: "All Gate Logs",
-                path: "/security/logs",
-                icon: <FiFileText />,
-                requiredPermissions: ["security.entry.read"],
-              },
-            ],
-          },
-          {
-            title: "Account",
-            path: "/settings",
-            icon: <FiSettings />,
-          },
-        ]
-      : doctorOnly
+  const visibleMenus = useMemo(
+    () => {
+      const sourceMenus: MenuItem[] = securityOnly
         ? [
             {
-              title: "Doctor Desk",
-              icon: <FaHospitalUser />,
-              path: "/doctor",
-            },
-            {
-              title: "Consultation Queue",
-              icon: <FiCalendar />,
-              path: "/doctor/appointments",
-            },
-            {
-              title: "Patient Records",
-              icon: <FaUserInjured />,
-              path: "/doctor/patients",
-            },
-            {
-              title: "Clinical Tools",
-              icon: <FiClipboard />,
+              title: "Security",
+              icon: <FiShield />,
               children: [
-                { title: "Clinical Notes", path: "/doctor/notes", icon: <FaNotesMedical /> },
-                { title: "Lab Requests", path: "/doctor/lab", icon: <FaFlask /> },
-                { title: "Prescriptions", path: "/doctor/prescription", icon: <FaCapsules /> },
-                { title: "Ward Requests", path: "/doctor/admission", icon: <FaBed /> },
-                { title: "Referrals", path: "/doctor/referral", icon: <FiShare2 /> },
+                {
+                  title: "Security Entry",
+                  path: "/security/entry",
+                  icon: <FiUserCheck />,
+                  requiredPermissions: ["security.entry.create"],
+                },
+                {
+                  title: "All Entries",
+                  path: "/security/logs",
+                  icon: <FiFileText />,
+                  requiredPermissions: ["security.entry.read"],
+                },
+                {
+                  title: "Account",
+                  path: "/settings",
+                  icon: <FiSettings />,
+                },
               ],
             },
-            {
-              title: "Wards & Beds",
-              icon: <FaBed />,
-              path: "/setup/wards",
-            },
-            {
-              title: "Reminders",
-              icon: <FiBell />,
-              path: "/doctor/reminders",
-            },
-            {
-              title: "Account",
-              icon: <FiSettings />,
-              path: "/settings",
-            },
           ]
-        : nurseOnly
+        : doctorOnly
           ? [
-              { title: "Nurse Desk", icon: <FaUserNurse />, path: "/nurse" },
-              { title: "Patient Directory", icon: <FaUserInjured />, path: "/patients" },
-              { title: "Ward Inpatients", icon: <FaBed />, path: "/setup/wards" },
-              { title: "Medication Rounds", icon: <FaCapsules />, path: "/nurse/medications" },
-              { title: "Doctor Orders", icon: <FiFileText />, path: "/nurse/orders" },
-              { title: "Vitals Observation", icon: <FiActivity />, path: "/nurse/vitals" },
-              { title: "Nursing Notes", icon: <FaNotesMedical />, path: "/nurse/notes" },
-              { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
-              { title: "Account", icon: <FiSettings />, path: "/settings" },
+              {
+                title: "Doctor Desk",
+                icon: <FaHospitalUser />,
+                path: "/doctor",
+              },
+              {
+                title: "Appointments",
+                icon: <FiCalendar />,
+                path: "/doctor/appointments",
+              },
+              {
+                title: "Patients",
+                icon: <FaUserInjured />,
+                path: "/doctor/patients",
+              },
+              {
+                title: "Care Tools",
+                icon: <FiClipboard />,
+                children: [
+                  { title: "Clinical Notes", path: "/doctor/notes", icon: <FaNotesMedical /> },
+                  { title: "Lab Requests", path: "/doctor/lab", icon: <FaFlask /> },
+                  { title: "Prescriptions", path: "/doctor/prescription", icon: <FaCapsules /> },
+                  { title: "Ward Requests", path: "/doctor/admission", icon: <FaBed /> },
+                  { title: "Referrals", path: "/doctor/referral", icon: <FiShare2 /> },
+                ],
+              },
+              {
+                title: "Reminders",
+                icon: <FiBell />,
+                path: "/doctor/reminders",
+              },
+              {
+                title: "Account",
+                icon: <FiSettings />,
+                path: "/settings",
+              },
             ]
-          : deskOfficeOnly
+        : nurseOnly
             ? [
-                { title: "Desk Office Claims", icon: <FiFileText />, path: "/desk-office" },
+                { title: "Nurse Desk", icon: <FaUserNurse />, path: "/nurse" },
+                { title: "Patients", icon: <FaUserInjured />, path: "/nurse/patients" },
+                { title: "Ward Patients", icon: <FaBed />, path: "/nurse/ward" },
+                { title: "Medication Rounds", icon: <FaCapsules />, path: "/nurse/medications" },
+                { title: "Doctor Orders", icon: <FiFileText />, path: "/nurse/orders" },
+                { title: "Vitals", icon: <FiActivity />, path: "/nurse/vitals" },
+                { title: "Nursing Notes", icon: <FaNotesMedical />, path: "/nurse/notes" },
+                { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
                 { title: "Account", icon: <FiSettings />, path: "/settings" },
               ]
-          : menus;
+            : deskOfficeOnly
+              ? [
+                  { title: "Desk Office", icon: <FiFileText />, path: "/desk-office" },
+                  { title: "Account", icon: <FiSettings />, path: "/settings" },
+                ]
+        : menus;
 
-    return sourceMenus
-      .map((menu) => ({
-        ...menu,
-        children: menu.children?.filter(canAccess),
-      }))
-      .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
-  }, [permissions, roles, securityOnly, doctorOnly, nurseOnly, deskOfficeOnly]);
+      return sourceMenus
+        .map((menu) => ({
+          ...menu,
+          children: menu.children?.filter(canAccess),
+        }))
+        .filter((menu) => canAccess(menu) && (!menu.children || menu.children.length > 0));
+    },
+    [permissions, roles, securityOnly, doctorOnly, nurseOnly, deskOfficeOnly]
+  );
 
   const initiallyOpen = useMemo(() => {
     const openGroups = new Set<string>();
@@ -283,11 +288,13 @@ export function Sidebar({ collapsed, toggle, mobileOpen, closeMobile }: Props) {
   const toggleGroup = (title: string) => {
     setOpenGroups((current) => {
       const next = new Set(current);
+
       if (next.has(title)) {
         next.delete(title);
       } else {
         next.add(title);
       }
+
       return next;
     });
   };
@@ -297,132 +304,100 @@ export function Sidebar({ collapsed, toggle, mobileOpen, closeMobile }: Props) {
     const [itemPath, itemHash = ""] = path.split("#");
     return itemPath === location.pathname && (!itemHash || `#${itemHash}` === location.hash);
   };
-
   const isGroupActive = (item: MenuItem) =>
     item.children?.some((child) => isMenuActive(child.path)) ?? false;
 
-  const handleLinkClick = () => {
-    if (closeMobile) {
-      closeMobile();
-    }
-  };
-
   return (
-    <>
-      {/* Mobile Drawer Backdrop */}
-      {mobileOpen && (
-        <div
-          className="sidebar-backdrop active"
-          onClick={closeMobile}
-          aria-hidden="true"
-        />
-      )}
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`} data-tour-region="desktop-sidebar">
+      <div className="sidebar-logo">
+        <img className="logo-mark" src={mdsLogo} alt="MDS Hospital" />
 
-      <aside
-        className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}
-        data-tour-region="desktop-sidebar"
+        {!collapsed && (
+          <div>
+            <h2>MDS Hospital</h2>
+            <span>Staff Portal</span>
+          </div>
+        )}
+      </div>
+
+      <button
+        className="collapse-btn"
+        onClick={toggle}
+        type="button"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        data-tour-target="sidebar-collapse"
       >
-        <div className="sidebar-logo">
-          <img className="logo-mark" src={mdsLogo} alt="MDS Hospital" />
+        {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
+      </button>
 
-          {(!collapsed || mobileOpen) && (
-            <div>
-              <h2>MDS Hospital</h2>
-              <span>Staff Portal</span>
-            </div>
-          )}
+      <nav>
+        {visibleMenus.map((item) => {
+          const groupOpen = openGroups.has(item.title);
+          const activeGroup = isGroupActive(item);
 
-          {mobileOpen && (
-            <button
-              type="button"
-              className="sidebar-mobile-close-btn"
-              onClick={closeMobile}
-              aria-label="Close sidebar"
-            >
-              <FiX />
-            </button>
-          )}
-        </div>
-
-        <button
-          className="collapse-btn"
-          onClick={toggle}
-          type="button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          data-tour-target="sidebar-collapse"
-        >
-          {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
-        </button>
-
-        <nav>
-          {visibleMenus.map((item) => {
-            const groupOpen = openGroups.has(item.title);
-            const activeGroup = isGroupActive(item);
-
-            if (item.children) {
-              return (
-                <div key={item.title} className={`sidebar-group ${activeGroup ? "active" : ""}`}>
-                  <button
-                    className="sidebar-item sidebar-group-trigger"
-                    type="button"
-                    onClick={() => toggleGroup(item.title)}
-                    data-tour-group={tourKey(item.title)}
-                  >
-                    <span className="icon">{item.icon}</span>
-                    {(!collapsed || mobileOpen) && (
-                      <>
-                        <span className="menu-label">{item.title}</span>
-                        <FiChevronDown className={`submenu-chevron ${groupOpen ? "open" : ""}`} />
-                      </>
-                    )}
-                  </button>
-
-                  {(!collapsed || mobileOpen) && groupOpen && (
-                    <div className="sidebar-submenu">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          onClick={handleLinkClick}
-                          className={isMenuActive(child.path) ? "sidebar-subitem active" : "sidebar-subitem"}
-                          data-tour-menu-path={child.path}
-                          data-tour-menu-title={tourKey(child.title)}
-                        >
-                          <span className="subitem-icon">{child.icon}</span>
-                          <span>{child.title}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
+          if (item.children) {
             return (
-              <Link
-                key={item.path}
-                to={item.path ?? "/"}
-                onClick={handleLinkClick}
-                className={isMenuActive(item.path) ? "sidebar-item active" : "sidebar-item"}
-                data-tour-menu-path={item.path ?? "/"}
-                data-tour-menu-title={tourKey(item.title)}
-              >
-                <span className="icon">{item.icon}</span>
-                {(!collapsed || mobileOpen) && <span className="menu-label">{item.title}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+              <div key={item.title} className={`sidebar-group ${activeGroup ? "active" : ""}`}>
+                <button
+                  className="sidebar-item sidebar-group-trigger"
+                  type="button"
+                  onClick={() => toggleGroup(item.title)}
+                  data-tour-group={tourKey(item.title)}
+                >
+                  <span className="icon">{item.icon}</span>
+                  {!collapsed && (
+                    <>
+                      <span>{item.title}</span>
+                      <FiChevronDown className={`submenu-chevron ${groupOpen ? "open" : ""}`} />
+                    </>
+                  )}
+                </button>
 
-        <div className="sidebar-footer">
-          {(!collapsed || mobileOpen) && (
-            <>
-              <strong>{getUserDisplayName(user)}</strong>
-              <small>{user?.roles?.join(", ") || "Care team"}</small>
-            </>
-          )}
-        </div>
-      </aside>
-    </>
+                {!collapsed && groupOpen && (
+                  <div className="sidebar-submenu">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        className={isMenuActive(child.path) ? "sidebar-subitem active" : "sidebar-subitem"}
+                        data-tour-menu-path={child.path}
+                        data-tour-menu-title={tourKey(child.title)}
+                      >
+                        <span className="subitem-icon">{child.icon}</span>
+                        <span>{child.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path ?? "/"}
+              className={isMenuActive(item.path) ? "sidebar-item active" : "sidebar-item"}
+              data-tour-menu-path={item.path ?? "/"}
+              data-tour-menu-title={tourKey(item.title)}
+            >
+              <span className="icon">{item.icon}</span>
+              {!collapsed && <span>{item.title}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="sidebar-footer">
+        {!collapsed && (
+          <>
+            <strong>
+              {getUserDisplayName(user)}
+            </strong>
+            <small>{user?.roles?.join(", ") || "Care team"}</small>
+          </>
+        )}
+      </div>
+    </aside>
   );
 }

@@ -1,4 +1,4 @@
-self.HMS_CACHE_NAME = "mds-hms-app-shell-v1";
+self.HMS_CACHE_NAME = "mds-hms-app-shell-v2";
 self.HMS_APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -118,3 +118,4 @@ self.addEventListener("push", (event) => {
     })
   );
 });
+

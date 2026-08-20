@@ -17,16 +17,19 @@ import {
 import {
   FiArrowUp,
   FiArrowRight,
+  FiChevronDown,
+  FiChevronUp,
   FiClock,
   FiExternalLink,
   FiMapPin,
   FiMenu,
   FiMoon,
   FiPhoneCall,
+  FiSearch,
   FiSun,
+  FiX,
 } from "react-icons/fi";
-import { useEffect, useState } from "react";
-import { useThemeMode } from "../hooks/useThemeMode";
+import { useEffect, useMemo, useState } from "react";
 
 import hospitalGate from "../assets/optimized/hospital-gate.jpg";
 import hospitalExterior from "../assets/optimized/hospital-exterior.jpg";
@@ -46,6 +49,7 @@ import kachimaLogo from "../assets/kschmalogo.png";
 import jichimaLogo from "../assets/jichima.png";
 import hygeiaLogo from "../assets/hygeia.png";
 import { publicServices } from "../data/publicServices";
+import { useThemeMode } from "../hooks/useThemeMode";
 import { applySeo, seoSiteUrl } from "../utils/seo";
 
 import "../styles/landing.css";
@@ -80,6 +84,38 @@ const schemeItemsRow2 = [
   { name: "Clinical Referrals", type: "Hospital Network", icon: <FaCheckCircle /> },
   { name: "Direct Settlement", type: "Flexible Billing", icon: <FaCreditCard /> },
 ];
+
+const serviceCategories = [
+  { id: "all", labelEn: "All Services", labelHa: "Duk Ayyuka", icon: <FaHospital /> },
+  { id: "surgery", labelEn: "Surgery & Emergency", labelHa: "Tiyata & Gaggawa", icon: <FaAmbulance /> },
+  { id: "diagnostics", labelEn: "Lab & Diagnostics", labelHa: "Lab & Gwaje-gwaje", icon: <FaMicroscope /> },
+  { id: "maternity", labelEn: "Maternity & Wards", labelHa: "Haihuwa & Kwanciya", icon: <FaHeartbeat /> },
+  { id: "specialists", labelEn: "Specialist Clinics", labelHa: "Kwararrun Likitoci", icon: <FaUserMd /> },
+];
+
+function getServiceCategory(slug: string): string {
+  if (
+    slug === "general-surgery" ||
+    slug === "minimal-access-surgery" ||
+    slug === "emergency-care"
+  ) {
+    return "surgery";
+  }
+  if (
+    slug === "diagnostic-laboratory" ||
+    slug === "radiology-scanning-ecg" ||
+    slug === "pharmacy"
+  ) {
+    return "diagnostics";
+  }
+  if (
+    slug === "maternity-labour-care" ||
+    slug === "inpatient-admission-wards"
+  ) {
+    return "maternity";
+  }
+  return "specialists";
+}
 
 const qualifications = [
   {
@@ -339,7 +375,7 @@ const landingCopy: Record<
       "Healthcare support for every stage of the patient experience.",
     servicesText:
       "Integrated clinical services designed to improve access, diagnosis, treatment, recovery, and follow-up.",
-    serviceCta: "View service",
+    serviceCta: "View Details & Clinics",
     allServices: "Explore all MDS Hospital services",
     emergencyEyebrow: "Emergency support",
     emergencyTitle: "Need urgent medical assistance?",
@@ -372,74 +408,74 @@ const landingCopy: Record<
     schemesEyebrow: "Coverage and service schemes",
     schemesTitle: "Multiple options for accessible healthcare.",
     schemesText:
-      "MDS Hospital supports health insurance, government schemes, referrals, retainership, wallet, and direct-payment arrangements.",
+      "MDS Hospital works with public, state, private, corporate, and direct-settlement health coverage options.",
     showFewer: "Show fewer schemes",
     showAll: "Show all schemes",
     schemeNote:
-      "Coverage may depend on eligibility, authorisation, service type, and the patient scheme terms. Some specialised services may attract separate billing.",
-    showcaseEyebrow: "Modern clinical experience",
-    showcaseTitle: "Real care spaces, clearer expectations.",
+      "Coverage acceptance may depend on eligibility, pre-authorisation, procedure type, and plan terms. Some specialist services may require co-payment.",
+    showcaseEyebrow: "Care in practice",
+    showcaseTitle: "Real environments, visible standard of care.",
     showcaseText:
-      "See the people, departments, and service areas that support patient care at MDS Hospital.",
+      "A look inside the people, spaces and working areas supporting patient care across MDS Hospital.",
     contactEyebrow: "Visit or contact MDS Hospital",
-    contactTitle: "Let our team guide you to the right care.",
+    contactTitle: "Let us help you connect to the right care.",
     contactText:
-      "Contact reception for appointments, specialist clinic schedules, coverage enquiries, referrals, ambulance support, and directions to our Giginyu, Kano facility.",
+      "Reach our reception for appointments, specialist clinic schedules, scheme confirmations, referrals, ambulance support, and directions to our hospital in Giginyu, Kano.",
     contactLabels: {
       call: "Call MDS Hospital",
-      emergency: "Emergency contact",
+      emergency: "Emergency line",
       address: "Hospital address",
-      hours: "Opening hours",
-      hoursValue: "Emergency services available 24/7",
+      hours: "Working hours",
+      hoursValue: "24/7 Emergency & clinical coverage",
       maps: "Open in Google Maps",
       appointments: "Appointments",
       request: "Request a consultation",
       appointmentText:
-        "Speak with our reception team to confirm clinic availability and prepare for your visit.",
+        "Speak with reception to confirm clinic availability, required documents, and preparation before arrival.",
       whatsapp: "Chat with reception",
       phone: "Call the hospital",
       notice:
-        "WhatsApp connects you to reception. Use the emergency line for urgent medical assistance.",
+        "WhatsApp messages connect directly to reception. For life-threatening situations, use our emergency numbers.",
     },
     footerText:
-      "Compassionate, specialist-led healthcare supported by coordinated clinical services and modern hospital systems.",
+      "Compassionate, competent healthcare delivery with modern hospital management.",
     footerHospital: "Hospital",
-    footerServices: "Clinical services",
-    footerQuick: "Quick access",
+    footerServices: "Services",
+    footerQuick: "Quick links",
     footerLinks: {
       about: "About MDS",
       leadership: "Leadership",
-      ambulance: "Ambulance support",
-      schemes: "Coverage schemes",
-      surgery: "General surgery",
+      ambulance: "Ambulance care",
+      schemes: "Accepted schemes",
+      surgery: "Surgery",
       clinics: "Specialist clinics",
       diagnostics: "Diagnostics",
       pharmacy: "Pharmacy",
       portal: "Staff portal",
       appointments: "Appointments",
-      emergency: "Emergency contact",
+      emergency: "Emergency line",
       directions: "Hospital directions",
     },
     backToTop: "Back to top",
-    floatingWhatsapp: "Chat with us",
+    floatingWhatsapp: "Message us",
   },
   ha: {
-    emergencyBar: "Agajin gaggawa da motar daukar marasa lafiya 24/7",
+    emergencyBar: "Agajin Gaggawa da Ambulance 24/7",
     emergencyLine: "Layin gaggawa",
-    brandTagline: "Kulawar Mara Lafiya da Tsari",
+    brandTagline: "Kulawar Mara Lafiya Cikin Tsari",
     nav: {
-      about: "Game da mu",
+      about: "Game da MDS",
       services: "Ayyuka",
       ambulance: "Ambulance",
       leadership: "Jagoranci",
-      contact: "Tuntube mu",
+      contact: "Tuntuba",
       portal: "Shafin ma'aikata",
     },
     heroKicker: "MDS HOSPITAL",
-    heroTitle: "Ingantacciyar kulawa, kusa da ku.",
+    heroTitle: "Ingantacciyar kulawar lafiya, kusa da kai.",
     heroText:
-      "Cikakkiyar kulawar likita, gwaje-gwaje, tiyata da ayyukan kwararru daga kwararrun ma'aikatan lafiya a Kano.",
-    book: "Nemi Ganawa",
+      "Cikakkiyar kulawar lafiya, gwaje-gwaje, tiyata da ayyukan kwararru karkashin kwararrun ma'aikatan lafiya a Kano.",
+    book: "Nemi Ganin Likita",
     exploreServices: "Duba Ayyukanmu",
     heroPillars: [
       {
@@ -483,7 +519,7 @@ const landingCopy: Record<
       "Kulawar lafiya daga matakin farko har zuwa warkewa.",
     servicesText:
       "Ayyukanmu suna taimakawa wajen ganowa, magani, gwaji, karbar magani, admission da bin diddigin lafiyar mara lafiya.",
-    serviceCta: "Duba aiki",
+    serviceCta: "Duba Cikakken Bayani",
     allServices: "Duba duk ayyukan MDS Hospital",
     emergencyEyebrow: "Agajin gaggawa",
     emergencyTitle: "Ana bukatar taimakon gaggawa?",
@@ -586,12 +622,42 @@ const reveal = {
 };
 
 export default function LandingPage() {
-  const { isDark, toggleTheme } = useThemeMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [schemesExpanded, setSchemesExpanded] = useState(false);
   const [language, setLanguage] = useState<LandingLanguage>("en");
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [serviceSearch, setServiceSearch] = useState<string>("");
+  const [showAllServicesMobile, setShowAllServicesMobile] = useState<boolean>(false);
+  const { isDark, toggleTheme } = useThemeMode();
   const copy = landingCopy[language];
+
+  const filteredServices = useMemo(() => {
+    return publicServices.filter((service) => {
+      const matchesCategory =
+        selectedCategory === "all" ||
+        getServiceCategory(service.slug) === selectedCategory;
+      const q = serviceSearch.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        service.title.toLowerCase().includes(q) ||
+        service.summary.toLowerCase().includes(q) ||
+        service.keywords.toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, serviceSearch]);
+
+  const displayedServices = useMemo(() => {
+    if (serviceSearch.trim() || selectedCategory !== "all" || showAllServicesMobile) {
+      return filteredServices;
+    }
+    return filteredServices.slice(0, 6);
+  }, [filteredServices, selectedCategory, serviceSearch, showAllServicesMobile]);
+
+  const getCategoryCount = (categoryId: string) => {
+    if (categoryId === "all") return publicServices.length;
+    return publicServices.filter((s) => getServiceCategory(s.slug) === categoryId).length;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -661,31 +727,14 @@ export default function LandingPage() {
           </div>
         </Link>
 
-        <div className="landing-header-controls">
-          <button
-            type="button"
-            className={`landing-theme-toggle ${isDark ? "dark" : "light"}`}
-            onClick={toggleTheme}
-            aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            <span className="theme-toggle-track">
-              <span className="theme-toggle-icon sun"><FiSun /></span>
-              <span className="theme-toggle-icon moon"><FiMoon /></span>
-              <span className="theme-toggle-thumb" />
-            </span>
-            <span className="theme-toggle-text">{isDark ? "Dark" : "Light"}</span>
-          </button>
-
-          <button
-            type="button"
-            className="mobile-menu-button"
-            aria-label="Open navigation menu"
-            onClick={() => setMenuOpen((current) => !current)}
-          >
-            <FiMenu />
-          </button>
-        </div>
+        <button
+          type="button"
+          className="mobile-menu-button"
+          aria-label="Open navigation menu"
+          onClick={() => setMenuOpen((current) => !current)}
+        >
+          <FiMenu />
+        </button>
 
         <nav className={`landing-nav ${menuOpen ? "nav-open" : ""}`}>
           <a href="#about" onClick={scrollToSection}>
@@ -721,6 +770,15 @@ export default function LandingPage() {
             <strong>{language === "en" ? "HA" : "EN"}</strong>
           </button>
 
+          <button
+            type="button"
+            className="landing-theme-toggle"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch home page to light mode" : "Switch home page to dark mode"}
+          >
+            {isDark ? <FiSun /> : <FiMoon />}
+            <span>{isDark ? "Light" : "Dark"}</span>
+          </button>
           <Link
             to="/login"
             className="landing-nav-cta"
@@ -809,7 +867,7 @@ export default function LandingPage() {
               <div className="hero-cinematic-card">
                 <img
                   src={hospitalGate}
-                  alt="MDS Hospital facility entrance and main access on Eastern Bypass, Kano"
+                  alt="MDS Hospital facility entrance on Eastern Bypass, Kano"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -902,7 +960,7 @@ export default function LandingPage() {
           >
             <img
               src={hospitalExterior}
-              alt="MDS Hospital modern clinical facility and care environment"
+              alt="MDS Hospital facility building exterior on Eastern Bypass, Kano"
               loading="lazy"
               decoding="async"
             />
@@ -955,38 +1013,150 @@ export default function LandingPage() {
             <p>{copy.servicesText}</p>
           </div>
 
-          <div className="services-grid">
-            {publicServices.slice(0, 12).map((service, index) => (
-              <motion.article
-                key={service.slug}
-                className={`service-card ${
-                  service.featured ? "service-card-featured" : ""
-                }`}
-                initial={{ opacity: 0, y: 22 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.18 }}
-                transition={{
-                  duration: 0.42,
-                  delay: Math.min(index * 0.04, 0.24),
-                }}
-                whileHover={{ y: -8 }}
-              >
-                <div className="service-icon">{service.icon}</div>
+          {/* Interactive Filter Bar */}
+          <div className="services-filter-bar">
+            <div className="services-category-tabs" role="tablist" aria-label="Filter hospital services by department">
+              {serviceCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedCategory === cat.id}
+                  className={`service-tab-btn ${selectedCategory === cat.id ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  <span className="tab-icon">{cat.icon}</span>
+                  <span>{language === "en" ? cat.labelEn : cat.labelHa}</span>
+                  <span className="tab-count">{getCategoryCount(cat.id)}</span>
+                </button>
+              ))}
+            </div>
 
-                {service.featured && (
-                  <span className="featured-label">Specialist service</span>
-                )}
-
-                <h3>{service.title}</h3>
-                <p>{service.summary}</p>
-
-                <Link to={`/services/${service.slug}`}>
-                  {copy.serviceCta}
-                  <FiArrowRight />
-                </Link>
-              </motion.article>
-            ))}
+            <div className="services-search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder={
+                  language === "en"
+                    ? "Search any service, clinic or test (e.g. Surgery, Scan, Dental)..."
+                    : "Nemi kowane aiki, duba ko gwaji (misali Tiyata, Scan, Hakori)..."
+                }
+                value={serviceSearch}
+                onChange={(e) => setServiceSearch(e.target.value)}
+                aria-label="Search hospital services"
+              />
+              {serviceSearch && (
+                <button
+                  type="button"
+                  className="clear-search-btn"
+                  onClick={() => setServiceSearch("")}
+                  aria-label="Clear search"
+                >
+                  <FiX />
+                </button>
+              )}
+            </div>
           </div>
+
+          {filteredServices.length === 0 ? (
+            <div className="services-empty-state">
+              <FaHospital />
+              <h3>{language === "en" ? "No matching services found" : "Ba a sami aiki mai kama da wannan ba"}</h3>
+              <p>
+                {language === "en"
+                  ? "Try checking your spelling or clearing search filters to see all clinical services."
+                  : "Gwada canza rubutun ko share abin da aka rubuta domin ganin dukkan ayyukanmu."}
+              </p>
+              <button
+                type="button"
+                className="clear-filters-btn"
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setServiceSearch("");
+                }}
+              >
+                {language === "en" ? "Reset & View All Services" : "Koma ga Dukkan Ayyuka"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="services-grid">
+                {displayedServices.map((service, index) => (
+                  <motion.div
+                    key={service.slug}
+                    className="service-card-wrapper"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{
+                      duration: 0.38,
+                      delay: Math.min(index * 0.04, 0.22),
+                    }}
+                    whileHover={{ y: -6 }}
+                  >
+                    <Link
+                      to={`/services/${service.slug}`}
+                      className={`service-card ${
+                        service.featured ? "service-card-featured" : ""
+                      }`}
+                      title={`${service.title} - ${copy.serviceCta}`}
+                    >
+                      <div className="service-card-top">
+                        <div className="service-icon">{service.icon}</div>
+
+                        {service.featured ? (
+                          <span className="featured-label">
+                            {language === "en" ? "Specialist Care" : "Kwararru"}
+                          </span>
+                        ) : (
+                          <span className="service-open-badge">
+                            <FiClock />
+                            <span>{language === "en" ? "Available 24/7" : "Akwai 24/7"}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <h3>{service.title}</h3>
+                      <p>{service.summary}</p>
+
+                      <div className="service-card-footer">
+                        <span className="service-cta-pill">
+                          <span>{copy.serviceCta}</span>
+                          <FiArrowRight className="pill-arrow" />
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              {filteredServices.length > 6 && !serviceSearch && selectedCategory === "all" && (
+                <div className="services-mobile-toggle">
+                  <button
+                    type="button"
+                    className="services-expand-btn"
+                    onClick={() => setShowAllServicesMobile((prev) => !prev)}
+                  >
+                    {showAllServicesMobile ? (
+                      <>
+                        <span>{language === "en" ? "Show Fewer Services" : "Rufe Wasu Ayyuka"}</span>
+                        <FiChevronUp />
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          {language === "en"
+                            ? `View All ${filteredServices.length} Clinical Services`
+                            : `Duba Dukkan Ayyukanmu (${filteredServices.length})`}
+                        </span>
+                        <FiChevronDown />
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="services-index-link">
             <Link to="/services">
@@ -1529,17 +1699,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Floating Theme Toggle (Mobile & Quick Access) */}
-      <button
-        type="button"
-        className="floating-theme-toggle"
-        onClick={toggleTheme}
-        aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-      >
-        {isDark ? <FiSun /> : <FiMoon />}
-      </button>
-
       {/* Floating WhatsApp */}
       <a
         href={whatsappUrl}
@@ -1563,3 +1722,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+

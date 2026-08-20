@@ -110,6 +110,10 @@
   background: color-mix(in srgb, var(--surface) 58%, transparent);
 }
 
+.topbar-status-group {
+  flex: 0 0 auto;
+}
+
 .topbar-action-group {
   flex: 0 0 auto;
 }
@@ -729,6 +733,55 @@
    Responsive Breakpoints
    ========================================================================== */
 
+@media (max-width: 1500px) {
+  .topbar {
+    grid-template-columns: minmax(150px, 1fr) auto;
+  }
+
+  .topbar-left h2 {
+    max-width: 300px;
+  }
+
+  .topbar-status-group .backend-status {
+    width: 42px;
+    min-width: 42px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .topbar-status-group .backend-status div {
+    display: none;
+  }
+
+  .topbar-status-group .backend-status > svg {
+    display: block;
+    font-size: 1rem;
+  }
+
+  .user-menu-trigger {
+    width: 46px;
+    height: 42px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .user-menu-trigger-text,
+  .user-menu-chevron {
+    display: none;
+  }
+
+  .tour-trigger-btn {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+  }
+
+  .tour-trigger-btn span,
+  .logout-btn span {
+    display: none;
+  }
+}
+
 @media (max-width: 1200px) {
   .topbar {
     grid-template-columns: minmax(140px, 0.8fr) auto;
@@ -761,29 +814,9 @@
   .topbar-left {
     min-width: 0;
     display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .mobile-drawer-toggle {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-strong);
-    font-size: 1.25rem;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.18s ease;
-  }
-
-  .mobile-drawer-toggle:hover {
-    background: var(--surface-hover);
-    border-color: var(--primary);
-    color: var(--primary);
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
   }
 
   .topbar-kicker {
