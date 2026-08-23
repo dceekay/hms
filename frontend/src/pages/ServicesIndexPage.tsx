@@ -12,7 +12,7 @@ import "../styles/landing.css";
 
 const emergencyTel = "tel:+2347082297430";
 const whatsappUrl =
-  "https://wa.me/2348062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20ask%20about%20your%20services.";
+  "https://wa.me/2349137526952?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20ask%20about%20your%20services.";
 
 export default function ServicesIndexPage() {
   useEffect(() => {

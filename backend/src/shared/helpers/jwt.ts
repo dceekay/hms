@@ -28,7 +28,8 @@ export function signAccessToken(
 }
 
 export function signRefreshToken(
-  payload: RefreshTokenPayloadInput
+  payload: RefreshTokenPayloadInput,
+  expiresIn = env.REFRESH_TOKEN_EXPIRES
 ): string {
   return jwt.sign(
     {
@@ -39,7 +40,7 @@ export function signRefreshToken(
     REFRESH_SECRET,
     {
       algorithm: "HS256",
-      expiresIn: env.REFRESH_TOKEN_EXPIRES,
+      expiresIn,
     } as SignOptions
   );
 }

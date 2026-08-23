@@ -12,7 +12,10 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   emailOrUsername: z.string().min(3),
   password: z.string().min(8),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
+
+

@@ -7,6 +7,13 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
 import { Prisma } from "@prisma/client";
 
+const DEFAULT_REFRESH_TOKEN_DAYS = 7;
+const REMEMBER_ME_REFRESH_TOKEN_DAYS = 30;
+
+function refreshTokenExpiresAt(days: number) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
 function extractRolesAndPermissions(user: any): { roles: string[]; permissions: string[] } {
   const roles =
     user.roles?.flatMap((userRole: any) =>
@@ -32,17 +39,17 @@ export class AuthService {
     private readonly refreshTokenRepository = new RefreshTokenRepository()
   ) {}
 
-  private async createRefreshToken(user: { id: string }) {
+  private async createRefreshToken(user: { id: string }, lifetimeDays = DEFAULT_REFRESH_TOKEN_DAYS) {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const refreshToken = signRefreshToken({
         sub: user.id,
-      });
+      }, `${lifetimeDays}d`);
 
       try {
         await this.refreshTokenRepository.create({
           token: refreshToken,
           userId: user.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          expiresAt: refreshTokenExpiresAt(lifetimeDays),
         });
 
         return refreshToken;
@@ -67,7 +74,7 @@ export class AuthService {
             where: { id: existingToken.id },
             data: {
               revoked: false,
-              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              expiresAt: refreshTokenExpiresAt(lifetimeDays),
             },
           });
 
@@ -183,7 +190,10 @@ export class AuthService {
       },
     });
 
-    const refreshToken = await this.createRefreshToken(user);
+    const refreshTokenLifetimeDays = payload.rememberMe
+      ? REMEMBER_ME_REFRESH_TOKEN_DAYS
+      : DEFAULT_REFRESH_TOKEN_DAYS;
+    const refreshToken = await this.createRefreshToken(user, refreshTokenLifetimeDays);
 
     return {
       accessToken,
@@ -250,3 +260,6 @@ export class AuthService {
     return { success: true };
   }
 }
+
+
+

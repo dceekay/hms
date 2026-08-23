@@ -46,13 +46,14 @@ import { isJwtExpired } from "./utils/session";
 
 function RootRoute() {
   const token = useAuthStore((state) => state.token);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const tokenExpired = isJwtExpired(token);
 
-  if (token && !tokenExpired) {
+  if ((token && !tokenExpired) || refreshToken) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (tokenExpired) {
+  if (tokenExpired && !refreshToken) {
     return <Navigate to="/login?session=expired" replace />;
   }
 
@@ -348,5 +349,8 @@ export default function App() {
     </>
   );
 }
+
+
+
 
 

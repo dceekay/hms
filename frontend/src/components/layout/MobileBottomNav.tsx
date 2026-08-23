@@ -155,6 +155,12 @@ export default function MobileBottomNav() {
           <span>{item.label}</span>
         </NavLink>
       ))}
+      {visibleItems.length > 4 && (
+        <span className="mobile-nav-scroll-cue" aria-hidden="true">
+          ›
+        </span>
+      )}
     </nav>
   );
 }
+

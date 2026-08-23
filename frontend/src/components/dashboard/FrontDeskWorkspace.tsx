@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  FiActivity,
   FiArrowRight,
   FiCalendar,
-  FiCheckCircle,
   FiClock,
   FiCreditCard,
   FiExternalLink,
-  FiPlus,
+  FiFileText,
   FiSearch,
-  FiUserCheck,
+  FiTruck,
   FiUserPlus,
   FiUsers,
 } from "react-icons/fi";
@@ -70,8 +68,62 @@ export default function FrontDeskWorkspace({
   }, []);
 
   const availableDoctors = overview?.users.availableDoctors ?? [];
+  const doctorCount = overviewLoading ? "..." : availableDoctors.length.toString();
+  const queueCount = overviewLoading ? "..." : appointments.length.toString();
 
-  // Filter appointments for the live queue feed
+  const actionItems = [
+    {
+      title: "Register Patient",
+      detail: "New, old, or investigation patient",
+      to: "/register-patient",
+      icon: <FiUserPlus />,
+      className: "highlight-teal",
+    },
+    {
+      title: "Book Appointment",
+      detail: "Assign patient to a doctor",
+      to: "/appointments",
+      icon: <FiCalendar />,
+      className: "highlight-blue",
+    },
+    {
+      title: "Find Patient",
+      detail: "MRN, name, phone, or ID card",
+      to: "/patients",
+      icon: <FiSearch />,
+      className: "highlight-purple",
+    },
+    ...(permissions.includes("billing.read")
+      ? [
+          {
+            title: "Billing Desk",
+            detail: "Receive payment and print receipt",
+            to: "/billing",
+            icon: <FiCreditCard />,
+            className: "highlight-rose",
+          },
+        ]
+      : []),
+    ...(permissions.includes("semsas.read")
+      ? [
+          {
+            title: "SEMSAS",
+            detail: "Ambulance service records",
+            to: "/operations/semsas",
+            icon: <FiTruck />,
+            className: "highlight-orange",
+          },
+        ]
+      : []),
+    {
+      title: "Queue",
+      detail: `${queueCount} appointments today`,
+      to: "/appointments",
+      icon: <FiFileText />,
+      className: "highlight-slate",
+    },
+  ];
+
   const filteredAppointments = appointments.filter((appt: Appointment) => {
     if (activeQueueTab === "all") return true;
     if (activeQueueTab === "waiting") return appt.status === "scheduled" || appt.status === "checked_in";
@@ -88,49 +140,45 @@ export default function FrontDeskWorkspace({
 
   return (
     <div className="frontdesk-workspace-root">
-      {/* Quick Search & Mobile Command Bar */}
-      <div className="frontdesk-quickbar-card">
-        <div className="frontdesk-quickbar-header">
-          <div className="quickbar-title-wrap">
-            <FiSearch className="quickbar-icon" />
-            <div>
-              <h3>Fast Patient Lookup</h3>
-              <p>Instant search by Name, MRN or Phone for fast check-in.</p>
+      <section className="frontdesk-action-grid" aria-label="Reception shortcuts">
+        {actionItems.map((item) => (
+          <Link className={`launchpad-card ${item.className}`} to={item.to} key={`${item.title}-${item.to}`}>
+            <div className="launchpad-icon">{item.icon}</div>
+            <div className="launchpad-text">
+              <strong>{item.title}</strong>
+              <small>{item.detail}</small>
             </div>
-          </div>
-          <Link to="/register-patient" className="quickbar-reg-btn">
-            <FiUserPlus />
-            <span>+ New Patient</span>
+            <FiArrowRight className="launchpad-arrow" />
           </Link>
-        </div>
+        ))}
+      </section>
 
+      <div className="frontdesk-quickbar-card compact">
         <div className="frontdesk-search-container">
           <PatientSearchSelect
             patients={patients}
             onSelectPatient={handlePatientSelect}
-            placeholder="Type patient name, MRN (e.g. MRN-001), or phone..."
+            placeholder="Search patient by name, MRN, phone, or policy number..."
           />
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="frontdesk-main-grid">
-        {/* Doctors Live On-Duty Panel */}
+      <div className="frontdesk-main-grid compact">
         <article className="frontdesk-panel frontdesk-doctors-panel">
-          <div className="frontdesk-panel-heading">
+          <div className="frontdesk-panel-heading compact">
             <div>
               <h2>Doctors on Duty</h2>
-              <p>Live physician roster & clinic availability.</p>
+              <p>{doctorCount} active doctor(s)</p>
             </div>
             <span className="live-count-chip">
               <span className="live-pulse-dot" />
-              {availableDoctors.length} Active
+              Live
             </span>
           </div>
 
           <div className="frontdesk-doctor-list">
             {availableDoctors.length === 0 ? (
-              <div className="empty-panel-msg">
+              <div className="empty-panel-msg compact">
                 <FaUserMd />
                 <p>No active doctor accounts assigned right now.</p>
               </div>
@@ -159,170 +207,108 @@ export default function FrontDeskWorkspace({
           </div>
         </article>
 
-        {/* Quick Desk Action Launchpad */}
-        <article className="frontdesk-panel frontdesk-launchpad-panel">
-          <div className="frontdesk-panel-heading">
+        <article className="frontdesk-panel frontdesk-queue-panel">
+          <div className="frontdesk-panel-heading queue-heading compact">
             <div>
-              <h2>Quick Actions</h2>
-              <p>One-tap front desk & reception workflows.</p>
+              <h2>Today&apos;s Queue</h2>
+              <p>{loadingData ? "Refreshing..." : `${filteredAppointments.length} shown`}</p>
             </div>
-            <FiCheckCircle />
+
+            <div className="queue-filter-tabs">
+              <button
+                type="button"
+                className={`queue-tab-btn ${activeQueueTab === "all" ? "active" : ""}`}
+                onClick={() => setActiveQueueTab("all")}
+              >
+                All ({appointments.length})
+              </button>
+              <button
+                type="button"
+                className={`queue-tab-btn ${activeQueueTab === "waiting" ? "active" : ""}`}
+                onClick={() => setActiveQueueTab("waiting")}
+              >
+                Waiting
+              </button>
+              <button
+                type="button"
+                className={`queue-tab-btn ${activeQueueTab === "consulting" ? "active" : ""}`}
+                onClick={() => setActiveQueueTab("consulting")}
+              >
+                Doctor
+              </button>
+              <button
+                type="button"
+                className={`queue-tab-btn ${activeQueueTab === "completed" ? "active" : ""}`}
+                onClick={() => setActiveQueueTab("completed")}
+              >
+                Done
+              </button>
+            </div>
           </div>
 
-          <div className="frontdesk-launchpad-grid">
-            <Link className="launchpad-card highlight-teal" to="/register-patient">
-              <div className="launchpad-icon">
-                <FiUserPlus />
+          <div className="queue-list-container">
+            {filteredAppointments.length === 0 ? (
+              <div className="empty-panel-msg compact">
+                <FiClock />
+                <p>No appointments in this queue right now.</p>
+                <Link to="/appointments" className="empty-cta-link">
+                  Create appointment
+                </Link>
               </div>
-              <div className="launchpad-text">
-                <strong>Register Patient</strong>
-                <small>Create profile & photo ID card</small>
-              </div>
-              <FiArrowRight className="launchpad-arrow" />
-            </Link>
+            ) : (
+              <div className="queue-cards-list">
+                {filteredAppointments.slice(0, 8).map((appt: Appointment) => {
+                  const patientName = appt.patient
+                    ? `${appt.patient.firstName} ${appt.patient.lastName}`
+                    : "Patient";
+                  const doctorName = appt.doctor
+                    ? `Dr. ${appt.doctor.firstName} ${appt.doctor.lastName}`
+                    : "Doctor";
 
-            <Link className="launchpad-card highlight-blue" to="/appointments">
-              <div className="launchpad-icon">
-                <FiCalendar />
-              </div>
-              <div className="launchpad-text">
-                <strong>Schedule / Queue</strong>
-                <small>Book consultation with doctor</small>
-              </div>
-              <FiArrowRight className="launchpad-arrow" />
-            </Link>
+                  return (
+                    <div className="queue-patient-row" key={appt.id}>
+                      <div className="queue-patient-avatar">
+                        {patientName[0] || <FiUsers />}
+                      </div>
 
-            <Link className="launchpad-card highlight-purple" to="/patients">
-              <div className="launchpad-icon">
-                <FiUsers />
-              </div>
-              <div className="launchpad-text">
-                <strong>Patient Registry</strong>
-                <small>Search directory & view records</small>
-              </div>
-              <FiArrowRight className="launchpad-arrow" />
-            </Link>
+                      <div className="queue-patient-details">
+                        <div className="queue-patient-header">
+                          <strong>{patientName}</strong>
+                          {appt.patient?.mrn && <span className="mrn-badge">{appt.patient.mrn}</span>}
+                          <span className={`appt-status-pill status-${appt.status}`}>
+                            {appt.status.replace("_", " ")}
+                          </span>
+                        </div>
+                        <div className="queue-patient-meta">
+                          <span className="meta-doctor">
+                            <FaUserMd /> {doctorName}
+                          </span>
+                          {appt.scheduledFor && (
+                            <span className="meta-time">
+                              <FiClock />{" "}
+                              {new Date(appt.scheduledFor).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-            {permissions.includes("billing.read") && (
-              <Link className="launchpad-card highlight-rose" to="/billing">
-                <div className="launchpad-icon">
-                  <FiCreditCard />
-                </div>
-                <div className="launchpad-text">
-                  <strong>Cashier & Billing</strong>
-                  <small>Receive invoice & print receipt</small>
-                </div>
-                <FiArrowRight className="launchpad-arrow" />
-              </Link>
+                      <div className="queue-patient-actions">
+                        <Link to="/appointments" className="queue-action-btn" title="Manage appointment">
+                          <FiExternalLink />
+                          <span>Manage</span>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </article>
       </div>
-
-      {/* Live Today's Waiting Room & Triage Queue */}
-      <article className="frontdesk-panel frontdesk-queue-panel">
-        <div className="frontdesk-panel-heading queue-heading">
-          <div>
-            <h2>Today's Patient Queue & Handoffs</h2>
-            <p>Track patient movement from check-in to consultation and billing.</p>
-          </div>
-
-          <div className="queue-filter-tabs">
-            <button
-              type="button"
-              className={`queue-tab-btn ${activeQueueTab === "all" ? "active" : ""}`}
-              onClick={() => setActiveQueueTab("all")}
-            >
-              All ({appointments.length})
-            </button>
-            <button
-              type="button"
-              className={`queue-tab-btn ${activeQueueTab === "waiting" ? "active" : ""}`}
-              onClick={() => setActiveQueueTab("waiting")}
-            >
-              Waiting
-            </button>
-            <button
-              type="button"
-              className={`queue-tab-btn ${activeQueueTab === "consulting" ? "active" : ""}`}
-              onClick={() => setActiveQueueTab("consulting")}
-            >
-              With Doctor
-            </button>
-            <button
-              type="button"
-              className={`queue-tab-btn ${activeQueueTab === "completed" ? "active" : ""}`}
-              onClick={() => setActiveQueueTab("completed")}
-            >
-              Completed
-            </button>
-          </div>
-        </div>
-
-        <div className="queue-list-container">
-          {filteredAppointments.length === 0 ? (
-            <div className="empty-panel-msg">
-              <FiClock />
-              <p>No appointments in this queue right now.</p>
-              <Link to="/appointments" className="empty-cta-link">
-                + Create Appointment
-              </Link>
-            </div>
-          ) : (
-            <div className="queue-cards-list">
-              {filteredAppointments.map((appt: Appointment) => {
-                const patientName = appt.patient
-                  ? `${appt.patient.firstName} ${appt.patient.lastName}`
-                  : "Patient";
-                const doctorName = appt.doctor
-                  ? `Dr. ${appt.doctor.firstName} ${appt.doctor.lastName}`
-                  : "Doctor";
-
-                return (
-                  <div className="queue-patient-row" key={appt.id}>
-                    <div className="queue-patient-avatar">
-                      {patientName[0] || <FiUsers />}
-                    </div>
-
-                    <div className="queue-patient-details">
-                      <div className="queue-patient-header">
-                        <strong>{patientName}</strong>
-                        {appt.patient?.mrn && (
-                          <span className="mrn-badge">{appt.patient.mrn}</span>
-                        )}
-                        <span className={`appt-status-pill status-${appt.status}`}>
-                          {appt.status.replace("_", " ")}
-                        </span>
-                      </div>
-                      <div className="queue-patient-meta">
-                        <span className="meta-doctor">
-                          <FaUserMd /> {doctorName}
-                        </span>
-                        {appt.scheduledFor && (
-                          <span className="meta-time">
-                            <FiClock /> {new Date(appt.scheduledFor).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="queue-patient-actions">
-                      <Link
-                        to="/appointments"
-                        className="queue-action-btn"
-                        title="Manage appointment"
-                      >
-                        <FiExternalLink />
-                        <span>Manage</span>
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </article>
     </div>
   );
 }

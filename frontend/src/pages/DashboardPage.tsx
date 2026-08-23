@@ -21,7 +21,6 @@ import {
   FiCreditCard,
   FiDatabase,
   FiFileText,
-  FiPlusCircle,
   FiRefreshCw,
   FiShield,
   FiTrendingUp,
@@ -67,11 +66,6 @@ const cardMotion = {
   visible: { opacity: 1, y: 0 },
 };
 
-const commonSyncItems = [
-  "Local queue for offline patient registration",
-  "Conflict-safe record versioning",
-  "Background sync when backend returns online",
-];
 
 function money(value: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -451,6 +445,26 @@ export default function DashboardPage() {
 
   if (isDoctorUser && canUseDoctorDesk) {
     return <Navigate to="/doctor" replace />;
+  }
+
+  if (isFrontDeskDashboard) {
+    return (
+      <AdminLayout>
+        <div className="dashboard-page reception-dashboard-page">
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+          >
+            <FrontDeskWorkspace
+              overview={overview}
+              overviewLoading={overviewLoading}
+              permissions={permissions}
+            />
+          </motion.section>
+        </div>
+      </AdminLayout>
+    );
   }
 
   return (
@@ -833,43 +847,8 @@ export default function DashboardPage() {
         </div>
         )}
 
-        <section className="sync-panel">
-          <div>
-            <p className="eyebrow">Online/offline sync preparation</p>
-            <h2>Patient registration will be sync-ready.</h2>
-            <p>
-              The next patient checkpoint will prepare QR-enabled patient records and leave room for
-              offline capture, queued writes, and safe background sync.
-            </p>
-          </div>
-
-          <div className="sync-list">
-            {commonSyncItems.map((item) => (
-              <span key={item}>
-                <FiRefreshCw />
-                {item}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        <section className="role-strip">
-          {[
-            { label: "Patients", icon: <FiUsers /> },
-            { label: "Doctors", icon: <FiActivity /> },
-            { label: "Nurses", icon: <FaUserNurse /> },
-            { label: "Laboratory", icon: <FaFlask /> },
-            { label: "Beds", icon: <FaBed /> },
-            { label: "Billing", icon: <FiCreditCard /> },
-            { label: "Setup", icon: <FiPlusCircle /> },
-          ].map((item) => (
-            <div className="role-tile" key={item.label}>
-              <span>{item.icon}</span>
-              <strong>{item.label}</strong>
-            </div>
-          ))}
-        </section>
       </div>
     </AdminLayout>
   );
 }
+

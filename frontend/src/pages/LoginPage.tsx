@@ -2,26 +2,12 @@ import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { FaAmbulance, FaCapsules, FaFlask, FaUserMd } from "react-icons/fa";
 import mdsLogo from "../assets/optimized/logo.png";
 import mdsHospital from "../assets/optimized/login_back.png";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import "../styles/login.css";
 
-const testAccounts = [
-  { role: "Super Admin", username: "admin", password: "Admin@123" },
-  { role: "Administrator", username: "administrator", password: "Administrator@123" },
-  { role: "Doctor", username: "drjohn", password: "Doctor@123" },
-  { role: "Nurse", username: "nurseama", password: "Nurse@123" },
-  { role: "Receptionist", username: "reception", password: "Reception@123" },
-  { role: "Laboratory", username: "labtech", password: "Lab@12345" },
-  { role: "Pharmacist", username: "pharm", password: "Pharm@123" },
-  { role: "Cashier", username: "cashier", password: "Cashier@123" },
-  { role: "Billing Officer", username: "billing", password: "Billing@123" },
-  { role: "Desk Office", username: "deskoffice", password: "Desk@123" },
-  { role: "Security", username: "security", password: "Security@123" },
-];
 
 function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
   const normalizedRoles = roles.map((role) => role.toLowerCase());
@@ -53,18 +39,19 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setToken = useAuthStore((state) => state.setToken);
+  const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
   const setUser = useAuthStore((state) => state.setUser);
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const showTestAccounts = import.meta.env.VITE_SHOW_TEST_LOGINS !== "false";
 
   async function submitLogin(username: string, loginPassword: string) {
     setLoading(true);
     setError(null);
 
-    const result = await login({ emailOrUsername: username, password: loginPassword });
+    const result = await login({ emailOrUsername: username, password: loginPassword, rememberMe });
     setLoading(false);
 
     if (!result?.accessToken) {
@@ -73,6 +60,7 @@ export default function LoginPage() {
     }
 
     setToken(result.accessToken);
+    setRefreshToken(result.refreshToken ?? null);
     setUser(result.user);
     navigate(getPostLoginPath(result.user?.roles, result.user?.permissions), { replace: true });
   }
@@ -82,15 +70,18 @@ export default function LoginPage() {
     await submitLogin(emailOrUsername, password);
   }
 
-  const loginWithTestAccount = async (account: (typeof testAccounts)[number]) => {
-    setEmailOrUsername(account.username);
-    setPassword(account.password);
-    await submitLogin(account.username, account.password);
-  };
 
   return (
     <main className="login-page">
       <section className="login-visual" aria-label="MDS staff portal overview">
+        <img
+          className="login-hospital-image"
+          src={mdsHospital}
+          alt="MDS Hospital Kano Facility"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
         <div className="login-brand">
           <img className="login-logo" src={mdsLogo} alt="MDS Hospital Logo" decoding="async" />
           <div>
@@ -99,59 +90,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="login-showcase-card">
-          <img
-            className="login-hospital-image"
-            src={mdsHospital}
-            alt="MDS Hospital Kano Facility"
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-          />
-          <div className="showcase-badge">
-            <span className="badge-pulse" />
-            <span>Eastern Bypass, Giginyu, Kano • 24/7 Care</span>
-          </div>
-        </div>
 
         <div className="login-copy">
           <p className="eyebrow">MDS Specialist Hospital</p>
           <h1>Welcome to MDS staff portal.</h1>
           <p>Secure clinical and administrative portal for doctors, nurses, specialists, and hospital staff.</p>
-        </div>
-
-        <div className="login-feature-grid">
-          <div className="login-feature-card">
-            <div className="feature-icon-wrap emergency">
-              <FaAmbulance />
-            </div>
-            <strong>24/7 Emergency</strong>
-            <small>Trauma & Ambulance</small>
-          </div>
-
-          <div className="login-feature-card">
-            <div className="feature-icon-wrap clinical">
-              <FaUserMd />
-            </div>
-            <strong>Specialist Care</strong>
-            <small>Doctors & Clinics</small>
-          </div>
-
-          <div className="login-feature-card">
-            <div className="feature-icon-wrap lab">
-              <FaFlask />
-            </div>
-            <strong>Fast Laboratory</strong>
-            <small>Accurate Diagnostics</small>
-          </div>
-
-          <div className="login-feature-card">
-            <div className="feature-icon-wrap pharmacy">
-              <FaCapsules />
-            </div>
-            <strong>24hr Pharmacy</strong>
-            <small>Genuine Medications</small>
-          </div>
         </div>
       </section>
 
@@ -194,6 +137,18 @@ export default function LoginPage() {
             </div>
           </label>
 
+          <label className="login-remember">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
+            <span>
+              <strong>Remember me for 30 days</strong>
+              <small>Use this on trusted hospital devices only.</small>
+            </span>
+          </label>
+
           <button type="submit" disabled={loading} className="login-submit">
             {loading ? "Signing in..." : "Sign in"}
             <FiArrowRight />
@@ -214,32 +169,12 @@ export default function LoginPage() {
             View hospital landing page
             <FiArrowRight />
           </Link>
-
-          {showTestAccounts && (
-            <div className="test-login-panel">
-              <div>
-                <strong>Trial role logins</strong>
-                <span>Click a role to sign in.</span>
-              </div>
-
-              <div className="test-login-grid">
-                {testAccounts.map((account) => (
-                  <button
-                    key={account.role}
-                    type="button"
-                    onClick={() => loginWithTestAccount(account)}
-                    className="test-login-btn"
-                    disabled={loading}
-                  >
-                    <span>{account.role}</span>
-                    <small>{account.username} / {account.password}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </form>
       </section>
     </main>
   );
 }
+
+
+
+

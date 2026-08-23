@@ -18,17 +18,23 @@ export function ProtectedRoute({
   requiredRoles = [],
 }: ProtectedRouteProps) {
   const token = useAuthStore((state) => state.token);
+  const refreshToken = useAuthStore((state) => state.refreshToken);
   const user = useAuthStore((state) => state.user);
   const tokenExpired = isJwtExpired(token);
+  const canRefreshSession = Boolean(refreshToken);
 
   useEffect(() => {
-    if (tokenExpired) {
+    if (tokenExpired && !canRefreshSession) {
       endSession();
     }
-  }, [tokenExpired]);
+  }, [canRefreshSession, tokenExpired]);
 
-  if (!token || tokenExpired) {
-    return <Navigate to={tokenExpired ? "/login?session=expired" : "/login"} replace />;
+  if (!token && !canRefreshSession) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (tokenExpired && !canRefreshSession) {
+    return <Navigate to="/login?session=expired" replace />;
   }
 
   const permissions = user?.permissions ?? [];

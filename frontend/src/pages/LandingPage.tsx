@@ -56,10 +56,10 @@ import "../styles/landing.css";
 
 const hospitalAddress =
   "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu, Kano 700213, Kano";
-const whatsappDisplay = "0706 225 5150";
+const whatsappDisplay = "09137526952";
 const whatsappUrl =
-  "https://wa.me/2347062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
-const emergencyDisplay = "0708 229 7430";
+  "https://wa.me/2349137526952?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.";
+const emergencyDisplay = "07082297430";
 const emergencyTel = "tel:+2347082297430";
 const receptionTel = "tel:+2347062255150";
 const googleMapsUrl =
@@ -117,33 +117,35 @@ function getServiceCategory(slug: string): string {
   return "specialists";
 }
 
-const qualifications = [
+const directorPhotoTitles = [
+  "Consultant General Surgeon",
+  "Minimal Access Surgery",
+  "Director of Medical Services",
+];
+
+const directorCredentials = ["MD", "MSc", "Ph.D.", "FMAS", "M.SAGES", "M.WALS"];
+
+const directorProfileHighlights = [
   {
-    school: "University of Washington, USA",
-    qualification:
-      "Certificate in Leadership and Management in Health and Healthcare Administration",
-    year: "2016",
+    value: "30+",
+    label: "peer-reviewed publications",
   },
   {
-    school: "World Laparoscopy Hospital",
-    qualification:
-      "Fellowship in Minimal Access Surgery — General Surgery",
-    year: "2014",
+    value: "FMAS",
+    label: "minimal access surgery fellowship",
   },
   {
-    school: "Rostov State Medical University",
-    qualification:
-      "MSc and PhD in General Surgery, Laparoscopy and Minimal Access Surgery",
-    year: "2004 – 2009",
-  },
-  {
-    school: "Saint Petersburg State Medical University",
-    qualification:
-      "Doctor of Medicine — General Medicine and Physician Training",
-    year: "1990 – 1997",
+    value: "Public health",
+    label: "hospital and programme leadership",
   },
 ];
 
+const directorFocusAreas = [
+  "Laparoscopic surgery",
+  "Hospital leadership",
+  "Public health systems",
+  "Medical education",
+];
 const trustItems = [
   "Consultant-led clinical services",
   "Accredited healthcare coverage schemes",
@@ -1391,8 +1393,13 @@ export default function LandingPage() {
               />
 
               <div className="director-photo-overlay">
-                <small>Chief Executive Officer</small>
+                <small>Clinical leadership</small>
                 <strong>Dr. Abdulkadir Yakubu</strong>
+                <div className="director-photo-title-stack">
+                  {directorPhotoTitles.map((title) => (
+                    <span key={title}>{title}</span>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1414,35 +1421,44 @@ export default function LandingPage() {
           >
             <p className="eyebrow">Clinical leadership</p>
 
-            <h2>Experienced leadership guiding modern patient care.</h2>
+            <h2>Surgeon-led care with disciplined hospital leadership.</h2>
 
-            <h3>Dr. Abdulkadir Yakubu</h3>
+            <div className="director-heading-row">
+              <div>
+                <h3>Dr. Abdulkadir Yakubu, Ph.D.</h3>
+                <p>
+                  Consultant General Surgeon and Specialist in Minimal Access
+                  (Laparoscopic) Surgery.
+                </p>
+              </div>
+              <strong>30+ publications</strong>
+            </div>
 
             <div className="director-titles">
-              <span>Consultant General Surgeon</span>
-              <span>Chief Executive Officer, MDS Hospital</span>
-              <span>
-                Director and Programme Manager, SEMCHiC, Jigawa State Ministry
-                of Health
-              </span>
+              {directorCredentials.map((credential) => (
+                <span key={credential}>{credential}</span>
+              ))}
             </div>
 
             <p className="director-introduction">
-              Dr. Abdulkadir Yakubu brings extensive experience in general
-              surgery, laparoscopic and minimal access surgery, clinical
-              leadership, and health programme management.
+              Dr. Yakubu brings together advanced surgical practice, hospital
+              administration, public-health leadership, and medical education.
+              His work reflects a clear commitment to safer clinical systems,
+              stronger healthcare teams, and accessible specialist care.
             </p>
 
-            <div className="qualifications">
-              {qualifications.map((item) => (
-                <article key={`${item.school}-${item.year}`}>
-                  <span>{item.year}</span>
-
-                  <div>
-                    <h4>{item.school}</h4>
-                    <p>{item.qualification}</p>
-                  </div>
+            <div className="director-highlight-grid director-compact-highlights">
+              {directorProfileHighlights.map((item) => (
+                <article key={item.value}>
+                  <strong>{item.value}</strong>
+                  <p>{item.label}</p>
                 </article>
+              ))}
+            </div>
+
+            <div className="director-focus-strip">
+              {directorFocusAreas.map((area) => (
+                <span key={area}>{area}</span>
               ))}
             </div>
           </motion.div>

@@ -15,7 +15,7 @@ const hospitalAddress =
 const emergencyDisplay = "0708 229 7430";
 const emergencyTel = "tel:+2347082297430";
 const whatsappUrl =
-  "https://wa.me/2348062255150?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20ask%20about%20a%20service.";
+  "https://wa.me/2349137526952?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20ask%20about%20a%20service.";
 const googleMapsUrl =
   "https://www.google.com/maps/place/MDS+HOSPITAL/@11.9926965,8.5865612,17z/data=!3m1!4b1!4m6!3m5!1s0x11ae833f2e4d110f:0x916e22c7202b3a5!8m2!3d11.9926965!4d8.5865612!16s%2Fg%2F11hz_lk_v0";
 
