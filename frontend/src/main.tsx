@@ -6,6 +6,7 @@ import App from "./App";
 import { queryClient } from "./lib/queryClient";
 
 import "./styles.css";
+import "./styles/theme-visibility.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

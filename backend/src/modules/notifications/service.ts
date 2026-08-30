@@ -9,6 +9,7 @@ import { prisma } from "../../database/prisma";
 import { HttpStatus } from "../../core/HttpStatus";
 import { ApiError } from "../../shared/errors/ApiError";
 import { env } from "../../config/env";
+import { publishNotification } from "./realtime";
 import {
   ListNotificationsQueryDto,
   PushSubscriptionDto,
@@ -285,6 +286,7 @@ export class NotificationService {
       },
     });
 
+    publishNotification(notification);
     void NotificationService.dispatchPush(notification);
 
     return notification;

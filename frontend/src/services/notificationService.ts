@@ -95,3 +95,10 @@ export async function unsubscribeFromPush(endpoint: string) {
     };
   }
 }
+export function openNotificationStream(token: string) {
+  const baseUrl = String(api.defaults.baseURL ?? "").replace(/\/$/, "");
+  const streamUrl = new URL(`${baseUrl}/notifications/stream`);
+  streamUrl.searchParams.set("token", token);
+
+  return new EventSource(streamUrl.toString());
+}

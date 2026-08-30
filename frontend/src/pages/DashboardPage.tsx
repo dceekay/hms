@@ -14,6 +14,7 @@ import {
 import {
   FiActivity,
   FiArchive,
+  FiArrowRight,
   FiBarChart2,
   FiCalendar,
   FiCheckCircle,
@@ -26,15 +27,18 @@ import {
   FiTrendingUp,
   FiTruck,
   FiUserPlus,
+  FiTool,
   FiUsers,
 } from "react-icons/fi";
-import { FaBed, FaCapsules, FaFlask, FaUserNurse } from "react-icons/fa";
+import { FaBed, FaCapsules, FaFlask, FaHospitalUser, FaUserNurse } from "react-icons/fa";
 
 type DashboardAction = {
   label: string;
   to: string;
   icon: ReactNode;
   primary?: boolean;
+  detail?: string;
+  tone?: "blue" | "teal" | "purple" | "rose" | "amber" | "slate";
 };
 
 type DashboardProfile = {
@@ -206,6 +210,13 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   const canCreatePatients = permissions.includes("patients.create");
   const canCreateInvestigationPatients = permissions.includes("patients.investigation.create");
   const canReadPatients = permissions.includes("patients.read");
+  const canReadAppointments = permissions.includes("appointments.read");
+  const canReadBilling = permissions.includes("billing.read");
+  const canReadLab = permissions.includes("laboratory.read");
+  const canReadPharmacy = permissions.includes("pharmacy.read");
+  const canReadInventory = permissions.includes("inventory.read");
+  const canReadReports = permissions.includes("reports.read");
+  const isSuperAdmin = hasRole(roles, "Super Admin");
   const canTestApi = permissions.includes("setup.read") || permissions.includes("users.read");
 
   if (hasRole(roles, "Doctor")) {
@@ -383,13 +394,20 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
       { title: "Pending Bills", value: "128", change: "-3.2%", color: "#dc2626", icon: <FiCreditCard /> },
     ],
     actions: [
-      ...(canCreatePatients ? [{ label: "Register Patient", to: "/register-patient", icon: <FiUserPlus />, primary: true }] : []),
-      ...(canCreateInvestigationPatients && !canCreatePatients
-        ? [{ label: "Register Investigation", to: "/register-patient", icon: <FiUserPlus />, primary: true }]
-        : []),
-      ...(canReadPatients ? [{ label: "Patient List", to: "/patients", icon: <FiUsers /> }] : []),
-      ...(permissions.includes("semsas.read") ? [{ label: "SEMSAS", to: "/operations/semsas", icon: <FiTruck /> }] : []),
-      ...(canTestApi ? [{ label: "Test API", to: "/api-tester", icon: <FiActivity /> }] : []),
+      ...(permissions.includes("users.read") ? [{ label: "Users", to: "/admin/users", icon: <FiUsers />, primary: true, detail: "Create staff, reset access", tone: "blue" as const }] : []),
+      ...(isSuperAdmin ? [{ label: "Doctors", to: "/admin/doctors", icon: <FaHospitalUser />, detail: "Add doctors and IDs", tone: "teal" as const }] : []),
+      ...(canCreatePatients ? [{ label: "Register Patient", to: "/register-patient", icon: <FiUserPlus />, detail: "New patient intake", tone: "purple" as const }] : []),
+      ...(canReadPatients ? [{ label: "Patients", to: "/patients", icon: <FiUsers />, detail: "Find records and ID cards", tone: "slate" as const }] : []),
+      ...(canReadAppointments ? [{ label: "Appointments", to: "/appointments", icon: <FiCalendar />, detail: "Doctor assignment queue", tone: "blue" as const }] : []),
+      ...(canReadBilling ? [{ label: "Billing", to: "/billing", icon: <FiCreditCard />, detail: "Invoices and receipts", tone: "teal" as const }] : []),
+      ...(canReadLab ? [{ label: "Laboratory", to: "/laboratory", icon: <FaFlask />, detail: "Requests and results", tone: "purple" as const }] : []),
+      ...(canReadPharmacy ? [{ label: "Pharmacy", to: "/pharmacy", icon: <FaCapsules />, detail: "Sales and stock", tone: "rose" as const }] : []),
+      ...(permissions.includes("semsas.read") ? [{ label: "SEMSAS", to: "/operations/semsas", icon: <FiTruck />, detail: "Ambulance service records", tone: "amber" as const }] : []),
+      ...(canReadInventory ? [{ label: "Inventory", to: "/inventory", icon: <FiDatabase />, detail: "Hospital materials", tone: "slate" as const }] : []),
+      ...(isSuperAdmin ? [{ label: "Insurance", to: "/setup/insurance", icon: <FiShield />, detail: "Schemes and percentages", tone: "blue" as const }] : []),
+      ...(isSuperAdmin ? [{ label: "Services", to: "/setup/services", icon: <FiTool />, detail: "Hospital service setup", tone: "teal" as const }] : []),
+      ...(canReadReports ? [{ label: "Reports", to: "/reports", icon: <FiBarChart2 />, detail: "System summaries", tone: "purple" as const }] : []),
+      ...(canTestApi ? [{ label: "Test API", to: "/api-tester", icon: <FiActivity />, detail: "Developer checks", tone: "slate" as const }] : []),
     ],
     tasks: [
       { label: "Patient registration", detail: "New outpatient profile pending QR generation", time: "8 min" },
@@ -405,6 +423,33 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   };
 }
 
+
+function roleActionTone(index: number, action: DashboardAction) {
+  if (action.tone) return action.tone;
+  if (action.primary) return "blue";
+  return (["teal", "purple", "amber", "slate"] as const)[index % 4];
+}
+
+function RoleActionGrid({ actions }: { actions: DashboardAction[] }) {
+  return (
+    <section className="role-action-grid" aria-label="Role shortcuts">
+      {actions.map((action, index) => (
+        <Link
+          className={`role-action-card tone-${roleActionTone(index, action)} ${action.primary ? "primary" : ""}`}
+          to={action.to}
+          key={`${action.label}-${action.to}`}
+        >
+          <span className="role-action-icon">{action.icon}</span>
+          <span className="role-action-copy">
+            <strong>{action.label}</strong>
+            {action.detail && <small>{action.detail}</small>}
+          </span>
+          <FiArrowRight className="role-action-arrow" />
+        </Link>
+      ))}
+    </section>
+  );
+}
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const roles = user?.roles ?? [];
@@ -412,6 +457,7 @@ export default function DashboardPage() {
   const isSecurityUser = hasRole(roles, "Security");
   const isPharmacyUser = hasRole(roles, "Pharmacist") || hasRole(roles, "Pharmacy");
   const isDoctorUser = hasRole(roles, "Doctor");
+  const isNurseUser = hasRole(roles, "Nurse");
   const canUseDoctorDesk = permissions.includes("clinical.read");
   const isAdminDashboard =
     hasRole(roles, "Super Admin") || hasRole(roles, "Administrator");
@@ -447,6 +493,10 @@ export default function DashboardPage() {
     return <Navigate to="/doctor" replace />;
   }
 
+  if (isNurseUser) {
+    return <Navigate to="/nurse" replace />;
+  }
+
   if (isFrontDeskDashboard) {
     return (
       <AdminLayout>
@@ -471,31 +521,25 @@ export default function DashboardPage() {
     <AdminLayout>
       <div className="dashboard-page">
         <motion.section
-          className="dashboard-command"
+          className="role-home-header"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
         >
           <div>
             <p className="eyebrow">{dashboard.eyebrow}</p>
-            <span className="role-context">{dashboard.roleLabel}</span>
-            <h1>{dashboard.title}</h1>
+            <h1>{dashboard.roleLabel}</h1>
             <p>{dashboard.description}</p>
           </div>
-
-          <div className="command-actions">
-            {dashboard.actions.map((action) => (
-              <Link
-                key={action.label}
-                to={action.to}
-                className={action.primary ? "command-btn primary" : "command-btn"}
-              >
-                {action.icon}
-                {action.label}
-              </Link>
-            ))}
-          </div>
         </motion.section>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <RoleActionGrid actions={dashboard.actions} />
+        </motion.div>
 
         <motion.div
           className="stats-grid"

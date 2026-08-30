@@ -5,6 +5,8 @@ import { NotificationController } from "./controller";
 const router = Router();
 const controller = new NotificationController();
 
+router.get("/stream", controller.stream);
+
 router.use(authenticate);
 
 router.get("/", controller.list);

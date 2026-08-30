@@ -6,6 +6,7 @@ import {
   fetchPushPublicKey,
   markAllNotificationsRead,
   markNotificationRead,
+  openNotificationStream,
   subscribeToPush,
 } from "../../services/notificationService";
 import type { AppNotification } from "../../types/notification";
@@ -15,6 +16,7 @@ import {
 } from "../../utils/appEvents";
 import { playClinicalAlertSound } from "../../utils/alertSound";
 import type { ClinicalAlertLevel } from "../../utils/alertSound";
+import { useAuthStore } from "../../store/authStore";
 
 function formatTime(value: string) {
   const date = new Date(value);
@@ -105,6 +107,7 @@ async function registerPushDevice() {
 
 export default function NotificationCenter() {
   const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -116,8 +119,13 @@ export default function NotificationCenter() {
     "idle" | "saving" | "subscribed" | "unavailable"
   >("idle");
   const [soundEnabled, setSoundEnabled] = useState(getStoredSoundPreference);
+  const [streamConnected, setStreamConnected] = useState(false);
   const seenIdsRef = useRef<Set<string>>(new Set());
   const firstLoadRef = useRef(true);
+  const loadingRef = useRef(false);
+  const soundEnabledRef = useRef(soundEnabled);
+  const streamConnectedRef = useRef(false);
+  const pollStartedAtRef = useRef(0);
 
   const unreadItems = useMemo(
     () => items.filter((item) => !item.readAt),
@@ -125,8 +133,12 @@ export default function NotificationCenter() {
   );
 
   const loadNotifications = async () => {
+    if (loadingRef.current) return;
+
+    loadingRef.current = true;
     setLoading(true);
     const result = await fetchNotifications();
+    loadingRef.current = false;
     setLoading(false);
 
     if (!result.result) return;
@@ -141,7 +153,7 @@ export default function NotificationCenter() {
 
     nextItems.forEach((item) => seenIdsRef.current.add(item.id));
 
-    if (!firstLoadRef.current && newUnread.length > 0 && soundEnabled) {
+    if (!firstLoadRef.current && newUnread.length > 0 && soundEnabledRef.current) {
       playClinicalAlertSound(notificationAlertLevel(newUnread));
     }
 
@@ -175,11 +187,20 @@ export default function NotificationCenter() {
   };
 
   useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
+
+  useEffect(() => {
     void loadNotifications();
 
     const interval = window.setInterval(() => {
-      void loadNotifications();
-    }, 15000);
+      const pollEveryMs = streamConnectedRef.current ? 60000 : 10000;
+
+      if (Date.now() - pollStartedAtRef.current >= pollEveryMs) {
+        pollStartedAtRef.current = Date.now();
+        void loadNotifications();
+      }
+    }, 5000);
 
     const handleFocus = () => void loadNotifications();
     const handleAppUpdate = () => void loadNotifications();
@@ -194,6 +215,43 @@ export default function NotificationCenter() {
       window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleAppUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (!token || typeof EventSource === "undefined") {
+      setStreamConnected(false);
+      streamConnectedRef.current = false;
+      return;
+    }
+
+    const stream = openNotificationStream(token);
+
+    const markConnected = () => {
+      streamConnectedRef.current = true;
+      setStreamConnected(true);
+    };
+
+    const markDisconnected = () => {
+      streamConnectedRef.current = false;
+      setStreamConnected(false);
+    };
+
+    const handleNotification = () => {
+      void loadNotifications();
+    };
+
+    stream.addEventListener("open", markConnected);
+    stream.addEventListener("ready", markConnected);
+    stream.addEventListener("notification", handleNotification);
+    stream.onerror = markDisconnected;
+
+    return () => {
+      stream.removeEventListener("open", markConnected);
+      stream.removeEventListener("ready", markConnected);
+      stream.removeEventListener("notification", handleNotification);
+      stream.close();
+      markDisconnected();
+    };
+  }, [token]);
 
   useEffect(() => {
     if (
@@ -271,6 +329,9 @@ export default function NotificationCenter() {
           </div>
 
           <div className="notification-tools">
+            <span className={`notification-live-status ${streamConnected ? "online" : "polling"}`}>
+              {streamConnected ? "Live" : "Polling"}
+            </span>
             <button type="button" onClick={requestPermission}>
               <FiBell />
               {pushStatus === "saving"

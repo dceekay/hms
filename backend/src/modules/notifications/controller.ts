@@ -1,4 +1,4 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import {
@@ -7,12 +7,64 @@ import {
   pushUnsubscribeSchema,
 } from "./dto";
 import { NotificationService } from "./service";
+import { verifyAccessToken } from "../../shared/helpers/jwt";
+import {
+  canReceiveNotification,
+  serializeNotification,
+  subscribeToNotificationEvents,
+} from "./realtime";
 
 export class NotificationController extends BaseController {
   constructor(private readonly notificationService = new NotificationService()) {
     super();
   }
 
+
+  stream = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const token = typeof req.query.token === "string" ? req.query.token : "";
+      let payload: ReturnType<typeof verifyAccessToken>;
+
+      try {
+        payload = verifyAccessToken(token);
+      } catch {
+        return res.status(401).json({ success: false, message: "Invalid or expired token" });
+      }
+
+      if (payload.type !== "access") {
+        return res.status(401).json({ success: false, message: "Invalid token type" });
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      });
+
+      res.write(`event: ready\ndata: ${JSON.stringify({ ok: true })}\n\n`);
+
+      const heartbeat = setInterval(() => {
+        res.write(`event: heartbeat\ndata: ${JSON.stringify({ at: new Date().toISOString() })}\n\n`);
+      }, 25000);
+
+      const unsubscribe = subscribeToNotificationEvents((notification) => {
+        if (!canReceiveNotification(notification, payload.sub, payload.roles ?? [])) {
+          return;
+        }
+
+        res.write(`event: notification\ndata: ${JSON.stringify(serializeNotification(notification))}\n\n`);
+      });
+
+      req.on("close", () => {
+        clearInterval(heartbeat);
+        unsubscribe();
+        res.end();
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
   list = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const result = await this.notificationService.listForUser(

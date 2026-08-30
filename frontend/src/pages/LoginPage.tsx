@@ -24,6 +24,10 @@ function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
     return "/doctor";
   }
 
+  if (normalizedRoles.includes("nurse")) {
+    return "/nurse";
+  }
+
   if (normalizedRoles.includes("security")) {
     return "/security/entry";
   }
@@ -174,7 +178,4 @@ export default function LoginPage() {
     </main>
   );
 }
-
-
-
 

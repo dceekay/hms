@@ -1,0 +1,330 @@
+:root {
+  --field-bg: rgba(2, 8, 23, 0.68);
+  --field-bg-strong: rgba(8, 19, 35, 0.92);
+  --field-text: #f8fbff;
+  --field-placeholder: #91a4bb;
+  --field-border: rgba(148, 163, 184, 0.32);
+  --field-focus: rgba(34, 211, 238, 0.72);
+  --readable-surface: rgba(8, 19, 35, 0.92);
+  --readable-surface-soft: rgba(15, 31, 54, 0.82);
+  --readable-text: #dbe7f6;
+  --readable-strong: #ffffff;
+  --readable-muted: #9fb3c8;
+}
+
+:root[data-theme="light"] {
+  --field-bg: #ffffff;
+  --field-bg-strong: #f8fbff;
+  --field-text: #0f172a;
+  --field-placeholder: #64748b;
+  --field-border: rgba(15, 23, 42, 0.18);
+  --field-focus: rgba(37, 99, 235, 0.55);
+  --readable-surface: #ffffff;
+  --readable-surface-soft: #f8fbff;
+  --readable-text: #334155;
+  --readable-strong: #0f172a;
+  --readable-muted: #5f6f85;
+}
+
+body,
+.admin-layout,
+.landing-page,
+.service-page,
+.login-page {
+  color: var(--readable-text);
+  text-rendering: optimizeLegibility;
+}
+
+.admin-layout h1,
+.admin-layout h2,
+.admin-layout h3,
+.admin-layout h4,
+.admin-layout h5,
+.admin-layout h6,
+.admin-layout strong,
+.landing-page h1,
+.landing-page h2,
+.landing-page h3,
+.landing-page h4,
+.landing-page strong,
+.service-page h1,
+.service-page h2,
+.service-page h3,
+.service-page h4,
+.service-page strong {
+  color: var(--readable-strong);
+}
+
+.admin-layout p,
+.admin-layout small,
+.admin-layout span,
+.admin-layout li,
+.admin-layout label,
+.landing-page p,
+.landing-page small,
+.landing-page li,
+.service-page p,
+.service-page small,
+.service-page li {
+  color: inherit;
+}
+
+.admin-layout .muted,
+.admin-layout .eyebrow + p,
+.admin-layout .card p,
+.admin-layout .panel p,
+.admin-layout small,
+.landing-page small,
+.service-page small {
+  color: var(--readable-muted);
+}
+
+input,
+select,
+textarea,
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea,
+.landing-page input,
+.landing-page select,
+.landing-page textarea,
+.service-page input,
+.service-page select,
+.service-page textarea,
+.login-page input,
+.login-page select,
+.login-page textarea {
+  border-color: var(--field-border) !important;
+  background-color: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  caret-color: var(--primary, #2563eb);
+}
+
+input::placeholder,
+textarea::placeholder,
+.admin-layout input::placeholder,
+.admin-layout textarea::placeholder,
+.landing-page input::placeholder,
+.landing-page textarea::placeholder,
+.service-page input::placeholder,
+.service-page textarea::placeholder,
+.login-page input::placeholder,
+.login-page textarea::placeholder {
+  color: var(--field-placeholder) !important;
+  opacity: 1;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--field-focus) 55%, transparent);
+  outline-offset: 2px;
+}
+
+select option,
+select optgroup {
+  background: var(--field-bg-strong);
+  color: var(--field-text);
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="number"],
+input[type="search"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] input[type="date"],
+:root[data-theme="light"] input[type="time"],
+:root[data-theme="light"] input[type="datetime-local"],
+:root[data-theme="light"] input[type="number"],
+:root[data-theme="light"] input[type="search"] {
+  color-scheme: light;
+}
+
+.card,
+.dashboard-card,
+.dashboard-panel,
+.setup-card,
+.doctor-panel,
+.nurse-panel,
+.frontdesk-panel,
+.laboratory-card,
+.pharmacy-card,
+.billing-card,
+.inventory-card,
+.security-card,
+.modal-content,
+.notification-panel,
+.patient-picker-popover {
+  background-color: var(--readable-surface);
+  color: var(--readable-text);
+  border-color: var(--border);
+}
+
+.stat-card,
+.summary-card,
+.metric-card,
+.quick-card,
+.appointment-card,
+.patient-compact-card,
+.table-card,
+.list-card,
+.role-card,
+.user-card,
+.doctor-card,
+.ward-card,
+.bed-card {
+  background-color: var(--readable-surface-soft);
+  color: var(--readable-text);
+  border-color: var(--border);
+}
+
+.icon-text-btn,
+.action-btn,
+.secondary-btn,
+.ghost-btn,
+.filter-chip,
+.service-tab-btn,
+.patient-select-trigger,
+.queue-tab-btn,
+.notification-tools button {
+  color: var(--readable-strong);
+  border-color: var(--border);
+}
+
+:root[data-theme="light"] .icon-text-btn,
+:root[data-theme="light"] .action-btn,
+:root[data-theme="light"] .secondary-btn,
+:root[data-theme="light"] .ghost-btn,
+:root[data-theme="light"] .filter-chip,
+:root[data-theme="light"] .service-tab-btn,
+:root[data-theme="light"] .patient-select-trigger,
+:root[data-theme="light"] .queue-tab-btn,
+:root[data-theme="light"] .notification-tools button {
+  color: #0f172a;
+  background-color: #ffffff;
+}
+
+.table-wrapper,
+table {
+  color: var(--readable-text);
+}
+
+th {
+  color: var(--readable-muted);
+}
+
+td {
+  color: var(--readable-text);
+}
+
+.badge,
+.pill,
+.status-pill,
+.patient-category-badge,
+.patient-status-badge,
+.doctor-status,
+.nurse-duty-pill {
+  font-weight: 850;
+}
+
+:root[data-theme="light"] .landing-header,
+:root[data-theme="light"] .service-topbar,
+:root[data-theme="light"] .landing-nav.nav-open {
+  background: rgba(255, 255, 255, 0.94);
+  color: #14243b;
+}
+
+:root[data-theme="light"] .landing-nav > a,
+:root[data-theme="light"] .service-topnav a,
+:root[data-theme="light"] .landing-brand,
+:root[data-theme="light"] .landing-brand strong {
+  color: #14243b;
+}
+
+:root[data-theme="dark"] .language-toggle,
+:root[data-theme="dark"] .landing-theme-toggle,
+:root[data-theme="dark"] .mobile-menu-button {
+  background: rgba(8, 19, 35, 0.94) !important;
+  color: #f8fbff !important;
+}
+
+.login-field div {
+  background-color: var(--field-bg) !important;
+  border-color: var(--field-border) !important;
+}
+
+.login-field > span,
+.login-remember,
+.login-remember strong {
+  color: #f8fbff;
+}
+
+.login-remember small {
+  color: #b8c8d8;
+}
+
+:root[data-theme="light"] .login-page {
+  background: #f4f8fb;
+}
+
+:root[data-theme="light"] .login-panel-wrap {
+  background:
+    radial-gradient(circle at 10% 8%, rgba(20, 184, 166, 0.1), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #eaf3fb 100%);
+}
+
+:root[data-theme="light"] .login-panel {
+  background: rgba(255, 255, 255, 0.94);
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 32px 82px rgba(15, 23, 42, 0.13);
+}
+
+:root[data-theme="light"] .login-panel h2,
+:root[data-theme="light"] .login-field > span,
+:root[data-theme="light"] .login-remember,
+:root[data-theme="light"] .login-remember strong {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .login-remember small {
+  color: #64748b;
+}
+
+@media (max-width: 680px) {
+  input,
+  select,
+  textarea,
+  .admin-layout input,
+  .admin-layout select,
+  .admin-layout textarea {
+    min-height: 48px;
+    font-size: 16px;
+  }
+}
+.landing-page .hero-headline,
+.landing-page .hero-copy h1,
+.landing-page .hero-metric-card strong,
+.landing-page .hero-card h3,
+.landing-page .ambulance-hero h1,
+.service-page .service-cta-section h2,
+.service-page .service-detail-hero.dark h1 {
+  color: #ffffff !important;
+}
+
+.landing-page .hero-copy p,
+.landing-page .hero-subcopy,
+.landing-page .hero-card p,
+.landing-page .ambulance-hero p,
+.service-page .service-cta-section p {
+  color: #d8e8f7 !important;
+}
+
+
+
+

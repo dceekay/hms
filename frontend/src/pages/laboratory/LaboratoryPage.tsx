@@ -62,6 +62,25 @@ function templateLabel(template: LaboratoryTemplate) {
   return `${template.name}${template.code ? ` | ${template.code}` : ""}${template.specimen ? ` | ${template.specimen}` : ""}`;
 }
 
+function stringResult(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function reportTitle(request: LaboratoryRequest) {
+  const customName = stringResult(request.resultValues?.test_name);
+
+  if (request.template.code === "LAB-CUSTOM" && customName) {
+    return `${customName} Result`;
+  }
+
+  return request.template.reportTitle || request.template.name;
+}
+
+function requestDisplayName(request: LaboratoryRequest) {
+  const customName = stringResult(request.resultValues?.test_name);
+  return customName || request.template.name;
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "Not recorded";
 
@@ -114,6 +133,7 @@ export default function LaboratoryPage() {
   const [statusFilter, setStatusFilter] = useState<LaboratoryRequestStatus | "all">("all");
   const [patientPicker, setPatientPicker] = useState("");
   const [templatePicker, setTemplatePicker] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("All");
   const [requestForm, setRequestForm] = useState<LaboratoryRequestFormValues>(emptyRequestForm);
   const [activeResult, setActiveResult] = useState<LaboratoryRequest | null>(null);
   const [resultForm, setResultForm] = useState<LaboratoryResultFormValues>(emptyResultForm);
@@ -135,6 +155,30 @@ export default function LaboratoryPage() {
     () => patients.find((patient) => patient.id === requestForm.patientId),
     [patients, requestForm.patientId]
   );
+
+  const activeTemplates = useMemo(
+    () => templates.filter((template) => template.isActive),
+    [templates]
+  );
+
+  const templateCategories = useMemo(
+    () => ["All", ...Array.from(new Set(activeTemplates.map((template) => template.category || "General"))).sort()],
+    [activeTemplates]
+  );
+
+  const visibleTemplates = useMemo(() => {
+    const search = templatePicker.trim().toLowerCase();
+
+    return activeTemplates
+      .filter((template) => templateCategory === "All" || (template.category || "General") === templateCategory)
+      .filter((template) =>
+        !search ||
+        template.name.toLowerCase().includes(search) ||
+        (template.code ?? "").toLowerCase().includes(search) ||
+        (template.specimen ?? "").toLowerCase().includes(search)
+      )
+      .slice(0, 12);
+  }, [activeTemplates, templateCategory, templatePicker]);
 
   const loadData = async () => {
     setLoading(true);
@@ -186,6 +230,11 @@ export default function LaboratoryPage() {
     setPatientPicker(value);
     const patient = patients.find((item) => patientOptionLabel(item) === value);
     setRequestForm((current) => ({ ...current, patientId: patient?.id ?? "" }));
+  };
+
+  const handleTemplateSelect = (template: LaboratoryTemplate) => {
+    setTemplatePicker(templateLabel(template));
+    setRequestForm((current) => ({ ...current, templateId: template.id }));
   };
 
   const handleTemplatePick = (value: string) => {
@@ -386,11 +435,39 @@ export default function LaboratoryPage() {
                     required
                   />
                   <datalist id="lab-template-options">
-                    {templates.filter((template) => template.isActive).map((template) => (
+                    {activeTemplates.map((template) => (
                       <option key={template.id} value={templateLabel(template)} />
                     ))}
                   </datalist>
                 </label>
+
+                <div className="laboratory-template-shortcuts" aria-label="Laboratory test shortcuts">
+                  <div className="laboratory-category-chips">
+                    {templateCategories.map((category) => (
+                      <button
+                        type="button"
+                        key={category}
+                        className={templateCategory === category ? "active" : ""}
+                        onClick={() => setTemplateCategory(category)}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="laboratory-template-quick-list">
+                    {visibleTemplates.map((template) => (
+                      <button
+                        type="button"
+                        key={template.id}
+                        className={requestForm.templateId === template.id ? "active" : ""}
+                        onClick={() => handleTemplateSelect(template)}
+                      >
+                        <strong>{template.name}</strong>
+                        <small>{template.specimen || "Specimen not set"}</small>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {selectedTemplate && (
                   <div className="laboratory-template-preview">
@@ -452,7 +529,7 @@ export default function LaboratoryPage() {
                     <article className="laboratory-request-card" key={request.id}>
                       <div className="laboratory-card-main">
                         <div className="setup-provider-title">
-                          <strong>{request.template.name}</strong>
+                          <strong>{requestDisplayName(request)}</strong>
                           <span className={`laboratory-status-badge ${request.status}`}>
                             {statusLabel(request.status)}
                           </span>
@@ -495,7 +572,7 @@ export default function LaboratoryPage() {
               <form className="setup-form laboratory-result-form" onSubmit={handleCompleteResult}>
                 <div className="panel-title">
                   <div>
-                    <h2>{activeResult ? activeResult.template.name : "Result Entry"}</h2>
+                    <h2>{activeResult ? requestDisplayName(activeResult) : "Result Entry"}</h2>
                     <p>{activeResult ? `${patientName(activeResult.patient)} | ${activeResult.requestNumber}` : "Select a request to enter results."}</p>
                   </div>
                   <FiCheckCircle />
@@ -587,7 +664,7 @@ export default function LaboratoryPage() {
                   {requests.filter((request) => request.status !== "completed" && request.status !== "cancelled").map((request) => (
                     <button className="laboratory-queue-item" type="button" key={request.id} onClick={() => openResultForm(request)}>
                       <span>
-                        <strong>{request.template.name}</strong>
+                        <strong>{requestDisplayName(request)}</strong>
                         <small>{patientName(request.patient)} | {request.requestNumber}</small>
                       </span>
                       <b>{statusLabel(request.status)}</b>
@@ -604,7 +681,7 @@ export default function LaboratoryPage() {
                 <img src={mdsLogo} alt="MDS Hospital" />
                 <div>
                   <h2>MDS Hospital</h2>
-                  <p>{selectedReport.template.reportTitle || selectedReport.template.name}</p>
+                  <p>{reportTitle(selectedReport)}</p>
                 </div>
                 <span>{selectedReport.requestNumber}</span>
               </div>
