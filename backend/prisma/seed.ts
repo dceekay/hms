@@ -300,6 +300,9 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "patients.update",
     "patients.convert",
     "patients.reactivate",
+    "claims.read",
+    "setup.read",
+    "billing.read",
     "semsas.read",
     "semsas.create",
     "semsas.update",
@@ -360,6 +363,7 @@ const rolePermissions: Record<RoleName, PermissionName[]> = {
     "claims.create",
     "claims.update",
     "patients.read",
+    "setup.read",
     "reports.read",
   ],
   Security: ["security.entry.read", "security.entry.create", "security.entry.update"],
@@ -1249,24 +1253,95 @@ async function seedSetupData() {
     serviceMap[serviceData.code] = service.id;
   }
 
-  const insuranceProvider = await prisma.insuranceProvider.upsert({
-    where: { name: "CeekayX Health Plan" },
-    update: {
-      code: "CXHP",
-      patientPayPercentage: 20,
-      isActive: true,
+  const hmoProviders = [
+    {
+      name: "NHIA",
+      code: "NHIA",
+      email: "enquiries@nhia.gov.ng",
+      phone: "+2348006442644",
+      description: "National Health Insurance Authority (Federal Coverage)",
+      patientPayPercentage: 10,
     },
-    create: {
+    {
+      name: "KSCHIMA",
+      code: "KSCHIMA",
+      email: "info@kschima.kn.gov.ng",
+      phone: "+2348030000001",
+      description: "Kano State Contributory Healthcare Management Agency",
+      patientPayPercentage: 10,
+    },
+    {
+      name: "JICHMA",
+      code: "JICHMA",
+      email: "info@jichma.jg.gov.ng",
+      phone: "+2348030000002",
+      description: "Jigawa State Contributory Healthcare Management Agency",
+      patientPayPercentage: 10,
+    },
+    {
+      name: "Hygeia HMO",
+      code: "HYGEIA",
+      email: "hygeia@hygeiahmo.com",
+      phone: "+234700494342",
+      description: "Hygeia HMO Private Health Insurance Plan",
+      patientPayPercentage: 0,
+    },
+    {
+      name: "Reliance HMO",
+      code: "RELIANCE",
+      email: "hello@reliancehmo.com",
+      phone: "+23417006900",
+      description: "Reliance HMO Healthcare Coverage",
+      patientPayPercentage: 0,
+    },
+    {
+      name: "AXA Mansard Health",
+      code: "AXA-MAN",
+      email: "care@axamansard.com",
+      phone: "+23412801400",
+      description: "AXA Mansard Health Insurance Scheme",
+      patientPayPercentage: 0,
+    },
+    {
       name: "CeekayX Health Plan",
       code: "CXHP",
       email: "claims@ceekayx-health.example",
       phone: "+2348000000000",
+      description: "Hospital Staff & Family Coverage Plan",
       patientPayPercentage: 20,
     },
-  });
+  ];
+
+  let primaryInsuranceProvider: any = null;
+
+  for (const hmo of hmoProviders) {
+    const provider = await prisma.insuranceProvider.upsert({
+      where: { name: hmo.name },
+      update: {
+        code: hmo.code,
+        email: hmo.email,
+        phone: hmo.phone,
+        description: hmo.description,
+        patientPayPercentage: hmo.patientPayPercentage,
+        isActive: true,
+      },
+      create: {
+        name: hmo.name,
+        code: hmo.code,
+        email: hmo.email,
+        phone: hmo.phone,
+        description: hmo.description,
+        patientPayPercentage: hmo.patientPayPercentage,
+      },
+    });
+
+    if (hmo.name === "CeekayX Health Plan" || !primaryInsuranceProvider) {
+      primaryInsuranceProvider = provider;
+    }
+  }
 
   return {
-    insuranceProvider,
+    insuranceProvider: primaryInsuranceProvider,
     serviceMap,
   };
 }
@@ -1275,6 +1350,7 @@ async function seedDemoPatient(insuranceProviderId: string) {
   const demoPatient = {
     mrn: "CXHMS-2026-SEED0001",
     qrCode: "PAT-SEED-GRACE-ADEYEMI",
+    physicalFileNumber: "MDS-P-00101",
     firstName: "Grace",
     lastName: "Adeyemi",
     email: "patient@example.com",
@@ -1284,8 +1360,8 @@ async function seedDemoPatient(insuranceProviderId: string) {
     status: "active" as const,
     patientCategory: "new_patient" as const,
     address: "12 Care Avenue",
-    city: "Lagos",
-    state: "Lagos",
+    city: "Kano",
+    state: "Kano",
     country: "Nigeria",
     emergencyContactName: "Tunde Adeyemi",
     emergencyContactPhone: "+2348090002222",
@@ -1297,6 +1373,70 @@ async function seedDemoPatient(insuranceProviderId: string) {
     insurancePolicyNumber: "CXHP-0001",
     insuranceCoverageStatus: "active",
   };
+
+  const patient2 = {
+    mrn: "CXHMS-2026-SEED0002",
+    qrCode: "PAT-SEED-IBRAHIM-MUSA",
+    physicalFileNumber: "MDS-P-00102",
+    firstName: "Ibrahim",
+    lastName: "Musa",
+    email: "ibrahim.musa@example.com",
+    phone: "+2348031112233",
+    dateOfBirth: new Date("1992-04-15"),
+    gender: "male" as const,
+    status: "active" as const,
+    patientCategory: "old_patient" as const,
+    address: "24 Nassarawa Road",
+    city: "Kano",
+    state: "Kano",
+    country: "Nigeria",
+    emergencyContactName: "Amina Musa",
+    emergencyContactPhone: "+2348039998877",
+    emergencyContactRelationship: "Sister",
+    bloodGroup: "B+",
+    genotype: "AS",
+    allergies: "Penicillin",
+    insuranceProviderId,
+    insurancePolicyNumber: "CXHP-0002",
+    insuranceCoverageStatus: "active",
+  };
+
+  const patient3 = {
+    mrn: "CXHMS-2026-SEED0003",
+    qrCode: "PAT-SEED-ZAINAB-HARUNA",
+    physicalFileNumber: "MDS-P-00103",
+    firstName: "Zainab",
+    lastName: "Haruna",
+    email: "zainab.haruna@example.com",
+    phone: "+2348065554433",
+    dateOfBirth: new Date("1995-11-08"),
+    gender: "female" as const,
+    status: "active" as const,
+    patientCategory: "investigation_patient" as const,
+    address: "5 Giginyu Quarters",
+    city: "Kano",
+    state: "Kano",
+    country: "Nigeria",
+    emergencyContactName: "Haruna Sani",
+    emergencyContactPhone: "+2348061110099",
+    emergencyContactRelationship: "Father",
+    bloodGroup: "A+",
+    genotype: "AA",
+    allergies: "None",
+  };
+
+  await Promise.all([
+    prisma.patient.upsert({
+      where: { mrn: patient2.mrn },
+      update: patient2,
+      create: patient2,
+    }),
+    prisma.patient.upsert({
+      where: { mrn: patient3.mrn },
+      update: patient3,
+      create: patient3,
+    }),
+  ]);
 
   return prisma.patient.upsert({
     where: { mrn: demoPatient.mrn },

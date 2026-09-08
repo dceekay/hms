@@ -35,6 +35,13 @@ export class PatientRepository extends BaseRepository<Patient> {
     return this.model.findUnique({ where: { mrn } });
   }
 
+  async findByPhysicalFileNumber(physicalFileNumber: string): Promise<PatientWithDetails | null> {
+    return this.model.findFirst({
+      where: { physicalFileNumber, deletedAt: null },
+      include: { insuranceProvider: true },
+    });
+  }
+
   async findByQrCode(qrCode: string): Promise<PatientWithDetails | null> {
     return this.model.findUnique({
       where: { qrCode },
@@ -64,6 +71,7 @@ export class PatientRepository extends BaseRepository<Patient> {
         ? {
             OR: [
               { mrn: { contains: params.search } },
+              { physicalFileNumber: { contains: params.search } },
               { qrCode: { contains: params.search } },
               { firstName: { contains: params.search } },
               { lastName: { contains: params.search } },

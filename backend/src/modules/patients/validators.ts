@@ -16,6 +16,7 @@ const insurancePolicySchema = z
 
 export const patientBaseSchema = z.object({
   mrn: z.string().trim().min(3).max(50).optional(),
+  physicalFileNumber: optionalText(80),
 
   firstName: z.string().trim().min(1, "First name is required."),
   lastName: z.string().trim().min(1, "Last name is required."),

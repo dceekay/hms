@@ -1,0 +1,431 @@
+/* --------------------------------------------------------------------------
+   SweetAlert & Toast Notification Styles for MDS Hospital
+   -------------------------------------------------------------------------- */
+
+/* Animated backdrop */
+.sweetalert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 25, 47, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: sweetalertFadeIn 0.22s ease-out forwards;
+}
+
+/* Modal box */
+.sweetalert-box {
+  background: var(--surface, #ffffff);
+  color: var(--text, #1e293b);
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 460px;
+  box-shadow:
+    0 20px 45px -10px rgba(9, 42, 94, 0.28),
+    0 0 0 1px rgba(8, 126, 189, 0.16);
+  padding: 2rem 1.75rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: sweetalertPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Toast container for non-blocking floating alerts */
+.sweetalert-toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 420px;
+  width: calc(100vw - 3rem);
+  pointer-events: none;
+}
+
+.sweetalert-toast {
+  pointer-events: auto;
+  background: var(--surface, #ffffff);
+  border-radius: 1rem;
+  box-shadow:
+    0 12px 32px -4px rgba(10, 37, 64, 0.22),
+    0 0 0 1px rgba(16, 169, 214, 0.18);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  animation: sweetalertToastSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sweetalert-toast:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 36px -4px rgba(10, 37, 64, 0.28),
+    0 0 0 1.5px var(--accent, #087ebd);
+}
+
+/* Success animated icon */
+.sweetalert-icon-wrap {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.sweetalert-icon-wrap.success {
+  background: radial-gradient(circle, #e8f9f5 0%, #d1f4ed 100%);
+  color: #0d9488;
+  box-shadow: 0 0 0 8px rgba(13, 148, 136, 0.12);
+}
+
+.sweetalert-icon-wrap.info {
+  background: radial-gradient(circle, #e0f4ff 0%, #cbebff 100%);
+  color: #0284c7;
+  box-shadow: 0 0 0 8px rgba(2, 132, 199, 0.12);
+}
+
+.sweetalert-toast-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.sweetalert-toast-icon.success {
+  background: #e6f9f4;
+  color: #0d9488;
+}
+
+.sweetalert-toast-icon.nurse {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.sweetalert-toast-icon.doctor {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+/* SVG animated checkmark */
+.sweetalert-checkmark-svg {
+  width: 42px;
+  height: 42px;
+  stroke: #0d9488;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.sweetalert-checkmark-path {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: sweetalertCheckmark 0.45s 0.15s ease-in-out forwards;
+}
+
+/* Content styling */
+.sweetalert-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-strong, #0a2540);
+  margin: 0 0 0.5rem;
+  line-height: 1.3;
+}
+
+.sweetalert-desc {
+  font-size: 0.935rem;
+  color: var(--muted, #4a5568);
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+}
+
+/* Metadata pill badges */
+.sweetalert-meta-card {
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 0.85rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sweetalert-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.825rem;
+}
+
+.sweetalert-meta-label {
+  color: var(--muted, #64748b);
+  font-weight: 500;
+}
+
+.sweetalert-meta-value {
+  color: var(--text-strong, #0f172a);
+  font-weight: 600;
+}
+
+.sweetalert-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sweetalert-meta-badge.online {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.sweetalert-meta-badge.offline {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sweetalert-meta-badge.nurse {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* Toast body */
+.sweetalert-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.sweetalert-toast-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-strong, #0f172a);
+  margin: 0 0 0.25rem;
+  line-height: 1.3;
+}
+
+.sweetalert-toast-desc {
+  font-size: 0.825rem;
+  color: var(--muted, #475569);
+  margin: 0 0 0.65rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.sweetalert-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sweetalert-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.sweetalert-action-btn.primary {
+  background: linear-gradient(135deg, #0d9488, #087ebd);
+  color: #ffffff;
+}
+
+.sweetalert-action-btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+.sweetalert-action-btn.secondary {
+  background: var(--surface-muted, #f1f5f9);
+  color: var(--text, #475569);
+}
+
+.sweetalert-action-btn.secondary:hover {
+  background: var(--border, #e2e8f0);
+  color: var(--text-strong, #1e293b);
+}
+
+/* Buttons for Modal */
+.sweetalert-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.sweetalert-btn-confirm {
+  background: linear-gradient(135deg, #0d9488 0%, #087ebd 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.925rem;
+  padding: 0.7rem 1.75rem;
+  border-radius: 0.65rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: all 0.18s ease;
+}
+
+.sweetalert-btn-confirm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+}
+
+.sweetalert-btn-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  color: var(--muted, #94a3b8);
+  cursor: pointer;
+  font-size: 1.15rem;
+  padding: 0.35rem;
+  border-radius: 0.375rem;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.sweetalert-btn-close:hover {
+  color: var(--text-strong, #1e293b);
+}
+
+/* Toast progress bar */
+.sweetalert-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0d9488, #087ebd);
+  width: 100%;
+  transform-origin: left;
+  animation: sweetalertProgress linear forwards;
+}
+
+/* Keyframes */
+@keyframes sweetalertFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sweetalertPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sweetalertToastSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes sweetalertCheckmark {
+  from {
+    stroke-dashoffset: 48;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sweetalertProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* SweetAlert2 MDS Hospital Theming */
+.mds-swal-popup {
+  border-radius: 1.25rem !important;
+  padding: 1.75rem 1.5rem !important;
+  border: 1.5px solid var(--accent, #087ebd) !important;
+  box-shadow: 0 20px 40px -10px rgba(8, 126, 189, 0.25), 0 0 0 1px rgba(8, 126, 189, 0.08) !important;
+  font-family: inherit !important;
+  background: var(--surface, #ffffff) !important;
+}
+
+.mds-swal-title {
+  color: var(--text-strong, #0a2540) !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+}
+
+.mds-swal-text {
+  color: var(--text, #334155) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+}
+
+.mds-swal-confirm {
+  background: var(--accent, #087ebd) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 1.4rem !important;
+  border: 1px solid var(--accent, #087ebd) !important;
+  margin: 0.35rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.mds-swal-confirm:hover {
+  filter: brightness(1.1) !important;
+  box-shadow: 0 4px 12px rgba(8, 126, 189, 0.3) !important;
+}
+
+.mds-swal-cancel {
+  background: var(--surface-muted, #f1f5f9) !important;
+  color: var(--text, #475569) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 1.4rem !important;
+  border: 1px solid var(--border, #cbd5e1) !important;
+  margin: 0.35rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.mds-swal-cancel:hover {
+  background: var(--border, #e2e8f0) !important;
+  color: var(--text-strong, #1e293b) !important;
+}

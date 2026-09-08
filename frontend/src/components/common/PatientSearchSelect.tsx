@@ -28,9 +28,10 @@ export interface PatientSearchSelectProps {
 
 export function formatPatientDisplay(patient: Patient): string {
   const name = `${patient.firstName} ${patient.lastName}`.trim();
+  const pFile = patient.physicalFileNumber ? `[P-File: ${patient.physicalFileNumber}]` : "";
   const mrn = patient.mrn ? `(${patient.mrn})` : "";
   const phone = patient.phone ? `• ${patient.phone}` : "";
-  return `${name} ${mrn} ${phone}`.trim();
+  return [name, pFile, mrn, phone].filter(Boolean).join(" ");
 }
 
 export function calculateAge(dob?: string | null): string {
@@ -50,7 +51,7 @@ export default function PatientSearchSelect({
   patients,
   selectedPatientId,
   onSelectPatient,
-  placeholder = "Search by name, MRN, or phone number...",
+  placeholder = "Search by name, P-File No., MRN, or phone...",
   label,
   error,
   disabled = false,
@@ -77,13 +78,19 @@ export default function PatientSearchSelect({
     return patients.filter((patient) => {
       const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
       const mrn = (patient.mrn ?? "").toLowerCase();
+      const pFile = (patient.physicalFileNumber ?? "").toLowerCase();
       const phone = (patient.phone ?? "").toLowerCase();
       const email = (patient.email ?? "").toLowerCase();
+      const insurance = (patient.insuranceProvider?.name ?? "").toLowerCase();
+      const policy = (patient.insurancePolicyNumber ?? "").toLowerCase();
       return (
         fullName.includes(q) ||
         mrn.includes(q) ||
+        pFile.includes(q) ||
         phone.includes(q) ||
-        email.includes(q)
+        email.includes(q) ||
+        insurance.includes(q) ||
+        policy.includes(q)
       );
     }).slice(0, 50);
   }, [patients, searchQuery]);
@@ -327,6 +334,11 @@ export default function PatientSearchSelect({
                           <strong className="patient-name">
                             {patient.firstName} {patient.lastName}
                           </strong>
+                          {patient.physicalFileNumber && (
+                            <span className="patient-pfile-chip" title="Physical File / Folder Number">
+                              📁 {patient.physicalFileNumber}
+                            </span>
+                          )}
                           {patient.mrn && (
                             <span className="patient-mrn-chip">
                               {patient.mrn}
@@ -346,9 +358,9 @@ export default function PatientSearchSelect({
                               {patient.dateOfBirth && ` • ${calculateAge(patient.dateOfBirth)}`}
                             </span>
                           )}
-                          {patient.insuranceProvider && (
+                          {(patient.insuranceProvider || patient.insurancePolicyNumber) && (
                             <span className="subtext-item insurance-tag">
-                              <FiCreditCard /> {patient.insuranceProvider.name}
+                              <FiCreditCard /> {patient.insuranceProvider?.name || "HMO"}{patient.insurancePolicyNumber ? ` (${patient.insurancePolicyNumber})` : ""}
                             </span>
                           )}
                         </div>

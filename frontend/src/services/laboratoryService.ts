@@ -221,3 +221,64 @@ export async function completeLaboratoryRequest(id: string, values: LaboratoryRe
     };
   }
 }
+
+export type LaboratoryVerificationData = {
+  id: string;
+  requestNumber: string;
+  status: LaboratoryRequestStatus;
+  patient: {
+    id: string;
+    mrn?: string | null;
+    fullName: string;
+    gender: string;
+    dateOfBirth?: string;
+  };
+  template: {
+    id: string;
+    name: string;
+    code?: string | null;
+    category?: string | null;
+    specimen?: string | null;
+    reportTitle?: string | null;
+    fields: LaboratoryTemplate["fields"];
+    notes?: string | null;
+  };
+  clinicalNotes?: string | null;
+  sampleCollectedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  resultValues?: Record<string, unknown> | null;
+  interpretation?: string | null;
+  technicianNote?: string | null;
+  technician?: {
+    name: string;
+    username: string;
+  } | null;
+  recordedBy?: {
+    name: string;
+    username: string;
+  } | null;
+  completedBy?: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+  } | null;
+  hospital?: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    accreditation: string;
+  };
+};
+
+export async function verifyLaboratoryRequestPublic(identifier: string) {
+  try {
+    const response = await api.get<{ data: LaboratoryVerificationData }>(
+      `/laboratory/verify/${identifier}`
+    );
+    return { data: response.data.data, error: undefined };
+  } catch (error: any) {
+    return { data: null, error: error?.response?.data?.message ?? "Unable to verify laboratory record." };
+  }
+}

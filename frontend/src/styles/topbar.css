@@ -17,8 +17,13 @@
 
 .topbar-left {
   min-width: 0;
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-menu-btn {
+  display: none;
 }
 
 .topbar-kicker {
@@ -781,18 +786,6 @@
     display: none;
   }
 }
-
-@media (max-width: 1200px) {
-  .topbar {
-    grid-template-columns: minmax(140px, 0.8fr) auto;
-  }
-
-  .topbar-left h2 {
-    max-width: 280px;
-  }
-}
-
-/* Mobile & Tablet Streamlined Single-Row Topbar */
 @media (max-width: 900px) {
   .desktop-only {
     display: none !important;
@@ -806,17 +799,36 @@
     justify-content: space-between;
     padding: 8px 14px;
     gap: 12px;
-    background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+    background: color-mix(in srgb, var(--surface-strong, #ffffff) 94%, transparent);
     backdrop-filter: blur(20px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .mobile-menu-btn {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border, #e2e8f0);
+    background: var(--surface, #ffffff);
+    color: var(--text-strong, #0f172a);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-menu-btn:hover {
+    background: var(--surface-hover, #f1f5f9);
+    color: var(--accent, #087ebd);
+    border-color: var(--accent, #087ebd);
   }
 
   .topbar-left {
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 1px;
+    align-items: center;
+    gap: 10px;
   }
 
   .topbar-kicker {

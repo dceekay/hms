@@ -5,6 +5,13 @@ const insurancePolicyNumberPattern =
 
 export const patientSchema = z
   .object({
+    physicalFileNumber: z
+      .string()
+      .trim()
+      .max(80, "P-File Number must not exceed 80 characters.")
+      .optional()
+      .or(z.literal("")),
+
     firstName: z
       .string()
       .trim()
@@ -268,6 +275,8 @@ export type Patient = {
 
   mrn?: string | null;
   qrCode?: string | null;
+  physicalFileNumber?: string | null;
+  physicalFileOpenedAt?: string | null;
 
   firstName: string;
   lastName: string;
