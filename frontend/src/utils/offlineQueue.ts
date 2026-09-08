@@ -7,11 +7,25 @@ import {
 const STORAGE_KEY = "hms_offline_sync_queue";
 
 export type OfflineOperationType =
+  | "laboratory.create_request"
+  | "laboratory.update_status"
   | "laboratory.complete_result"
-  | "security.create_entry"
+  | "inventory.create_item"
+  | "inventory.adjust_stock"
   | "billing.create_bill"
   | "pharmacy.create_sale"
-  | "clinical.create_note";
+  | "clinical.create_note"
+  | "clinical.create_prescription"
+  | "clinical.create_admission"
+  | "clinical.create_referral"
+  | "nursing.record_vitals"
+  | "nursing.administer_med"
+  | "nursing.create_note"
+  | "nursing.acknowledge_order"
+  | "patient.register_patient"
+  | "patient.update_patient"
+  | "appointments.book_appointment"
+  | "appointments.update_status";
 
 export type OfflineOperation = {
   id: string;
@@ -78,6 +92,19 @@ export function enqueueOfflineOperation(
 
   writeQueue([...readQueue(), queued]);
   return queued;
+}
+
+export function updateOfflineOperationBody(id: string, body: unknown) {
+  const queue = readQueue();
+  const index = queue.findIndex((item) => item.id === id);
+  if (index === -1) return false;
+
+  writeQueue(
+    queue.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, body } : item
+    )
+  );
+  return true;
 }
 
 export function isLikelyNetworkError(error: unknown) {

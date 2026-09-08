@@ -4,6 +4,7 @@ import {
   FiChevronDown,
   FiCreditCard,
   FiDownload,
+  FiFolder,
   FiTrash2,
   FiUserPlus,
 } from "react-icons/fi";
@@ -24,8 +25,10 @@ import {
   patientSchema,
 } from "../../types/patient";
 import { compressImageToWebp } from "../../utils/imageCompression";
+import { showSuccessWithSound } from "../../utils/sweetAlert";
 
 const initialForm: PatientFormValues = {
+  physicalFileNumber: "",
   firstName: "",
   lastName: "",
   email: "",
@@ -273,6 +276,10 @@ export default function PatientRegistrationPage() {
     }
 
     setCreatedPatient(patient);
+    void showSuccessWithSound({
+      title: "Patient Registered Successfully!",
+      text: `${patient.firstName} ${patient.lastName} has been registered with MRN ${patient.mrn || "assigned"}.`,
+    });
   };
 
   const handleGenerateId = async () => {
@@ -403,6 +410,22 @@ export default function PatientRegistrationPage() {
               </div>
 
               <div className="form-grid">
+                <label className="form-full-col pfile-field-group">
+                  <span className="pfile-input-label">
+                    <FiFolder className="pfile-icon" /> Physical File Number (P-File Number)
+                  </span>
+                  <input
+                    placeholder="e.g. MDS-0142, P-2026/089, or Card Folder No."
+                    value={form.physicalFileNumber ?? ""}
+                    onChange={(event) =>
+                      update("physicalFileNumber", event.target.value)
+                    }
+                  />
+                  <small className="field-hint">
+                    Physical paper folder or medical card index in the Health Records archive.
+                  </small>
+                </label>
+
                 <label>
                   First name
                   <input

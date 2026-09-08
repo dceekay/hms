@@ -1,4 +1,6 @@
-import api from "./api";
+﻿import api from "./api";
+import { enqueueOfflineOperation, updateOfflineOperationBody } from "../utils/offlineQueue";
+import { notifyDataMutated } from "../utils/appEvents";
 import type {
   AdmissionRequestFormValues,
   ClinicalAdmissionRequest,
@@ -38,6 +40,27 @@ type PrescriptionListResponse = {
     };
   };
 };
+
+const CACHE_KEY_DOCTOR_WORKSPACE = "hms_cached_doctor_workspace";
+
+export function getCachedDoctorWorkspace(): ClinicalWorkspace | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY_DOCTOR_WORKSPACE);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCachedDoctorWorkspace(data: ClinicalWorkspace) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CACHE_KEY_DOCTOR_WORKSPACE, JSON.stringify(data));
+  } catch (err) {
+    console.error("Failed to cache doctor workspace", err);
+  }
+}
 
 function getErrorMessage(error: any, fallback: string) {
   return error?.response?.data?.message ?? fallback;
@@ -102,11 +125,19 @@ function cleanReferralPayload(values: ReferralFormValues) {
 }
 
 export async function fetchDoctorWorkspace() {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const cached = getCachedDoctorWorkspace();
+    if (cached) return { workspace: cached, error: undefined };
+  }
+
   try {
     const response = await api.get<WorkspaceResponse>("/clinical/doctor-workspace");
+    saveCachedDoctorWorkspace(response.data.data);
     return { workspace: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);
+    const cached = getCachedDoctorWorkspace();
+    if (cached) return { workspace: cached, error: undefined };
     return {
       workspace: null,
       error: getErrorMessage(error, "Unable to load doctor workspace."),
@@ -138,12 +169,44 @@ export async function fetchClinicalEncounters(params: {
 }
 
 export async function createClinicalEncounter(values: ClinicalEncounterFormValues) {
+  const payload = cleanEncounterPayload(values);
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const queuedOperation = enqueueOfflineOperation({
+      type: "clinical.create_note",
+      label: `Clinical encounter for patient ${payload.patientId}`,
+      method: "POST",
+      path: "/clinical/encounters",
+      body: payload,
+    });
+    const optimisticEncounter = {
+      id: `offline-enc:${queuedOperation.id}`,
+      encounterNumber: `ENC-OFF-${Date.now().toString().slice(-4)}`,
+      patientId: payload.patientId,
+      doctorId: "offline-doctor",
+      visitType: payload.visitType ?? "General consultation",
+      chiefComplaint: payload.chiefComplaint,
+      history: payload.history,
+      examination: payload.examination,
+      diagnosis: payload.diagnosis,
+      remarks: payload.remarks,
+      plan: payload.plan,
+      status: "open",
+      startedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as unknown as ClinicalEncounter;
+
+    notifyDataMutated({ source: "clinical" });
+    return { encounter: optimisticEncounter, error: undefined, queued: true };
+  }
+
   try {
     const response = await api.post<{ data: ClinicalEncounter }>(
       "/clinical/encounters",
-      cleanEncounterPayload(values)
+      payload
     );
-
+    notifyDataMutated({ source: "clinical" });
     return { encounter: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);
@@ -154,13 +217,84 @@ export async function createClinicalEncounter(values: ClinicalEncounterFormValue
   }
 }
 
+export async function updateClinicalEncounter(id: string, values: ClinicalEncounterFormValues) {
+  const payload = cleanEncounterPayload(values);
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const queuedCreateId = id.startsWith("offline-enc:")
+      ? id.slice("offline-enc:".length)
+      : null;
+    const updatedQueuedCreate = queuedCreateId
+      ? updateOfflineOperationBody(queuedCreateId, payload)
+      : false;
+
+    if (!updatedQueuedCreate) {
+      enqueueOfflineOperation({
+        type: "clinical.create_note",
+        label: `Update clinical encounter ${id}`,
+        method: "PATCH",
+        path: `/clinical/encounters/${id}`,
+        body: payload,
+      });
+    }
+
+    notifyDataMutated({ source: "clinical" });
+    return {
+      encounter: {
+        id,
+        ...payload,
+        status: "open",
+        updatedAt: new Date().toISOString(),
+      } as unknown as ClinicalEncounter,
+      error: undefined,
+      queued: true,
+    };
+  }
+
+  try {
+    const response = await api.patch<{ data: ClinicalEncounter }>(
+      `/clinical/encounters/${id}`,
+      payload
+    );
+    notifyDataMutated({ source: "clinical" });
+    return { encounter: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      encounter: null,
+      error: getErrorMessage(error, "Unable to update clinical note."),
+    };
+  }
+}
+
 export async function completeClinicalEncounter(id: string) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    enqueueOfflineOperation({
+      type: "clinical.create_note",
+      label: `Close clinical encounter ${id}`,
+      method: "PATCH",
+      path: `/clinical/encounters/${id}`,
+      body: { status: "completed" },
+    });
+
+    notifyDataMutated({ source: "clinical" });
+    return {
+      encounter: {
+        id,
+        status: "completed",
+        endedAt: new Date().toISOString(),
+      } as unknown as ClinicalEncounter,
+      error: undefined,
+      queued: true,
+    };
+  }
+
   try {
     const response = await api.patch<{ data: ClinicalEncounter }>(
       `/clinical/encounters/${id}`,
       { status: "completed" }
     );
-
+    notifyDataMutated({ source: "clinical" });
     return { encounter: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);
@@ -195,12 +329,53 @@ export async function fetchPrescriptions(params: {
 }
 
 export async function createPrescription(values: PrescriptionFormValues) {
+  const payload = cleanPrescriptionPayload(values);
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const optimisticPrescription = {
+      id: `offline-rx-${Date.now()}`,
+      prescriptionNumber: `RX-OFF-${Date.now().toString().slice(-4)}`,
+      patientId: payload.patientId,
+      doctorId: "offline-doctor",
+      status: "sent_to_pharmacy",
+      notes: payload.notes,
+      items: payload.items.map((item, idx) => ({
+        id: `offline-rx-item-${Date.now()}-${idx}`,
+        prescriptionId: `offline-rx-${Date.now()}`,
+        medicationId: item.medicationId,
+        medicationName: item.medicationName,
+        strength: item.strength,
+        dosageForm: item.dosageForm,
+        dose: item.dose,
+        frequency: item.frequency,
+        duration: item.duration,
+        quantity: item.quantity,
+        instructions: item.instructions,
+        isDispensed: false,
+        createdAt: new Date().toISOString(),
+      })),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as unknown as Prescription;
+
+    enqueueOfflineOperation({
+      type: "clinical.create_prescription",
+      label: `Prescription for patient ${payload.patientId}`,
+      method: "POST",
+      path: "/clinical/prescriptions",
+      body: payload,
+    });
+
+    notifyDataMutated({ source: "clinical" });
+    return { prescription: optimisticPrescription, error: undefined, queued: true };
+  }
+
   try {
     const response = await api.post<{ data: Prescription }>(
       "/clinical/prescriptions",
-      cleanPrescriptionPayload(values)
+      payload
     );
-
+    notifyDataMutated({ source: "clinical" });
     return { prescription: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);
@@ -212,12 +387,43 @@ export async function createPrescription(values: PrescriptionFormValues) {
 }
 
 export async function createAdmissionRequest(values: AdmissionRequestFormValues) {
+  const payload = cleanAdmissionPayload(values);
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const optimisticRequest = {
+      id: `offline-adm-${Date.now()}`,
+      requestNumber: `ADM-OFF-${Date.now().toString().slice(-4)}`,
+      patientId: payload.patientId,
+      doctorId: "offline-doctor",
+      wardId: payload.wardId,
+      bedId: payload.bedId,
+      priority: payload.priority,
+      status: "pending",
+      diagnosis: payload.diagnosis,
+      reason: payload.reason,
+      notes: payload.notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as unknown as ClinicalAdmissionRequest;
+
+    enqueueOfflineOperation({
+      type: "clinical.create_admission",
+      label: `Admission request for patient ${payload.patientId}`,
+      method: "POST",
+      path: "/clinical/admission-requests",
+      body: payload,
+    });
+
+    notifyDataMutated({ source: "clinical" });
+    return { admissionRequest: optimisticRequest, error: undefined, queued: true };
+  }
+
   try {
     const response = await api.post<{ data: ClinicalAdmissionRequest }>(
       "/clinical/admission-requests",
-      cleanAdmissionPayload(values)
+      payload
     );
-
+    notifyDataMutated({ source: "clinical" });
     return { admissionRequest: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);
@@ -229,12 +435,43 @@ export async function createAdmissionRequest(values: AdmissionRequestFormValues)
 }
 
 export async function createReferral(values: ReferralFormValues) {
+  const payload = cleanReferralPayload(values);
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const optimisticReferral = {
+      id: `offline-ref-${Date.now()}`,
+      referralNumber: `REF-OFF-${Date.now().toString().slice(-4)}`,
+      patientId: payload.patientId,
+      doctorId: "offline-doctor",
+      priority: payload.priority,
+      status: "pending",
+      destinationFacility: payload.destinationFacility,
+      departmentOrSpecialty: payload.departmentOrSpecialty,
+      reason: payload.reason,
+      clinicalSummary: payload.clinicalSummary,
+      notes: payload.notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as unknown as ClinicalReferral;
+
+    enqueueOfflineOperation({
+      type: "clinical.create_referral",
+      label: `Referral for patient ${payload.patientId}`,
+      method: "POST",
+      path: "/clinical/referrals",
+      body: payload,
+    });
+
+    notifyDataMutated({ source: "clinical" });
+    return { referral: optimisticReferral, error: undefined, queued: true };
+  }
+
   try {
     const response = await api.post<{ data: ClinicalReferral }>(
       "/clinical/referrals",
-      cleanReferralPayload(values)
+      payload
     );
-
+    notifyDataMutated({ source: "clinical" });
     return { referral: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);

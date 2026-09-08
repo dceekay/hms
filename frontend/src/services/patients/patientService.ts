@@ -79,10 +79,33 @@ export async function fetchPatientInsuranceProviders(): Promise<{
   }
 }
 
-type PatientListParams = {
+const PATIENTS_CACHE_KEY = "hms_cached_patients_directory";
+
+export function getCachedPatients(): Patient[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(PATIENTS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCachedPatients(patients: Patient[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PATIENTS_CACHE_KEY, JSON.stringify(patients));
+  } catch (err) {
+    console.error("Failed to cache patients locally:", err);
+  }
+}
+
+export type PatientListParams = {
   search?: string;
   status?: string;
   patientCategory?: string;
+  page?: number;
+  take?: number;
 };
 
 export async function fetchPatients(
@@ -90,6 +113,8 @@ export async function fetchPatients(
 ): Promise<Patient[] | null> {
   try {
     const query = {
+      ...(params.take ? { take: params.take } : {}),
+      ...(params.page ? { page: params.page } : {}),
       ...(params.search?.trim() ? { search: params.search.trim() } : {}),
       ...(params.status ? { status: params.status } : {}),
       ...(params.patientCategory
@@ -103,9 +128,15 @@ export async function fetchPatients(
       params: Object.keys(query).length > 0 ? query : undefined,
     });
 
-    return response.data.data.items;
+    const items = response.data.data.items;
+    if (items && items.length > 0) {
+      saveCachedPatients(items);
+    }
+    return items;
   } catch (error) {
     console.error(error);
+    const cached = getCachedPatients();
+    if (cached.length > 0) return cached;
     return null;
   }
 }

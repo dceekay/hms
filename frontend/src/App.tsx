@@ -40,6 +40,7 @@ import OfflineSyncBridge from "./components/OfflineSyncBridge";
 import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
 import { ScrollToTop } from "./components/ScrollToTop";
 import PwaInstallBanner from "./components/pwa/PwaInstallBanner";
+import { SweetAlertToastContainer } from "./components/common/SweetAlertToast";
 import { FiDatabase, FiPieChart } from "react-icons/fi";
 import { useAuthStore } from "./store/authStore";
 import { isJwtExpired } from "./utils/session";
@@ -67,6 +68,7 @@ export default function App() {
       <OfflineSyncBridge />
       <ScrollToTop />
       <PwaInstallBanner />
+      <SweetAlertToastContainer />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
@@ -170,7 +172,7 @@ export default function App() {
         <Route
           path="/doctor"
           element={
-            <ProtectedRoute requiredRoles={["Doctor"]}>
+            <ProtectedRoute requiredRoles={["Doctor", "Super Admin"]}>
               <DoctorDashboardPage />
             </ProtectedRoute>
           }
@@ -179,7 +181,7 @@ export default function App() {
         <Route
           path="/doctor/:view"
           element={
-            <ProtectedRoute requiredRoles={["Doctor"]}>
+            <ProtectedRoute requiredRoles={["Doctor", "Super Admin"]}>
               <DoctorDashboardPage />
             </ProtectedRoute>
           }
@@ -188,7 +190,7 @@ export default function App() {
         <Route
           path="/nurse"
           element={
-            <ProtectedRoute requiredRoles={["Nurse"]}>
+            <ProtectedRoute requiredRoles={["Nurse", "Doctor", "Super Admin"]}>
               <NurseDashboardPage />
             </ProtectedRoute>
           }
@@ -197,7 +199,7 @@ export default function App() {
         <Route
           path="/nurse/:view"
           element={
-            <ProtectedRoute requiredRoles={["Nurse"]}>
+            <ProtectedRoute requiredRoles={["Nurse", "Doctor", "Super Admin"]}>
               <NurseDashboardPage />
             </ProtectedRoute>
           }
@@ -242,7 +244,10 @@ export default function App() {
         <Route
           path="/inventory"
           element={
-            <ProtectedRoute requiredPermissions={["inventory.read"]}>
+            <ProtectedRoute
+              requiredPermissions={["inventory.read"]}
+              allowRoles={["Super Admin", "Administrator", "Pharmacist", "Receptionist"]}
+            >
               <InventoryPage />
             </ProtectedRoute>
           }
@@ -251,7 +256,10 @@ export default function App() {
         <Route
           path="/billing"
           element={
-            <ProtectedRoute requiredPermissions={["billing.read"]}>
+            <ProtectedRoute
+              requiredPermissions={["billing.read"]}
+              allowRoles={["Super Admin", "Administrator", "Cashier", "Billing Officer", "Receptionist"]}
+            >
               <BillingPage />
             </ProtectedRoute>
           }

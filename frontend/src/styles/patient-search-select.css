@@ -367,6 +367,17 @@
   font-family: monospace;
 }
 
+.patient-pfile-chip {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(15, 118, 110, 0.12);
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  color: #0d9488;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .patient-row-subtext {
   display: flex;
   align-items: center;

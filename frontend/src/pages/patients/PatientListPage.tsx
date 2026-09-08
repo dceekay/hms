@@ -224,6 +224,9 @@ function patientToForm(
   patient: Patient
 ): PatientFormValues {
   return {
+    physicalFileNumber:
+      patient.physicalFileNumber ?? "",
+
     firstName:
       patient.firstName ?? "",
 
@@ -1021,6 +1024,15 @@ export function PatientListPage() {
                           </div>
 
                           <div className="patient-compact-badges">
+                            {patient.physicalFileNumber && (
+                              <span
+                                className="pfile-pill"
+                                title={`Physical File / Folder Number: ${patient.physicalFileNumber}`}
+                              >
+                                📁 P-File: {patient.physicalFileNumber}
+                              </span>
+                            )}
+
                             <span
                               className="mrn-pill"
                               title={
@@ -1447,6 +1459,26 @@ export function PatientListPage() {
                       </div>
 
                       <div className="form-grid">
+                        <label className="form-full-col pfile-field-group">
+                          Physical File Number (P-File Number)
+
+                          <input
+                            placeholder="e.g. MDS-0142 or P-2026/089"
+                            value={
+                              editForm.physicalFileNumber ?? ""
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateEditField(
+                                "physicalFileNumber",
+                                event.target
+                                  .value
+                              )
+                            }
+                          />
+                        </label>
+
                         <label>
                           First name
 

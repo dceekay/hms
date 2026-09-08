@@ -130,16 +130,19 @@
 .login-panel-wrap {
   min-width: 0;
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: clamp(22px, 4vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 3vw, 40px);
+  overflow-y: auto;
   background:
     radial-gradient(circle at 10% 8%, rgba(20, 184, 166, 0.16), transparent 32%),
     linear-gradient(180deg, #0b1728 0%, #060c17 100%);
 }
 
 .login-panel {
-  width: min(430px, 100%);
+  width: min(490px, 100%);
+  margin: auto 0;
   display: grid;
   gap: 18px;
   padding: clamp(24px, 3vw, 34px);
@@ -333,6 +336,181 @@
   background: rgba(37, 99, 235, 0.24);
 }
 
+.test-login-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.test-login-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.test-login-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.test-login-icon {
+  width: 20px;
+  height: 20px;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.test-login-title-group strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.test-login-title-group p {
+  margin: 2px 0 0;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.test-login-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(14, 165, 233, 0.12);
+  color: #38bdf8;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.test-login-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 255px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.test-login-grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.test-login-grid::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 10px;
+}
+
+.test-login-grid::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+}
+
+.test-login-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+.test-login-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 11px;
+  background: rgba(2, 8, 23, 0.6);
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.test-login-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.48);
+  background: rgba(14, 165, 233, 0.14);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.test-login-btn:active {
+  transform: translateY(0);
+}
+
+.test-login-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.test-login-btn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.test-login-role {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.test-login-badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 750;
+  padding: 1.5px 5.5px;
+  border-radius: 6px;
+  border: 1px solid;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.test-login-btn-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.test-login-user {
+  overflow: hidden;
+  color: #38bdf8;
+  font-size: 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.test-login-name {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90px;
+}
+
 @media (max-width: 1080px) {
   .login-page {
     grid-template-columns: 1fr;
@@ -441,6 +619,10 @@
   .login-panel {
     gap: 14px;
     padding: 18px;
+  }
+
+  .test-login-grid {
+    grid-template-columns: 1fr;
   }
 }
 

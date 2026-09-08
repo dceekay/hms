@@ -1,0 +1,984 @@
+/* ============================================================================
+   MODERN PATIENT ASSIGNMENT & DOCTOR QUEUE STYLES
+   Cavendish Hospital Clinical Suite
+   ============================================================================ */
+
+.appointments-page-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ----------------------------------------------------------------------------
+   1. COMMAND HEADER & LIVE QUEUE KPI RIBBON
+   ---------------------------------------------------------------------------- */
+.queue-command-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 22px 26px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(8, 126, 189, 0.15), transparent 50%),
+    linear-gradient(135deg, rgba(15, 31, 54, 0.96), rgba(8, 20, 36, 0.98)),
+    var(--surface-strong, #0b2038);
+  border: 1px solid color-mix(in srgb, var(--accent, #087ebd) 30%, var(--border, rgba(148, 163, 184, 0.18)));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.queue-command-copy h1 {
+  margin: 4px 0 6px;
+  color: var(--text-strong, #ffffff);
+  font-size: clamp(1.4rem, 2.8vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.queue-command-copy p {
+  margin: 0;
+  color: var(--muted, #94a3b8);
+  font-size: 0.88rem;
+}
+
+.queue-command-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.queue-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
+  background: color-mix(in srgb, var(--surface, #132b4a) 70%, transparent);
+  color: var(--text, #e2e8f0);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.queue-refresh-btn:hover:not(:disabled) {
+  background: var(--surface, #132b4a);
+  border-color: var(--accent, #087ebd);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.queue-refresh-btn.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* KPI Stats Ribbon */
+.queue-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.queue-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--surface-strong, #0b2038);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.queue-kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.queue-kpi-card.tone-blue {
+  border-left: 4px solid #3b82f6;
+}
+.queue-kpi-card.tone-amber {
+  border-left: 4px solid #f59e0b;
+}
+.queue-kpi-card.tone-purple {
+  border-left: 4px solid #a855f7;
+}
+.queue-kpi-card.tone-emerald {
+  border-left: 4px solid #10b981;
+}
+
+.queue-kpi-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 1.25rem;
+}
+
+.tone-blue .queue-kpi-icon {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+.tone-amber .queue-kpi-icon {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+.tone-purple .queue-kpi-icon {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+.tone-emerald .queue-kpi-icon {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.queue-kpi-data {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.queue-kpi-data span {
+  color: var(--muted, #94a3b8);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.queue-kpi-data strong {
+  color: var(--text-strong, #ffffff);
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* ----------------------------------------------------------------------------
+   2. MAIN 2-COLUMN SPLIT GRID
+   ---------------------------------------------------------------------------- */
+.queue-main-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 440px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* ----------------------------------------------------------------------------
+   3. LEFT PANEL: FAST PATIENT ASSIGNMENT STUDIO
+   ---------------------------------------------------------------------------- */
+.assignment-studio-card {
+  padding: 22px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(8, 126, 189, 0.08), transparent 50%),
+    var(--surface-strong, #0b2038);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+}
+
+.studio-header h2 {
+  margin: 0 0 2px;
+  color: var(--text-strong, #ffffff);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.studio-header p {
+  margin: 0;
+  color: var(--muted, #94a3b8);
+  font-size: 0.8rem;
+}
+
+.studio-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(8, 126, 189, 0.15);
+  color: #38bdf8;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* Patient Snapshot Card (When Patient is Selected) */
+.patient-snapshot-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent, #087ebd) 12%, var(--surface, #132b4a));
+  border: 1px solid color-mix(in srgb, var(--accent, #087ebd) 35%, transparent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: fadeInDown 0.2s ease both;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.snapshot-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.snapshot-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--accent, #087ebd);
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(8, 126, 189, 0.35);
+}
+
+.snapshot-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.snapshot-details strong {
+  color: var(--text-strong, #ffffff);
+  font-size: 0.95rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snapshot-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.snapshot-mrn {
+  color: #38bdf8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.snapshot-cat {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text, #cbd5e1);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.snapshot-clear-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+}
+
+.snapshot-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Studio Section Labels */
+.studio-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text, #e2e8f0);
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.studio-section-label small {
+  color: var(--muted, #94a3b8);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* Visual Doctor Selection Grid */
+.doctor-selection-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.doctor-select-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+  background: color-mix(in srgb, var(--surface, #132b4a) 80%, transparent);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.doctor-select-card:hover {
+  border-color: var(--accent, #087ebd);
+  background: var(--surface, #132b4a);
+  transform: translateY(-1px);
+}
+
+.doctor-select-card.selected {
+  border-color: #38bdf8;
+  background: color-mix(in srgb, var(--accent, #087ebd) 20%, var(--surface, #132b4a));
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3), 0 4px 16px rgba(8, 126, 189, 0.25);
+}
+
+.doc-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.doc-avatar-wrap {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(8, 126, 189, 0.15);
+  color: #38bdf8;
+  font-size: 1rem;
+  position: relative;
+}
+
+.doc-duty-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid var(--surface-strong, #0b2038);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.doc-duty-dot.offline {
+  background: #94a3b8;
+  box-shadow: none;
+}
+
+.doc-duty-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+}
+
+.doc-status-pill {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.doc-status-pill.online {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.doc-status-pill.offline {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.doc-queue-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted, #94a3b8);
+}
+
+.doc-queue-pill.has-queue {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.doc-card-name {
+  color: var(--text-strong, #ffffff);
+  font-size: 0.85rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-card-specialty {
+  color: var(--muted, #94a3b8);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Consultation Reason 1-Tap Presets */
+.preset-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.preset-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  background: color-mix(in srgb, var(--surface, #132b4a) 70%, transparent);
+  color: var(--text, #cbd5e1);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.preset-chip:hover {
+  border-color: var(--accent, #087ebd);
+  color: #ffffff;
+  background: var(--surface, #132b4a);
+}
+
+.preset-chip.active {
+  border-color: var(--accent, #087ebd);
+  background: rgba(8, 126, 189, 0.22);
+  color: #38bdf8;
+  box-shadow: 0 0 8px rgba(8, 126, 189, 0.3);
+}
+
+/* Form Inputs in Studio */
+.studio-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  background: color-mix(in srgb, var(--surface, #132b4a) 70%, transparent);
+  color: var(--text-strong, #ffffff);
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.studio-textarea:focus {
+  outline: none;
+  border-color: var(--accent, #087ebd);
+  box-shadow: 0 0 0 3px rgba(8, 126, 189, 0.2);
+}
+
+/* Timing Toggle Options */
+.timing-segmented-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #132b4a) 90%, var(--surface-strong, #0b2038));
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+}
+
+.timing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timing-btn.active {
+  background: var(--accent, #087ebd);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(8, 126, 189, 0.35);
+}
+
+/* Submit Action Button */
+.studio-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent, #087ebd) 60%, transparent);
+  background: linear-gradient(135deg, #087ebd, #0284c7);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(8, 126, 189, 0.4);
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.studio-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(8, 126, 189, 0.5);
+}
+
+.studio-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ----------------------------------------------------------------------------
+   4. RIGHT PANEL: LIVE DOCTOR QUEUE & WORKBENCH
+   ---------------------------------------------------------------------------- */
+.queue-workbench-panel {
+  padding: 22px;
+  border-radius: 20px;
+  background: var(--surface-strong, #0b2038);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.workbench-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+}
+
+.workbench-title h2 {
+  margin: 0 0 2px;
+  color: var(--text-strong, #ffffff);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.workbench-title p {
+  margin: 0;
+  color: var(--muted, #94a3b8);
+  font-size: 0.82rem;
+}
+
+/* Queue Filter Tabs */
+.queue-segmented-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.queue-segment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+  background: color-mix(in srgb, var(--surface, #132b4a) 70%, transparent);
+  color: var(--muted, #94a3b8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.queue-segment-btn:hover {
+  color: var(--text, #ffffff);
+  background: var(--surface, #132b4a);
+}
+
+.queue-segment-btn.active {
+  background: var(--accent, #087ebd);
+  border-color: var(--accent, #087ebd);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(8, 126, 189, 0.35);
+}
+
+/* Search & Doctor Filter Bar */
+.workbench-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+}
+
+.workbench-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  background: color-mix(in srgb, var(--surface, #132b4a) 70%, transparent);
+}
+
+.workbench-search-box svg {
+  color: var(--muted, #94a3b8);
+  font-size: 1rem;
+}
+
+.workbench-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-strong, #ffffff);
+  font-size: 0.85rem;
+}
+
+.workbench-search-box input:focus {
+  outline: none;
+}
+
+.workbench-doctor-filter select {
+  width: 100%;
+  height: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  background: var(--surface, #132b4a);
+  color: var(--text, #e2e8f0);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* Modern Queue Cards List */
+.queue-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.queue-patient-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface, #132b4a) 90%, transparent), color-mix(in srgb, var(--surface-strong, #0b2038) 95%, transparent)),
+    var(--surface-strong, #0b2038);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.queue-patient-card:hover {
+  border-color: color-mix(in srgb, var(--accent, #087ebd) 40%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+}
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-patient-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.patient-init-badge {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #087ebd) 20%, var(--surface, #132b4a));
+  color: #38bdf8;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.card-patient-text strong {
+  display: block;
+  color: var(--text-strong, #ffffff);
+  font-size: 0.96rem;
+  font-weight: 800;
+}
+
+.card-patient-text small {
+  color: var(--muted, #94a3b8);
+  font-size: 0.76rem;
+  font-family: monospace;
+}
+
+/* Status Pills */
+.queue-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.queue-status-pill.status-scheduled {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.queue-status-pill.status-checked_in {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.queue-status-pill.status-in_consultation {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.queue-status-pill.status-completed {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.queue-status-pill.status-cancelled,
+.queue-status-pill.status-no_show {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Card Middle Row (Meta details) */
+.card-mid-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface, #132b4a) 50%, transparent);
+  font-size: 0.8rem;
+  color: var(--text, #cbd5e1);
+}
+
+.card-mid-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-mid-row svg {
+  color: #38bdf8;
+}
+
+.card-reason-tag {
+  color: var(--text-strong, #ffffff);
+  font-size: 0.82rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Card Bottom Action Row */
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, rgba(148, 163, 184, 0.12));
+}
+
+.queue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.queue-btn.btn-checkin {
+  background: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.queue-btn.btn-checkin:hover:not(:disabled) {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.queue-btn.btn-consult {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.35);
+}
+
+.queue-btn.btn-consult:hover:not(:disabled) {
+  background: #a855f7;
+  color: #ffffff;
+}
+
+.queue-btn.btn-complete {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.queue-btn.btn-complete:hover:not(:disabled) {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.queue-btn.btn-cancel {
+  background: transparent;
+  color: var(--muted, #94a3b8);
+  border-color: var(--border, rgba(148, 163, 184, 0.2));
+}
+
+.queue-btn.btn-cancel:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.queue-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted, #94a3b8);
+}
+
+.queue-empty-box svg {
+  font-size: 2.4rem;
+  color: rgba(148, 163, 184, 0.4);
+}
+
+/* ----------------------------------------------------------------------------
+   5. RESPONSIVE MEDIA QUERIES
+   ---------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .queue-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .queue-kpi-ribbon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .queue-command-header {
+    padding: 16px 18px;
+  }
+
+  .queue-kpi-ribbon {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .card-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-actions-row {
+    justify-content: stretch;
+  }
+
+  .card-actions-row .queue-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

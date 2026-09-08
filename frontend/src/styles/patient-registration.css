@@ -1,0 +1,747 @@
+/* ==========================================================================
+   Cavendish Hospital - Patient Registration & Intake Styling
+   ========================================================================== */
+
+.patient-registration-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Hero Header
+   -------------------------------------------------------------------------- */
+.registration-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface-strong) 92%, #087ebd 8%), var(--surface-strong));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.registration-hero-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.registration-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.registration-hero h1 {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+}
+
+.registration-hero p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.registration-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.registration-hero-actions span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.registration-hero-actions svg {
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Layout Grid
+   -------------------------------------------------------------------------- */
+.registration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  gap: 24px;
+  align-items: start;
+}
+
+/* --------------------------------------------------------------------------
+   Main Registration Form
+   -------------------------------------------------------------------------- */
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface-strong);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   Form Section Card Blocks
+   -------------------------------------------------------------------------- */
+.registration-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.registration-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+}
+
+.section-subtitle {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------------------
+   Category Selector Cards (No text overlap)
+   -------------------------------------------------------------------------- */
+.patient-category-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.category-option-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.category-option-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(8, 126, 189, 0.1);
+}
+
+.category-option-card.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), color-mix(in srgb, var(--primary) 12%, var(--surface)));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent), 0 8px 20px rgba(8, 126, 189, 0.16);
+  transform: translateY(-2px);
+}
+
+.category-card-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+  color: var(--accent);
+  font-size: 1.15rem;
+  transition: transform 0.2s ease;
+}
+
+.category-option-card.active .category-card-icon {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 169, 214, 0.35);
+  transform: scale(1.05);
+}
+
+.category-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.category-card-title {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.category-card-desc {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.category-card-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.72rem;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.category-option-card.active .category-card-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --------------------------------------------------------------------------
+   Photo Capture & Avatar
+   -------------------------------------------------------------------------- */
+.patient-photo-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.photo-avatar-zone {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2.5px solid var(--border);
+  background: var(--surface-strong);
+  display: grid;
+  place-items: center;
+}
+
+.photo-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-avatar-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 1.6rem;
+}
+
+.photo-upload-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.photo-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photo-upload-label:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+  transform: translateY(-1px);
+}
+
+.photo-upload-label input[type="file"] {
+  display: none;
+}
+
+.photo-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.photo-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.photo-delete-btn:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Form Grid & Fields
+   -------------------------------------------------------------------------- */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+  width: 100%;
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.form-field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.field-badge-required {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--danger);
+  letter-spacing: 0.02em;
+}
+
+.field-badge-optional {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.form-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon-prefix {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.form-field-group input,
+.form-field-group select,
+.form-field-group textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-strong);
+  font-size: 0.92rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.form-field-group.has-icon input,
+.form-field-group.has-icon select {
+  padding-left: 40px;
+}
+
+.form-field-group input:focus,
+.form-field-group select:focus,
+.form-field-group textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  background: var(--surface-strong);
+}
+
+.form-field-group input::placeholder,
+.form-field-group textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-size: 0.88rem;
+}
+
+.form-field-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238ea5c4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 38px;
+}
+
+.form-field-hint {
+  font-size: 0.74rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* --------------------------------------------------------------------------
+   Accordion / Expandable Additional Info
+   -------------------------------------------------------------------------- */
+.registration-expandable {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.registration-expandable summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.registration-expandable summary::-webkit-details-marker {
+  display: none;
+}
+
+.expandable-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.expandable-trigger-left svg {
+  color: var(--accent);
+}
+
+.expandable-chevron {
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+
+.registration-expandable[open] summary .expandable-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.expandable-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 20px 20px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  margin-top: 4px;
+}
+
+.expandable-subsection-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin: 12px 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   Submit Button & Error Banner
+   -------------------------------------------------------------------------- */
+.registration-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #087ebd 0%, #10a9d6 100%);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(8, 126, 189, 0.28);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.registration-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #076ea6 0%, #087ebd 100%);
+  box-shadow: 0 12px 30px rgba(8, 126, 189, 0.38);
+  transform: translateY(-2px);
+}
+
+.registration-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.registration-alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  color: var(--danger);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.registration-alert-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  color: var(--success);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Live Digital ID Card Preview Panel
+   -------------------------------------------------------------------------- */
+.patient-preview-sidebar {
+  position: sticky;
+  top: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.patient-preview-card-wrap {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface-strong);
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.preview-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.preview-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.preview-badge-live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulseLive 1.5s infinite;
+}
+
+@keyframes pulseLive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.generate-id-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  width: 100%;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong));
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.generate-id-action-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(16, 169, 214, 0.3);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .registration-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-preview-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .registration-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .registration-hero-actions {
+    width: 100%;
+  }
+
+  .registration-hero-actions span {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .registration-form {
+    padding: 18px;
+  }
+
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-category-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-photo-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

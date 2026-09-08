@@ -316,8 +316,9 @@ model User {
 model Patient {
   id String @id @default(uuid()) @db.Char(36)
 
-  mrn    String? @unique @db.VarChar(50)
-  qrCode String? @unique @db.VarChar(120)
+  mrn                String? @unique @db.VarChar(50)
+  qrCode             String? @unique @db.VarChar(120)
+  physicalFileNumber String? @db.VarChar(80)
 
   firstName String @db.VarChar(100)
   lastName  String @db.VarChar(100)
@@ -401,6 +402,7 @@ model Patient {
   @@index([insuranceProviderId])
   @@index([mrn])
   @@index([qrCode])
+  @@index([physicalFileNumber])
   @@index([status])
   @@index([patientCategory])
   @@map("patients")
