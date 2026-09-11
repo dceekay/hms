@@ -776,8 +776,21 @@ pre {
 .loader-wrapper {
   display: grid;
   place-items: center;
+  align-content: center;
+  justify-content: center;
   padding: 40px 20px;
   width: 100%;
+}
+
+.loader-wrapper.loader-lg,
+.loader-wrapper.loader-fullscreen {
+  min-height: 80vh;
+  min-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
 }
 
 .loader-mark {

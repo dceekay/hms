@@ -5,10 +5,13 @@ import {
   FiEdit3,
   FiFileText,
   FiPlus,
+  FiPrinter,
   FiRefreshCw,
   FiSave,
   FiSearch,
+  FiX,
 } from "react-icons/fi";
+import mdsLogo from "../../assets/optimized/logo.png";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createLaboratoryTemplate,
@@ -16,6 +19,8 @@ import {
   updateLaboratoryTemplate,
 } from "../../services/laboratoryService";
 import { useAuthStore } from "../../store/authStore";
+import { NIGERIAN_LAB_TEMPLATES } from "../../constants/nigerianLabTemplates";
+import "../../styles/laboratory-studio.css";
 import type {
   LaboratoryFieldType,
   LaboratoryTemplate,
@@ -67,10 +72,11 @@ export default function LaboratoryTemplatesPage() {
   const canCreate = permissions.includes("laboratory.create");
   const canUpdate = permissions.includes("laboratory.update");
 
-  const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
+  const [templates, setTemplates] = useState<LaboratoryTemplate[]>(NIGERIAN_LAB_TEMPLATES);
   const [templateSearch, setTemplateSearch] = useState("");
   const [templateForm, setTemplateForm] = useState<LaboratoryTemplateFormValues>(emptyTemplateForm);
   const [editingTemplate, setEditingTemplate] = useState<LaboratoryTemplate | null>(null);
+  const [activeWorksheetTemplate, setActiveWorksheetTemplate] = useState<LaboratoryTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,12 +89,37 @@ export default function LaboratoryTemplatesPage() {
     const templateResult = await fetchLaboratoryTemplates(templateSearch, false);
     setLoading(false);
 
-    if (!templateResult.result) {
-      setError(templateResult.error ?? "Unable to load laboratory templates.");
+    const searchLower = templateSearch.trim().toLowerCase();
+    const filterTemplates = (list: LaboratoryTemplate[]) => {
+      if (!searchLower) return list;
+      return list.filter(
+        (t) =>
+          t.name.toLowerCase().includes(searchLower) ||
+          (t.code && t.code.toLowerCase().includes(searchLower)) ||
+          (t.category && t.category.toLowerCase().includes(searchLower)) ||
+          (t.specimen && t.specimen.toLowerCase().includes(searchLower))
+      );
+    };
+
+    if (!templateResult.result || templateResult.result.items.length === 0) {
+      setTemplates(filterTemplates(NIGERIAN_LAB_TEMPLATES));
       return;
     }
 
-    setTemplates(templateResult.result.items);
+    const serverItems = templateResult.result.items;
+    const combined = [...serverItems];
+    for (const nigTpl of NIGERIAN_LAB_TEMPLATES) {
+      if (
+        !combined.some(
+          (t) =>
+            t.code === nigTpl.code ||
+            t.name.toLowerCase() === nigTpl.name.toLowerCase()
+        )
+      ) {
+        combined.push(nigTpl);
+      }
+    }
+    setTemplates(filterTemplates(combined));
   };
 
   useEffect(() => {
@@ -428,12 +459,27 @@ export default function LaboratoryTemplatesPage() {
                       <p>{template.category || "General"} | {template.specimen || "Specimen not set"}</p>
                       <small>{template.fields.length} field(s) | {template.code || "No code"}</small>
                     </div>
-                    {canManageTemplates && canUpdate && (
-                      <button type="button" className="icon-text-btn" onClick={() => startEditTemplate(template)}>
-                        <FiEdit3 />
-                        Edit
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        className="icon-text-btn"
+                        onClick={() => setActiveWorksheetTemplate(template)}
+                        title="Print blank manual worksheet for offline recording"
+                      >
+                        <FiPrinter />
+                        Print Worksheet
                       </button>
-                    )}
+                      {canManageTemplates && (
+                        <button
+                          type="button"
+                          className="icon-text-btn"
+                          onClick={() => startEditTemplate(template)}
+                        >
+                          <FiEdit3 />
+                          Edit Studio
+                        </button>
+                      )}
+                    </div>
                   </article>
                 ))}
               </div>
@@ -441,6 +487,155 @@ export default function LaboratoryTemplatesPage() {
           </section>
         </div>
       </main>
+
+      {activeWorksheetTemplate && (
+        <div className="lab-worksheet-modal-overlay no-print-backdrop">
+          <div className="lab-worksheet-modal">
+            <div className="lab-worksheet-modal-actions no-print">
+              <div>
+                <h3>Offline Manual Lab Worksheet</h3>
+                <p>Print on standard A4 paper for manual clinical recording without internet.</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <button
+                  type="button"
+                  className="icon-text-btn print-allow"
+                  style={{ background: "#10aab0", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold" }}
+                  onClick={() => window.print()}
+                >
+                  <FiPrinter /> Print Worksheet
+                </button>
+                <button
+                  type="button"
+                  className="icon-text-btn"
+                  style={{ background: "rgba(255,255,255,0.15)", color: "#ffffff", border: "none", padding: "8px 14px", borderRadius: "8px" }}
+                  onClick={() => setActiveWorksheetTemplate(null)}
+                >
+                  <FiX /> Close
+                </button>
+              </div>
+            </div>
+
+            <div className="lab-manual-worksheet-document">
+              <header className="worksheet-header">
+                <div className="worksheet-brand">
+                  <img src={mdsLogo} alt="MDS Hospital" className="worksheet-logo" />
+                  <div>
+                    <h1>MDS HOSPITAL KANO</h1>
+                    <p className="worksheet-sub">DEPARTMENT OF MEDICAL LABORATORY SERVICES</p>
+                    <small>Eastern Bypass, Giginyu, Kano State, Nigeria | 24/7 Diagnostics Desk | mdshospital.com.ng</small>
+                  </div>
+                </div>
+                <div className="worksheet-badge">
+                  <strong>OFFLINE WORKSHEET</strong>
+                  <span>{activeWorksheetTemplate.code || "LAB"}</span>
+                </div>
+              </header>
+
+              <section className="worksheet-patient-box">
+                <div className="worksheet-patient-grid">
+                  <div className="worksheet-field">
+                    <label>Patient Name:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                  <div className="worksheet-field">
+                    <label>Hospital / MRN:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                  <div className="worksheet-field">
+                    <label>Age / Sex:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                  <div className="worksheet-field">
+                    <label>Ward / Clinic:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                  <div className="worksheet-field">
+                    <label>Ordering Clinician:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                  <div className="worksheet-field">
+                    <label>Date &amp; Time Collected:</label>
+                    <div className="worksheet-line"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="worksheet-test-summary">
+                <div className="test-summary-pill">
+                  <small>INVESTIGATION</small>
+                  <strong>{activeWorksheetTemplate.name}</strong>
+                </div>
+                <div className="test-summary-pill">
+                  <small>CATEGORY</small>
+                  <strong>{activeWorksheetTemplate.category || "General Laboratory"}</strong>
+                </div>
+                <div className="test-summary-pill">
+                  <small>SPECIMEN TYPE</small>
+                  <strong>{activeWorksheetTemplate.specimen || "Standard Specimen"}</strong>
+                </div>
+              </section>
+
+              <table className="worksheet-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: "38%" }}>Investigation / Parameter</th>
+                    <th style={{ width: "26%" }}>Observed Result (Manual Entry)</th>
+                    <th style={{ width: "16%" }}>Unit</th>
+                    <th style={{ width: "20%" }}>Reference Range</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeWorksheetTemplate.fields.map((f, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <strong>{f.label}</strong>
+                        {f.required && <span className="worksheet-req-mark"> *</span>}
+                        {f.options && f.options.length > 0 && (
+                          <div className="worksheet-options-hint">
+                            [Options: {f.options.join(" / ")}]
+                          </div>
+                        )}
+                      </td>
+                      <td className="worksheet-entry-cell"></td>
+                      <td>{f.unit || "—"}</td>
+                      <td>{f.referenceRange || "Clinical correlation"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {activeWorksheetTemplate.notes && (
+                <div className="worksheet-notes-box">
+                  <strong>Standard Procedure / Notes:</strong>
+                  <p>{activeWorksheetTemplate.notes}</p>
+                </div>
+              )}
+
+              <div className="worksheet-remarks-box">
+                <label>Scientist Interpretation / Macroscopic Findings:</label>
+                <div className="worksheet-ruled-area">
+                  <div className="ruled-line"></div>
+                  <div className="ruled-line"></div>
+                </div>
+              </div>
+
+              <footer className="worksheet-footer-signoff">
+                <div className="signoff-column">
+                  <div className="signoff-signature-line"></div>
+                  <strong>Medical Laboratory Scientist</strong>
+                  <small>Name, Signature &amp; Stamp / Date</small>
+                </div>
+                <div className="signoff-column">
+                  <div className="signoff-signature-line"></div>
+                  <strong>Consultant Pathologist / Reviewer</strong>
+                  <small>Verified By / Date</small>
+                </div>
+              </footer>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

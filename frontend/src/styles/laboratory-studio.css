@@ -3874,4 +3874,322 @@
   }
 }
 
+/* ==========================================================================
+   OFFLINE PRINTABLE MANUAL LAB WORKSHEET
+   ========================================================================== */
+
+.lab-worksheet-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 30px 16px;
+  overflow-y: auto;
+}
+
+.lab-worksheet-modal {
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 16px;
+  max-width: 860px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+.lab-worksheet-modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #0f1f38;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 16px;
+}
+
+.lab-worksheet-modal-actions h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #ffffff;
+}
+
+.lab-worksheet-modal-actions p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.lab-manual-worksheet-document {
+  padding: 36px 40px;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.worksheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2.5px solid #0f4c81;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.worksheet-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.worksheet-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.worksheet-brand h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f4c81;
+  letter-spacing: -0.01em;
+}
+
+.worksheet-sub {
+  margin: 2px 0 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #10aab0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.worksheet-brand small {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.worksheet-badge {
+  text-align: right;
+  border: 1.5px solid #0f4c81;
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: #f0f9ff;
+}
+
+.worksheet-badge strong {
+  display: block;
+  font-size: 0.72rem;
+  color: #0f4c81;
+  letter-spacing: 0.04em;
+}
+
+.worksheet-badge span {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.worksheet-patient-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  background: #f8fafc;
+}
+
+.worksheet-patient-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 24px;
+}
+
+.worksheet-field {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.worksheet-field label {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #334155;
+}
+
+.worksheet-line {
+  flex: 1;
+  border-bottom: 1px dotted #94a3b8;
+  height: 18px;
+}
+
+.worksheet-test-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.test-summary-pill {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: #ffffff;
+}
+
+.test-summary-pill small {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.test-summary-pill strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.worksheet-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+
+.worksheet-table th {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.worksheet-table td {
+  border: 1px solid #cbd5e1;
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.worksheet-entry-cell {
+  background: #fafafa;
+  min-height: 38px;
+  height: 38px;
+}
+
+.worksheet-req-mark {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.worksheet-options-hint {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.worksheet-notes-box {
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #fcfcfc;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.worksheet-notes-box strong {
+  color: #1e293b;
+}
+
+.worksheet-notes-box p {
+  margin: 4px 0 0;
+}
+
+.worksheet-remarks-box {
+  margin-bottom: 28px;
+}
+
+.worksheet-remarks-box label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.worksheet-ruled-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ruled-line {
+  border-bottom: 1px dashed #cbd5e1;
+  height: 12px;
+}
+
+.worksheet-footer-signoff {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.signoff-column {
+  text-align: center;
+}
+
+.signoff-signature-line {
+  border-bottom: 1.5px solid #334155;
+  height: 32px;
+  margin-bottom: 8px;
+}
+
+.signoff-column strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.signoff-column small {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+@media print {
+  .lab-worksheet-modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .lab-worksheet-modal {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .lab-worksheet-modal-actions {
+    display: none !important;
+  }
+
+  .lab-manual-worksheet-document {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 

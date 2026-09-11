@@ -55,74 +55,82 @@ margin-bottom:30px;
 
 }
 
-.stat-card{
-
-background:white;
-
-padding:24px;
-
-border-radius:20px;
-
-box-shadow:0 10px 35px rgba(0,0,0,.08);
-
-transition:.3s;
-
-cursor:pointer;
-
+.stat-card {
+  background: var(--surface-strong, #ffffff);
+  color: var(--readable-text, #0f172a);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  transition: 0.3s;
+  cursor: pointer;
 }
 
-.stat-card:hover{
-
-transform:translateY(-8px);
-
+:root[data-theme="dark"] .stat-card,
+[data-theme="dark"] .stat-card {
+  background: #0f1f38 !important;
+  color: #f8fafc !important;
+  border-color: rgba(125, 211, 252, 0.18) !important;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
 }
 
-.stat-top{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
+.stat-card:hover {
+  transform: translateY(-8px);
 }
 
-.stat-icon{
-
-font-size:2rem;
-
-width:60px;
-
-height:60px;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-border-radius:18px;
-
-background:#eef4ff;
-
+.stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.stat-card h2{
-
-margin-top:10px;
-
-font-size:2rem;
-
+.stat-icon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #eef4ff;
 }
 
-.stat-change{
+.stat-card h2,
+.stat-top h2 {
+  margin-top: 10px;
+  font-size: 2rem;
+  color: var(--text-strong, #0f172a);
+}
 
-margin-top:18px;
+:root[data-theme="dark"] .stat-card h2,
+:root[data-theme="dark"] .stat-top h2,
+[data-theme="dark"] .stat-card h2,
+[data-theme="dark"] .stat-top h2 {
+  color: #ffffff !important;
+}
 
-color:#16a34a;
+.stat-top p,
+.stat-left p {
+  color: var(--muted, #64748b);
+  margin: 0;
+}
 
-font-weight:600;
+:root[data-theme="dark"] .stat-top p,
+:root[data-theme="dark"] .stat-left p,
+[data-theme="dark"] .stat-top p,
+[data-theme="dark"] .stat-left p {
+  color: #94a3b8 !important;
+}
 
+.stat-change {
+  margin-top: 18px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .stat-change,
+[data-theme="dark"] .stat-change {
+  color: #4ade80 !important;
 }
 
 @media(max-width:1100px){

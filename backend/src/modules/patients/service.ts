@@ -118,7 +118,7 @@ export class PatientService {
   }
 
   async listActiveInsuranceProviders() {
-    return prisma.insuranceProvider.findMany({
+    let providers = await prisma.insuranceProvider.findMany({
       where: {
         isActive: true,
         deletedAt: null,
@@ -133,6 +133,77 @@ export class PatientService {
         name: "asc",
       },
     });
+
+    if (providers.length < 24) {
+      const canonicalProviders = [
+        { name: "AXA Mansard", code: "AXA" },
+        { name: "Novo", code: "NOVO" },
+        { name: "Hygiea", code: "HYGIEA" },
+        { name: "Total Health Trust", code: "THT" },
+        { name: "Avon", code: "AVON" },
+        { name: "SUNU", code: "SUNU" },
+        { name: "Reliance", code: "RELIANCE" },
+        { name: "Leadway", code: "LEADWAY" },
+        { name: "Aspire", code: "ASPIRE" },
+        { name: "Mass Life", code: "MASSLIFE" },
+        { name: "NEM", code: "NEM" },
+        { name: "DOT", code: "DOT" },
+        { name: "Kennedia", code: "KENNEDIA" },
+        { name: "Philip", code: "PHILIP" },
+        { name: "Aman", code: "AMAN" },
+        { name: "MB and O", code: "MB-O" },
+        { name: "Bastion", code: "BASTION" },
+        { name: "Hadiel", code: "HADIEL" },
+        { name: "Zenor", code: "ZENOR" },
+        { name: "HCI", code: "HCI" },
+        { name: "Grooming", code: "GROOMING" },
+        { name: "Life Worth", code: "LIFEWORTH" },
+        { name: "Woot Health", code: "WOOT" },
+        { name: "NNPC", code: "NNPC" },
+      ];
+
+      for (const p of canonicalProviders) {
+        try {
+          const existing = await prisma.insuranceProvider.findFirst({
+            where: { OR: [{ name: p.name }, { code: p.code }] },
+          });
+          if (!existing) {
+            await prisma.insuranceProvider.create({
+              data: {
+                name: p.name,
+                code: p.code,
+                isActive: true,
+              },
+            });
+          } else if (!existing.isActive || existing.deletedAt) {
+            await prisma.insuranceProvider.update({
+              where: { id: existing.id },
+              data: { isActive: true, deletedAt: null },
+            });
+          }
+        } catch {
+          // Ignore individual provider creation errors in concurrent requests
+        }
+      }
+
+      providers = await prisma.insuranceProvider.findMany({
+        where: {
+          isActive: true,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          patientPayPercentage: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      });
+    }
+
+    return providers;
   }
 
   async create(payload: PatientCreateDto) {

@@ -146,7 +146,7 @@ function adminStats(overview: DashboardOverview | null) {
     {
       title: "Active Staff",
       value: formatNumber(overview.users.active),
-      change: `${overview.users.inactive} inactive`,
+      change: `${overview.users.inactive} inactive staff`,
       color: "#7c3aed",
       icon: <FiShield />,
     },
@@ -157,7 +157,7 @@ function adminStats(overview: DashboardOverview | null) {
           overview.operations.semsas.unfiled +
           overview.operations.security.currentlyInside
       ),
-      change: "pending bills, SEMSAS, entry logs",
+      change: "Pending bills, SEMSAS & security logs",
       color: "#dc2626",
       icon: <FiActivity />,
     },

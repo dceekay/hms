@@ -18,6 +18,7 @@ import {
   fetchPatientInsuranceProviders,
   fetchPatientQr,
 } from "../../services/patients/patientService";
+import { nigeriaStates } from "../../constants/nigeriaStates";
 import { useAuthStore } from "../../store/authStore";
 import {
   Patient,
@@ -284,16 +285,24 @@ export default function PatientRegistrationPage() {
 
     setCreatedPatient(patient);
 
-    // Automatically generate and fetch the ID card QR code immediately
+    // Automatically initialize full QR data immediately so ID card is ready without delay
+    const immediateQr: PatientQr = {
+      patientId: patient.id,
+      mrn: patient.mrn || "",
+      qrCode: patient.qrCode || patient.mrn || `MDS-${patient.id}`,
+      lookupPath: `/verify/patient/${encodeURIComponent(patient.qrCode || patient.mrn || String(patient.id))}`,
+    };
+    setPatientQr(immediateQr);
+
+    // Sync from server in background if available
     setGeneratingId(true);
-    let qr = null;
     try {
-      qr = await fetchPatientQr(patient.id);
+      const qr = await fetchPatientQr(patient.id);
       if (qr) {
         setPatientQr(qr);
       }
     } catch {
-      // Non-blocking fallback
+      // immediateQr is already active
     } finally {
       setGeneratingId(false);
     }
@@ -543,16 +552,28 @@ export default function PatientRegistrationPage() {
                   />
                 </label>
 
-                <div className="auto-location-card form-full-col" aria-label="Location set automatically to Kano, Nigeria">
-                  <span className="auto-location-icon" aria-hidden="true">
-                    <FiMapPin />
-                  </span>
-                  <span>
-                    <small>Location</small>
-                    <strong>Kano, Nigeria</strong>
-                  </span>
-                  <em>Set automatically</em>
-                </div>
+                <label>
+                  State
+                  <select
+                    value={form.state || "Kano"}
+                    onChange={(event) => update("state", event.target.value)}
+                  >
+                    {nigeriaStates.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Country
+                  <input
+                    value={form.country || "Nigeria"}
+                    onChange={(event) => update("country", event.target.value)}
+                    placeholder="Nigeria"
+                  />
+                </label>
               </div>
             </div>
 

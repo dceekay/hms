@@ -103,7 +103,7 @@ function PatientQrImage({ patientQr }: { patientQr: PatientQr }) {
 export function PatientIdCard({
   patient,
   patientQr,
-  emptyMessage = "ID card not generated yet.",
+  emptyMessage = "Generating QR code...",
   showActions = true,
 }: {
   patient: Patient;
@@ -114,12 +114,24 @@ export function PatientIdCard({
   const [copied, setCopied] = useState(false);
   const photoSource = getPhotoSource(patient);
 
+  // Auto-generate QR data immediately from patient object if patientQr is still fetching
+  const activeQr: PatientQr | null =
+    patientQr ||
+    (patient.qrCode || patient.mrn || patient.id
+      ? {
+          patientId: String(patient.id || ""),
+          mrn: patient.mrn || "",
+          qrCode: patient.qrCode || patient.mrn || `MDS-${patient.id}`,
+          lookupPath: `/verify/patient/${encodeURIComponent(patient.qrCode || patient.mrn || String(patient.id))}`,
+        }
+      : null);
+
   const handlePrint = () => {
     window.print();
   };
 
   const handleCopyCode = () => {
-    const code = patientQr?.qrCode || patient.qrCode || patient.mrn || "";
+    const code = activeQr?.qrCode || patient.qrCode || patient.mrn || "";
     if (code) {
       void navigator.clipboard.writeText(code);
       setCopied(true);
@@ -194,9 +206,9 @@ export function PatientIdCard({
           </div>
 
           <div className="patient-id-qr-block">
-            {patientQr ? (
+            {activeQr ? (
               <div className="patient-qr-box">
-                <PatientQrImage patientQr={patientQr} />
+                <PatientQrImage patientQr={activeQr} />
                 <span className="qr-scan-label">SCAN TO VERIFY</span>
               </div>
             ) : (
@@ -228,7 +240,7 @@ export function PatientIdCard({
         </div>
 
         <div className="patient-id-footer">
-          <span>{patientQr?.qrCode || patient.qrCode || "QR pending"}</span>
+          <span>{activeQr?.qrCode || patient.qrCode || patient.mrn || "MDS Verified"}</span>
           <small>Powered by CeekayX</small>
         </div>
       </article>

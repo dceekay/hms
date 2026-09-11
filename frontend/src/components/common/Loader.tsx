@@ -3,11 +3,17 @@ import logo from "../../assets/optimized/logo.png";
 interface LoaderProps {
   text?: string;
   size?: "sm" | "md" | "lg";
+  fullScreen?: boolean;
 }
 
-export default function Loader({ text = "Loading...", size = "md" }: LoaderProps) {
+export default function Loader({ text = "Loading...", size = "md", fullScreen }: LoaderProps) {
+  const isFullScreen = fullScreen || size === "lg";
   return (
-    <div className={`loader-wrapper loader-${size}`} aria-label="Loading">
+    <div
+      className={`loader-wrapper loader-${size} ${isFullScreen ? "loader-fullscreen" : ""}`}
+      aria-label="Loading"
+      role="status"
+    >
       <div className="loader-mark">
         <div className="loader-ring-wrapper">
           <div className="loader-ring"></div>

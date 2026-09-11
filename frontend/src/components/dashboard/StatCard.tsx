@@ -9,6 +9,24 @@ interface Props {
 }
 
 export default function StatCard({ title, value, icon, change, color = "#2563eb" }: Props) {
+  const renderChangeText = () => {
+    if (!change) return null;
+    const trimmed = change.trim();
+    const lower = trimmed.toLowerCase();
+    if (
+      lower.includes("this month") ||
+      lower.includes("today") ||
+      lower.includes("pending") ||
+      lower.includes("inactive") ||
+      lower.includes("loading")
+    ) {
+      return trimmed;
+    }
+    return `${trimmed} this month`;
+  };
+
+  const changeText = renderChangeText();
+
   return (
     <div className="stat-card">
       <div className="stat-top">
@@ -22,7 +40,7 @@ export default function StatCard({ title, value, icon, change, color = "#2563eb"
         </div>
       </div>
 
-      {change && <div className="stat-change">{change} this month</div>}
+      {changeText && <div className="stat-change">{changeText}</div>}
     </div>
   );
 }

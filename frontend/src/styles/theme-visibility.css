@@ -183,6 +183,26 @@ input[type="search"] {
   border-color: var(--border);
 }
 
+:root[data-theme="dark"] .stat-card {
+  background-color: #0f1f38 !important;
+  color: #f8fafc !important;
+  border-color: rgba(125, 211, 252, 0.18) !important;
+}
+
+:root[data-theme="dark"] .stat-card h2,
+:root[data-theme="dark"] .stat-top h2 {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .stat-card p,
+:root[data-theme="dark"] .stat-top p {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="dark"] .stat-change {
+  color: #4ade80 !important;
+}
+
 .icon-text-btn,
 .action-btn,
 .secondary-btn,
