@@ -10,6 +10,7 @@ import {
   FiClipboard,
   FiCreditCard,
   FiDatabase,
+  FiDownload,
   FiDroplet,
   FiFileText,
   FiHome,
@@ -679,6 +680,17 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
 
         {/* User Presence Footer */}
         <div className="sidebar-footer">
+          <button
+            type="button"
+            className="sidebar-pwa-btn"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
+            title="Install Web App / Add to iPhone Home Screen"
+            aria-label="Install App or Add to iPhone Home Screen"
+          >
+            <FiDownload className="icon" />
+            {!collapsed && <span>Install / Add to Home</span>}
+          </button>
+
           <Link
             to="/settings"
             className="sidebar-user-card"

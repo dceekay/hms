@@ -43,17 +43,31 @@ export default function PwaInstallBanner() {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
+    const handleOpenTrigger = () => {
+      setDismissed(false);
+      if (isAppleMobile || isIos) {
+        setShowIosGuide(true);
+      } else if (deferredPrompt) {
+        void deferredPrompt.prompt();
+      } else {
+        setShowIosGuide(true);
+      }
+    };
+
+    window.addEventListener("open-pwa-install", handleOpenTrigger);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("open-pwa-install", handleOpenTrigger);
     };
-  }, []);
+  }, [deferredPrompt, isIos]);
 
-  if (isStandalone || dismissed) {
+  if (isStandalone || (dismissed && !showIosGuide)) {
     return null;
   }
 
   // Only show if prompt is available or on iOS mobile
-  if (!deferredPrompt && !isIos) {
+  if (!deferredPrompt && !isIos && !showIosGuide) {
     return null;
   }
 
@@ -81,30 +95,36 @@ export default function PwaInstallBanner() {
 
   return (
     <>
-      <aside className="pwa-install-banner" aria-label="Add App Banner">
-        <div className="pwa-banner-content">
-          <img src={mdsLogo} alt="MDS Hospital" className="pwa-app-icon" />
-          <div className="pwa-banner-text">
-            <strong>Add MDS Hospital to Home Screen</strong>
-            <p>Add to your phone home screen for instant alerts & faster ward rounds.</p>
+      {!dismissed && (
+        <aside className="pwa-install-banner" aria-label="Add App Banner">
+          <div className="pwa-banner-content">
+            <img src={mdsLogo} alt="MDS Hospital" className="pwa-app-icon" />
+            <div className="pwa-banner-text">
+              <strong>{isIos ? "Add to iPhone Home Screen" : "Add MDS Hospital to Home Screen"}</strong>
+              <p>
+                {isIos
+                  ? "Install as a full-screen app on your iPhone for faster access & offline records."
+                  : "Add to your phone home screen for instant alerts & faster ward rounds."}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="pwa-banner-actions">
-          <button type="button" className="pwa-install-btn" onClick={handleInstallClick}>
-            <FiDownload />
-            Add App
-          </button>
-          <button
-            type="button"
-            className="pwa-close-btn"
-            onClick={handleDismiss}
-            aria-label="Dismiss app install banner"
-          >
-            <FiX />
-          </button>
-        </div>
-      </aside>
+          <div className="pwa-banner-actions">
+            <button type="button" className="pwa-install-btn" onClick={handleInstallClick}>
+              {isIos ? <FiShare /> : <FiDownload />}
+              {isIos ? "Add to iPhone" : "Add App"}
+            </button>
+            <button
+              type="button"
+              className="pwa-close-btn"
+              onClick={handleDismiss}
+              aria-label="Dismiss app install banner"
+            >
+              <FiX />
+            </button>
+          </div>
+        </aside>
+      )}
 
       {showIosGuide && (
         <div className="pwa-ios-modal-overlay" onClick={() => setShowIosGuide(false)}>
@@ -146,6 +166,11 @@ export default function PwaInstallBanner() {
                 </div>
               </li>
             </ol>
+
+            <div className="pwa-ios-tip">
+              <FiInfo />
+              <span>Make sure to open in <strong>Safari</strong> on your iPhone to see the "Add to Home Screen" option.</span>
+            </div>
 
             <button
               type="button"

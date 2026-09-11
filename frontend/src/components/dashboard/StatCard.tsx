@@ -28,19 +28,23 @@ export default function StatCard({ title, value, icon, change, color = "#2563eb"
   const changeText = renderChangeText();
 
   return (
-    <div className="stat-card">
+    <div className="stat-card" title={`${title}: ${value}`}>
       <div className="stat-top">
-        <div>
-          <p>{title}</p>
-          <h2>{value}</h2>
+        <div className="stat-info">
+          <p title={title}>{title}</p>
+          <h2 title={value}>{value}</h2>
         </div>
 
-        <div className="stat-icon" style={{ backgroundColor: color }}>
+        <div className="stat-icon" style={{ backgroundColor: color }} aria-hidden="true">
           {icon}
         </div>
       </div>
 
-      {changeText && <div className="stat-change">{changeText}</div>}
+      {changeText && (
+        <div className="stat-change" title={changeText}>
+          {changeText}
+        </div>
+      )}
     </div>
   );
 }

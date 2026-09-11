@@ -534,14 +534,6 @@ export default function DashboardPage() {
         </motion.section>
 
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-        >
-          <RoleActionGrid actions={dashboard.actions} />
-        </motion.div>
-
-        <motion.div
           className="stats-grid"
           initial="hidden"
           animate="visible"
@@ -558,6 +550,14 @@ export default function DashboardPage() {
               />
             </motion.div>
           ))}
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <RoleActionGrid actions={dashboard.actions} />
         </motion.div>
 
         {isAdminDashboard && (
