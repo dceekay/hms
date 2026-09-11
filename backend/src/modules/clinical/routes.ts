@@ -19,7 +19,7 @@ router.get(
 
 router.get(
   "/encounters",
-  authorizePermissionsOrRoles(["clinical.read"], ["Doctor", "Administrator", "Super Admin"]),
+  authorizePermissionsOrRoles(["clinical.read"], ["Doctor", "Nurse", "Administrator", "Super Admin"]),
   controller.listEncounters
 );
 router.post(

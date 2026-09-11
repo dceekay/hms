@@ -590,3 +590,740 @@
     max-width: 100%;
   }
 }
+
+/* ==========================================================================
+   Patient Actions Enhancement (Assign, Profile, Notes)
+   ========================================================================== */
+.patient-compact-actions .assign-btn {
+  background: linear-gradient(135deg, #0284c7, #087ebd);
+  color: #ffffff !important;
+  border-color: #0284c7;
+  box-shadow: 0 4px 12px rgba(8, 126, 189, 0.25);
+  font-weight: 700;
+}
+
+.patient-compact-actions .assign-btn:hover {
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+  box-shadow: 0 6px 16px rgba(8, 126, 189, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Assign Doctor Modal Styles
+   ========================================================================== */
+.assign-doctor-panel {
+  max-width: 580px !important;
+  border-radius: 20px !important;
+}
+
+.assign-modal-header-text h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+}
+
+.assign-modal-icon {
+  color: var(--accent);
+}
+
+.assign-patient-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  margin-bottom: 18px;
+}
+
+.assign-patient-avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+}
+
+.assign-patient-info strong {
+  display: block;
+  font-size: 1.05rem;
+  color: var(--text-strong);
+}
+
+.assign-patient-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.assign-hmo-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+.assign-doctor-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.86rem;
+  margin-bottom: 16px;
+}
+
+.assign-doctor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.assign-doctor-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.assign-doctor-select {
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-strong);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.assign-time-pill {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: #0284c7;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.assign-doctor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   Patient Profile Summary Modal & Dossier
+   ========================================================================== */
+.patient-profile-summary-panel {
+  max-width: 820px !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+  overflow-y: auto !important;
+  border-radius: 22px !important;
+}
+
+.patient-profile-dossier {
+  padding: 24px;
+  background: var(--surface-strong);
+  color: var(--text-strong);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.dossier-letterhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dossier-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+.dossier-hospital-details {
+  flex: 1;
+  text-align: center;
+}
+
+.dossier-hospital-details h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #0f4c81;
+  letter-spacing: 0.04em;
+}
+
+.dossier-hospital-details p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.dossier-contact-line {
+  font-size: 0.74rem !important;
+}
+
+.dossier-doc-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #0f4c81;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.dossier-qr-box {
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+}
+
+.dossier-qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dossier-qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted);
+  font-size: 1.4rem;
+}
+
+.dossier-qr-placeholder small {
+  font-size: 0.58rem;
+}
+
+.dossier-rule {
+  height: 2px;
+  background: linear-gradient(90deg, #0f4c81, #087ebd, transparent);
+  margin: 16px 0 20px;
+}
+
+.dossier-patient-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: color-mix(in srgb, var(--surface) 70%, var(--surface-strong));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.dossier-photo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.dossier-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f4c81, #087ebd);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.dossier-patient-main h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: var(--text-strong);
+}
+
+.dossier-key-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dossier-pill {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+
+.dossier-pill.mrn {
+  background: rgba(8, 126, 189, 0.12);
+  color: #087ebd;
+  border-color: rgba(8, 126, 189, 0.3);
+}
+
+.dossier-pill.pfile {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.dossier-pill.status {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.dossier-section {
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 40%, var(--surface-strong));
+}
+
+.dossier-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0f4c81;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+:root[data-theme="dark"] .dossier-section-title,
+[data-theme="dark"] .dossier-section-title {
+  color: #38bdf8 !important;
+}
+
+.dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dossier-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dossier-item.span-2 {
+  grid-column: span 2;
+}
+
+.dossier-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dossier-value {
+  font-size: 0.88rem;
+  color: var(--text-strong);
+}
+
+.dossier-value.highlight {
+  color: #087ebd;
+  font-weight: 800;
+}
+
+.dossier-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.dossier-footer-meta p {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.dossier-security-note {
+  font-size: 0.68rem !important;
+  font-style: italic;
+  margin-top: 6px !important;
+}
+
+.dossier-signoff-boxes {
+  display: flex;
+  gap: 24px;
+}
+
+.signoff-box {
+  width: 170px;
+  text-align: center;
+}
+
+.signoff-line {
+  border-bottom: 1px solid var(--text-strong);
+  margin-bottom: 6px;
+  height: 35px;
+}
+
+.signoff-box span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Patient Visits & Clinical Notes Modal
+   ========================================================================== */
+.patient-visits-panel {
+  max-width: 860px !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+  overflow-y: auto !important;
+  border-radius: 22px !important;
+}
+
+.visits-header-icon {
+  color: #8b5cf6;
+  margin-right: 8px;
+}
+
+.visits-patient-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
+  margin-bottom: 18px;
+}
+
+.vps-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+
+.vps-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.vps-item strong {
+  font-size: 0.88rem;
+  color: var(--text-strong);
+}
+
+.visits-loading-state,
+.visits-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  gap: 12px;
+}
+
+.visits-spin-icon {
+  font-size: 2rem;
+  color: var(--accent);
+  animation: spin 1.2s linear infinite;
+}
+
+.visits-empty-icon {
+  font-size: 3rem;
+  color: var(--muted);
+}
+
+.visits-empty-state h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-strong);
+}
+
+.visits-empty-state p {
+  margin: 0;
+  max-width: 400px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.visits-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.visit-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.visit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  background: color-mix(in srgb, var(--surface) 60%, var(--surface-strong));
+  border-bottom: 1px solid var(--border);
+}
+
+.visit-doctor-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.visit-doctor-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #8b5cf6;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+
+.visit-doctor-info h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.visit-encounter-num {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.visit-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.visit-time-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.visit-status-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.visit-status-badge.completed {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.visit-status-badge.in_progress,
+.visit-status-badge.open {
+  background: rgba(8, 126, 189, 0.12);
+  color: #087ebd;
+}
+
+.visit-card-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.visit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.visit-field-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.visit-field-value {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-strong);
+  line-height: 1.45;
+}
+
+.visit-field.diagnosis-field {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(8, 126, 189, 0.08);
+  border: 1px solid rgba(8, 126, 189, 0.2);
+}
+
+.visit-field.diagnosis-field .visit-field-label {
+  color: #087ebd;
+}
+
+.diagnosis-text {
+  font-weight: 800;
+  color: #087ebd !important;
+}
+
+.visit-field.notes-field {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.visit-field.notes-field .visit-field-label {
+  color: #8b5cf6;
+}
+
+.visits-print-header {
+  display: none;
+}
+
+/* ==========================================================================
+   Print Stylesheet (@media print) for Patient Dossier & Notes
+   ========================================================================== */
+@media print {
+  /* Hide all app chrome */
+  body * {
+    visibility: hidden;
+  }
+
+  .sidebar,
+  .topbar,
+  .mobile-bottom-nav,
+  .patient-id-modal-backdrop,
+  .no-print,
+  button,
+  .modal-header,
+  .modal-actions {
+    display: none !important;
+  }
+
+  /* Make modal panel fill standard A4 */
+  .patient-id-modal,
+  .patient-profile-summary-panel,
+  .patient-visits-panel {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .printable-area,
+  .printable-area * {
+    visibility: visible !important;
+  }
+
+  .patient-profile-dossier {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  .dossier-letterhead {
+    display: flex !important;
+  }
+
+  .dossier-section {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    break-inside: avoid;
+  }
+
+  .dossier-patient-strip {
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  .visits-print-header {
+    display: flex !important;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #0f4c81;
+  }
+
+  .visits-timeline,
+  .visits-timeline * {
+    visibility: visible !important;
+  }
+
+  .visit-card {
+    break-inside: avoid;
+    border: 1px solid #d1d5db !important;
+    margin-bottom: 14px;
+    background: #ffffff !important;
+  }
+}
+

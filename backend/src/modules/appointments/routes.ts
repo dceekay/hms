@@ -11,9 +11,30 @@ const controller = new AppointmentController();
 
 router.use(authenticate);
 
-router.get("/doctors", authorizePermissions(["appointments.read"]), controller.listDoctors);
-router.get("/", authorizePermissions(["appointments.read"]), controller.list);
-router.post("/", authorizePermissions(["appointments.create"]), controller.create);
+router.get(
+  "/doctors",
+  authorizePermissionsOrRoles(
+    ["appointments.read", "patients.read"],
+    ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"]
+  ),
+  controller.listDoctors
+);
+router.get(
+  "/",
+  authorizePermissionsOrRoles(
+    ["appointments.read", "patients.read"],
+    ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"]
+  ),
+  controller.list
+);
+router.post(
+  "/",
+  authorizePermissionsOrRoles(
+    ["appointments.create", "patients.update"],
+    ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"]
+  ),
+  controller.create
+);
 router.patch(
   "/:id/status",
   authorizePermissionsOrRoles(["appointments.update"], ["Doctor", "Receptionist", "Administrator", "Super Admin"]),

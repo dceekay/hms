@@ -17,11 +17,16 @@ import {
   FiSearch,
   FiSlash,
   FiTrash2,
+  FiUser,
   FiUserCheck,
   FiX,
 } from "react-icons/fi";
+import { FaNotesMedical, FaUserMd } from "react-icons/fa";
 
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
+import AssignDoctorModal from "../../components/patients/AssignDoctorModal";
+import PatientProfileSummaryModal from "../../components/patients/PatientProfileSummaryModal";
+import PatientVisitsModal from "../../components/patients/PatientVisitsModal";
 import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
@@ -380,6 +385,10 @@ export function PatientListPage() {
   ] = useState<PatientFormValues | null>(
     null
   );
+
+  const [assignDoctorPatient, setAssignDoctorPatient] = useState<Patient | null>(null);
+  const [summaryPatient, setSummaryPatient] = useState<Patient | null>(null);
+  const [visitsPatient, setVisitsPatient] = useState<Patient | null>(null);
 
   const [loading, setLoading] =
     useState(false);
@@ -1148,6 +1157,39 @@ export function PatientListPage() {
                       </div>
 
                       <div className="patient-row-actions patient-compact-actions">
+                        <button
+                          type="button"
+                          className="icon-text-btn assign-btn"
+                          aria-label="Assign patient to doctor"
+                          onClick={() => setAssignDoctorPatient(patient)}
+                          title="Assign to doctor & queue for consultation"
+                        >
+                          <FaUserMd />
+                          <span className="patient-action-label">Assign</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icon-text-btn"
+                          aria-label="View patient profile summary & print dossier"
+                          onClick={() => setSummaryPatient(patient)}
+                          title="View profile summary & print dossier"
+                        >
+                          <FiUser />
+                          <span className="patient-action-label">Profile</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icon-text-btn"
+                          aria-label="View previous doctor visits and clinical notes"
+                          onClick={() => setVisitsPatient(patient)}
+                          title="View previous doctor visits and clinical notes"
+                        >
+                          <FaNotesMedical />
+                          <span className="patient-action-label">Notes</span>
+                        </button>
+
                         <button
                           type="button"
                           className="icon-text-btn"
@@ -2106,6 +2148,38 @@ export function PatientListPage() {
                 </section>
               </div>
             )}
+
+          {assignDoctorPatient && (
+            <AssignDoctorModal
+              patient={assignDoctorPatient}
+              isOpen={Boolean(assignDoctorPatient)}
+              onClose={() => setAssignDoctorPatient(null)}
+              onAssigned={() => {
+                void loadPatients({
+                  searchTerm: search,
+                  status: statusFilter,
+                  category: categoryFilter,
+                });
+              }}
+            />
+          )}
+
+          {summaryPatient && (
+            <PatientProfileSummaryModal
+              patient={summaryPatient}
+              isOpen={Boolean(summaryPatient)}
+              onClose={() => setSummaryPatient(null)}
+            />
+          )}
+
+          {visitsPatient && (
+            <PatientVisitsModal
+              patient={visitsPatient}
+              isOpen={Boolean(visitsPatient)}
+              onClose={() => setVisitsPatient(null)}
+              onAssignDoctor={(patient) => setAssignDoctorPatient(patient)}
+            />
+          )}
         </div>
       </main>
     </AdminLayout>
