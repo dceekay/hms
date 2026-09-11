@@ -74,7 +74,12 @@ export class PatientService {
   }
 
   private async createWithCategory(payload: PatientCreateDto, patientCategory: PatientCategory) {
-    const data = normalizePayload(payload);
+    const data = normalizePayload({
+      ...payload,
+      city: payload.city?.trim() || undefined,
+      state: payload.state?.trim() || "Kano",
+      country: payload.country?.trim() || "Nigeria",
+    });
 
     try {
       const patient = await this.patientRepository.createPatient({
@@ -113,22 +118,22 @@ export class PatientService {
   }
 
   async listActiveInsuranceProviders() {
-  return prisma.insuranceProvider.findMany({
-    where: {
-      isActive: true,
-      deletedAt: null,
-    },
-    select: {
-      id: true,
-      name: true,
-      code: true,
-      patientPayPercentage: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-}
+    return prisma.insuranceProvider.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        patientPayPercentage: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
 
   async create(payload: PatientCreateDto) {
     const patientCategory =

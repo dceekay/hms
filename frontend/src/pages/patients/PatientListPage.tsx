@@ -270,13 +270,13 @@ function patientToForm(
       patient.address ?? "",
 
     city:
-      patient.city ?? "",
+      undefined,
 
     state:
-      patient.state ?? "",
+      patient.state || "Kano",
 
     country:
-      patient.country ?? "Nigeria",
+      patient.country || "Nigeria",
 
     emergencyContactName:
       patient.emergencyContactName ?? "",
@@ -1671,25 +1671,6 @@ export function PatientListPage() {
                           />
                         </label>
 
-                        <label>
-                          City
-
-                          <input
-                            value={
-                              editForm.city ??
-                              ""
-                            }
-                            onChange={(
-                              event
-                            ) =>
-                              updateEditField(
-                                "city",
-                                event.target
-                                  .value
-                              )
-                            }
-                          />
-                        </label>
 
                         <label>
                           State

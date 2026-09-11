@@ -5,11 +5,13 @@ import {
   FiCreditCard,
   FiDownload,
   FiFolder,
+  FiMapPin,
+  FiShield,
   FiTrash2,
   FiUserPlus,
 } from "react-icons/fi";
+import InsuranceProviderPicker from "../../components/insurance/InsuranceProviderPicker";
 import { PatientIdPanel } from "../../components/patients/PatientIdCard";
-import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createPatient,
@@ -25,7 +27,7 @@ import {
   patientSchema,
 } from "../../types/patient";
 import { compressImageToWebp } from "../../utils/imageCompression";
-import { showSuccessWithSound } from "../../utils/sweetAlert";
+import { showPatientCreatedAlert } from "../../utils/sweetAlert";
 
 const initialForm: PatientFormValues = {
   physicalFileNumber: "",
@@ -43,8 +45,8 @@ const initialForm: PatientFormValues = {
   gender: "female",
   patientCategory: "new_patient",
   address: "",
-  city: "",
-  state: "",
+  city: undefined,
+  state: "Kano",
   country: "Nigeria",
   emergencyContactName: "",
   emergencyContactPhone: "",
@@ -60,8 +62,13 @@ const initialForm: PatientFormValues = {
 };
 
 function cleanPayload(values: PatientFormValues): PatientFormValues {
+  const payload = { ...values };
+  delete payload.city;
+  payload.state = payload.state?.trim() || "Kano";
+  payload.country = payload.country?.trim() || "Nigeria";
+
   return Object.fromEntries(
-    Object.entries(values).map(([key, value]) => [
+    Object.entries(payload).map(([key, value]) => [
       key,
       value === "" ? undefined : value,
     ])
@@ -276,10 +283,43 @@ export default function PatientRegistrationPage() {
     }
 
     setCreatedPatient(patient);
-    void showSuccessWithSound({
-      title: "Patient Registered Successfully!",
-      text: `${patient.firstName} ${patient.lastName} has been registered with MRN ${patient.mrn || "assigned"}.`,
+
+    // Automatically generate and fetch the ID card QR code immediately
+    setGeneratingId(true);
+    let qr = null;
+    try {
+      qr = await fetchPatientQr(patient.id);
+      if (qr) {
+        setPatientQr(qr);
+      }
+    } catch {
+      // Non-blocking fallback
+    } finally {
+      setGeneratingId(false);
+    }
+
+    // Play chime and display rich interactive alert with one-click actions
+    const action = await showPatientCreatedAlert({
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      mrn: patient.mrn,
+      category: patient.patientCategory,
     });
+
+    if (action === "print") {
+      window.print();
+    } else if (action === "another") {
+      handleResetForm();
+    }
+  };
+
+  const handleResetForm = () => {
+    setForm({
+      ...initialForm,
+      patientCategory: form.patientCategory,
+    });
+    setCreatedPatient(null);
+    setPatientQr(null);
+    setError(null);
   };
 
   const handleGenerateId = async () => {
@@ -494,45 +534,113 @@ export default function PatientRegistrationPage() {
                   />
                 </label>
 
-                <label>
+                <label className="form-full-col">
                   Address
                   <input
                     value={form.address ?? ""}
                     onChange={(event) => update("address", event.target.value)}
+                    placeholder="Street, district, or landmark"
                   />
                 </label>
 
-                <label>
-                  City
-                  <input
-                    value={form.city ?? ""}
-                    onChange={(event) => update("city", event.target.value)}
-                  />
-                </label>
-
-                <label>
-                  State
-                  <select
-                    value={form.state ?? ""}
-                    onChange={(event) => update("state", event.target.value)}
-                  >
-                    <option value="">Select state</option>
-                    {nigeriaStates.map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  Country
-                  <input
-                    value={form.country ?? ""}
-                    onChange={(event) => update("country", event.target.value)}
-                  />
-                </label>
+                <div className="auto-location-card form-full-col" aria-label="Location set automatically to Kano, Nigeria">
+                  <span className="auto-location-icon" aria-hidden="true">
+                    <FiMapPin />
+                  </span>
+                  <span>
+                    <small>Location</small>
+                    <strong>Kano, Nigeria</strong>
+                  </span>
+                  <em>Set automatically</em>
+                </div>
               </div>
+            </div>
+
+            <div className="form-section coverage-section">
+              <div className="coverage-section-heading">
+                <span aria-hidden="true"><FiShield /></span>
+                <div>
+                  <h2>Payment &amp; Insurance</h2>
+                  <p>Choose how this visit will be covered.</p>
+                </div>
+              </div>
+
+              <InsuranceProviderPicker
+                providers={insuranceProviders}
+                value={form.insuranceProviderId ?? ""}
+                onChange={(providerId) => update("insuranceProviderId", providerId)}
+                loading={loadingInsuranceProviders}
+              />
+
+              {form.insuranceProviderId && (
+                <div className="form-grid insurance-details-grid">
+                  <label>
+                    Insurance policy number
+                    <span className="optional-field">optional</span>
+                    <input
+                      value={form.insurancePolicyNumber ?? ""}
+                      onChange={(event) =>
+                        update(
+                          "insurancePolicyNumber",
+                          event.target.value.toUpperCase()
+                        )
+                      }
+                      placeholder="Example: CXHP-0001"
+                      pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9/-]+"
+                      title="Use at least one letter and one number. Hyphens and slashes are allowed."
+                    />
+                  </label>
+
+                  <label>
+                    Principal insurance owner{" "}
+                    <span className="optional-field">optional</span>
+                    <input
+                      value={form.insurancePrincipalName ?? ""}
+                      onChange={(event) =>
+                        update("insurancePrincipalName", event.target.value)
+                      }
+                      placeholder="Example: Aisha Musa"
+                    />
+                  </label>
+
+                  <label>
+                    Member / dependent number{" "}
+                    {!form.insurancePolicyNumber && <span> *</span>}
+                    <input
+                      value={form.insuranceMemberNumber ?? ""}
+                      onChange={(event) =>
+                        update(
+                          "insuranceMemberNumber",
+                          event.target.value.toUpperCase()
+                        )
+                      }
+                      placeholder="Example: NHIA-DEP-02"
+                      required={!form.insurancePolicyNumber}
+                    />
+                  </label>
+
+                  <label>
+                    Coverage status{" "}
+                    <span className="optional-field">optional</span>
+                    <select
+                      value={form.insuranceCoverageStatus ?? ""}
+                      onChange={(event) =>
+                        update("insuranceCoverageStatus", event.target.value)
+                      }
+                    >
+                      <option value="">Not provided</option>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending verification</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="expired">Expired</option>
+                    </select>
+                  </label>
+                </div>
+              )}
+
+              {insuranceProviderError && (
+                <p className="registration-error">{insuranceProviderError}</p>
+              )}
             </div>
 
             <details className="registration-details">
@@ -582,7 +690,7 @@ export default function PatientRegistrationPage() {
               </div>
 
               <div className="form-section">
-                <h2>Medical &amp; Insurance</h2>
+                <h2>Medical</h2>
                 <div className="form-grid">
                   <label>
                     Blood group <span className="optional-field">optional</span>
@@ -614,106 +722,7 @@ export default function PatientRegistrationPage() {
                     />
                   </label>
 
-                  <label>
-                    Insurance provider{" "}
-                    <span className="optional-field">optional</span>
-                    <select
-                      value={form.insuranceProviderId ?? ""}
-                      onChange={(event) =>
-                        update("insuranceProviderId", event.target.value)
-                      }
-                      disabled={loadingInsuranceProviders}
-                    >
-                      <option value="">
-                        {loadingInsuranceProviders
-                          ? "Loading providers..."
-                          : "No insurance / Self pay"}
-                      </option>
-
-                      {insuranceProviders.map((provider) => (
-                        <option key={provider.id} value={provider.id}>
-                          {provider.name}
-                          {provider.code ? ` (${provider.code})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Insurance policy number
-                    <span className="optional-field">optional</span>
-                    <input
-                      value={form.insurancePolicyNumber ?? ""}
-                      onChange={(event) =>
-                        update(
-                          "insurancePolicyNumber",
-                          event.target.value.toUpperCase()
-                        )
-                      }
-                      placeholder="Example: CXHP-0001"
-                      disabled={!form.insuranceProviderId}
-                      pattern="(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9/-]+"
-                      title="Use at least one letter and one number. Hyphens and slashes are allowed."
-                    />
-                  </label>
-
-                  <label>
-                    Principal insurance owner{" "}
-                    <span className="optional-field">optional</span>
-                    <input
-                      value={form.insurancePrincipalName ?? ""}
-                      onChange={(event) =>
-                        update("insurancePrincipalName", event.target.value)
-                      }
-                      placeholder="Example: Aisha Musa"
-                      disabled={!form.insuranceProviderId}
-                    />
-                  </label>
-
-                  <label>
-                    Member / dependent number{" "}
-                    {form.insuranceProviderId && <span> *</span>}
-                    <input
-                      value={form.insuranceMemberNumber ?? ""}
-                      onChange={(event) =>
-                        update(
-                          "insuranceMemberNumber",
-                          event.target.value.toUpperCase()
-                        )
-                      }
-                      placeholder="Example: NHIA-DEP-02"
-                      disabled={!form.insuranceProviderId}
-                      required={Boolean(
-                        form.insuranceProviderId &&
-                          !form.insurancePolicyNumber
-                      )}
-                    />
-                  </label>
-
-                  <label>
-                    Coverage status{" "}
-                    <span className="optional-field">optional</span>
-                    <select
-                      value={form.insuranceCoverageStatus ?? ""}
-                      onChange={(event) =>
-                        update("insuranceCoverageStatus", event.target.value)
-                      }
-                      disabled={!form.insuranceProviderId}
-                    >
-                      <option value="">Not provided</option>
-                      <option value="active">Active</option>
-                      <option value="pending">Pending verification</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="expired">Expired</option>
-                    </select>
-                  </label>
                 </div>
-
-                {insuranceProviderError && (
-                  <p className="registration-error">
-                    {insuranceProviderError}
-                  </p>
-                )}
               </div>
             </details>
 
@@ -730,9 +739,13 @@ export default function PatientRegistrationPage() {
           </form>
 
           <aside className="patient-id-panel">
-            <PatientIdPanel patient={createdPatient} patientQr={patientQr} />
+            <PatientIdPanel
+              patient={createdPatient}
+              patientQr={patientQr}
+              onReset={handleResetForm}
+            />
 
-            {createdPatient && (
+            {createdPatient && !patientQr && (
               <button
                 className="generate-id-btn"
                 type="button"

@@ -1255,87 +1255,176 @@ async function seedSetupData() {
 
   const hmoProviders = [
     {
-      name: "NHIA",
-      code: "NHIA",
-      email: "enquiries@nhia.gov.ng",
-      phone: "+2348006442644",
-      description: "National Health Insurance Authority (Federal Coverage)",
-      patientPayPercentage: 10,
-    },
-    {
-      name: "KSCHIMA",
-      code: "KSCHIMA",
-      email: "info@kschima.kn.gov.ng",
-      phone: "+2348030000001",
-      description: "Kano State Contributory Healthcare Management Agency",
-      patientPayPercentage: 10,
-    },
-    {
-      name: "JICHMA",
-      code: "JICHMA",
-      email: "info@jichma.jg.gov.ng",
-      phone: "+2348030000002",
-      description: "Jigawa State Contributory Healthcare Management Agency",
-      patientPayPercentage: 10,
-    },
-    {
-      name: "Hygeia HMO",
-      code: "HYGEIA",
-      email: "hygeia@hygeiahmo.com",
-      phone: "+234700494342",
-      description: "Hygeia HMO Private Health Insurance Plan",
-      patientPayPercentage: 0,
-    },
-    {
-      name: "Reliance HMO",
-      code: "RELIANCE",
-      email: "hello@reliancehmo.com",
-      phone: "+23417006900",
-      description: "Reliance HMO Healthcare Coverage",
-      patientPayPercentage: 0,
-    },
-    {
-      name: "AXA Mansard Health",
+      name: "AXA Mansard",
       code: "AXA-MAN",
-      email: "care@axamansard.com",
-      phone: "+23412801400",
-      description: "AXA Mansard Health Insurance Scheme",
-      patientPayPercentage: 0,
+      description: "AXA Mansard health insurance provider",
     },
     {
-      name: "CeekayX Health Plan",
-      code: "CXHP",
-      email: "claims@ceekayx-health.example",
-      phone: "+2348000000000",
-      description: "Hospital Staff & Family Coverage Plan",
-      patientPayPercentage: 20,
+      name: "Novo",
+      code: "NOVO",
+      description: "Novo health insurance provider",
     },
-  ];
+    {
+      name: "Hygiea",
+      code: "HYGEIA",
+      description: "Hygiea health insurance provider",
+    },
+    {
+      name: "Total Health Trust",
+      code: "THT",
+      description: "Total Health Trust insurance provider",
+    },
+    {
+      name: "Avon",
+      code: "AVON",
+      description: "Avon health insurance provider",
+    },
+    {
+      name: "SUNU",
+      code: "SUNU",
+      description: "SUNU health insurance provider",
+    },
+    {
+      name: "Reliance",
+      code: "RELIANCE",
+      description: "Reliance health insurance provider",
+    },
+    {
+      name: "Leadway",
+      code: "LEADWAY",
+      description: "Leadway health insurance provider",
+    },
+    {
+      name: "Aspire",
+      code: "ASPIRE",
+      description: "Aspire health insurance provider",
+    },
+    {
+      name: "Mass Life",
+      code: "MASSLIFE",
+      description: "Mass Life health insurance provider",
+    },
+    {
+      name: "NEM",
+      code: "NEM",
+      description: "NEM health insurance provider",
+    },
+    {
+      name: "DOT",
+      code: "DOT",
+      description: "DOT health insurance provider",
+    },
+    {
+      name: "Kennedia",
+      code: "KENNEDIA",
+      description: "Kennedia health insurance provider",
+    },
+    {
+      name: "Philip",
+      code: "PHILIP",
+      description: "Philip health insurance provider",
+    },
+    {
+      name: "Aman",
+      code: "AMAN",
+      description: "Aman health insurance provider",
+    },
+    {
+      name: "MB and O",
+      code: "MB-O",
+      description: "MB and O health insurance provider",
+    },
+    {
+      name: "Bastion",
+      code: "BASTION",
+      description: "Bastion health insurance provider",
+    },
+    {
+      name: "Hadiel",
+      code: "HADIEL",
+      description: "Hadiel health insurance provider",
+    },
+    {
+      name: "Zenor",
+      code: "ZENOR",
+      description: "Zenor health insurance provider",
+    },
+    {
+      name: "HCI",
+      code: "HCI",
+      description: "HCI health insurance provider",
+    },
+    {
+      name: "Grooming",
+      code: "GROOMING",
+      description: "Grooming health insurance provider",
+    },
+    {
+      name: "Life Worth",
+      code: "LIFEWORTH",
+      description: "Life Worth health insurance provider",
+    },
+    {
+      name: "Woot Health",
+      code: "WOOT",
+      description: "Woot Health insurance provider",
+    },
+    {
+      name: "NNPC",
+      code: "NNPC",
+      description: "NNPC health insurance provider",
+    },
+  ].map((provider) => ({
+    ...provider,
+    email: null,
+    phone: null,
+    patientPayPercentage: 0,
+  }));
+
+  await prisma.insuranceProvider.updateMany({
+    where: {
+      code: { in: ["NHIA", "KSCHIMA", "JICHMA", "CXHP"] },
+    },
+    data: {
+      isActive: false,
+    },
+  });
 
   let primaryInsuranceProvider: any = null;
 
   for (const hmo of hmoProviders) {
-    const provider = await prisma.insuranceProvider.upsert({
-      where: { name: hmo.name },
-      update: {
-        code: hmo.code,
-        email: hmo.email,
-        phone: hmo.phone,
-        description: hmo.description,
-        patientPayPercentage: hmo.patientPayPercentage,
-        isActive: true,
-      },
-      create: {
-        name: hmo.name,
-        code: hmo.code,
-        email: hmo.email,
-        phone: hmo.phone,
-        description: hmo.description,
-        patientPayPercentage: hmo.patientPayPercentage,
+    const existingProvider = await prisma.insuranceProvider.findFirst({
+      where: {
+        OR: [{ name: hmo.name }, { code: hmo.code }],
       },
     });
 
-    if (hmo.name === "CeekayX Health Plan" || !primaryInsuranceProvider) {
+    const provider = existingProvider
+      ? await prisma.insuranceProvider.update({
+          where: { id: existingProvider.id },
+          data: {
+            name: hmo.name,
+            code: hmo.code,
+            email: hmo.email,
+            phone: hmo.phone,
+            description: hmo.description,
+            patientPayPercentage: hmo.patientPayPercentage,
+            isActive: true,
+            deletedAt: null,
+          },
+        })
+      : await prisma.insuranceProvider.create({
+          data: {
+            name: hmo.name,
+            code: hmo.code,
+            email: hmo.email,
+            phone: hmo.phone,
+            description: hmo.description,
+            patientPayPercentage: hmo.patientPayPercentage,
+          },
+        });
+
+    if (hmo.name === "AXA Mansard" || !primaryInsuranceProvider) {
       primaryInsuranceProvider = provider;
     }
   }
@@ -1370,7 +1459,7 @@ async function seedDemoPatient(insuranceProviderId: string) {
     genotype: "AA",
     allergies: "None reported",
     insuranceProviderId,
-    insurancePolicyNumber: "CXHP-0001",
+    insurancePolicyNumber: "AXA-0001",
     insuranceCoverageStatus: "active",
   };
 

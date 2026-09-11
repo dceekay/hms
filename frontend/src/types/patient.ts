@@ -110,13 +110,15 @@ export const patientSchema = z
       .string()
       .trim()
       .max(100)
-      .optional(),
+      .optional()
+      .default("Kano"),
 
     country: z
       .string()
       .trim()
       .max(100)
-      .optional(),
+      .optional()
+      .default("Nigeria"),
 
     emergencyContactName: z
       .string()

@@ -429,3 +429,20 @@
   background: var(--border, #e2e8f0) !important;
   color: var(--text-strong, #1e293b) !important;
 }
+
+.mds-swal-deny {
+  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 1.4rem !important;
+  border: 1px solid #0d9488 !important;
+  margin: 0.35rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.mds-swal-deny:hover {
+  filter: brightness(1.1) !important;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3) !important;
+}

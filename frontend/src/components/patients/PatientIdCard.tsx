@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { FiCreditCard, FiRefreshCw, FiShield } from "react-icons/fi";
+import { FiCheck, FiCopy, FiCreditCard, FiPrinter, FiRefreshCw, FiShield, FiUserPlus } from "react-icons/fi";
 import { Patient, PatientQr } from "../../types/patient";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { getAppUrl } from "../../utils/appUrl";
@@ -60,7 +60,7 @@ function PatientQrImage({ patientQr }: { patientQr: PatientQr }) {
       type: "svg",
       errorCorrectionLevel: "M",
       margin: 1,
-      width: 180,
+      width: 220,
       color: {
         dark: "#020617",
         light: "#ffffff",
@@ -104,15 +104,54 @@ export function PatientIdCard({
   patient,
   patientQr,
   emptyMessage = "ID card not generated yet.",
+  showActions = true,
 }: {
   patient: Patient;
   patientQr: PatientQr | null;
   emptyMessage?: string;
+  showActions?: boolean;
 }) {
+  const [copied, setCopied] = useState(false);
   const photoSource = getPhotoSource(patient);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyCode = () => {
+    const code = patientQr?.qrCode || patient.qrCode || patient.mrn || "";
+    if (code) {
+      void navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="patient-id-print-area">
+      {showActions && (
+        <div className="patient-id-card-actions no-print">
+          <button
+            type="button"
+            className="id-action-btn primary"
+            onClick={handlePrint}
+            title="Print Patient ID Card (CR80 standard badge format)"
+          >
+            <FiPrinter />
+            <span>Print ID Card</span>
+          </button>
+          <button
+            type="button"
+            className="id-action-btn secondary"
+            onClick={handleCopyCode}
+            title="Copy MRN / QR Code"
+          >
+            {copied ? <FiCheck /> : <FiCopy />}
+            <span>{copied ? "Copied!" : "Copy Code"}</span>
+          </button>
+        </div>
+      )}
+
       <article className="patient-id-card">
         <div className="patient-id-brand">
           <img src={mdsLogo} alt="MDS Hospital" />
@@ -156,10 +195,10 @@ export function PatientIdCard({
 
           <div className="patient-id-qr-block">
             {patientQr ? (
-              <>
+              <div className="patient-qr-box">
                 <PatientQrImage patientQr={patientQr} />
-                <small>Scan for details</small>
-              </>
+                <span className="qr-scan-label">SCAN TO VERIFY</span>
+              </div>
             ) : (
               <div className="id-empty-qr">
                 <FiRefreshCw />
@@ -200,9 +239,11 @@ export function PatientIdCard({
 export function PatientIdPanel({
   patient,
   patientQr,
+  onReset,
 }: {
   patient: Patient | null;
   patientQr: PatientQr | null;
+  onReset?: () => void;
 }) {
   return (
     <>
@@ -210,7 +251,7 @@ export function PatientIdPanel({
         <FiCreditCard />
         <div>
           <h2>Patient ID</h2>
-          <p>Generated after successful registration.</p>
+          <p>Generated instantly upon registration with scannable QR.</p>
         </div>
       </div>
 
@@ -221,7 +262,22 @@ export function PatientIdPanel({
         </div>
       )}
 
-      {patient && <PatientIdCard patient={patient} patientQr={patientQr} />}
+      {patient && (
+        <>
+          <PatientIdCard patient={patient} patientQr={patientQr} />
+          {onReset && (
+            <button
+              type="button"
+              className="id-action-btn secondary full-width"
+              onClick={onReset}
+              style={{ marginTop: "12px" }}
+            >
+              <FiUserPlus />
+              <span>Register Another Patient</span>
+            </button>
+          )}
+        </>
+      )}
     </>
   );
 }
