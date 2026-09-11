@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiCheck, FiChevronDown, FiCreditCard, FiSearch } from "react-icons/fi";
+import { FiCheck, FiChevronDown, FiCreditCard, FiSearch, FiShield, FiX } from "react-icons/fi";
 import type { PatientInsuranceProvider } from "../../types/patient";
 import InsuranceProviderChip from "./InsuranceProviderChip";
 
@@ -47,7 +47,18 @@ export default function InsuranceProviderPicker({
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("touchstart", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
-    window.setTimeout(() => searchRef.current?.focus(), 0);
+
+    // CRITICAL: Do NOT auto-focus on touch/mobile devices because doing so immediately
+    // summons the virtual keyboard, shrinking the screen and obscuring the list of insurances.
+    const isTouch =
+      typeof window !== "undefined" &&
+      (window.matchMedia("(pointer: coarse)").matches ||
+        window.innerWidth <= 768 ||
+        /iphone|ipad|ipod|android/i.test(navigator.userAgent));
+
+    if (!isTouch) {
+      window.setTimeout(() => searchRef.current?.focus(), 0);
+    }
 
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
@@ -105,18 +116,42 @@ export default function InsuranceProviderPicker({
         </button>
 
         {open && !loading && (
-          <div className="insurance-picker-menu">
-            <div className="insurance-picker-search">
-              <FiSearch aria-hidden="true" />
-              <input
-                ref={searchRef}
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Find an insurer"
-                aria-label="Search insurance providers"
-              />
-            </div>
+          <>
+            <div
+              className="insurance-picker-backdrop"
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="insurance-picker-menu">
+              <div className="insurance-picker-mobile-header">
+                <div className="insurance-picker-mobile-title">
+                  <FiShield className="insurance-picker-title-icon" aria-hidden="true" />
+                  <div>
+                    <h4>Select Insurance Provider</h4>
+                    <small>{providers.length} HMOs available</small>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="insurance-picker-close-btn"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close insurance list"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div className="insurance-picker-search">
+                <FiSearch aria-hidden="true" />
+                <input
+                  ref={searchRef}
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search HMO (e.g. AXA, NHIA, Hygiea)..."
+                  aria-label="Search insurance providers"
+                />
+              </div>
 
             <div
               id="insurance-provider-listbox"
@@ -164,7 +199,8 @@ export default function InsuranceProviderPicker({
               )}
             </div>
           </div>
-        )}
+        </>
+      )}
       </div>
     </div>
   );

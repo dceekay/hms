@@ -7,6 +7,7 @@ export type DashboardOverview = {
     active: number;
     inactive: number;
     registeredToday: number;
+    seenToday?: number;
     categories: {
       newPatients: number;
       oldPatients: number;
@@ -62,6 +63,13 @@ export type DashboardOverview = {
       totalAmount: number;
     }>;
   };
+  clinical?: {
+    patientsSeenToday: number;
+    labTestsRequestedToday: number;
+  };
+  laboratory?: {
+    requestedToday: number;
+  };
   operations: {
     semsas: {
       total: number;
@@ -77,6 +85,7 @@ export type DashboardOverview = {
       total: number;
       available: number;
       occupied: number;
+      occupancyRate?: number;
     };
   };
   recent: {

@@ -274,48 +274,112 @@
   line-height: 1.5;
 }
 
+.role-action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.role-action-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.role-action-section-title h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  letter-spacing: -0.01em;
+}
+
+.role-action-section-title p {
+  margin: 2px 0 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.role-action-count-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
 .role-action-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   min-width: 0;
 }
 
 .role-action-card {
   min-width: 0;
-  min-height: 94px;
+  min-height: 96px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
+  gap: 14px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--surface-strong);
   color: var(--text-strong);
   text-decoration: none;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease,
+              background 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+:root[data-theme="dark"] .role-action-card,
+[data-theme="dark"] .role-action-card {
+  background: #0f1f38 !important;
+  border-color: rgba(148, 163, 184, 0.16) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .role-action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+:root[data-theme="dark"] .role-action-card:hover,
+[data-theme="dark"] .role-action-card:hover {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
 }
 
 .role-action-icon {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
   display: grid;
   place-items: center;
-  flex: 0 0 44px;
-  border-radius: 8px;
+  border-radius: 14px;
   background: rgba(37, 99, 235, 0.12);
   color: #2563eb;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  transition: transform 0.22s ease;
+}
+
+.role-action-card:hover .role-action-icon {
+  transform: scale(1.06);
 }
 
 .role-action-copy {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 3px;
   min-width: 0;
   flex: 1;
@@ -323,30 +387,56 @@
 
 .role-action-copy strong {
   color: var(--text-strong);
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   font-weight: 800;
   line-height: 1.25;
   overflow-wrap: break-word;
   word-break: normal;
 }
 
+:root[data-theme="dark"] .role-action-copy strong,
+[data-theme="dark"] .role-action-copy strong {
+  color: #f8fafc !important;
+}
+
 .role-action-copy small {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.77rem;
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: break-word;
   word-break: normal;
 }
 
-.role-action-arrow {
-  flex: 0 0 auto;
-  color: var(--muted);
-  transition: transform 0.18s ease;
+:root[data-theme="dark"] .role-action-copy small,
+[data-theme="dark"] .role-action-copy small {
+  color: #94a3b8 !important;
 }
 
-.role-action-card:hover .role-action-arrow {
+.role-action-arrow-wrap {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.role-action-card:hover .role-action-arrow-wrap {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
   transform: translateX(3px);
+  box-shadow: 0 4px 12px rgba(8, 126, 189, 0.35);
+}
+
+.role-action-arrow {
+  font-size: 0.95rem;
 }
 
 .role-action-card.tone-teal .role-action-icon { background: rgba(15, 118, 110, 0.12); color: #0f766e; }
@@ -356,7 +446,7 @@
 .role-action-card.tone-slate .role-action-icon { background: rgba(71, 85, 105, 0.14); color: #475569; }
 
 .role-action-card.primary {
-  border-color: color-mix(in srgb, #2563eb 42%, var(--border));
+  border-color: color-mix(in srgb, #2563eb 45%, var(--border));
 }
 .dashboard-command {
   width: 100%;
@@ -1426,6 +1516,14 @@
   transform: rotate(180deg);
 }
 
+.insurance-picker-backdrop {
+  display: none;
+}
+
+.insurance-picker-mobile-header {
+  display: none;
+}
+
 .insurance-picker-menu {
   position: absolute;
   z-index: 40;
@@ -1439,6 +1537,130 @@
   border-radius: 8px;
   background: var(--surface-strong);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 768px) {
+  .insurance-picker-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1050;
+    animation: insuranceBackdropIn 0.2s ease;
+  }
+
+  .insurance-picker-menu {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    max-height: 82vh !important;
+    max-height: 82dvh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom)) !important;
+    z-index: 1051 !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: insuranceDrawerUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .insurance-picker-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insurance-picker-mobile-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .insurance-picker-title-icon {
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+
+  .insurance-picker-mobile-title h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-strong);
+  }
+
+  .insurance-picker-mobile-title small {
+    display: block;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .insurance-picker-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .insurance-picker-close-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-strong);
+  }
+
+  .insurance-picker-options {
+    max-height: 52dvh !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    padding-bottom: 16px !important;
+  }
+
+  .insurance-picker-option {
+    min-height: 48px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    background: color-mix(in srgb, var(--surface) 60%, var(--surface-strong)) !important;
+    border: 1px solid var(--border) !important;
+  }
+
+  .insurance-picker-option:hover,
+  .insurance-picker-option.selected {
+    border-color: var(--accent) !important;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-strong)) !important;
+  }
+}
+
+@keyframes insuranceBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes insuranceDrawerUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 .insurance-picker-search {

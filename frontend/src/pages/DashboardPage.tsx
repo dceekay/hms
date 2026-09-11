@@ -122,11 +122,31 @@ function adminStats(overview: DashboardOverview | null) {
   if (!overview) {
     return [
       { title: "Total Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers /> },
+      { title: "Patients Seen Today", value: "...", change: "loading", color: "#0284c7", icon: <FaHospitalUser /> },
+      { title: "Lab Tests Requested", value: "...", change: "loading", color: "#8b5cf6", icon: <FaFlask /> },
+      { title: "Beds Occupancy", value: "...", change: "loading", color: "#f59e0b", icon: <FaBed /> },
       { title: "Monthly Billing", value: "...", change: "loading", color: "#0f766e", icon: <FiCreditCard /> },
       { title: "Active Staff", value: "...", change: "loading", color: "#7c3aed", icon: <FiShield /> },
       { title: "Open Operations", value: "...", change: "loading", color: "#dc2626", icon: <FiActivity /> },
     ];
   }
+
+  const bedsTotal = overview.operations.beds.total;
+  const bedsOccupied = overview.operations.beds.occupied;
+  const bedsAvailable = overview.operations.beds.available;
+  const occupancyRate =
+    overview.operations.beds.occupancyRate ??
+    (bedsTotal > 0 ? Math.round((bedsOccupied / bedsTotal) * 100) : 0);
+
+  const patientsSeenToday =
+    overview.clinical?.patientsSeenToday ??
+    overview.patients.seenToday ??
+    0;
+
+  const labTestsRequestedToday =
+    overview.clinical?.labTestsRequestedToday ??
+    overview.laboratory?.requestedToday ??
+    0;
 
   return [
     {
@@ -135,6 +155,27 @@ function adminStats(overview: DashboardOverview | null) {
       change: `${overview.patients.registeredToday} registered today`,
       color: "#2563eb",
       icon: <FiUsers />,
+    },
+    {
+      title: "Patients Seen Today",
+      value: formatNumber(patientsSeenToday),
+      change: `${patientsSeenToday} consultations today`,
+      color: "#0284c7",
+      icon: <FaHospitalUser />,
+    },
+    {
+      title: "Lab Tests Requested",
+      value: formatNumber(labTestsRequestedToday),
+      change: `${labTestsRequestedToday} orders placed today`,
+      color: "#8b5cf6",
+      icon: <FaFlask />,
+    },
+    {
+      title: "Beds Occupancy",
+      value: `${occupancyRate}%`,
+      change: `${bedsOccupied} of ${bedsTotal} occupied (${bedsAvailable} free)`,
+      color: "#f59e0b",
+      icon: <FaBed />,
     },
     {
       title: "Monthly Billing",
@@ -157,7 +198,7 @@ function adminStats(overview: DashboardOverview | null) {
           overview.operations.semsas.unfiled +
           overview.operations.security.currentlyInside
       ),
-      change: "Pending bills, SEMSAS & security logs",
+      change: "Pending bills, SEMSAS & logs",
       color: "#dc2626",
       icon: <FiActivity />,
     },
@@ -432,22 +473,34 @@ function roleActionTone(index: number, action: DashboardAction) {
 
 function RoleActionGrid({ actions }: { actions: DashboardAction[] }) {
   return (
-    <section className="role-action-grid" aria-label="Role shortcuts">
-      {actions.map((action, index) => (
-        <Link
-          className={`role-action-card tone-${roleActionTone(index, action)} ${action.primary ? "primary" : ""}`}
-          to={action.to}
-          key={`${action.label}-${action.to}`}
-        >
-          <span className="role-action-icon">{action.icon}</span>
-          <span className="role-action-copy">
-            <strong>{action.label}</strong>
-            {action.detail && <small>{action.detail}</small>}
-          </span>
-          <FiArrowRight className="role-action-arrow" />
-        </Link>
-      ))}
-    </section>
+    <div className="role-action-section">
+      <div className="role-action-section-header">
+        <div className="role-action-section-title">
+          <h3>Quick Operations &amp; Portals</h3>
+          <p>Role-tailored shortcuts and high-frequency workflows</p>
+        </div>
+        <span className="role-action-count-pill">{actions.length} shortcuts</span>
+      </div>
+
+      <section className="role-action-grid" aria-label="Role shortcuts">
+        {actions.map((action, index) => (
+          <Link
+            className={`role-action-card tone-${roleActionTone(index, action)} ${action.primary ? "primary" : ""}`}
+            to={action.to}
+            key={`${action.label}-${action.to}`}
+          >
+            <span className="role-action-icon">{action.icon}</span>
+            <span className="role-action-copy">
+              <strong>{action.label}</strong>
+              {action.detail && <small>{action.detail}</small>}
+            </span>
+            <span className="role-action-arrow-wrap" aria-hidden="true">
+              <FiArrowRight className="role-action-arrow" />
+            </span>
+          </Link>
+        ))}
+      </section>
+    </div>
   );
 }
 export default function DashboardPage() {
