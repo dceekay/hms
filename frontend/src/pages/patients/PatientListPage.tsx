@@ -30,6 +30,8 @@ import PatientVisitsModal from "../../components/patients/PatientVisitsModal";
 import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
+import { confirmImportantAction, showSuccessWithSound } from "../../utils/sweetAlert";
+import { playSuccessChime } from "../../utils/soundAlerts";
 
 import "../../styles/patient-list.css";
 
@@ -536,6 +538,38 @@ export function PatientListPage() {
         | "reactivate"
         | "deactivate"
     ) => {
+      const actionConfig = {
+        convert: {
+          title: "Convert to Hospital Patient?",
+          text: `Are you sure you want to convert ${patient.firstName} ${patient.lastName} to a full hospital patient?`,
+          confirmButtonText: "Yes, Convert Patient",
+          danger: false,
+        },
+        reactivate: {
+          title: "Reactivate Patient?",
+          text: `Are you sure you want to restore ${patient.firstName} ${patient.lastName}'s account status to active?`,
+          confirmButtonText: "Yes, Reactivate",
+          danger: false,
+        },
+        deactivate: {
+          title: "Deactivate Patient?",
+          text: `Are you sure you want to mark ${patient.firstName} ${patient.lastName} as inactive?`,
+          confirmButtonText: "Yes, Mark Inactive",
+          danger: true,
+        },
+      }[action];
+
+      const confirmed = await confirmImportantAction({
+        title: actionConfig.title,
+        text: actionConfig.text,
+        confirmButtonText: actionConfig.confirmButtonText,
+        cancelButtonText: "Cancel",
+        icon: action === "deactivate" ? "warning" : "question",
+        danger: actionConfig.danger,
+      });
+
+      if (!confirmed) return;
+
       setError(null);
 
       const result =
@@ -558,6 +592,18 @@ export function PatientListPage() {
 
         return;
       }
+
+      playSuccessChime();
+      void showSuccessWithSound({
+        title:
+          action === "convert"
+            ? "Patient Converted"
+            : action === "reactivate"
+              ? "Patient Reactivated"
+              : "Patient Deactivated",
+        text: `${patient.firstName} ${patient.lastName} has been successfully updated.`,
+        timer: 1800,
+      });
 
       setPatients((current) =>
         current.map((item) =>
@@ -762,6 +808,19 @@ export function PatientListPage() {
       return;
     }
 
+    const confirmed = await confirmImportantAction({
+      title: "Save Patient Changes?",
+      text: `Are you sure you want to update the details for ${editForm.firstName} ${editForm.lastName}?`,
+      confirmButtonText: "Yes, Save Changes",
+      cancelButtonText: "Cancel",
+      icon: "question",
+      danger: false,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setSavingPatient(true);
 
     const {
@@ -818,6 +877,13 @@ export function PatientListPage() {
         updatedPatient
       );
     }
+
+    playSuccessChime();
+    void showSuccessWithSound({
+      title: "Patient Updated",
+      text: `${updatedPatient.firstName} ${updatedPatient.lastName}'s records have been successfully saved.`,
+      timer: 1800,
+    });
 
     closeEditPatient();
   };

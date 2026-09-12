@@ -6,6 +6,8 @@ import type { Patient } from "../../types/patient";
 import type { AppUser } from "../../types/rbac";
 import { createAppointment, fetchAppointmentDoctors } from "../../services/appointmentService";
 import { notifyDataMutated } from "../../utils/appEvents";
+import { confirmImportantAction } from "../../utils/sweetAlert";
+import { playSuccessChime } from "../../utils/soundAlerts";
 
 interface AssignDoctorModalProps {
   patient: Patient | null;
@@ -30,32 +32,51 @@ export default function AssignDoctorModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    setError(null);
-    setSelectedDoctorId("");
-    setConsultationType("Routine Consultation");
-    setReason("");
-    setNotes("");
+    if (!isOpen) {
+      setSelectedDoctorId("");
+      setConsultationType("Routine Consultation");
+      setReason("");
+      setNotes("");
+      setError(null);
+      return;
+    }
 
     setLoadingDoctors(true);
-    void fetchAppointmentDoctors().then(({ doctors: docList, error: docError }) => {
+    setError(null);
+
+    void fetchAppointmentDoctors().then(({ doctors: list, error: docError }) => {
       setLoadingDoctors(false);
-      if (docList && docList.length > 0) {
-        setDoctors(docList);
-        setSelectedDoctorId(docList[0].id);
-      } else if (docError) {
+      if (docError) {
         setError(docError);
+        return;
+      }
+      setDoctors(list ?? []);
+      if (list && list.length > 0) {
+        setSelectedDoctorId(list[0].id);
       }
     });
   }, [isOpen]);
 
   if (!isOpen || !patient) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAssign = async () => {
     if (!selectedDoctorId) {
       setError("Please select a doctor to assign the patient to.");
+      return;
+    }
+
+    const assignedDoc = doctors.find((d) => d.id === selectedDoctorId);
+    const doctorName = assignedDoc ? `Dr. ${assignedDoc.firstName} ${assignedDoc.lastName}` : "the doctor";
+
+    const confirmed = await confirmImportantAction({
+      title: "Assign to Doctor?",
+      text: `Are you sure you want to assign ${patient.firstName} ${patient.lastName} to ${doctorName} for ${consultationType}?`,
+      confirmButtonText: "Yes, Assign Patient",
+      cancelButtonText: "No, Go Back",
+      icon: "question",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -81,10 +102,8 @@ export default function AssignDoctorModal({
       return;
     }
 
-    const assignedDoc = doctors.find((d) => d.id === selectedDoctorId);
-    const doctorName = assignedDoc ? `Dr. ${assignedDoc.firstName} ${assignedDoc.lastName}` : "the doctor";
-
     notifyDataMutated({ source: "assign-doctor" });
+    playSuccessChime();
 
     await Swal.fire({
       icon: "success",
@@ -93,10 +112,21 @@ export default function AssignDoctorModal({
       confirmButtonColor: "#087ebd",
     });
 
+    // Refresh form state
+    setSelectedDoctorId("");
+    setConsultationType("Routine Consultation");
+    setReason("");
+    setNotes("");
+
     if (onAssigned) {
       onAssigned();
     }
     onClose();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleAssign();
   };
 
   return (

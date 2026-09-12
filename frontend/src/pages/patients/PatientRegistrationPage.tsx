@@ -28,7 +28,7 @@ import {
   patientSchema,
 } from "../../types/patient";
 import { compressImageToWebp } from "../../utils/imageCompression";
-import { showPatientCreatedAlert } from "../../utils/sweetAlert";
+import { confirmImportantAction, showPatientCreatedAlert } from "../../utils/sweetAlert";
 
 const initialForm: PatientFormValues = {
   physicalFileNumber: "",
@@ -269,6 +269,24 @@ export default function PatientRegistrationPage() {
       return;
     }
 
+    const categoryLabel =
+      form.patientCategory === "investigation_patient"
+        ? "Laboratory Investigation Patient"
+        : "Hospital Patient";
+
+    const confirmed = await confirmImportantAction({
+      title: "Register New Patient?",
+      text: `Are you sure you want to register ${form.firstName.trim()} ${form.lastName.trim()} as a ${categoryLabel}?`,
+      confirmButtonText: "Yes, Register Patient",
+      cancelButtonText: "Review Details",
+      icon: "question",
+    });
+
+    if (!confirmed) {
+      setLoading(false);
+      return;
+    }
+
     const { patient, error: registrationError } = await createPatient(
       cleanPayload(validation.data)
     );
@@ -284,6 +302,14 @@ export default function PatientRegistrationPage() {
     }
 
     setCreatedPatient(patient);
+
+    // Refresh the registration form immediately back to clean defaults ready for next entry
+    setForm({
+      ...initialForm,
+      state: "Kano",
+      country: "Nigeria",
+      patientCategory: form.patientCategory,
+    });
 
     // Automatically initialize full QR data immediately so ID card is ready without delay
     const immediateQr: PatientQr = {

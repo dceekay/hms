@@ -398,20 +398,42 @@ export class PatientService {
   async reactivate(id: string) {
     const patient = await this.getById(id);
 
-    return this.patientRepository.update(id, {
+    const updated = await this.patientRepository.update(id, {
       patientCategory: PatientCategory.old_patient,
       status: PatientStatus.active,
       reactivatedAt: new Date(),
       version: patient.version + 1,
     });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "Patient Reactivated",
+      message: `${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn || "N/A"}) has been reactivated.`,
+      eventKey: "patient.reactivated",
+      priority: "info",
+      linkUrl: "/patients",
+      metadata: { patientId: patient.id, mrn: patient.mrn },
+    });
+
+    return updated;
   }
 
   async deactivate(id: string) {
     const patient = await this.getById(id);
 
-    return this.patientRepository.update(id, {
+    const updated = await this.patientRepository.update(id, {
       status: PatientStatus.inactive,
       version: patient.version + 1,
     });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "Patient Deactivated",
+      message: `${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn || "N/A"}) has been marked inactive.`,
+      eventKey: "patient.deactivated",
+      priority: "warning",
+      linkUrl: "/patients",
+      metadata: { patientId: patient.id, mrn: patient.mrn },
+    });
+
+    return updated;
   }
 }

@@ -299,6 +299,19 @@ export class AppointmentService {
       },
     });
 
+    await NotificationService.notifyRoles(["Receptionist", "Nurse", "Administrator", "Super Admin"], {
+      title: "Patient queued for doctor",
+      message: `${appointment.patient.firstName} ${appointment.patient.lastName} has been assigned to Dr. ${appointment.doctor.lastName}.`,
+      eventKey: "appointment.assigned",
+      priority: "info",
+      linkUrl: "/appointments",
+      metadata: {
+        appointmentId: appointment.id,
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+      },
+    });
+
     return appointment;
   }
 
@@ -312,7 +325,7 @@ export class AppointmentService {
       throw new ApiError(HttpStatus.NOT_FOUND, "Appointment not found");
     }
 
-    return prisma.appointment.update({
+    const updated = await prisma.appointment.update({
       where: { id },
       data: {
         status: payload.status as AppointmentStatus,
@@ -321,5 +334,18 @@ export class AppointmentService {
       },
       include: appointmentInclude,
     });
+
+    if (payload.status === "cancelled") {
+      await NotificationService.notifyUsers([appointment.doctorId], {
+        title: "Appointment cancelled",
+        message: `Appointment for ${appointment.patient.firstName} ${appointment.patient.lastName} was cancelled.`,
+        eventKey: "appointment.cancelled",
+        priority: "warning",
+        linkUrl: "/doctor",
+        metadata: { appointmentId: appointment.id },
+      });
+    }
+
+    return updated;
   }
 }
