@@ -1170,7 +1170,7 @@ export function PatientListPage() {
 
                         <button
                           type="button"
-                          className="icon-text-btn"
+                          className="icon-text-btn profile-btn"
                           aria-label="View patient profile summary & print dossier"
                           onClick={() => setSummaryPatient(patient)}
                           title="View profile summary & print dossier"
@@ -1181,7 +1181,7 @@ export function PatientListPage() {
 
                         <button
                           type="button"
-                          className="icon-text-btn"
+                          className="icon-text-btn notes-btn"
                           aria-label="View previous doctor visits and clinical notes"
                           onClick={() => setVisitsPatient(patient)}
                           title="View previous doctor visits and clinical notes"
@@ -1192,7 +1192,7 @@ export function PatientListPage() {
 
                         <button
                           type="button"
-                          className="icon-text-btn"
+                          className="icon-text-btn id-btn"
                           aria-label="Open patient ID card"
                           onClick={() =>
                             handleViewIdCard(
@@ -1210,7 +1210,7 @@ export function PatientListPage() {
                         {canUpdate && (
                           <button
                             type="button"
-                            className="icon-text-btn"
+                            className="icon-text-btn edit-btn"
                             aria-label="Edit patient"
                             onClick={() =>
                               openEditPatient(
@@ -1231,7 +1231,7 @@ export function PatientListPage() {
                             "investigation_patient" && (
                             <button
                               type="button"
-                              className="icon-text-btn success"
+                              className="icon-text-btn convert-btn success"
                               aria-label="Convert investigation patient"
                               onClick={() =>
                                 handlePatientAction(
@@ -1253,7 +1253,7 @@ export function PatientListPage() {
                             "inactive" && (
                             <button
                               type="button"
-                              className="icon-text-btn success"
+                              className="icon-text-btn status-btn success"
                               aria-label="Reactivate patient"
                               onClick={() =>
                                 handlePatientAction(
@@ -1276,7 +1276,7 @@ export function PatientListPage() {
                             "active" && (
                             <button
                               type="button"
-                              className="icon-text-btn danger"
+                              className="icon-text-btn status-btn danger"
                               aria-label="Mark patient inactive"
                               onClick={() =>
                                 handlePatientAction(
