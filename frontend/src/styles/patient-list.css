@@ -463,6 +463,19 @@
   border-color: #e11d48;
 }
 
+.patient-compact-actions .delete-btn {
+  color: #ef4444;
+  border-color: color-mix(in srgb, #ef4444 32%, var(--border));
+  background: color-mix(in srgb, #ef4444 8%, var(--surface));
+}
+
+.patient-compact-actions .delete-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
 .patient-compact-actions .status-btn.success {
   color: #059669;
   border-color: color-mix(in srgb, #10b981 30%, var(--border));
@@ -1360,4 +1373,271 @@
     background: #ffffff !important;
   }
 }
+
+/* ==========================================================================
+   Delete Patient Modal Styles (Super Admin)
+   ========================================================================== */
+.delete-patient-panel {
+  max-width: 540px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  box-shadow: 0 25px 60px -15px rgba(239, 68, 68, 0.25), 0 0 0 1px rgba(239, 68, 68, 0.1) !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.delete-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.delete-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.delete-danger-icon-badge {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+}
+
+.delete-super-admin-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
+
+.delete-modal-header h2 {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.delete-warning-banner {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-left: 4px solid #ef4444;
+  padding: 14px 16px;
+  border-radius: 10px;
+}
+
+.delete-warning-banner strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ef4444;
+  margin-bottom: 4px;
+}
+
+.delete-warning-banner p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--text);
+  opacity: 0.9;
+}
+
+.delete-patient-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.delete-patient-avatar {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+}
+
+.delete-patient-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.delete-patient-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.delete-patient-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.delete-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.84rem;
+}
+
+.delete-countdown-box {
+  background: color-mix(in srgb, var(--surface) 80%, var(--surface-strong));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delete-countdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.delete-countdown-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.lock-icon.locked {
+  color: #f59e0b;
+}
+
+.lock-icon.unlocked {
+  color: #10b981;
+}
+
+.unlocked-text {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.delete-countdown-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ef4444;
+  font-size: 0.95rem;
+}
+
+.delete-progress-track {
+  width: 100%;
+  height: 6px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.delete-progress-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 999px;
+  transition: width 1s linear, background-color 0.3s ease;
+}
+
+.delete-progress-fill.ready {
+  background: #10b981;
+}
+
+.delete-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.delete-cancel-btn {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-strong);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.delete-confirm-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-confirm-btn.locked {
+  background: rgba(239, 68, 68, 0.15);
+  color: rgba(239, 68, 68, 0.5);
+  cursor: not-allowed;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.delete-confirm-btn.active {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+.delete-confirm-btn.active:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.55);
+  transform: translateY(-1px);
+}
+
 

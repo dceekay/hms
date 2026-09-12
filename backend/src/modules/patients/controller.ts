@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { PatientService } from "./service";
+import { AuthRequest } from "../../shared/middleware/auth.middleware";
 
 export class PatientController extends BaseController {
   constructor(private readonly patientService = new PatientService()) {
@@ -152,6 +153,16 @@ export class PatientController extends BaseController {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const patient = await this.patientService.deactivate(id);
       return this.ok(res, "Patient deactivated successfully", patient);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deletePermanently = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await this.patientService.deletePermanently(id, req.user?.sub);
+      return this.ok(res, "Patient record permanently deleted", result);
     } catch (error) {
       next(error);
     }

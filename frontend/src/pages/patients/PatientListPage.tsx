@@ -27,6 +27,7 @@ import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import AssignDoctorModal from "../../components/patients/AssignDoctorModal";
 import PatientProfileSummaryModal from "../../components/patients/PatientProfileSummaryModal";
 import PatientVisitsModal from "../../components/patients/PatientVisitsModal";
+import DeletePatientModal from "../../components/patients/DeletePatientModal";
 import { nigeriaStates } from "../../constants/nigeriaStates";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
@@ -343,6 +344,13 @@ export function PatientListPage() {
       "patients.update"
     );
 
+  const roles = useAuthStore(
+    (state) =>
+      state.user?.roles ?? []
+  );
+
+  const isSuperAdmin = roles.includes("Super Admin");
+
   const [patients, setPatients] =
     useState<Patient[]>([]);
 
@@ -391,6 +399,7 @@ export function PatientListPage() {
   const [assignDoctorPatient, setAssignDoctorPatient] = useState<Patient | null>(null);
   const [summaryPatient, setSummaryPatient] = useState<Patient | null>(null);
   const [visitsPatient, setVisitsPatient] = useState<Patient | null>(null);
+  const [deleteTargetPatient, setDeleteTargetPatient] = useState<Patient | null>(null);
 
   const [loading, setLoading] =
     useState(false);
@@ -670,6 +679,27 @@ export function PatientListPage() {
     setEditingPatient(null);
     setEditForm(null);
     setEditError(null);
+  };
+
+  const handlePatientDeleted = (deletedId: string) => {
+    setPatients((current) => current.filter((item) => item.id !== deletedId));
+    if (selectedPatient?.id === deletedId) {
+      setSelectedPatient(null);
+      setSelectedQr(null);
+    }
+    if (editingPatient?.id === deletedId) {
+      closeEditPatient();
+    }
+    if (assignDoctorPatient?.id === deletedId) {
+      setAssignDoctorPatient(null);
+    }
+    if (summaryPatient?.id === deletedId) {
+      setSummaryPatient(null);
+    }
+    if (visitsPatient?.id === deletedId) {
+      setVisitsPatient(null);
+    }
+    setDeleteTargetPatient(null);
   };
 
   const updateEditField = (
@@ -1358,6 +1388,21 @@ export function PatientListPage() {
                               </span>
                             </button>
                           )}
+
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            className="icon-text-btn delete-btn danger"
+                            aria-label="Delete patient permanently"
+                            onClick={() => setDeleteTargetPatient(patient)}
+                            title="Delete patient permanently (Super Admin only)"
+                          >
+                            <FiTrash2 />
+                            <span className="patient-action-label">
+                              Delete
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </article>
                   );
@@ -2210,6 +2255,34 @@ export function PatientListPage() {
 
                       <FiSave />
                     </button>
+
+                    {isSuperAdmin && editingPatient && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const p = editingPatient;
+                          closeEditPatient();
+                          setDeleteTargetPatient(p);
+                        }}
+                        style={{
+                          background: "rgba(239, 68, 68, 0.1)",
+                          color: "#ef4444",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          borderRadius: "10px",
+                          padding: "12px 16px",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          marginTop: "8px",
+                        }}
+                      >
+                        <FiTrash2 /> Delete Patient Record Permanently
+                      </button>
+                    )}
                   </form>
                 </section>
               </div>
@@ -2244,6 +2317,15 @@ export function PatientListPage() {
               isOpen={Boolean(visitsPatient)}
               onClose={() => setVisitsPatient(null)}
               onAssignDoctor={(patient) => setAssignDoctorPatient(patient)}
+            />
+          )}
+
+          {deleteTargetPatient && (
+            <DeletePatientModal
+              patient={deleteTargetPatient}
+              isOpen={Boolean(deleteTargetPatient)}
+              onClose={() => setDeleteTargetPatient(null)}
+              onDeleted={handlePatientDeleted}
             />
           )}
         </div>

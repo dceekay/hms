@@ -197,6 +197,21 @@ export async function deactivatePatient(
   }
 }
 
+export async function deletePatientPermanently(
+  patientId: string
+): Promise<{ success: boolean; message?: string } | null> {
+  try {
+    const response = await api.delete<{ data: { success: boolean; message?: string } }>(
+      `/patients/${patientId}`
+    );
+
+    return response.data.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
 export async function fetchPatientQr(
   patientId: string
 ): Promise<PatientQr | null> {
