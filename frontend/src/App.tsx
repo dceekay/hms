@@ -9,6 +9,7 @@ const ServiceDetailPage = lazy(() => import("./pages/ServiceDetailPage"));
 const ServicesIndexPage = lazy(() => import("./pages/ServicesIndexPage"));
 const StaffVerificationPage = lazy(() => import("./pages/StaffVerificationPage"));
 const PatientVerificationPage = lazy(() => import("./pages/PatientVerificationPage"));
+const LaboratoryVerificationPage = lazy(() => import("./pages/LaboratoryVerificationPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const PatientListPage = lazy(() =>
   import("./pages/patients/PatientListPage").then((m) => ({
@@ -93,6 +94,7 @@ export default function App() {
         <Route path="/services/:slug" element={<ServiceDetailPage />} />
         <Route path="/verify/staff/:id" element={<StaffVerificationPage />} />
         <Route path="/verify/patient/:qrCode" element={<PatientVerificationPage />} />
+        <Route path="/verify/lab/:identifier" element={<LaboratoryVerificationPage />} />
 
         <Route path="/" element={<RootRoute />} />
 

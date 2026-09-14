@@ -1,66 +1,43 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
-  FiArrowLeft,
-  FiEdit3,
-  FiFileText,
-  FiPlus,
-  FiPrinter,
-  FiRefreshCw,
-  FiSave,
-  FiSearch,
-  FiX,
-} from "react-icons/fi";
-import mdsLogo from "../../assets/optimized/logo.png";
+  ArrowLeft as FiArrowLeft,
+  Plus as FiPlus,
+  Search as FiSearch,
+  RefreshCw as FiRefreshCw,
+  Edit3 as FiEdit3,
+  Copy as FiCopy,
+  Trash2 as FiTrash2,
+  Eye as FiEye,
+  Layers as FiLayers,
+  Droplet as FiDroplet,
+  Activity as FiActivity,
+  CheckCircle2 as FiCheckCircle,
+  XCircle as FiXCircle,
+  Sliders as FiSliders,
+  Zap as FiZap,
+  FileText as FiFileText,
+  X as FiX,
+  Check as FiCheck,
+} from "lucide-react";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createLaboratoryTemplate,
+  deleteLaboratoryTemplate,
   fetchLaboratoryTemplates,
   updateLaboratoryTemplate,
 } from "../../services/laboratoryService";
 import { useAuthStore } from "../../store/authStore";
-import { NIGERIAN_LAB_TEMPLATES } from "../../constants/nigerianLabTemplates";
-import "../../styles/laboratory-studio.css";
 import type {
-  LaboratoryFieldType,
   LaboratoryTemplate,
-  LaboratoryTemplateField,
   LaboratoryTemplateFormValues,
 } from "../../types/laboratory";
+import LaboratoryTemplateStudio from "../../components/laboratory/LaboratoryTemplateStudio";
+import LaboratoryReportPreview from "../../components/laboratory/LaboratoryReportPreview";
+import LaboratoryPresetLibraryModal from "../../components/laboratory/LaboratoryPresetLibraryModal";
 
-const emptyTemplateField: LaboratoryTemplateField = {
-  key: "",
-  label: "",
-  type: "text",
-  unit: "",
-  referenceRange: "",
-  options: [],
-  required: false,
-};
-
-const emptyTemplateForm: LaboratoryTemplateFormValues = {
-  name: "",
-  code: "",
-  category: "",
-  specimen: "",
-  reportTitle: "",
-  notes: "",
-  isActive: true,
-  fields: [{ ...emptyTemplateField }],
-};
-
-function formFromTemplate(template: LaboratoryTemplate): LaboratoryTemplateFormValues {
-  return {
-    name: template.name,
-    code: template.code ?? "",
-    category: template.category ?? "",
-    specimen: template.specimen ?? "",
-    reportTitle: template.reportTitle ?? "",
-    notes: template.notes ?? "",
-    isActive: template.isActive,
-    fields: template.fields.length > 0 ? template.fields : [{ ...emptyTemplateField }],
-  };
-}
+import "../../styles/laboratory-studio.css";
 
 export default function LaboratoryTemplatesPage() {
   const user = useAuthStore((state) => state.user);
@@ -69,57 +46,40 @@ export default function LaboratoryTemplatesPage() {
   const isSuperAdmin = roles.some((role) => role.toLowerCase() === "super admin");
   const isLaboratoryRole = roles.some((role) => role.toLowerCase() === "laboratory");
   const canManageTemplates = isSuperAdmin || isLaboratoryRole;
-  const canCreate = permissions.includes("laboratory.create");
-  const canUpdate = permissions.includes("laboratory.update");
+  const canCreate = permissions.includes("laboratory.create") || canManageTemplates;
+  const canUpdate = permissions.includes("laboratory.update") || canManageTemplates;
 
-  const [templates, setTemplates] = useState<LaboratoryTemplate[]>(NIGERIAN_LAB_TEMPLATES);
-  const [templateSearch, setTemplateSearch] = useState("");
-  const [templateForm, setTemplateForm] = useState<LaboratoryTemplateFormValues>(emptyTemplateForm);
-  const [editingTemplate, setEditingTemplate] = useState<LaboratoryTemplate | null>(null);
-  const [activeWorksheetTemplate, setActiveWorksheetTemplate] = useState<LaboratoryTemplate | null>(null);
+  const [templates, setTemplates] = useState<LaboratoryTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Filters & search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
+  // View modes & modals
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<LaboratoryTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<LaboratoryTemplate | null>(null);
+  const [isPresetLibraryOpen, setIsPresetLibraryOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const loadTemplates = async () => {
     setLoading(true);
     setError(null);
 
-    const templateResult = await fetchLaboratoryTemplates(templateSearch, false);
+    const templateResult = await fetchLaboratoryTemplates(searchTerm, false);
     setLoading(false);
 
-    const searchLower = templateSearch.trim().toLowerCase();
-    const filterTemplates = (list: LaboratoryTemplate[]) => {
-      if (!searchLower) return list;
-      return list.filter(
-        (t) =>
-          t.name.toLowerCase().includes(searchLower) ||
-          (t.code && t.code.toLowerCase().includes(searchLower)) ||
-          (t.category && t.category.toLowerCase().includes(searchLower)) ||
-          (t.specimen && t.specimen.toLowerCase().includes(searchLower))
-      );
-    };
-
-    if (!templateResult.result || templateResult.result.items.length === 0) {
-      setTemplates(filterTemplates(NIGERIAN_LAB_TEMPLATES));
+    if (!templateResult.result) {
+      setError(templateResult.error ?? "Unable to load laboratory templates.");
       return;
     }
 
-    const serverItems = templateResult.result.items;
-    const combined = [...serverItems];
-    for (const nigTpl of NIGERIAN_LAB_TEMPLATES) {
-      if (
-        !combined.some(
-          (t) =>
-            t.code === nigTpl.code ||
-            t.name.toLowerCase() === nigTpl.name.toLowerCase()
-        )
-      ) {
-        combined.push(nigTpl);
-      }
-    }
-    setTemplates(filterTemplates(combined));
+    setTemplates(templateResult.result.items);
   };
 
   useEffect(() => {
@@ -127,62 +87,144 @@ export default function LaboratoryTemplatesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleTemplateFieldChange = (
-    index: number,
-    field: keyof LaboratoryTemplateField,
-    value: string | boolean | string[]
-  ) => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields: current.fields.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  };
+  useEffect(() => {
+    if (!previewTemplate) return;
+    document.body.classList.add("has-print-modal", "lab-print-modal-active");
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPreviewTemplate(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.classList.remove("has-print-modal", "lab-print-modal-active");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [previewTemplate]);
 
-  const addTemplateField = () => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields: [...current.fields, { ...emptyTemplateField }],
-    }));
-  };
+  // Compute metric stats
+  const stats = useMemo(() => {
+    const total = templates.length;
+    const active = templates.filter((t) => t.isActive).length;
+    const categories = new Set(templates.map((t) => t.category || "General")).size;
+    const totalFields = templates.reduce((sum, t) => sum + (t.fields?.length || 0), 0);
 
-  const removeTemplateField = (index: number) => {
-    setTemplateForm((current) => ({
-      ...current,
-      fields:
-        current.fields.length === 1
-          ? [{ ...emptyTemplateField }]
-          : current.fields.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  };
+    return { total, active, categories, totalFields };
+  }, [templates]);
 
-  const startEditTemplate = (template: LaboratoryTemplate) => {
-    setEditingTemplate(template);
-    setTemplateForm(formFromTemplate(template));
+  // Unique categories for pills filter
+  const categoriesList = useMemo(() => {
+    const cats = new Set<string>();
+    templates.forEach((t) => {
+      if (t.category) cats.add(t.category);
+    });
+    return ["All", ...Array.from(cats)];
+  }, [templates]);
+
+  // Filtered list
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((t) => {
+      const matchSearch =
+        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.code ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.category ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (t.specimen ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.fields.some((f) => f.label.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchCategory =
+        selectedCategory === "All" || (t.category || "General") === selectedCategory;
+
+      const matchStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "active"
+          ? t.isActive
+          : !t.isActive;
+
+      return matchSearch && matchCategory && matchStatus;
+    });
+  }, [templates, searchTerm, selectedCategory, statusFilter]);
+
+  // Actions
+  const handleOpenNewStudio = () => {
+    setEditingTemplate(null);
+    setIsStudioOpen(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const resetForm = () => {
-    setEditingTemplate(null);
-    setTemplateForm(emptyTemplateForm);
+  const handleEditTemplate = (template: LaboratoryTemplate) => {
+    setEditingTemplate(template);
+    setIsStudioOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleTemplateSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleDuplicateTemplate = (template: LaboratoryTemplate) => {
+    const duplicated: LaboratoryTemplate = {
+      ...template,
+      id: "",
+      name: `${template.name} (Copy)`,
+      code: template.code ? `${template.code}-COPY` : "",
+    };
+    setEditingTemplate(duplicated);
+    setIsStudioOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-    if (!canManageTemplates) {
-      setError("Only laboratory staff and super administrators can manage templates.");
+  const handleToggleActive = async (template: LaboratoryTemplate) => {
+    if (!canUpdate) return;
+    setError(null);
+    setSuccess(null);
+
+    const updated = await updateLaboratoryTemplate(template.id, {
+      name: template.name,
+      code: template.code ?? "",
+      category: template.category ?? "",
+      specimen: template.specimen ?? "",
+      reportTitle: template.reportTitle ?? "",
+      notes: template.notes ?? "",
+      isActive: !template.isActive,
+      fields: template.fields,
+    });
+
+    if (updated.template) {
+      setSuccess(
+        `Template "${template.name}" is now ${!template.isActive ? "active" : "inactive"}.`
+      );
+      await loadTemplates();
+    } else {
+      setError(updated.error ?? "Failed to toggle template status.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this laboratory template?")) {
       return;
     }
 
+    setDeletingId(id);
+    setError(null);
+    setSuccess(null);
+
+    const result = await deleteLaboratoryTemplate(id);
+    setDeletingId(null);
+
+    if (result.success) {
+      setSuccess("Template deleted successfully.");
+      await loadTemplates();
+    } else {
+      setError(result.error ?? "Failed to delete template.");
+    }
+  };
+
+  const handleSaveFromStudio = async (values: LaboratoryTemplateFormValues) => {
     setSaving(true);
     setError(null);
     setSuccess(null);
 
-    const result = editingTemplate
-      ? await updateLaboratoryTemplate(editingTemplate.id, templateForm)
-      : await createLaboratoryTemplate(templateForm);
+    const result =
+      editingTemplate && editingTemplate.id
+        ? await updateLaboratoryTemplate(editingTemplate.id, values)
+        : await createLaboratoryTemplate(values);
 
     setSaving(false);
 
@@ -191,451 +233,441 @@ export default function LaboratoryTemplatesPage() {
       return;
     }
 
-    setSuccess(editingTemplate ? "Template updated." : "Template added.");
-    resetForm();
+    setSuccess(
+      editingTemplate && editingTemplate.id
+        ? `Template "${result.template.name}" updated successfully.`
+        : `New template "${result.template.name}" created successfully.`
+    );
+    setIsStudioOpen(false);
+    setEditingTemplate(null);
     await loadTemplates();
+  };
+
+  const handleApplyPresetToStudio = (presetValues: LaboratoryTemplateFormValues) => {
+    setEditingTemplate({
+      id: "",
+      ...presetValues,
+    });
+    setIsPresetLibraryOpen(false);
+    setIsStudioOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <AdminLayout>
       <main className="page-container">
-        <div className="laboratory-page laboratory-template-page">
-          <section className="setup-hero laboratory-hero">
-            <div>
-              <p className="eyebrow">Laboratory setup</p>
-              <h1>Test Templates</h1>
-              <p>Create reusable result forms for lab tests and reports.</p>
-            </div>
-            <div className="laboratory-template-hero-actions">
-              <Link className="icon-text-btn" to="/laboratory">
-                <FiArrowLeft />
-                Lab desk
-              </Link>
-              <button type="button" className="icon-text-btn" onClick={loadTemplates} disabled={loading}>
-                <FiRefreshCw />
-                Refresh
+        <div className="lab-studio-container">
+          {/* Notification Alerts */}
+          {error && (
+            <div
+              style={{
+                padding: "0.85rem 1.25rem",
+                background: "var(--cavendish-emergency-bg)",
+                border: "1px solid var(--cavendish-emergency-border)",
+                borderRadius: "10px",
+                color: "var(--danger)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>{error}</span>
+              <button
+                type="button"
+                className="lab-icon-btn danger"
+                onClick={() => setError(null)}
+              >
+                <FiX />
               </button>
             </div>
-          </section>
+          )}
 
-          {error && <p className="registration-error">{error}</p>}
-          {success && <p className="security-success">{success}</p>}
+          {success && (
+            <div
+              style={{
+                padding: "0.85rem 1.25rem",
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                borderRadius: "10px",
+                color: "var(--success)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <FiCheckCircle /> {success}
+              </span>
+              <button
+                type="button"
+                className="lab-icon-btn"
+                onClick={() => setSuccess(null)}
+              >
+                <FiX />
+              </button>
+            </div>
+          )}
 
-          <section className="laboratory-template-layout">
-            {!canManageTemplates ? (
-              <div className="setup-form laboratory-template-form">
-                <div className="panel-title">
-                  <div>
-                    <h2>Template Access</h2>
-                    <p>Only laboratory staff and super administrators can manage lab templates.</p>
-                  </div>
-                  <FiFileText />
-                </div>
-              </div>
-            ) : (
-              <form className="setup-form laboratory-template-form" onSubmit={handleTemplateSubmit}>
-                <div className="panel-title">
-                  <div>
-                    <h2>{editingTemplate ? "Edit Template" : "Add Template"}</h2>
-                    <p>Build the result form once, then reuse it for every matching test.</p>
-                  </div>
-                  <FiFileText />
-                </div>
-
-                <div className="form-grid">
-                  <label>
-                    Test name
-                    <input
-                      value={templateForm.name}
-                      onChange={(event) =>
-                        setTemplateForm((current) => ({ ...current, name: event.target.value }))
-                      }
-                      placeholder="Full blood count"
-                      required
-                    />
-                  </label>
-                  <label>
-                    Code
-                    <input
-                      value={templateForm.code}
-                      onChange={(event) =>
-                        setTemplateForm((current) => ({ ...current, code: event.target.value }))
-                      }
-                      placeholder="LAB-FBC"
-                    />
-                  </label>
-                  <label>
-                    Category
-                    <input
-                      value={templateForm.category}
-                      onChange={(event) =>
-                        setTemplateForm((current) => ({ ...current, category: event.target.value }))
-                      }
-                      placeholder="Haematology"
-                    />
-                  </label>
-                  <label>
-                    Specimen
-                    <input
-                      value={templateForm.specimen}
-                      onChange={(event) =>
-                        setTemplateForm((current) => ({ ...current, specimen: event.target.value }))
-                      }
-                      placeholder="Blood, urine, stool"
-                    />
-                  </label>
-                  <label>
-                    Report title
-                    <input
-                      value={templateForm.reportTitle}
-                      onChange={(event) =>
-                        setTemplateForm((current) => ({ ...current, reportTitle: event.target.value }))
-                      }
-                      placeholder="Laboratory result report"
-                    />
-                  </label>
+          {/* VIEW 1: STUDIO BUILDER WORKSPACE */}
+          {isStudioOpen ? (
+            <LaboratoryTemplateStudio
+              initialData={editingTemplate}
+              onSave={handleSaveFromStudio}
+              onCancel={() => {
+                setIsStudioOpen(false);
+                setEditingTemplate(null);
+              }}
+              saving={saving}
+              canEdit={canCreate || canUpdate}
+            />
+          ) : (
+            /* VIEW 2: TEMPLATES MANAGEMENT CATALOG HUB */
+            <>
+              {/* Hero Banner */}
+              <section className="lab-catalog-hero">
+                <div className="lab-hero-title-group">
+                  <p className="eyebrow" style={{ color: "var(--accent)", margin: 0, fontWeight: 700 }}>
+                    CLINICAL DIAGNOSTICS & PATHOLOGY SETUP
+                  </p>
+                  <h1>Laboratory Template Studio</h1>
+                  <p>
+                    Design accredited test panels, customize reference intervals, configure dropdown
+                    matrices, and simulate patient diagnostic reports in real-time.
+                  </p>
                 </div>
 
-                <div className="laboratory-fields-editor">
-                  <div className="setup-list-header">
-                    <strong>Result fields</strong>
-                    <button type="button" className="icon-text-btn" onClick={addTemplateField}>
-                      <FiPlus />
-                      Add field
-                    </button>
-                  </div>
+                <div className="lab-hero-actions">
+                  <Link className="lab-btn-secondary" to="/laboratory">
+                    <FiArrowLeft /> Return to Lab Desk
+                  </Link>
 
-                  {templateForm.fields.map((field, index) => (
-                    <article className="laboratory-field-row" key={index}>
-                      <input
-                        value={field.label}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(index, "label", event.target.value)
-                        }
-                        placeholder="Field label"
-                        required
-                      />
-                      <input
-                        value={field.key}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(
-                            index,
-                            "key",
-                            event.target.value.replace(/\s+/g, "_").toLowerCase()
-                          )
-                        }
-                        placeholder="field_key"
-                        required
-                      />
-                      <select
-                        value={field.type}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(
-                            index,
-                            "type",
-                            event.target.value as LaboratoryFieldType
-                          )
-                        }
-                      >
-                        <option value="text">Text</option>
-                        <option value="number">Number</option>
-                        <option value="select">Dropdown</option>
-                        <option value="textarea">Long text</option>
-                      </select>
-                      <input
-                        value={field.unit ?? ""}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(index, "unit", event.target.value)
-                        }
-                        placeholder="Unit"
-                      />
-                      <input
-                        value={field.referenceRange ?? ""}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(index, "referenceRange", event.target.value)
-                        }
-                        placeholder="Reference"
-                      />
-                      <input
-                        value={(field.options ?? []).join(", ")}
-                        onChange={(event) =>
-                          handleTemplateFieldChange(
-                            index,
-                            "options",
-                            event.target.value.split(",").map((option) => option.trim())
-                          )
-                        }
-                        placeholder="Dropdown options"
-                      />
-                      <label className="setup-toggle laboratory-field-required">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(field.required)}
-                          onChange={(event) =>
-                            handleTemplateFieldChange(index, "required", event.target.checked)
-                          }
-                        />
-                        Required
-                      </label>
-                      <button type="button" className="icon-text-btn" onClick={() => removeTemplateField(index)}>
-                        Remove
-                      </button>
-                    </article>
-                  ))}
-                </div>
-
-                <label>
-                  Notes
-                  <textarea
-                    rows={3}
-                    value={templateForm.notes}
-                    onChange={(event) =>
-                      setTemplateForm((current) => ({ ...current, notes: event.target.value }))
-                    }
-                    placeholder="Report note or processing instruction"
-                  />
-                </label>
-
-                <label className="setup-toggle">
-                  <input
-                    type="checkbox"
-                    checked={templateForm.isActive}
-                    onChange={(event) =>
-                      setTemplateForm((current) => ({ ...current, isActive: event.target.checked }))
-                    }
-                  />
-                  Active template
-                </label>
-
-                <div className="setup-actions">
-                  {editingTemplate && (
-                    <button type="button" className="icon-text-btn" onClick={resetForm}>
-                      Cancel
-                    </button>
-                  )}
                   <button
-                    className="registration-submit"
-                    type="submit"
-                    disabled={saving || (!canCreate && !canUpdate)}
+                    type="button"
+                    className="lab-btn-secondary"
+                    onClick={() => setIsPresetLibraryOpen(true)}
                   >
-                    {saving ? "Saving..." : editingTemplate ? "Update Template" : "Add Template"}
-                    <FiSave />
+                    <FiZap style={{ color: "#10a9d6" }} /> Starter Library
+                  </button>
+
+                  <button
+                    type="button"
+                    className="lab-btn-primary"
+                    onClick={handleOpenNewStudio}
+                    disabled={!canCreate}
+                  >
+                    <FiPlus /> New Template Studio
                   </button>
                 </div>
-              </form>
-            )}
+              </section>
 
-            <section className="setup-list-panel">
-              <div className="setup-list-header">
-                <div className="patient-search-control">
-                  <FiSearch />
-                  <input
-                    value={templateSearch}
-                    onChange={(event) => setTemplateSearch(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") void loadTemplates();
-                    }}
-                    placeholder="Search templates"
-                  />
+              {/* Metric Stats Cards */}
+              <section className="lab-stats-grid">
+                <div className="lab-stat-card">
+                  <div className="lab-stat-icon blue">
+                    <FiLayers />
+                  </div>
+                  <div className="lab-stat-info">
+                    <h3>{stats.total}</h3>
+                    <p>Total Templates</p>
+                  </div>
                 </div>
-                <button type="button" className="icon-text-btn" onClick={loadTemplates}>
-                  <FiRefreshCw />
-                  Search
-                </button>
-              </div>
 
-              <div className="laboratory-template-list">
-                {loading && <p className="muted-text">Loading templates...</p>}
-                {!loading && templates.length === 0 && <p className="muted-text">No templates found.</p>}
-                {templates.map((template) => (
-                  <article className="laboratory-template-card" key={template.id}>
-                    <div>
-                      <div className="setup-provider-title">
-                        <strong>{template.name}</strong>
-                        <span className={`laboratory-status-badge ${template.isActive ? "completed" : "cancelled"}`}>
-                          {template.isActive ? "active" : "inactive"}
-                        </span>
-                      </div>
-                      <p>{template.category || "General"} | {template.specimen || "Specimen not set"}</p>
-                      <small>{template.fields.length} field(s) | {template.code || "No code"}</small>
-                    </div>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="lab-stat-card">
+                  <div className="lab-stat-icon green">
+                    <FiCheckCircle />
+                  </div>
+                  <div className="lab-stat-info">
+                    <h3>{stats.active}</h3>
+                    <p>Active Panels</p>
+                  </div>
+                </div>
+
+                <div className="lab-stat-card">
+                  <div className="lab-stat-icon amber">
+                    <FiActivity />
+                  </div>
+                  <div className="lab-stat-info">
+                    <h3>{stats.totalFields}</h3>
+                    <p>Analyte Fields</p>
+                  </div>
+                </div>
+
+                <div className="lab-stat-card">
+                  <div className="lab-stat-icon purple">
+                    <FiSliders />
+                  </div>
+                  <div className="lab-stat-info">
+                    <h3>{stats.categories}</h3>
+                    <p>Categories Covered</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Filter & Search Bar */}
+              <section className="lab-filter-section">
+                <div className="lab-search-row">
+                  <div className="lab-search-input-wrapper">
+                    <FiSearch />
+                    <input
+                      type="text"
+                      placeholder="Search templates by test name, code, specimen, or analyte..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void loadTemplates();
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <select
+                      className="lab-studio-select"
+                      style={{ width: "auto", minWidth: "130px" }}
+                      value={statusFilter}
+                      onChange={(e) =>
+                        setStatusFilter(e.target.value as "all" | "active" | "inactive")
+                      }
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active Only</option>
+                      <option value="inactive">Draft / Inactive</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      className="lab-btn-secondary"
+                      onClick={loadTemplates}
+                      disabled={loading}
+                    >
+                      <FiRefreshCw className={loading ? "spin" : ""} /> Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {/* Category Pills Filter */}
+                <div className="lab-category-pills">
+                  {categoriesList.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`lab-pill-btn ${selectedCategory === cat ? "active" : ""}`}
+                      onClick={() => setSelectedCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Template Cards Grid */}
+              <section>
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "3rem", color: "var(--muted)" }}>
+                    <FiRefreshCw className="spin" style={{ fontSize: "2rem", marginBottom: "0.5rem" }} />
+                    <p>Loading laboratory templates...</p>
+                  </div>
+                ) : filteredTemplates.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "4rem 2rem",
+                      background: "var(--surface)",
+                      border: "1px dashed var(--border)",
+                      borderRadius: "16px",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <FiFileText style={{ fontSize: "2.5rem", marginBottom: "0.75rem", color: "var(--accent)" }} />
+                    <h3 style={{ margin: "0 0 0.5rem", color: "var(--text-strong)" }}>
+                      No Laboratory Templates Found
+                    </h3>
+                    <p style={{ margin: "0 0 1.5rem", maxWidth: "450px", marginLeft: "auto", marginRight: "auto" }}>
+                      Get started by importing a pre-configured clinical panel or building a custom test template from scratch.
+                    </p>
+                    <div style={{ display: "flex", justifyContent: "center", gap: "0.75rem" }}>
                       <button
                         type="button"
-                        className="icon-text-btn"
-                        onClick={() => setActiveWorksheetTemplate(template)}
-                        title="Print blank manual worksheet for offline recording"
+                        className="lab-btn-secondary"
+                        onClick={() => setIsPresetLibraryOpen(true)}
                       >
-                        <FiPrinter />
-                        Print Worksheet
+                        <FiZap style={{ color: "#10a9d6" }} /> Load Clinical Preset
                       </button>
-                      {canManageTemplates && (
-                        <button
-                          type="button"
-                          className="icon-text-btn"
-                          onClick={() => startEditTemplate(template)}
-                        >
-                          <FiEdit3 />
-                          Edit Studio
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="lab-btn-primary"
+                        onClick={handleOpenNewStudio}
+                      >
+                        <FiPlus /> Create from Scratch
+                      </button>
                     </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </section>
+                  </div>
+                ) : (
+                  <div className="lab-cards-grid">
+                    {filteredTemplates.map((template) => (
+                      <article key={template.id} className="lab-template-hub-card">
+                        <div>
+                          {/* Card Top Badges */}
+                          <div className="lab-card-top">
+                            <div className="lab-card-badge-row">
+                              <span className="lab-badge category">
+                                {template.category || "General"}
+                              </span>
+                              {template.code && (
+                                <span className="lab-badge code">{template.code}</span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              className={`lab-badge ${
+                                template.isActive ? "active-status" : "inactive-status"
+                              }`}
+                              style={{ cursor: canUpdate ? "pointer" : "default", border: "none" }}
+                              onClick={() => handleToggleActive(template)}
+                              title={canUpdate ? "Click to toggle active/inactive" : undefined}
+                            >
+                              {template.isActive ? "Active" : "Inactive"}
+                            </button>
+                          </div>
+
+                          {/* Card Title */}
+                          <h3 className="lab-card-title">{template.name}</h3>
+
+                          {/* Specimen Matrix */}
+                          <div className="lab-card-specimen">
+                            <FiDroplet />
+                            <span>{template.specimen || "Specimen not specified"}</span>
+                          </div>
+
+                          {/* Analyte Fields Preview Chips */}
+                          <div className="lab-card-fields-preview">
+                            {template.fields.slice(0, 4).map((f, fIdx) => (
+                              <span key={fIdx} className="lab-field-chip">
+                                {f.label}
+                              </span>
+                            ))}
+                            {template.fields.length > 4 && (
+                              <span className="lab-field-chip more">
+                                +{template.fields.length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Card Footer Actions */}
+                        <div className="lab-card-actions">
+                          <span style={{ fontSize: "0.76rem", color: "var(--muted)", fontWeight: 500 }}>
+                            {template.fields.length} field{template.fields.length !== 1 ? "s" : ""}
+                          </span>
+
+                          <div className="lab-card-action-group">
+                            <button
+                              type="button"
+                              className="lab-icon-btn"
+                              onClick={() => setPreviewTemplate(template)}
+                              title="Live Diagnostic Report Preview"
+                            >
+                              <FiEye />
+                            </button>
+
+                            {canCreate && (
+                              <button
+                                type="button"
+                                className="lab-icon-btn"
+                                onClick={() => handleDuplicateTemplate(template)}
+                                title="Duplicate Template"
+                              >
+                                <FiCopy />
+                              </button>
+                            )}
+
+                            {canUpdate && (
+                              <button
+                                type="button"
+                                className="lab-icon-btn"
+                                onClick={() => handleEditTemplate(template)}
+                                title="Edit in Visual Studio"
+                              >
+                                <FiEdit3 />
+                              </button>
+                            )}
+
+                            {canUpdate && (
+                              <button
+                                type="button"
+                                className="lab-icon-btn danger"
+                                disabled={deletingId === template.id}
+                                onClick={() => handleDelete(template.id)}
+                                title="Delete Template"
+                              >
+                                <FiTrash2 />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+
+          {/* PREVIEW MODAL */}
+          {previewTemplate &&
+            createPortal(
+              <div className="lab-modal-overlay lab-print-modal-overlay" onClick={() => setPreviewTemplate(null)}>
+                <div
+                  className="lab-modal-container lab-print-modal-container"
+                  style={{ maxWidth: "800px" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="lab-modal-header lab-print-modal-header no-print">
+                    <div>
+                      <h2>
+                        <FiEye style={{ color: "var(--accent)" }} /> Diagnostic Report Preview
+                      </h2>
+                      <p style={{ margin: "0.2rem 0 0", color: "var(--muted)", fontSize: "0.86rem" }}>
+                        {previewTemplate.name} ({previewTemplate.code || "No code"})
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="lab-icon-btn"
+                      onClick={() => setPreviewTemplate(null)}
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+
+                  <div className="lab-modal-body lab-print-modal-body">
+                    <LaboratoryReportPreview
+                      formValues={{
+                        name: previewTemplate.name,
+                        code: previewTemplate.code ?? "",
+                        category: previewTemplate.category ?? "",
+                        specimen: previewTemplate.specimen ?? "",
+                        reportTitle: previewTemplate.reportTitle ?? "",
+                        notes: previewTemplate.notes ?? "",
+                        isActive: previewTemplate.isActive,
+                        fields: previewTemplate.fields,
+                      }}
+                      onPrint={() => window.print()}
+                    />
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )}
+
+          {/* STARTER PRESET LIBRARY MODAL */}
+          <LaboratoryPresetLibraryModal
+            isOpen={isPresetLibraryOpen}
+            onClose={() => setIsPresetLibraryOpen(false)}
+            onSelectPreset={handleApplyPresetToStudio}
+          />
         </div>
       </main>
-
-      {activeWorksheetTemplate && (
-        <div className="lab-worksheet-modal-overlay no-print-backdrop">
-          <div className="lab-worksheet-modal">
-            <div className="lab-worksheet-modal-actions no-print">
-              <div>
-                <h3>Offline Manual Lab Worksheet</h3>
-                <p>Print on standard A4 paper for manual clinical recording without internet.</p>
-              </div>
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <button
-                  type="button"
-                  className="icon-text-btn print-allow"
-                  style={{ background: "#10aab0", color: "#ffffff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold" }}
-                  onClick={() => window.print()}
-                >
-                  <FiPrinter /> Print Worksheet
-                </button>
-                <button
-                  type="button"
-                  className="icon-text-btn"
-                  style={{ background: "rgba(255,255,255,0.15)", color: "#ffffff", border: "none", padding: "8px 14px", borderRadius: "8px" }}
-                  onClick={() => setActiveWorksheetTemplate(null)}
-                >
-                  <FiX /> Close
-                </button>
-              </div>
-            </div>
-
-            <div className="lab-manual-worksheet-document">
-              <header className="worksheet-header">
-                <div className="worksheet-brand">
-                  <img src={mdsLogo} alt="MDS Hospital" className="worksheet-logo" />
-                  <div>
-                    <h1>MDS HOSPITAL KANO</h1>
-                    <p className="worksheet-sub">DEPARTMENT OF MEDICAL LABORATORY SERVICES</p>
-                    <small>Eastern Bypass, Giginyu, Kano State, Nigeria | 24/7 Diagnostics Desk | mdshospital.com.ng</small>
-                  </div>
-                </div>
-                <div className="worksheet-badge">
-                  <strong>OFFLINE WORKSHEET</strong>
-                  <span>{activeWorksheetTemplate.code || "LAB"}</span>
-                </div>
-              </header>
-
-              <section className="worksheet-patient-box">
-                <div className="worksheet-patient-grid">
-                  <div className="worksheet-field">
-                    <label>Patient Name:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                  <div className="worksheet-field">
-                    <label>Hospital / MRN:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                  <div className="worksheet-field">
-                    <label>Age / Sex:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                  <div className="worksheet-field">
-                    <label>Ward / Clinic:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                  <div className="worksheet-field">
-                    <label>Ordering Clinician:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                  <div className="worksheet-field">
-                    <label>Date &amp; Time Collected:</label>
-                    <div className="worksheet-line"></div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="worksheet-test-summary">
-                <div className="test-summary-pill">
-                  <small>INVESTIGATION</small>
-                  <strong>{activeWorksheetTemplate.name}</strong>
-                </div>
-                <div className="test-summary-pill">
-                  <small>CATEGORY</small>
-                  <strong>{activeWorksheetTemplate.category || "General Laboratory"}</strong>
-                </div>
-                <div className="test-summary-pill">
-                  <small>SPECIMEN TYPE</small>
-                  <strong>{activeWorksheetTemplate.specimen || "Standard Specimen"}</strong>
-                </div>
-              </section>
-
-              <table className="worksheet-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: "38%" }}>Investigation / Parameter</th>
-                    <th style={{ width: "26%" }}>Observed Result (Manual Entry)</th>
-                    <th style={{ width: "16%" }}>Unit</th>
-                    <th style={{ width: "20%" }}>Reference Range</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeWorksheetTemplate.fields.map((f, idx) => (
-                    <tr key={idx}>
-                      <td>
-                        <strong>{f.label}</strong>
-                        {f.required && <span className="worksheet-req-mark"> *</span>}
-                        {f.options && f.options.length > 0 && (
-                          <div className="worksheet-options-hint">
-                            [Options: {f.options.join(" / ")}]
-                          </div>
-                        )}
-                      </td>
-                      <td className="worksheet-entry-cell"></td>
-                      <td>{f.unit || "—"}</td>
-                      <td>{f.referenceRange || "Clinical correlation"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {activeWorksheetTemplate.notes && (
-                <div className="worksheet-notes-box">
-                  <strong>Standard Procedure / Notes:</strong>
-                  <p>{activeWorksheetTemplate.notes}</p>
-                </div>
-              )}
-
-              <div className="worksheet-remarks-box">
-                <label>Scientist Interpretation / Macroscopic Findings:</label>
-                <div className="worksheet-ruled-area">
-                  <div className="ruled-line"></div>
-                  <div className="ruled-line"></div>
-                </div>
-              </div>
-
-              <footer className="worksheet-footer-signoff">
-                <div className="signoff-column">
-                  <div className="signoff-signature-line"></div>
-                  <strong>Medical Laboratory Scientist</strong>
-                  <small>Name, Signature &amp; Stamp / Date</small>
-                </div>
-                <div className="signoff-column">
-                  <div className="signoff-signature-line"></div>
-                  <strong>Consultant Pathologist / Reviewer</strong>
-                  <small>Verified By / Date</small>
-                </div>
-              </footer>
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 }

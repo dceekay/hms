@@ -10,6 +10,8 @@ import { LaboratoryController } from "./controller";
 const router = Router();
 const controller = new LaboratoryController();
 
+router.get("/verify/:identifier", controller.verifyRequest);
+
 router.use(authenticate);
 
 router.get(

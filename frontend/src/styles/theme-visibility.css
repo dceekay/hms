@@ -1,36 +1,53 @@
+/* ==========================================================================
+   CAVENDISH HOSPITAL MANAGEMENT SYSTEM - UNIVERSAL THEME VISIBILITY
+   Crystal-Clear Typography, High Contrast Cards & Components for Light & Dark Mode
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CORE THEME PALETTES & DESIGN TOKENS
+   -------------------------------------------------------------------------- */
 :root {
-  --field-bg: rgba(2, 8, 23, 0.68);
-  --field-bg-strong: rgba(8, 19, 35, 0.92);
+  --field-bg: #0b223d;
+  --field-bg-strong: #07192f;
   --field-text: #f8fbff;
-  --field-placeholder: #91a4bb;
-  --field-border: rgba(148, 163, 184, 0.32);
-  --field-focus: rgba(34, 211, 238, 0.72);
-  --readable-surface: rgba(8, 19, 35, 0.92);
-  --readable-surface-soft: rgba(15, 31, 54, 0.82);
+  --field-placeholder: #8ea5c4;
+  --field-border: rgba(94, 191, 219, 0.32);
+  --field-focus: rgba(16, 169, 214, 0.8);
+  --readable-surface: #0e2946;
+  --readable-surface-soft: #0b223d;
+  --readable-surface-subtle: #081a2f;
   --readable-text: #dbe7f6;
   --readable-strong: #ffffff;
-  --readable-muted: #9fb3c8;
+  --readable-muted: #8ea5c4;
+  --readable-border: rgba(94, 191, 219, 0.22);
 }
 
-:root[data-theme="light"] {
+:root[data-theme="light"],
+body.light-theme {
   --field-bg: #ffffff;
-  --field-bg-strong: #f8fbff;
-  --field-text: #0f172a;
+  --field-bg-strong: #f8fafc;
+  --field-text: #092a5e;
   --field-placeholder: #64748b;
-  --field-border: rgba(15, 23, 42, 0.18);
-  --field-focus: rgba(37, 99, 235, 0.55);
+  --field-border: rgba(9, 42, 94, 0.18);
+  --field-focus: rgba(8, 126, 189, 0.7);
   --readable-surface: #ffffff;
-  --readable-surface-soft: #f8fbff;
+  --readable-surface-soft: #f8fafc;
+  --readable-surface-subtle: #f1f5f9;
   --readable-text: #334155;
-  --readable-strong: #0f172a;
-  --readable-muted: #5f6f85;
+  --readable-strong: #092a5e;
+  --readable-muted: #64748b;
+  --readable-border: rgba(9, 42, 94, 0.14);
 }
 
+/* --------------------------------------------------------------------------
+   2. GLOBAL TYPOGRAPHY & HEADING CONTRAST
+   -------------------------------------------------------------------------- */
 body,
 .admin-layout,
 .landing-page,
 .service-page,
-.login-page {
+.login-page,
+.verification-page {
   color: var(--readable-text);
   text-rendering: optimizeLegibility;
 }
@@ -42,43 +59,35 @@ body,
 .admin-layout h5,
 .admin-layout h6,
 .admin-layout strong,
-.landing-page h1,
-.landing-page h2,
-.landing-page h3,
-.landing-page h4,
-.landing-page strong,
-.service-page h1,
-.service-page h2,
-.service-page h3,
-.service-page h4,
-.service-page strong {
+.admin-layout b,
+.verification-page h1,
+.verification-page h2,
+.verification-page h3,
+.verification-page h4,
+.verification-page strong {
   color: var(--readable-strong);
 }
 
 .admin-layout p,
-.admin-layout small,
 .admin-layout span,
 .admin-layout li,
 .admin-layout label,
-.landing-page p,
-.landing-page small,
-.landing-page li,
-.service-page p,
-.service-page small,
-.service-page li {
+.verification-page p,
+.verification-page span {
   color: inherit;
 }
 
 .admin-layout .muted,
-.admin-layout .eyebrow + p,
-.admin-layout .card p,
-.admin-layout .panel p,
+.admin-layout .muted-text,
 .admin-layout small,
-.landing-page small,
-.service-page small {
+.admin-layout .eyebrow + p,
+.verification-page small {
   color: var(--readable-muted);
 }
 
+/* --------------------------------------------------------------------------
+   3. FORMS, INPUTS, SELECTS & TEXTAREAS (LIGHT & DARK CONTRAST)
+   -------------------------------------------------------------------------- */
 input,
 select,
 textarea,
@@ -94,257 +103,1546 @@ textarea,
 .login-page input,
 .login-page select,
 .login-page textarea {
-  border-color: var(--field-border) !important;
+  border: 1px solid var(--field-border) !important;
   background-color: var(--field-bg) !important;
   color: var(--field-text) !important;
-  caret-color: var(--primary, #2563eb);
+  caret-color: var(--primary, #087ebd);
+  border-radius: 8px;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input::placeholder,
 textarea::placeholder,
 .admin-layout input::placeholder,
-.admin-layout textarea::placeholder,
-.landing-page input::placeholder,
-.landing-page textarea::placeholder,
-.service-page input::placeholder,
-.service-page textarea::placeholder,
-.login-page input::placeholder,
-.login-page textarea::placeholder {
+.admin-layout textarea::placeholder {
   color: var(--field-placeholder) !important;
   opacity: 1;
 }
 
 input:focus,
 select:focus,
-textarea:focus,
-button:focus-visible,
-a:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--field-focus) 55%, transparent);
-  outline-offset: 2px;
+textarea:focus {
+  outline: none;
+  border-color: var(--field-focus) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-focus) 25%, transparent) !important;
 }
 
 select option,
 select optgroup {
   background: var(--field-bg-strong);
   color: var(--field-text);
+  padding: 8px 12px;
 }
 
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"],
-input[type="number"],
-input[type="search"] {
-  color-scheme: dark;
+/* Sleek Modern Dropdown / Select Styling */
+select,
+.admin-layout select,
+.landing-page select,
+.service-page select,
+.login-page select,
+.lab-studio-select,
+.analyte-big-select,
+.lab-text-input:where(select) {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23087ebd' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px 16px !important;
+  padding-right: 42px !important;
+  cursor: pointer !important;
+  border-radius: 10px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-:root[data-theme="light"] input[type="date"],
-:root[data-theme="light"] input[type="time"],
-:root[data-theme="light"] input[type="datetime-local"],
-:root[data-theme="light"] input[type="number"],
-:root[data-theme="light"] input[type="search"] {
-  color-scheme: light;
+:root[data-theme="dark"] select,
+body.dark-theme select,
+:root[data-theme="dark"] .admin-layout select,
+body.dark-theme .admin-layout select,
+:root[data-theme="dark"] .lab-studio-select,
+body.dark-theme .lab-studio-select,
+:root[data-theme="dark"] .analyte-big-select,
+body.dark-theme .analyte-big-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
 }
 
+select:hover,
+.admin-layout select:hover,
+.lab-studio-select:hover,
+.analyte-big-select:hover {
+  border-color: var(--primary, #087ebd) !important;
+  box-shadow: 0 3px 10px rgba(8, 126, 189, 0.14) !important;
+}
+
+select:focus,
+.admin-layout select:focus,
+.lab-studio-select:focus,
+.analyte-big-select:focus {
+  border-color: var(--field-focus, #10a9d6) !important;
+  box-shadow: 0 0 0 3px rgba(16, 169, 214, 0.25) !important;
+  outline: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. CARDS & PANELS CONTRAST
+   -------------------------------------------------------------------------- */
 .card,
 .dashboard-card,
 .dashboard-panel,
 .setup-card,
+.setup-list-panel,
+.setup-form,
 .doctor-panel,
 .nurse-panel,
 .frontdesk-panel,
-.laboratory-card,
-.pharmacy-card,
 .billing-card,
 .inventory-card,
 .security-card,
 .modal-content,
 .notification-panel,
-.patient-picker-popover {
-  background-color: var(--readable-surface);
-  color: var(--readable-text);
-  border-color: var(--border);
-}
-
+.lab-desk-metric-card,
+.pharmacy-metric-card,
+.lab-request-item-card,
+.laboratory-request-card,
+.pharmacy-med-card,
+.pharmacy-cart-dock,
+.pharmacy-cart-item-card,
+.lab-result-field-card,
+.lab-result-demographics-banner,
 .stat-card,
-.summary-card,
-.metric-card,
-.quick-card,
-.appointment-card,
-.patient-compact-card,
 .table-card,
-.list-card,
 .role-card,
 .user-card,
 .doctor-card,
 .ward-card,
 .bed-card {
-  background-color: var(--readable-surface-soft);
+  background-color: var(--readable-surface);
   color: var(--readable-text);
-  border-color: var(--border);
+  border: 1px solid var(--readable-border);
 }
 
-:root[data-theme="dark"] .stat-card {
-  background-color: #0f1f38 !important;
-  color: #f8fafc !important;
-  border-color: rgba(125, 211, 252, 0.18) !important;
+/* Light Theme Explicit Card Styles */
+:root[data-theme="light"] .admin-layout .dashboard-panel,
+:root[data-theme="light"] .admin-layout .stat-card,
+:root[data-theme="light"] .admin-layout .setup-card,
+:root[data-theme="light"] .admin-layout .setup-list-panel,
+:root[data-theme="light"] .admin-layout .setup-form,
+:root[data-theme="light"] .admin-layout .lab-desk-metric-card,
+:root[data-theme="light"] .admin-layout .pharmacy-metric-card,
+:root[data-theme="light"] .admin-layout .lab-request-item-card,
+:root[data-theme="light"] .admin-layout .pharmacy-med-card,
+:root[data-theme="light"] .admin-layout .pharmacy-cart-dock,
+:root[data-theme="light"] .admin-layout .lab-result-field-card,
+:root[data-theme="light"] .admin-layout .role-card,
+:root[data-theme="light"] .admin-layout .user-card,
+body.light-theme .admin-layout .dashboard-panel,
+body.light-theme .admin-layout .stat-card,
+body.light-theme .admin-layout .setup-card,
+body.light-theme .admin-layout .setup-list-panel,
+body.light-theme .admin-layout .setup-form,
+body.light-theme .admin-layout .lab-desk-metric-card,
+body.light-theme .admin-layout .pharmacy-metric-card,
+body.light-theme .admin-layout .lab-request-item-card,
+body.light-theme .admin-layout .pharmacy-med-card,
+body.light-theme .admin-layout .pharmacy-cart-dock,
+body.light-theme .admin-layout .lab-result-field-card,
+body.light-theme .admin-layout .role-card,
+body.light-theme .admin-layout .user-card {
+  background: #ffffff;
+  color: #334155;
+  border-color: rgba(9, 42, 94, 0.12);
+  box-shadow: 0 4px 14px rgba(9, 42, 94, 0.05);
 }
 
-:root[data-theme="dark"] .stat-card h2,
-:root[data-theme="dark"] .stat-top h2 {
-  color: #ffffff !important;
+/* Light Theme Card Titles and Headers */
+:root[data-theme="light"] .admin-layout .dashboard-panel h1,
+:root[data-theme="light"] .admin-layout .dashboard-panel h2,
+:root[data-theme="light"] .admin-layout .dashboard-panel h3,
+:root[data-theme="light"] .admin-layout .stat-card h2,
+:root[data-theme="light"] .admin-layout .lab-desk-metric-content strong,
+:root[data-theme="light"] .admin-layout .pharmacy-metric-content strong,
+:root[data-theme="light"] .admin-layout .lab-request-card-title strong,
+:root[data-theme="light"] .admin-layout .pharmacy-med-name,
+:root[data-theme="light"] .admin-layout .pharmacy-cart-header h2,
+:root[data-theme="light"] .admin-layout .setup-form h2,
+:root[data-theme="light"] .admin-layout .panel-title h2,
+body.light-theme .admin-layout .dashboard-panel h1,
+body.light-theme .admin-layout .dashboard-panel h2,
+body.light-theme .admin-layout .dashboard-panel h3,
+body.light-theme .admin-layout .stat-card h2,
+body.light-theme .admin-layout .lab-desk-metric-content strong,
+body.light-theme .admin-layout .pharmacy-metric-content strong,
+body.light-theme .admin-layout .lab-request-card-title strong,
+body.light-theme .admin-layout .pharmacy-med-name,
+body.light-theme .admin-layout .pharmacy-cart-header h2,
+body.light-theme .admin-layout .setup-form h2,
+body.light-theme .admin-layout .panel-title h2 {
+  color: #092a5e !important;
 }
 
-:root[data-theme="dark"] .stat-card p,
-:root[data-theme="dark"] .stat-top p {
-  color: #94a3b8 !important;
+/* Light Theme Muted & Secondary Text in Cards */
+:root[data-theme="light"] .admin-layout .stat-card p,
+:root[data-theme="light"] .admin-layout .lab-desk-metric-content span,
+:root[data-theme="light"] .admin-layout .pharmacy-metric-content span,
+:root[data-theme="light"] .admin-layout .pharmacy-med-sub,
+:root[data-theme="light"] .admin-layout .meta,
+body.light-theme .admin-layout .stat-card p,
+body.light-theme .admin-layout .lab-desk-metric-content span,
+body.light-theme .admin-layout .pharmacy-metric-content span,
+body.light-theme .admin-layout .pharmacy-med-sub,
+body.light-theme .admin-layout .meta {
+  color: #64748b !important;
 }
 
-:root[data-theme="dark"] .stat-change {
-  color: #4ade80 !important;
+/* --------------------------------------------------------------------------
+   5. HERO BANNERS & COMMAND HEADERS
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] .lab-desk-hero,
+:root[data-theme="light"] .pharmacy-hero,
+:root[data-theme="light"] .workspace-hero,
+:root[data-theme="light"] .setup-hero,
+body.light-theme .lab-desk-hero,
+body.light-theme .pharmacy-hero,
+body.light-theme .workspace-hero,
+body.light-theme .setup-hero {
+  background: linear-gradient(135deg, rgba(8, 126, 189, 0.08) 0%, rgba(9, 42, 94, 0.05) 100%);
+  border-color: rgba(9, 42, 94, 0.14);
 }
 
-.icon-text-btn,
-.action-btn,
-.secondary-btn,
-.ghost-btn,
-.filter-chip,
-.service-tab-btn,
-.patient-select-trigger,
-.queue-tab-btn,
-.notification-tools button {
-  color: var(--readable-strong);
-  border-color: var(--border);
+:root[data-theme="light"] .lab-desk-title-group h1,
+:root[data-theme="light"] .pharmacy-hero-title h1,
+:root[data-theme="light"] .workspace-hero h1,
+:root[data-theme="light"] .setup-hero h1,
+body.light-theme .lab-desk-title-group h1,
+body.light-theme .pharmacy-hero-title h1,
+body.light-theme .workspace-hero h1,
+body.light-theme .setup-hero h1 {
+  color: #092a5e !important;
 }
 
-:root[data-theme="light"] .icon-text-btn,
-:root[data-theme="light"] .action-btn,
-:root[data-theme="light"] .secondary-btn,
-:root[data-theme="light"] .ghost-btn,
+:root[data-theme="light"] .lab-desk-title-group p,
+:root[data-theme="light"] .pharmacy-hero-title p,
+:root[data-theme="light"] .workspace-hero p,
+:root[data-theme="light"] .setup-hero p,
+body.light-theme .lab-desk-title-group p,
+body.light-theme .pharmacy-hero-title p,
+body.light-theme .workspace-hero p,
+body.light-theme .setup-hero p {
+  color: #475569 !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. TAB PILLS & SEGMENTED CONTROLS
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"] .lab-desk-tab-pill,
+:root[data-theme="light"] .pharmacy-category-chip,
+:root[data-theme="light"] .lab-patient-mode-btn,
+:root[data-theme="light"] .pharmacy-payment-method-btn,
 :root[data-theme="light"] .filter-chip,
-:root[data-theme="light"] .service-tab-btn,
-:root[data-theme="light"] .patient-select-trigger,
-:root[data-theme="light"] .queue-tab-btn,
-:root[data-theme="light"] .notification-tools button {
-  color: #0f172a;
-  background-color: #ffffff;
+body.light-theme .lab-desk-tab-pill,
+body.light-theme .pharmacy-category-chip,
+body.light-theme .lab-patient-mode-btn,
+body.light-theme .pharmacy-payment-method-btn,
+body.light-theme .filter-chip {
+  background: #ffffff;
+  color: #475569;
+  border-color: rgba(9, 42, 94, 0.16);
 }
 
-.table-wrapper,
+:root[data-theme="light"] .lab-desk-tab-pill:hover,
+:root[data-theme="light"] .pharmacy-category-chip:hover,
+:root[data-theme="light"] .lab-patient-mode-btn:hover,
+:root[data-theme="light"] .pharmacy-payment-method-btn:hover,
+body.light-theme .lab-desk-tab-pill:hover,
+body.light-theme .pharmacy-category-chip:hover,
+body.light-theme .lab-patient-mode-btn:hover,
+body.light-theme .pharmacy-payment-method-btn:hover {
+  background: #f1f5f9;
+  color: #092a5e;
+  border-color: #087ebd;
+}
+
+:root[data-theme="light"] .lab-desk-tab-pill.active,
+:root[data-theme="light"] .pharmacy-category-chip.active,
+:root[data-theme="light"] .pharmacy-payment-method-btn.active,
+body.light-theme .lab-desk-tab-pill.active,
+body.light-theme .pharmacy-category-chip.active,
+body.light-theme .pharmacy-payment-method-btn.active {
+  background: #087ebd;
+  color: #ffffff;
+  border-color: #087ebd;
+}
+
+:root[data-theme="light"] .lab-patient-mode-segmented,
+body.light-theme .lab-patient-mode-segmented {
+  background: #e2e8f0;
+  border-color: rgba(9, 42, 94, 0.12);
+}
+
+:root[data-theme="light"] .lab-patient-mode-btn.active,
+body.light-theme .lab-patient-mode-btn.active {
+  background: #ffffff;
+  color: #092a5e;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --------------------------------------------------------------------------
+   7. BUTTONS CONTRAST
+   -------------------------------------------------------------------------- */
+.lab-btn-primary,
+.registration-submit,
+.workspace-button.primary {
+  background: #087ebd;
+  color: #ffffff !important;
+  border: 1px solid #087ebd;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(8, 126, 189, 0.25);
+}
+
+.lab-btn-primary:hover,
+.registration-submit:hover,
+.workspace-button.primary:hover {
+  background: #076ea6;
+  border-color: #076ea6;
+}
+
+:root[data-theme="light"] .lab-btn-secondary,
+:root[data-theme="light"] .icon-text-btn,
+:root[data-theme="light"] .workspace-button.secondary,
+body.light-theme .lab-btn-secondary,
+body.light-theme .icon-text-btn,
+body.light-theme .workspace-button.secondary {
+  background: #ffffff;
+  color: #092a5e;
+  border-color: rgba(9, 42, 94, 0.2);
+}
+
+:root[data-theme="light"] .lab-btn-secondary:hover,
+:root[data-theme="light"] .icon-text-btn:hover,
+:root[data-theme="light"] .workspace-button.secondary:hover,
+body.light-theme .lab-btn-secondary:hover,
+body.light-theme .icon-text-btn:hover,
+body.light-theme .workspace-button.secondary:hover {
+  background: #f1f5f9;
+  border-color: #087ebd;
+  color: #087ebd;
+}
+
+/* --------------------------------------------------------------------------
+   8. TABLES & DATA GRIDS
+   -------------------------------------------------------------------------- */
 table {
+  width: 100%;
+  border-collapse: collapse;
   color: var(--readable-text);
 }
 
 th {
   color: var(--readable-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--readable-border);
 }
 
 td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--readable-border);
   color: var(--readable-text);
 }
 
-.badge,
-.pill,
-.status-pill,
-.patient-category-badge,
-.patient-status-badge,
-.doctor-status,
-.nurse-duty-pill {
-  font-weight: 850;
+tr:hover td {
+  background: var(--surface-hover);
 }
 
-:root[data-theme="light"] .landing-header,
-:root[data-theme="light"] .service-topbar,
-:root[data-theme="light"] .landing-nav.nav-open {
-  background: rgba(255, 255, 255, 0.94);
-  color: #14243b;
+:root[data-theme="light"] th,
+body.light-theme th {
+  color: #475569;
+  background: #f8fafc;
 }
 
-:root[data-theme="light"] .landing-nav > a,
-:root[data-theme="light"] .service-topnav a,
-:root[data-theme="light"] .landing-brand,
-:root[data-theme="light"] .landing-brand strong {
-  color: #14243b;
+:root[data-theme="light"] td,
+body.light-theme td {
+  color: #1e293b;
 }
 
-:root[data-theme="dark"] .language-toggle,
-:root[data-theme="dark"] .landing-theme-toggle,
-:root[data-theme="dark"] .mobile-menu-button {
-  background: rgba(8, 19, 35, 0.94) !important;
-  color: #f8fbff !important;
+/* --------------------------------------------------------------------------
+   9. STATUS BADGES & PILLS CONTRAST
+   -------------------------------------------------------------------------- */
+.laboratory-status-badge.pending,
+.pharmacy-med-stock-pill.low {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-weight: 700;
 }
 
-.login-field div {
-  background-color: var(--field-bg) !important;
-  border-color: var(--field-border) !important;
+.laboratory-status-badge.completed,
+.laboratory-status-badge.paid,
+.pharmacy-med-stock-pill.ok {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-weight: 700;
 }
 
-.login-field > span,
-.login-remember,
-.login-remember strong {
-  color: #f8fbff;
+.laboratory-status-badge.cancelled,
+.pharmacy-med-stock-pill.out {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  font-weight: 700;
 }
 
-.login-remember small {
-  color: #b8c8d8;
+.laboratory-status-badge.sample_collected,
+.laboratory-status-badge.in_progress {
+  background: rgba(8, 126, 189, 0.15);
+  color: #087ebd !important;
+  border: 1px solid rgba(8, 126, 189, 0.35);
+  font-weight: 700;
 }
 
-:root[data-theme="light"] .login-page {
-  background: #f4f8fb;
+/* --------------------------------------------------------------------------
+   10. PATIENT SEARCH SELECT & POPOVERS
+   -------------------------------------------------------------------------- */
+.patient-search-popover,
+.patient-picker-popover {
+  background: var(--readable-surface) !important;
+  border: 1px solid var(--readable-border) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
-:root[data-theme="light"] .login-panel-wrap {
-  background:
-    radial-gradient(circle at 10% 8%, rgba(20, 184, 166, 0.1), transparent 32%),
-    linear-gradient(180deg, #f8fbff 0%, #eaf3fb 100%);
+.patient-option-item {
+  color: var(--readable-text);
+  border-bottom: 1px solid var(--readable-border);
 }
 
-:root[data-theme="light"] .login-panel {
-  background: rgba(255, 255, 255, 0.94);
-  color: #334155;
-  border-color: rgba(15, 23, 42, 0.12);
-  box-shadow: 0 32px 82px rgba(15, 23, 42, 0.13);
+.patient-option-item strong {
+  color: var(--readable-strong);
 }
 
-:root[data-theme="light"] .login-panel h2,
-:root[data-theme="light"] .login-field > span,
-:root[data-theme="light"] .login-remember,
-:root[data-theme="light"] .login-remember strong {
-  color: #0f172a;
+.patient-option-item:hover {
+  background: var(--surface-hover);
 }
 
-:root[data-theme="light"] .login-remember small {
-  color: #64748b;
+:root[data-theme="light"] .patient-search-popover,
+:root[data-theme="light"] .patient-picker-popover,
+body.light-theme .patient-search-popover,
+body.light-theme .patient-picker-popover {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.16) !important;
 }
 
-@media (max-width: 680px) {
-  input,
-  select,
-  textarea,
-  .admin-layout input,
-  .admin-layout select,
-  .admin-layout textarea {
-    min-height: 48px;
-    font-size: 16px;
-  }
+:root[data-theme="light"] .patient-option-item:hover,
+body.light-theme .patient-option-item:hover {
+  background: #f1f5f9;
 }
-.landing-page .hero-headline,
-.landing-page .hero-copy h1,
-.landing-page .hero-metric-card strong,
-.landing-page .hero-card h3,
-.landing-page .ambulance-hero h1,
-.service-page .service-cta-section h2,
-.service-page .service-detail-hero.dark h1 {
+
+/* --------------------------------------------------------------------------
+   11. PHARMACY POS DOCK & CART (LIGHT & DARK CONTRAST)
+   -------------------------------------------------------------------------- */
+/* Light Theme Cart Items */
+:root[data-theme="light"] .pharmacy-cart-item-card,
+body.light-theme .pharmacy-cart-item-card {
+  background: #f8fafc !important;
+  border-color: rgba(9, 42, 94, 0.14) !important;
+}
+
+:root[data-theme="light"] .pharmacy-cart-item-title strong,
+:root[data-theme="light"] .pharmacy-cart-item-name,
+body.light-theme .pharmacy-cart-item-title strong,
+body.light-theme .pharmacy-cart-item-name {
+  color: #092a5e !important;
+  font-weight: 850 !important;
+}
+
+:root[data-theme="light"] .pharmacy-cart-item-title span,
+:root[data-theme="light"] .pharmacy-cart-item-spec,
+body.light-theme .pharmacy-cart-item-title span,
+body.light-theme .pharmacy-cart-item-spec {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .pharmacy-cart-item-price,
+body.light-theme .pharmacy-cart-item-price {
+  color: #087ebd !important;
+}
+
+:root[data-theme="light"] .pharmacy-qty-stepper,
+body.light-theme .pharmacy-qty-stepper {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.2) !important;
+}
+
+:root[data-theme="light"] .pharmacy-qty-stepper input,
+body.light-theme .pharmacy-qty-stepper input {
+  background: #ffffff !important;
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .pharmacy-cart-item-instructions,
+body.light-theme .pharmacy-cart-item-instructions {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.16) !important;
+  color: #0f172a !important;
+}
+
+/* Dark Theme Explicit Cart Contrast */
+:root[data-theme="dark"] .pharmacy-cart-item-card,
+body.dark-theme .pharmacy-cart-item-card {
+  background: #0d213c !important;
+  border-color: #1e3a5f !important;
+}
+
+:root[data-theme="dark"] .pharmacy-cart-item-title strong,
+:root[data-theme="dark"] .pharmacy-cart-item-name,
+body.dark-theme .pharmacy-cart-item-title strong,
+body.dark-theme .pharmacy-cart-item-name {
+  color: #ffffff !important;
+  font-weight: 850 !important;
+}
+
+:root[data-theme="dark"] .pharmacy-cart-item-title span,
+:root[data-theme="dark"] .pharmacy-cart-item-spec,
+body.dark-theme .pharmacy-cart-item-title span,
+body.dark-theme .pharmacy-cart-item-spec {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="dark"] .pharmacy-cart-item-price,
+body.dark-theme .pharmacy-cart-item-price {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .pharmacy-qty-stepper,
+body.dark-theme .pharmacy-qty-stepper {
+  background: #07172c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .pharmacy-qty-stepper input,
+body.dark-theme .pharmacy-qty-stepper input {
+  background: #07172c !important;
   color: #ffffff !important;
 }
 
-.landing-page .hero-copy p,
-.landing-page .hero-subcopy,
-.landing-page .hero-card p,
-.landing-page .ambulance-hero p,
-.service-page .service-cta-section p {
-  color: #d8e8f7 !important;
+:root[data-theme="dark"] .pharmacy-qty-stepper button,
+body.dark-theme .pharmacy-qty-stepper button {
+  color: #cbd5e1 !important;
 }
 
+:root[data-theme="dark"] .pharmacy-cart-item-instructions,
+body.dark-theme .pharmacy-cart-item-instructions {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #f1f5f9 !important;
+}
 
+/* Quick Drug Modal Theme Contrast */
+:root[data-theme="light"] .pharmacy-med-modal-container,
+body.light-theme .pharmacy-med-modal-container {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.14) !important;
+}
 
+:root[data-theme="light"] .pharmacy-med-modal-header,
+body.light-theme .pharmacy-med-modal-header {
+  background: #ffffff !important;
+}
+
+:root[data-theme="dark"] .pharmacy-med-modal-container,
+body.dark-theme .pharmacy-med-modal-container {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .pharmacy-med-modal-header,
+body.dark-theme .pharmacy-med-modal-header {
+  background: #0d213c !important;
+}
+
+:root[data-theme="dark"] .pharmacy-chip-btn,
+body.dark-theme .pharmacy-chip-btn {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .pharmacy-chip-btn.active,
+body.dark-theme .pharmacy-chip-btn.active {
+  background: #087ebd !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .pharmacy-form-input,
+body.dark-theme .pharmacy-form-input {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .pharmacy-unit-tag,
+body.dark-theme .pharmacy-unit-tag {
+  background: #132f54 !important;
+  border-color: #24415f !important;
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light"] .pharmacy-checkout-totals,
+body.light-theme .pharmacy-checkout-totals {
+  background: rgba(8, 126, 189, 0.05);
+  border-color: rgba(8, 126, 189, 0.25);
+}
+
+:root[data-theme="light"] .pharmacy-cart-header,
+body.light-theme .pharmacy-cart-header,
+:root[data-theme="light"] .pharmacy-cart-footer,
+body.light-theme .pharmacy-cart-footer {
+  background: #ffffff;
+  border-color: rgba(9, 42, 94, 0.12);
+}
+
+:root[data-theme="light"] .pharmacy-mobile-view-nav,
+body.light-theme .pharmacy-mobile-view-nav {
+  background: #f1f5f9;
+  border-color: rgba(9, 42, 94, 0.12);
+}
+
+:root[data-theme="light"] .pharmacy-mobile-view-btn.active,
+body.light-theme .pharmacy-mobile-view-btn.active {
+  background: #ffffff;
+  color: #087ebd;
+}
+
+/* --------------------------------------------------------------------------
+   12. BILLING DESK & INVOICE STUDIO (LIGHT & DARK CONTRAST)
+   -------------------------------------------------------------------------- */
+/* Light Mode Explicit */
+:root[data-theme="light"] .billing-metric-card,
+body.light-theme .billing-metric-card,
+:root[data-theme="light"] .billing-form-card,
+body.light-theme .billing-form-card,
+:root[data-theme="light"] .billing-ledger-card,
+body.light-theme .billing-ledger-card {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.12) !important;
+}
+
+:root[data-theme="light"] .billing-metric-val,
+body.light-theme .billing-metric-val,
+:root[data-theme="light"] .billing-form-header h2,
+body.light-theme .billing-form-header h2,
+:root[data-theme="light"] .billing-ledger-header h2,
+body.light-theme .billing-ledger-header h2,
+:root[data-theme="light"] .billing-invoice-num,
+body.light-theme .billing-invoice-num,
+:root[data-theme="light"] .billing-invoice-patient,
+body.light-theme .billing-invoice-patient,
+:root[data-theme="light"] .billing-invoice-price,
+body.light-theme .billing-invoice-price,
+:root[data-theme="light"] .billing-calc-row.total,
+body.light-theme .billing-calc-row.total {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .billing-invoice-item,
+body.light-theme .billing-invoice-item {
+  background: #ffffff !important;
+  border-color: rgba(9, 42, 94, 0.1) !important;
+}
+
+:root[data-theme="light"] .billing-preset-chip,
+body.light-theme .billing-preset-chip {
+  background: #f8fafc !important;
+  border-color: rgba(9, 42, 94, 0.14) !important;
+  color: #1e293b !important;
+}
+
+:root[data-theme="light"] .billing-calc-card,
+body.light-theme .billing-calc-card {
+  background: rgba(8, 126, 189, 0.05) !important;
+  border-color: rgba(8, 126, 189, 0.25) !important;
+}
+
+/* Dark Mode Explicit High Contrast */
+:root[data-theme="dark"] .billing-metric-card,
+body.dark-theme .billing-metric-card,
+:root[data-theme="dark"] .billing-form-card,
+body.dark-theme .billing-form-card,
+:root[data-theme="dark"] .billing-ledger-card,
+body.dark-theme .billing-ledger-card {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+:root[data-theme="dark"] .billing-metric-val,
+body.dark-theme .billing-metric-val {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-metric-label,
+body.dark-theme .billing-metric-label,
+:root[data-theme="dark"] .billing-form-header p,
+body.dark-theme .billing-form-header p,
+:root[data-theme="dark"] .billing-ledger-header p,
+body.dark-theme .billing-ledger-header p,
+:root[data-theme="dark"] .billing-preset-label,
+body.dark-theme .billing-preset-label,
+:root[data-theme="dark"] .billing-invoice-submeta,
+body.dark-theme .billing-invoice-submeta {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="dark"] .billing-form-header h2,
+body.dark-theme .billing-form-header h2,
+:root[data-theme="dark"] .billing-ledger-header h2,
+body.dark-theme .billing-ledger-header h2 {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-preset-chip,
+body.dark-theme .billing-preset-chip {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #f1f5f9 !important;
+}
+
+:root[data-theme="dark"] .billing-preset-chip:hover,
+body.dark-theme .billing-preset-chip:hover {
+  background: #087ebd !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-preset-chip.is-active,
+body.dark-theme .billing-preset-chip.is-active {
+  background: #087ebd !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-preset-chip span,
+body.dark-theme .billing-preset-chip span,
+:root[data-theme="dark"] .billing-preset-name,
+body.dark-theme .billing-preset-name {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-preset-chip strong,
+body.dark-theme .billing-preset-chip strong,
+:root[data-theme="dark"] .billing-preset-price,
+body.dark-theme .billing-preset-price {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-quick-patient-section,
+body.dark-theme .billing-quick-patient-section {
+  background: #07172c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .billing-quick-patient-label,
+body.dark-theme .billing-quick-patient-label {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-patient-chip-btn,
+body.dark-theme .billing-patient-chip-btn {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+  color: #f1f5f9 !important;
+}
+
+:root[data-theme="dark"] .billing-patient-chip-btn:hover,
+body.dark-theme .billing-patient-chip-btn:hover {
+  background: #087ebd !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-patient-chip-btn.is-active,
+body.dark-theme .billing-patient-chip-btn.is-active {
+  background: #087ebd !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4) !important;
+}
+
+:root[data-theme="dark"] .billing-chip-name,
+body.dark-theme .billing-chip-name {
+  color: inherit !important;
+}
+
+:root[data-theme="dark"] .patient-select-trigger,
+body.dark-theme .patient-select-trigger {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .selected-patient-name,
+body.dark-theme .selected-patient-name,
+:root[data-theme="dark"] .patient-name,
+body.dark-theme .patient-name {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .patient-picker-popover,
+body.dark-theme .patient-picker-popover {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .patient-row-card,
+body.dark-theme .patient-row-card {
+  background: #07172c !important;
+  border-color: #1e3a5f !important;
+}
+
+:root[data-theme="dark"] .patient-row-card:hover,
+body.dark-theme .patient-row-card:hover,
+:root[data-theme="dark"] .patient-row-card.highlighted,
+body.dark-theme .patient-row-card.highlighted {
+  background: rgba(8, 126, 189, 0.25) !important;
+}
+
+:root[data-theme="dark"] .billing-calc-card,
+body.dark-theme .billing-calc-card {
+  background: #07172c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .billing-calc-row,
+body.dark-theme .billing-calc-row {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .billing-calc-row strong,
+body.dark-theme .billing-calc-row strong {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-calc-row.total,
+body.dark-theme .billing-calc-row.total {
+  color: #38bdf8 !important;
+  border-top-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .billing-quick-pay-btn,
+body.dark-theme .billing-quick-pay-btn {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+  color: #f1f5f9 !important;
+}
+
+:root[data-theme="dark"] .billing-quick-pay-btn:hover,
+body.dark-theme .billing-quick-pay-btn:hover {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-invoice-item,
+body.dark-theme .billing-invoice-item {
+  background: #07172c !important;
+  border-color: #1e3a5f !important;
+}
+
+:root[data-theme="dark"] .billing-invoice-num,
+body.dark-theme .billing-invoice-num {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-invoice-patient,
+body.dark-theme .billing-invoice-patient {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-invoice-price,
+body.dark-theme .billing-invoice-price {
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-invoice-card-badge,
+body.dark-theme .billing-invoice-card-badge {
+  background: #132f54 !important;
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-print-action-btn,
+body.dark-theme .billing-print-action-btn {
+  background: #132f54 !important;
+  border-color: #24415f !important;
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-print-action-btn:hover,
+body.dark-theme .billing-print-action-btn:hover {
+  background: #087ebd !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-tab-group,
+body.dark-theme .billing-tab-group {
+  background: #07172c !important;
+}
+
+:root[data-theme="dark"] .billing-tab-btn.is-active,
+body.dark-theme .billing-tab-btn.is-active {
+  background: #087ebd !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-mobile-view-nav,
+body.dark-theme .billing-mobile-view-nav,
+:root[data-theme="dark"] .billing-workstation-tabs,
+body.dark-theme .billing-workstation-tabs {
+  background: #07172c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .billing-mobile-view-btn.active,
+body.dark-theme .billing-mobile-view-btn.active,
+:root[data-theme="dark"] .billing-workstation-tab-btn.active,
+body.dark-theme .billing-workstation-tab-btn.active {
+  background: #0d213c !important;
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-patient-summary-box,
+body.dark-theme .billing-patient-summary-box {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .billing-patient-summary-box strong,
+body.dark-theme .billing-patient-summary-box strong {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .billing-search-input-wrap input,
+body.dark-theme .billing-search-input-wrap input,
+:root[data-theme="dark"] .billing-refresh-btn,
+body.dark-theme .billing-refresh-btn {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light"] .pharmacy-total-row.grand,
+body.light-theme .pharmacy-total-row.grand {
+  color: #092a5e;
+}
+
+/* --------------------------------------------------------------------------
+   12. MODALS & PRINT PREVIEW CONTAINERS
+   -------------------------------------------------------------------------- */
+.lab-print-modal-container {
+  background: var(--readable-surface);
+  border: 1px solid var(--readable-border);
+}
+
+:root[data-theme="light"] .lab-print-modal-container,
+body.light-theme .lab-print-modal-container {
+  background: #ffffff;
+  border-color: rgba(9, 42, 94, 0.16);
+}
+
+/* Printable document inside modal always uses high contrast paper styles */
+.lab-print-page,
+.lab-print-document-container,
+.lab-report-sheet {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.lab-print-page h1,
+.lab-print-page h2,
+.lab-print-page h3,
+.lab-print-page h4,
+.lab-print-page strong,
+.lab-print-document-container h1,
+.lab-print-document-container h2,
+.lab-print-document-container h3,
+.lab-print-document-container h4,
+.lab-print-document-container strong,
+.lab-report-sheet h1,
+.lab-report-sheet h2,
+.lab-report-sheet h3,
+.lab-report-sheet h4,
+.lab-report-sheet strong,
+.lab-print-results-table td strong,
+.lab-print-param-name,
+.lab-print-param-cell strong,
+.lab-report-table td strong,
+.lab-report-param-name,
+.lab-report-param-cell strong {
+  color: #092a5e !important;
+}
+
+.lab-print-page td,
+.lab-print-page p,
+.lab-print-page span,
+.lab-print-document-container td,
+.lab-print-document-container p,
+.lab-print-document-container span,
+.lab-report-sheet td,
+.lab-report-sheet p,
+.lab-report-sheet span {
+  color: #1e293b !important;
+}
+
+/* CRITICAL: Overriding dark-theme generic strong tags inside print documents */
+:root[data-theme="dark"] .lab-print-document-container strong,
+body.dark-theme .lab-print-document-container strong,
+:root[data-theme="dark"] .lab-report-sheet strong,
+body.dark-theme .lab-report-sheet strong,
+:root[data-theme="dark"] .lab-print-page strong,
+body.dark-theme .lab-print-page strong,
+:root[data-theme="dark"] .lab-print-results-table td strong,
+body.dark-theme .lab-print-results-table td strong,
+:root[data-theme="dark"] .lab-print-param-name,
+body.dark-theme .lab-print-param-name,
+:root[data-theme="dark"] .lab-print-param-cell strong,
+body.dark-theme .lab-print-param-cell strong,
+:root[data-theme="dark"] .lab-report-table td strong,
+body.dark-theme .lab-report-table td strong,
+:root[data-theme="dark"] .lab-report-param-name,
+body.dark-theme .lab-report-param-name,
+:root[data-theme="dark"] .lab-report-param-cell strong,
+body.dark-theme .lab-report-param-cell strong {
+  color: #092a5e !important;
+}
+
+:root[data-theme="dark"] .lab-print-val-text,
+body.dark-theme .lab-print-val-text,
+:root[data-theme="dark"] .lab-report-val-text,
+body.dark-theme .lab-report-val-text {
+  color: #0f172a !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. PUBLIC LANDING, FAQS & SERVICE DETAILS HIGH-CONTRAST HARMONIZATION
+   -------------------------------------------------------------------------- */
+/* Dark Mode Public FAQ Visibility */
+:root[data-theme="dark"] .cav-faq-section,
+body.dark-theme .cav-faq-section {
+  background: #07172c !important;
+}
+
+:root[data-theme="dark"] .cav-faq-item,
+body.dark-theme .cav-faq-item {
+  border-color: #24415f !important;
+  color: #d8e2ed !important;
+}
+
+:root[data-theme="dark"] .cav-faq-item summary,
+body.dark-theme .cav-faq-item summary {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .cav-faq-item p,
+body.dark-theme .cav-faq-item p {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .service-faq-item,
+body.dark-theme .service-faq-item {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+  color: #d8e2ed !important;
+}
+
+:root[data-theme="dark"] .service-faq-item summary,
+body.dark-theme .service-faq-item summary {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .service-faq-item p,
+body.dark-theme .service-faq-item p {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .service-detail-panel,
+body.dark-theme .service-detail-panel {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+  color: #d8e2ed !important;
+}
+
+:root[data-theme="dark"] .service-detail-panel h2,
+body.dark-theme .service-detail-panel h2 {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .service-detail-process,
+body.dark-theme .service-detail-process {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .service-journey-card,
+body.dark-theme .service-journey-card {
+  background: #07172c !important;
+  border-color: #24415f !important;
+  color: #d8e2ed !important;
+}
+
+:root[data-theme="dark"] .service-journey-card p,
+body.dark-theme .service-journey-card p {
+  color: #d8e2ed !important;
+}
+
+:root[data-theme="dark"] .service-prep-card,
+body.dark-theme .service-prep-card {
+  background: #102844 !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .service-prep-card h3,
+body.dark-theme .service-prep-card h3 {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .service-prep-list,
+body.dark-theme .service-prep-list {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .cardiology-lead-profile,
+body.dark-theme .cardiology-lead-profile {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .cardiology-lead-info h2,
+body.dark-theme .cardiology-lead-info h2 {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .cardiology-lead-info p,
+body.dark-theme .cardiology-lead-info p {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .service-related-card,
+body.dark-theme .service-related-card {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .service-related-card strong,
+body.dark-theme .service-related-card strong {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .service-related-card p,
+body.dark-theme .service-related-card p {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .service-index-card,
+body.dark-theme .service-index-card {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .service-index-card-content h2,
+body.dark-theme .service-index-card-content h2 {
+  color: #f3f8fc !important;
+}
+
+:root[data-theme="dark"] .service-index-card-content p,
+body.dark-theme .service-index-card-content p {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .service-index-status,
+body.dark-theme .service-index-status {
+  background: #0d213c !important;
+  border-color: #24415f !important;
+}
+
+:root[data-theme="dark"] .service-index-status-title,
+body.dark-theme .service-index-status-title {
+  color: #f3f8fc !important;
+}
+
+/* Light Mode Public FAQ Visibility */
+:root[data-theme="light"] .cav-faq-section,
+body.light-theme .cav-faq-section {
+  background: #f5f3ee !important;
+}
+
+:root[data-theme="light"] .cav-faq-item summary,
+body.light-theme .cav-faq-item summary {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .cav-faq-item p,
+body.light-theme .cav-faq-item p {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .service-faq-item,
+body.light-theme .service-faq-item {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-faq-item summary,
+body.light-theme .service-faq-item summary {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .service-faq-item p,
+body.light-theme .service-faq-item p {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .service-detail-panel,
+body.light-theme .service-detail-panel {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-detail-panel h2,
+body.light-theme .service-detail-panel h2 {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .service-detail-process,
+body.light-theme .service-detail-process {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-journey-card,
+body.light-theme .service-journey-card {
+  background: #f8fafc !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-journey-card p,
+body.light-theme .service-journey-card p {
+  color: #1e293b !important;
+}
+
+:root[data-theme="light"] .cardiology-lead-profile,
+body.light-theme .cardiology-lead-profile {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .cardiology-lead-info h2,
+body.light-theme .cardiology-lead-info h2 {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .cardiology-lead-info p,
+body.light-theme .cardiology-lead-info p {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .service-related-card,
+body.light-theme .service-related-card {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-related-card strong,
+body.light-theme .service-related-card strong {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .service-related-card p,
+body.light-theme .service-related-card p {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .service-index-card,
+body.light-theme .service-index-card {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-index-card-content h2,
+body.light-theme .service-index-card-content h2 {
+  color: #092a5e !important;
+}
+
+:root[data-theme="light"] .service-index-card-content p,
+body.light-theme .service-index-card-content p {
+  color: #475569 !important;
+}
+
+:root[data-theme="light"] .service-index-status,
+body.light-theme .service-index-status {
+  background: #ffffff !important;
+  border-color: #dfe4e8 !important;
+}
+
+:root[data-theme="light"] .service-index-status-title,
+body.light-theme .service-index-status-title {
+  color: #092a5e !important;
+}
+
+/* --------------------------------------------------------------------------
+   14. UNIVERSAL BUTTON SPACING, NON-OVERLAP & THEME VISIBILITY (ALL DASHBOARDS)
+   Guarantees zero button overlap, clean flex-wrapping, and crystal-clear contrast
+   -------------------------------------------------------------------------- */
+
+/* Universal Container Spacing & Flex Wrapping for Action Bars */
+.doctor-action-ribbon,
+.nurse-action-ribbon,
+.patient-action-ribbon,
+.frontdesk-action-ribbon,
+.frontdesk-quick-action-ribbon,
+.command-actions,
+.doctor-action-row,
+.nurse-action-row,
+.lab-desk-tabs,
+.doctor-tabs-bar,
+.doctor-tab-pills,
+.nurse-tab-pills,
+.lab-desk-tab-pills,
+.form-actions,
+.card-actions,
+.doctor-presets-row,
+.doctor-hero-controls,
+.nurse-hero-controls,
+.lab-desk-hero .lab-desk-title-group + div,
+.pharmacy-hero > div:last-child {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.65rem 0.85rem !important;
+  row-gap: 0.75rem !important;
+  column-gap: 0.85rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Individual Button Non-Overlap Guarantees */
+.admin-layout button,
+a.command-btn,
+.command-btn,
+.doctor-action-btn,
+.nurse-action-btn,
+.lab-btn-primary,
+.lab-btn-secondary,
+.lab-desk-tab-pill,
+.doctor-tab-pill,
+.nurse-tab-pill,
+.quickbar-reg-btn,
+.doctor-assign-btn,
+.doctor-preset-chip,
+.role-action-card,
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  min-height: 40px !important;
+  padding: 0.55rem 1.05rem !important;
+  border-radius: 8px !important;
+  font-family: inherit !important;
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* Primary Button Styling & Contrast */
+.command-btn.primary,
+.doctor-action-btn.primary,
+.nurse-action-btn.primary,
+.lab-btn-primary,
+.quickbar-reg-btn,
+.btn-primary,
+.admin-layout button[type="submit"]:not(.secondary) {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border: 1px solid #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.28) !important;
+}
+
+.command-btn.primary:hover,
+.doctor-action-btn.primary:hover,
+.nurse-action-btn.primary:hover,
+.lab-btn-primary:hover,
+.quickbar-reg-btn:hover,
+.btn-primary:hover,
+.admin-layout button[type="submit"]:not(.secondary):hover {
+  background: #0369a1 !important;
+  border-color: #0369a1 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.38) !important;
+}
+
+/* Secondary Button Styling & Contrast - Light Mode */
+:root[data-theme="light"] .command-btn:not(.primary),
+:root[data-theme="light"] .doctor-action-btn.secondary,
+:root[data-theme="light"] .nurse-action-btn.secondary,
+:root[data-theme="light"] .lab-btn-secondary,
+:root[data-theme="light"] .doctor-assign-btn,
+:root[data-theme="light"] .btn-secondary,
+body.light-theme .command-btn:not(.primary),
+body.light-theme .doctor-action-btn.secondary,
+body.light-theme .nurse-action-btn.secondary,
+body.light-theme .lab-btn-secondary,
+body.light-theme .doctor-assign-btn,
+body.light-theme .btn-secondary {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root[data-theme="light"] .command-btn:not(.primary):hover,
+:root[data-theme="light"] .doctor-action-btn.secondary:hover,
+:root[data-theme="light"] .nurse-action-btn.secondary:hover,
+:root[data-theme="light"] .lab-btn-secondary:hover,
+:root[data-theme="light"] .doctor-assign-btn:hover,
+:root[data-theme="light"] .btn-secondary:hover,
+body.light-theme .command-btn:not(.primary):hover,
+body.light-theme .doctor-action-btn.secondary:hover,
+body.light-theme .nurse-action-btn.secondary:hover,
+body.light-theme .lab-btn-secondary:hover,
+body.light-theme .doctor-assign-btn:hover,
+body.light-theme .btn-secondary:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0284c7 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Secondary Button Styling & Contrast - Dark Mode */
+:root[data-theme="dark"] .command-btn:not(.primary),
+:root[data-theme="dark"] .doctor-action-btn.secondary,
+:root[data-theme="dark"] .nurse-action-btn.secondary,
+:root[data-theme="dark"] .lab-btn-secondary,
+:root[data-theme="dark"] .doctor-assign-btn,
+:root[data-theme="dark"] .btn-secondary,
+body.dark-theme .command-btn:not(.primary),
+body.dark-theme .doctor-action-btn.secondary,
+body.dark-theme .nurse-action-btn.secondary,
+body.dark-theme .lab-btn-secondary,
+body.dark-theme .doctor-assign-btn,
+body.dark-theme .btn-secondary {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #334155 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}
+
+:root[data-theme="dark"] .command-btn:not(.primary):hover,
+:root[data-theme="dark"] .doctor-action-btn.secondary:hover,
+:root[data-theme="dark"] .nurse-action-btn.secondary:hover,
+:root[data-theme="dark"] .lab-btn-secondary:hover,
+:root[data-theme="dark"] .doctor-assign-btn:hover,
+:root[data-theme="dark"] .btn-secondary:hover,
+body.dark-theme .command-btn:not(.primary):hover,
+body.dark-theme .doctor-action-btn.secondary:hover,
+body.dark-theme .nurse-action-btn.secondary:hover,
+body.dark-theme .lab-btn-secondary:hover,
+body.dark-theme .doctor-assign-btn:hover,
+body.dark-theme .btn-secondary:hover {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #38bdf8 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Tab Pills Styling & Contrast */
+.doctor-tab-pill.active,
+.nurse-tab-pill.active,
+.lab-desk-tab-pill.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+:root[data-theme="light"] .doctor-tab-pill:not(.active),
+:root[data-theme="light"] .nurse-tab-pill:not(.active),
+:root[data-theme="light"] .lab-desk-tab-pill:not(.active),
+body.light-theme .doctor-tab-pill:not(.active),
+body.light-theme .nurse-tab-pill:not(.active),
+body.light-theme .lab-desk-tab-pill:not(.active) {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .doctor-tab-pill:not(.active),
+:root[data-theme="dark"] .nurse-tab-pill:not(.active),
+:root[data-theme="dark"] .lab-desk-tab-pill:not(.active),
+body.dark-theme .doctor-tab-pill:not(.active),
+body.dark-theme .nurse-tab-pill:not(.active),
+body.dark-theme .lab-desk-tab-pill:not(.active) {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Active Highlight Pill in Ribbon */
+.doctor-action-btn.active,
+.nurse-action-btn.active {
+  background: rgba(2, 132, 199, 0.14) !important;
+  color: #0284c7 !important;
+  border: 1.5px solid #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme="dark"] .doctor-action-btn.active,
+:root[data-theme="dark"] .nurse-action-btn.active,
+body.dark-theme .doctor-action-btn.active,
+body.dark-theme .nurse-action-btn.active {
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #38bdf8 !important;
+  border-color: #38bdf8 !important;
+}
+
+/* Mobile & Small Screen Responsiveness for Button Clusters */
+@media (max-width: 768px) {
+  .doctor-action-ribbon,
+  .nurse-action-ribbon,
+  .patient-action-ribbon,
+  .frontdesk-action-ribbon {
+    gap: 0.5rem !important;
+  }
+
+  .admin-layout button,
+  .command-btn,
+  .doctor-action-btn,
+  .nurse-action-btn,
+  .lab-btn-primary,
+  .lab-btn-secondary {
+    min-height: 38px !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  .admin-layout button.desktop-only {
+    display: none !important;
+  }
+}
 

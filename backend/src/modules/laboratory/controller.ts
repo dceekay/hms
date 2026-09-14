@@ -1,4 +1,4 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import {
@@ -101,6 +101,18 @@ export class LaboratoryController extends BaseController {
       );
 
       this.ok(res, "Laboratory result completed successfully", request);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  verifyRequest = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const identifier = Array.isArray(req.params.identifier)
+        ? req.params.identifier[0]
+        : req.params.identifier;
+      const data = await this.laboratoryService.verifyRequest(String(identifier));
+      this.ok(res, "Laboratory record verified successfully", data);
     } catch (error) {
       next(error);
     }

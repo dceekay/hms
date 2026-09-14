@@ -21,6 +21,7 @@ export default function Loader({ text = "Loading...", size = "md", fullScreen }:
             src={logo}
             alt="MDS Hospital"
             className="loader-logo-img"
+            style={{ imageRendering: "-webkit-optimize-contrast" }}
             width={size === "sm" ? 32 : size === "lg" ? 64 : 46}
             height={size === "sm" ? 32 : size === "lg" ? 64 : 46}
           />

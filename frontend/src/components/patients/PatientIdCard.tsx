@@ -166,7 +166,7 @@ export function PatientIdCard({
 
       <article className="patient-id-card">
         <div className="patient-id-brand">
-          <img src={mdsLogo} alt="MDS Hospital" />
+          <img src={mdsLogo} alt="MDS Hospital" style={{ imageRendering: "-webkit-optimize-contrast" }} />
           <div>
             <strong>MDS Hospital</strong>
             <span>Patient Identification Card</span>

@@ -68,6 +68,10 @@ export type LaboratoryRequestFormValues = {
   patientId: string;
   templateId: string;
   clinicalNotes: string;
+  manualPatientName?: string;
+  manualPatientGender?: "male" | "female" | "other";
+  manualPatientPhone?: string;
+  manualPatientAge?: number | string;
 };
 
 export type LaboratoryResultFormValues = {

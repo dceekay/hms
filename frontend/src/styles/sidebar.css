@@ -87,6 +87,7 @@
   object-fit: contain;
   padding: 2px;
   box-shadow: 0 4px 14px rgba(8, 126, 189, 0.16);
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .sidebar-brand-text {

@@ -66,7 +66,7 @@ export default function BillingReceiptPrintDocument({
             src={mdsLogo}
             alt="MDS Hospital"
             className="receipt-logo"
-            style={{ width: 44, height: 44, objectFit: "contain" }}
+            style={{ width: 44, height: 44, objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
           />
           <div className="receipt-brand-text">
             <h1>{HOSPITAL_PRINT_INFO.name}</h1>

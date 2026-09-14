@@ -511,6 +511,10 @@ export default function DashboardPage() {
   const isPharmacyUser = hasRole(roles, "Pharmacist") || hasRole(roles, "Pharmacy");
   const isDoctorUser = hasRole(roles, "Doctor");
   const isNurseUser = hasRole(roles, "Nurse");
+  const isLaboratoryUser =
+    hasRole(roles, "Laboratory") &&
+    !hasRole(roles, "Super Admin") &&
+    !hasRole(roles, "Administrator");
   const canUseDoctorDesk = permissions.includes("clinical.read");
   const isAdminDashboard =
     hasRole(roles, "Super Admin") || hasRole(roles, "Administrator");
@@ -548,6 +552,10 @@ export default function DashboardPage() {
 
   if (isNurseUser) {
     return <Navigate to="/nurse" replace />;
+  }
+
+  if (isLaboratoryUser) {
+    return <Navigate to="/laboratory" replace />;
   }
 
   if (isFrontDeskDashboard) {
