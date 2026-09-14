@@ -37,7 +37,7 @@ export default function AdminLayout({
           collapsed ? "collapsed" : ""
         }`}
       >
-        <Topbar onToggleMobileNav={() => setMobileOpen((prev) => !prev)} />
+        <Topbar />
 
         <section className="page-content">
           {children}
