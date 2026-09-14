@@ -436,23 +436,42 @@ export function PatientListPage() {
     setInsuranceProviderError,
   ] = useState<string | null>(null);
 
-  const loadPatients = async (
-    filters = {
-      searchTerm: search,
-      status: statusFilter,
-      category: categoryFilter,
+  const [pageSize, setPageSize] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("hms_patient_page_size");
+      return saved ? Math.max(10, Number(saved)) : 25;
+    } catch {
+      return 25;
     }
+  });
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const loadPatients = async (
+    filters: {
+      searchTerm?: string;
+      status?: string;
+      category?: string;
+      take?: number;
+      page?: number;
+    } = {}
   ) => {
     setLoading(true);
     setError(null);
 
-    const response =
-      await fetchPatients({
-        search: filters.searchTerm,
-        status: filters.status,
-        patientCategory:
-          filters.category,
-      });
+    const term = filters.searchTerm !== undefined ? filters.searchTerm : search;
+    const status = filters.status !== undefined ? filters.status : statusFilter;
+    const cat = filters.category !== undefined ? filters.category : categoryFilter;
+    const take = filters.take !== undefined ? filters.take : pageSize;
+    const page = filters.page !== undefined ? filters.page : currentPage;
+
+    const response = await fetchPatients({
+      search: term,
+      status: status,
+      patientCategory: cat,
+      take: take,
+      page: page,
+    });
 
     if (!response) {
       setError(
@@ -466,10 +485,13 @@ export function PatientListPage() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
     void loadPatients({
       searchTerm: search,
       status: statusFilter,
       category: categoryFilter,
+      take: pageSize,
+      page: 1,
     });
   }, [
     statusFilter,
@@ -519,11 +541,14 @@ export function PatientListPage() {
     event: FormEvent
   ) => {
     event.preventDefault();
+    setCurrentPage(1);
 
     void loadPatients({
       searchTerm: search,
       status: statusFilter,
       category: categoryFilter,
+      take: pageSize,
+      page: 1,
     });
   };
 
@@ -531,11 +556,14 @@ export function PatientListPage() {
     setSearch("");
     setStatusFilter("");
     setCategoryFilter("");
+    setCurrentPage(1);
 
     void loadPatients({
       searchTerm: "",
       status: "",
       category: "",
+      take: pageSize,
+      page: 1,
     });
   };
 
@@ -1020,6 +1048,37 @@ export function PatientListPage() {
               </select>
             </label>
 
+            <label className="patient-page-size-field">
+              Rows
+              <select
+                value={pageSize}
+                onChange={(event) => {
+                  const newSize = Number(event.target.value);
+                  setPageSize(newSize);
+                  try {
+                    localStorage.setItem("hms_patient_page_size", String(newSize));
+                  } catch {}
+                  setCurrentPage(1);
+                  void loadPatients({
+                    searchTerm: search,
+                    status: statusFilter,
+                    category: categoryFilter,
+                    take: newSize,
+                    page: 1,
+                  });
+                }}
+                className="patient-size-select"
+                aria-label="Select how many patients to display"
+              >
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+                <option value={250}>250 per page</option>
+                <option value={500}>All (500)</option>
+              </select>
+            </label>
+
             <button
               type="submit"
               className="icon-text-btn"
@@ -1063,10 +1122,11 @@ export function PatientListPage() {
             )}
 
           {patients.length > 0 && (
-            <section
-              className="patient-compact-list"
-              aria-label="Patient records"
-            >
+            <>
+              <section
+                className="patient-compact-list"
+                aria-label="Patient records"
+              >
               {patients.map(
                 (patient) => {
                   const provider =
@@ -1409,7 +1469,60 @@ export function PatientListPage() {
                 }
               )}
             </section>
-          )}
+
+            {/* Sleek Pagination Bar */}
+            <div className="patient-pagination-bar">
+              <div className="patient-pagination-info">
+                Showing <strong>{patients.length}</strong> patient{patients.length === 1 ? "" : "s"}
+                {pageSize < 500 && (
+                  <span> • Page <strong>{currentPage}</strong></span>
+                )}
+              </div>
+
+              <div className="patient-pagination-actions">
+                <button
+                  type="button"
+                  className="patient-page-btn"
+                  disabled={currentPage <= 1 || loading}
+                  onClick={() => {
+                    const newPage = Math.max(1, currentPage - 1);
+                    setCurrentPage(newPage);
+                    void loadPatients({
+                      searchTerm: search,
+                      status: statusFilter,
+                      category: categoryFilter,
+                      take: pageSize,
+                      page: newPage,
+                    });
+                  }}
+                >
+                  ← Previous
+                </button>
+
+                <span className="patient-current-page-chip">Page {currentPage}</span>
+
+                <button
+                  type="button"
+                  className="patient-page-btn"
+                  disabled={patients.length < pageSize || loading}
+                  onClick={() => {
+                    const newPage = currentPage + 1;
+                    setCurrentPage(newPage);
+                    void loadPatients({
+                      searchTerm: search,
+                      status: statusFilter,
+                      category: categoryFilter,
+                      take: pageSize,
+                      page: newPage,
+                    });
+                  }}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
           {selectedPatient && (
             <div

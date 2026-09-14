@@ -86,6 +86,32 @@ const labMobileItems: MobileNavItem[] = [
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
+const pharmacyMobileItems: MobileNavItem[] = [
+  { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules /> },
+  { label: "Store", path: "/inventory", icon: <FiPackage /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
+const receptionMobileItems: MobileNavItem[] = [
+  { label: "Patients", path: "/patients", icon: <FaUserInjured /> },
+  { label: "Register", path: "/register-patient", icon: <FiUsers /> },
+  { label: "Appts", path: "/appointments", icon: <FiCalendar /> },
+  { label: "Wards", path: "/setup/wards", icon: <FaBed /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
+const securityMobileItems: MobileNavItem[] = [
+  { label: "Entry", path: "/security/entry", icon: <FiShield /> },
+  { label: "Logs", path: "/security/logs", icon: <FiFileText /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
+const billingMobileItems: MobileNavItem[] = [
+  { label: "Billing", path: "/billing", icon: <FiCreditCard /> },
+  { label: "Patients", path: "/patients", icon: <FaUserInjured /> },
+  { label: "Me", path: "/settings", icon: <FiSettings /> },
+];
+
 interface MobileBottomNavProps {
   onOpenMenu?: () => void;
 }
@@ -97,12 +123,27 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
   const normalizedRoles = useMemo(() => roles.map((role) => role.toLowerCase()), [roles]);
+
+  const isSuperAdmin = normalizedRoles.some((r) =>
+    ["super admin", "administrator", "admin"].includes(r)
+  );
+  const isSecurityRole = !isSuperAdmin && normalizedRoles.includes("security");
   const isDoctorRole = normalizedRoles.includes("doctor");
   const isDoctorActive = isDoctorRole || location.pathname.startsWith("/doctor");
-  const nurseOnly = normalizedRoles.includes("nurse") && !isDoctorRole && roles.length === 1;
-  const laboratoryOnly =
-    normalizedRoles.includes("laboratory") &&
-    !normalizedRoles.some((r) => ["super admin", "administrator", "admin"].includes(r));
+  const isNurseRole = !isSuperAdmin && !isDoctorRole && normalizedRoles.includes("nurse");
+  const isLabRole = !isSuperAdmin && normalizedRoles.includes("laboratory");
+  const isPharmacyRole =
+    !isSuperAdmin &&
+    (normalizedRoles.includes("pharmacist") || normalizedRoles.includes("pharmacy"));
+  const isReceptionRole =
+    !isSuperAdmin &&
+    (normalizedRoles.includes("receptionist") ||
+      normalizedRoles.includes("reception") ||
+      normalizedRoles.includes("desk office") ||
+      normalizedRoles.includes("desk"));
+  const isBillingRole =
+    !isSuperAdmin && (normalizedRoles.includes("cashier") || normalizedRoles.includes("billing"));
+
   const roleHomePath = useMemo(() => getRoleHomePath(roles), [roles]);
 
   const canAccess = (item: MobileNavItem) => {
@@ -121,13 +162,21 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
     return hasRequiredRole && hasRequiredPermissions && hasAnyPermission;
   };
 
-  const sourceItems = laboratoryOnly
-    ? labMobileItems
-    : isDoctorActive
-      ? doctorMobileItems
-      : nurseOnly
-        ? nurseMobileItems
-        : mobileItems;
+  const sourceItems = isSecurityRole
+    ? securityMobileItems
+    : isLabRole
+      ? labMobileItems
+      : isPharmacyRole
+        ? pharmacyMobileItems
+        : isDoctorActive
+          ? doctorMobileItems
+          : isNurseRole
+            ? nurseMobileItems
+            : isReceptionRole
+              ? receptionMobileItems
+              : isBillingRole
+                ? billingMobileItems
+                : mobileItems;
   const mappedItems = sourceItems
     .map((item) => item.label === "Home" ? { ...item, path: roleHomePath } : item)
     .filter(canAccess);

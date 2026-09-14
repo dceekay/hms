@@ -110,13 +110,21 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
   const nurseWaitingCount = nurseCache?.summary?.pendingVitals ?? 0;
   const pendingMedsCount = nurseCache?.summary?.dueMedication ?? 0;
 
-  const securityOnly = roles.includes("Security") && roles.length === 1;
-  const doctorOnly = roles.includes("Doctor") && roles.length === 1;
-  const nurseOnly = roles.includes("Nurse") && roles.length === 1;
-  const deskOfficeOnly = roles.includes("Desk Office") && roles.length === 1;
-  const laboratoryOnly =
-    roles.some((r) => r.toLowerCase() === "laboratory") &&
-    !roles.some((r) => ["super admin", "administrator"].includes(r.toLowerCase()));
+  const normalizedRoles = useMemo(() => roles.map((r) => r.toLowerCase()), [roles]);
+  const hasRole = (role: string) => normalizedRoles.includes(role.toLowerCase());
+
+  const isSuperAdmin = normalizedRoles.some((r) =>
+    ["super admin", "administrator", "admin"].includes(r)
+  );
+
+  const securityOnly = !isSuperAdmin && hasRole("security");
+  const doctorOnly = !isSuperAdmin && hasRole("doctor");
+  const nurseOnly = !isSuperAdmin && !doctorOnly && hasRole("nurse");
+  const laboratoryOnly = !isSuperAdmin && hasRole("laboratory");
+  const pharmacyOnly = !isSuperAdmin && (hasRole("pharmacist") || hasRole("pharmacy"));
+  const receptionOnly = !isSuperAdmin && (hasRole("receptionist") || hasRole("reception"));
+  const deskOfficeOnly = !isSuperAdmin && (hasRole("desk office") || hasRole("desk"));
+  const billingOnly = !isSuperAdmin && (hasRole("cashier") || hasRole("billing"));
 
   const roleHomePath = useMemo(() => getRoleHomePath(roles), [roles]);
 
@@ -318,13 +326,13 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
 
   const canAccess = (item: MenuItem | NonNullable<MenuItem["children"]>[number]) => {
     if (item.allowRoles?.length) {
-      if (item.allowRoles.some((role) => roles.includes(role))) {
+      if (item.allowRoles.some((role) => hasRole(role))) {
         return true;
       }
     }
 
     const hasRequiredRole =
-      !item.requiredRoles?.length || item.requiredRoles.some((role) => roles.includes(role));
+      !item.requiredRoles?.length || item.requiredRoles.some((role) => hasRole(role));
     const hasRequiredPermissions =
       !item.requiredPermissions?.length ||
       item.requiredPermissions.every((permission) => permissions.includes(permission));
@@ -433,43 +441,60 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
               { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
               { title: "Account", icon: <FiSettings />, path: "/settings" },
             ]
-          : deskOfficeOnly
+          : laboratoryOnly
             ? [
-                { title: "Desk Office", icon: <FiFileText />, path: "/desk-office" },
-                { title: "Account", icon: <FiSettings />, path: "/settings" },
+                {
+                  title: "Laboratory",
+                  icon: <FaFlask />,
+                  children: [
+                    {
+                      title: "Tests & Results",
+                      path: "/laboratory",
+                      icon: <FaFlask />,
+                      badge: readyLabsCount > 0 ? readyLabsCount : null,
+                      badgeClass: "labs",
+                    },
+                    {
+                      title: "Lab Templates",
+                      path: "/laboratory/templates",
+                      icon: <FiFileText />,
+                    },
+                  ],
+                },
+                ...(permissions.includes("patients.investigation.create") || permissions.includes("patients.create")
+                  ? [
+                      {
+                        title: "Patients",
+                        icon: <FaUserInjured />,
+                        children: [
+                          {
+                            title: "Register Patient",
+                            path: "/register-patient",
+                            icon: <FiPlusCircle />,
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+                {
+                  title: "Account",
+                  icon: <FiSettings />,
+                  path: "/settings",
+                },
               ]
-            : laboratoryOnly
+            : pharmacyOnly
               ? [
                   {
-                    title: "Laboratory",
-                    icon: <FaFlask />,
-                    children: [
-                      {
-                        title: "Tests & Results",
-                        path: "/laboratory",
-                        icon: <FaFlask />,
-                        badge: readyLabsCount > 0 ? readyLabsCount : null,
-                        badgeClass: "labs",
-                      },
-                      {
-                        title: "Lab Templates",
-                        path: "/laboratory/templates",
-                        icon: <FiFileText />,
-                      },
-                    ],
+                    title: "Pharmacy",
+                    icon: <FaCapsules />,
+                    path: "/pharmacy",
                   },
-                  ...(permissions.includes("patients.investigation.create") || permissions.includes("patients.create")
+                  ...(permissions.includes("inventory.read")
                     ? [
                         {
-                          title: "Patients",
-                          icon: <FaUserInjured />,
-                          children: [
-                            {
-                              title: "Register Patient",
-                              path: "/register-patient",
-                              icon: <FiPlusCircle />,
-                            },
-                          ],
+                          title: "Inventory",
+                          icon: <FiPackage />,
+                          path: "/inventory",
                         },
                       ]
                     : []),
@@ -479,7 +504,85 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
                     path: "/settings",
                   },
                 ]
-              : menus;
+              : receptionOnly || deskOfficeOnly
+                ? [
+                    {
+                      title: "Reception Desk",
+                      icon: <FiHome />,
+                      path: deskOfficeOnly ? "/desk-office" : "/patients",
+                    },
+                    {
+                      title: "Patients",
+                      icon: <FaUserInjured />,
+                      children: [
+                        {
+                          title: "Patient Directory",
+                          path: "/patients",
+                          icon: <FiUsers />,
+                          requiredPermissions: ["patients.read"],
+                        },
+                        {
+                          title: "Register Patient",
+                          path: "/register-patient",
+                          icon: <FiPlusCircle />,
+                          anyPermissions: ["patients.create", "patients.investigation.create"],
+                        },
+                      ],
+                    },
+                    {
+                      title: "Appointments",
+                      icon: <FiActivity />,
+                      path: "/appointments",
+                      requiredPermissions: ["appointments.read"],
+                    },
+                    ...(permissions.includes("billing.read")
+                      ? [
+                          {
+                            title: "Billing & Cashier",
+                            path: "/billing",
+                            icon: <FiCreditCard />,
+                          },
+                        ]
+                      : []),
+                    {
+                      title: "Wards & Beds",
+                      path: "/setup/wards",
+                      icon: <FaBed />,
+                    },
+                    ...(deskOfficeOnly
+                      ? [
+                          {
+                            title: "Desk Office",
+                            path: "/desk-office",
+                            icon: <FiFileText />,
+                          },
+                        ]
+                      : []),
+                    {
+                      title: "Account",
+                      icon: <FiSettings />,
+                      path: "/settings",
+                    },
+                  ]
+                : billingOnly
+                  ? [
+                      {
+                        title: "Billing & Cashier",
+                        path: "/billing",
+                        icon: <FiCreditCard />,
+                      },
+                      {
+                        title: "Patient Directory",
+                        path: "/patients",
+                        icon: <FiUsers />,
+                      },
+                      {
+                        title: "Account",
+                        icon: <FiSettings />,
+                        path: "/settings",
+                      },
+                    ]
+                  : menus;
 
     return sourceMenus
       .map((menu) => ({
@@ -493,8 +596,11 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
     securityOnly,
     doctorOnly,
     nurseOnly,
-    deskOfficeOnly,
     laboratoryOnly,
+    pharmacyOnly,
+    receptionOnly,
+    deskOfficeOnly,
+    billingOnly,
     menus,
     waitingCount,
     readyLabsCount,

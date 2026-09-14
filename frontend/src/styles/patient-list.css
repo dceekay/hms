@@ -52,6 +52,7 @@
     minmax(240px, 1.8fr)
     minmax(150px, 0.75fr)
     minmax(140px, 0.7fr)
+    minmax(130px, 0.65fr)
     auto
     auto;
   align-items: end;
@@ -63,6 +64,109 @@
   label {
   min-width: 0;
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+}
+
+.patient-page-size-field select {
+  font-weight: 600;
+}
+
+/* Pagination Bar */
+.patient-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-top: 18px;
+  border: 1px solid var(--border, rgba(8, 126, 189, 0.18));
+  background: var(--readable-surface-soft, #f8fafc);
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.patient-pagination-info {
+  font-size: 0.88rem;
+  color: var(--readable-text, #334155);
+}
+
+.patient-pagination-info strong {
+  color: var(--readable-strong, #092a5e);
+  font-weight: 750;
+}
+
+.patient-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patient-page-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--field-bg, #ffffff);
+  color: var(--field-text, #092a5e);
+  font-weight: 600;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.patient-page-btn:hover:not(:disabled) {
+  border-color: #087ebd;
+  background: rgba(8, 126, 189, 0.08);
+  color: #087ebd;
+  transform: translateY(-1px);
+}
+
+.patient-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.patient-current-page-chip {
+  padding: 6px 12px;
+  font-weight: 750;
+  font-size: 0.84rem;
+  color: #087ebd;
+  background: rgba(8, 126, 189, 0.12);
+  border: 1px solid rgba(8, 126, 189, 0.25);
+  border-radius: 8px;
+}
+
+[data-theme="dark"] .patient-pagination-bar,
+.dark .patient-pagination-bar {
+  background: #091e36;
+  border-color: rgba(94, 191, 219, 0.25);
+}
+
+[data-theme="dark"] .patient-page-btn,
+.dark .patient-page-btn {
+  background: #0b2440;
+  border-color: rgba(94, 191, 219, 0.25);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .patient-page-btn:hover:not(:disabled),
+.dark .patient-page-btn:hover:not(:disabled) {
+  border-color: #10a9d6;
+  background: rgba(16, 169, 214, 0.18);
+  color: #38bdf8;
+}
+
+[data-theme="dark"] .patient-current-page-chip,
+.dark .patient-current-page-chip {
+  background: rgba(16, 169, 214, 0.18);
+  border-color: rgba(16, 169, 214, 0.35);
+  color: #38bdf8;
 }
 
 /* Compact patient list */
