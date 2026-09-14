@@ -367,7 +367,7 @@ export default function NotificationCenter() {
                 onClick={() => void handleItemClick(item)}
               >
                 <span className="notification-dot" />
-                <span>
+                <span className="notification-body">
                   <strong>{item.title}</strong>
                   <small>{item.message}</small>
                   <em>{formatTime(item.createdAt)}</em>

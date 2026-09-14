@@ -10,6 +10,7 @@ import {
   FiClipboard,
   FiCreditCard,
   FiDatabase,
+  FiDownload,
   FiDroplet,
   FiFileText,
   FiHome,
@@ -113,6 +114,9 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
   const doctorOnly = roles.includes("Doctor") && roles.length === 1;
   const nurseOnly = roles.includes("Nurse") && roles.length === 1;
   const deskOfficeOnly = roles.includes("Desk Office") && roles.length === 1;
+  const laboratoryOnly =
+    roles.some((r) => r.toLowerCase() === "laboratory") &&
+    !roles.some((r) => ["super admin", "administrator"].includes(r.toLowerCase()));
 
   const roleHomePath = useMemo(() => getRoleHomePath(roles), [roles]);
 
@@ -434,7 +438,48 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
                 { title: "Desk Office", icon: <FiFileText />, path: "/desk-office" },
                 { title: "Account", icon: <FiSettings />, path: "/settings" },
               ]
-            : menus;
+            : laboratoryOnly
+              ? [
+                  {
+                    title: "Laboratory",
+                    icon: <FaFlask />,
+                    children: [
+                      {
+                        title: "Tests & Results",
+                        path: "/laboratory",
+                        icon: <FaFlask />,
+                        badge: readyLabsCount > 0 ? readyLabsCount : null,
+                        badgeClass: "labs",
+                      },
+                      {
+                        title: "Lab Templates",
+                        path: "/laboratory/templates",
+                        icon: <FiFileText />,
+                      },
+                    ],
+                  },
+                  ...(permissions.includes("patients.investigation.create") || permissions.includes("patients.create")
+                    ? [
+                        {
+                          title: "Patients",
+                          icon: <FaUserInjured />,
+                          children: [
+                            {
+                              title: "Register Patient",
+                              path: "/register-patient",
+                              icon: <FiPlusCircle />,
+                            },
+                          ],
+                        },
+                      ]
+                    : []),
+                  {
+                    title: "Account",
+                    icon: <FiSettings />,
+                    path: "/settings",
+                  },
+                ]
+              : menus;
 
     return sourceMenus
       .map((menu) => ({
@@ -449,6 +494,7 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
     doctorOnly,
     nurseOnly,
     deskOfficeOnly,
+    laboratoryOnly,
     menus,
     waitingCount,
     readyLabsCount,
@@ -679,6 +725,17 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
 
         {/* User Presence Footer */}
         <div className="sidebar-footer">
+          <button
+            type="button"
+            className="sidebar-pwa-btn"
+            onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
+            title="Install Web App / Add to iPhone Home Screen"
+            aria-label="Install App or Add to iPhone Home Screen"
+          >
+            <FiDownload className="icon" />
+            {!collapsed && <span>Install / Add to Home</span>}
+          </button>
+
           <Link
             to="/settings"
             className="sidebar-user-card"

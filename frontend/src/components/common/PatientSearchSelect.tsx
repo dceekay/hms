@@ -3,6 +3,7 @@ import {
   FiCheck,
   FiChevronDown,
   FiCreditCard,
+  FiLoader,
   FiPhone,
   FiPlus,
   FiSearch,
@@ -11,6 +12,7 @@ import {
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import type { Patient } from "../../types/patient";
+import { fetchPatients } from "../../services/patients/patientService";
 import "../../styles/patient-search-select.css";
 
 export interface PatientSearchSelectProps {
@@ -24,6 +26,30 @@ export interface PatientSearchSelectProps {
   required?: boolean;
   allowClear?: boolean;
   className?: string;
+}
+
+export function highlightMatch(text?: string | null, query?: string) {
+  if (!text) return "";
+  const q = query?.trim();
+  if (!q) return text;
+
+  try {
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
+    const parts = text.split(regex);
+
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <mark key={index} className="patient-search-highlight">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  } catch {
+    return text;
+  }
 }
 
 export function formatPatientDisplay(patient: Patient): string {
@@ -62,38 +88,77 @@ export default function PatientSearchSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [remotePatients, setRemotePatients] = useState<Patient[]>([]);
+  const [isSearchingRemote, setIsSearchingRemote] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Combine parent-provided patients with remote search results
+  const mergedPatients = useMemo(() => {
+    if (remotePatients.length === 0) return patients;
+    const map = new Map<string, Patient>();
+    for (const p of patients) map.set(p.id, p);
+    for (const p of remotePatients) map.set(p.id, p);
+    return Array.from(map.values());
+  }, [patients, remotePatients]);
+
   const selectedPatient = useMemo(
-    () => patients.find((p) => p.id === selectedPatientId) ?? null,
-    [patients, selectedPatientId]
+    () => mergedPatients.find((p) => p.id === selectedPatientId) ?? null,
+    [mergedPatients, selectedPatientId]
   );
+
+  // Asynchronous remote search for patients when typing
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setRemotePatients([]);
+      setIsSearchingRemote(false);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setIsSearchingRemote(true);
+      try {
+        const results = await fetchPatients({ search: q, take: 40 });
+        if (results && results.length > 0) {
+          setRemotePatients(results);
+        }
+      } catch (err) {
+        console.error("Live patient search fallback:", err);
+      } finally {
+        setIsSearchingRemote(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   const filteredPatients = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return patients.slice(0, 50);
+    if (!q) return mergedPatients.slice(0, 60);
 
-    return patients.filter((patient) => {
-      const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
-      const mrn = (patient.mrn ?? "").toLowerCase();
-      const pFile = (patient.physicalFileNumber ?? "").toLowerCase();
-      const phone = (patient.phone ?? "").toLowerCase();
-      const email = (patient.email ?? "").toLowerCase();
-      const insurance = (patient.insuranceProvider?.name ?? "").toLowerCase();
-      const policy = (patient.insurancePolicyNumber ?? "").toLowerCase();
-      return (
-        fullName.includes(q) ||
-        mrn.includes(q) ||
-        pFile.includes(q) ||
-        phone.includes(q) ||
-        email.includes(q) ||
-        insurance.includes(q) ||
-        policy.includes(q)
-      );
-    }).slice(0, 50);
-  }, [patients, searchQuery]);
+    return mergedPatients
+      .filter((patient) => {
+        const fullName = `${patient.firstName} ${patient.lastName}`.toLowerCase();
+        const mrn = (patient.mrn ?? "").toLowerCase();
+        const pFile = (patient.physicalFileNumber ?? "").toLowerCase();
+        const phone = (patient.phone ?? "").toLowerCase();
+        const email = (patient.email ?? "").toLowerCase();
+        const insurance = (patient.insuranceProvider?.name ?? "").toLowerCase();
+        const policy = (patient.insurancePolicyNumber ?? "").toLowerCase();
+        return (
+          fullName.includes(q) ||
+          mrn.includes(q) ||
+          pFile.includes(q) ||
+          phone.includes(q) ||
+          email.includes(q) ||
+          insurance.includes(q) ||
+          policy.includes(q)
+        );
+      })
+      .slice(0, 60);
+  }, [mergedPatients, searchQuery]);
 
   useEffect(() => {
     setHighlightedIndex(0);
@@ -282,7 +347,12 @@ export default function PatientSearchSelect({
                 autoComplete="off"
                 spellCheck={false}
               />
-              {searchQuery && (
+              {isSearchingRemote && (
+                <div className="picker-search-spinner" title="Searching database...">
+                  <FiLoader className="spin" />
+                </div>
+              )}
+              {searchQuery && !isSearchingRemote && (
                 <button
                   type="button"
                   className="search-clear-btn"
@@ -332,24 +402,24 @@ export default function PatientSearchSelect({
                       <div className="patient-row-info">
                         <div className="patient-row-name-line">
                           <strong className="patient-name">
-                            {patient.firstName} {patient.lastName}
+                            {highlightMatch(`${patient.firstName} ${patient.lastName}`.trim(), searchQuery)}
                           </strong>
                           {patient.physicalFileNumber && (
                             <span className="patient-pfile-chip" title="Physical File / Folder Number">
-                              📁 {patient.physicalFileNumber}
+                              📁 {highlightMatch(patient.physicalFileNumber, searchQuery)}
                             </span>
                           )}
                           {patient.mrn && (
                             <span className="patient-mrn-chip">
-                              {patient.mrn}
+                              {highlightMatch(patient.mrn, searchQuery)}
                             </span>
                           )}
                         </div>
 
                         <div className="patient-row-subtext">
                           {patient.phone && (
-                            <span className="subtext-item">
-                              <FiPhone /> {patient.phone}
+                            <span className="subtext-item phone-subtext">
+                              <FiPhone /> {highlightMatch(patient.phone, searchQuery)}
                             </span>
                           )}
                           {patient.gender && (

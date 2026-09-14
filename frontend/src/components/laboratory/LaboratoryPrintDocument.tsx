@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import mdsLogo from "../../assets/optimized/logo.png";
+import { CavendishMark } from "../common/CavendishLogo";
 import { getAppUrl } from "../../utils/appUrl";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
+
+import { HOSPITAL_OFFICIAL_DETAILS } from "../../constants/hospitalInfo";
 
 interface LaboratoryPrintDocumentProps {
   request: LaboratoryRequest | LaboratoryVerificationData;
@@ -12,11 +14,12 @@ interface LaboratoryPrintDocumentProps {
 }
 
 export const HOSPITAL_PRINT_INFO = {
-  name: "MDS HOSPITAL",
+  name: HOSPITAL_OFFICIAL_DETAILS.name,
   subtitle: "Specialist Diagnostic Centre & Clinical Pathology",
-  address: "Kano State, Nigeria",
-  phone: "+234 812 345 6789",
-  email: "info@mdshospital.com",
+  address: HOSPITAL_OFFICIAL_DETAILS.fullAddress,
+  phone: HOSPITAL_OFFICIAL_DETAILS.displayPhone,
+  email: HOSPITAL_OFFICIAL_DETAILS.email,
+  web: HOSPITAL_OFFICIAL_DETAILS.web,
 };
 
 function formatDate(val?: string | null): string {
@@ -97,41 +100,61 @@ export default function LaboratoryPrintDocument({
         return "NORMAL";
       }
     }
+
+    const lowerRef = referenceRange.toLowerCase();
+    const lowerVal = strVal.toLowerCase();
+    if (lowerRef.includes("negative") || lowerRef.includes("non-reactive") || lowerRef.includes("normal")) {
+      if (lowerVal.includes("positive") || lowerVal.includes("reactive") || lowerVal.includes("3+") || lowerVal.includes("4+")) {
+        return "ABNORMAL (A)";
+      }
+      if (lowerVal.includes("negative") || lowerVal.includes("non-reactive") || lowerVal.includes("normal")) {
+        return "NORMAL";
+      }
+    }
+
     return null;
   };
 
   const technicianName =
-    request.completedBy
-      ? `${request.completedBy.firstName || ""} ${request.completedBy.lastName || ""}`.trim()
-      : "Staff Laboratory Scientist";
+    "technician" in request && request.technician
+      ? request.technician.name
+      : "completedBy" in request && request.completedBy
+      ? `${request.completedBy.firstName} ${request.completedBy.lastName}`
+      : "Medical Laboratory Scientist";
 
   return (
-    <div className="lab-print-document-root" id="printable-lab-receipt">
-      {/* 1. Header with Logo, Hospital Info, and Verification QR */}
-      <header className="lab-print-header-grid">
-        <div className="lab-print-brand-col">
-          <img src={mdsLogo} alt="MDS Hospital" className="lab-print-logo-mark" style={{ width: 48, height: 48, objectFit: "contain" }} />
+    <div className="lab-print-document-container lab-print-page">
+      {/* 1. Official Hospital Header */}
+      <header className="lab-print-header-banner">
+        <div className="lab-print-brand-left">
+          <CavendishMark size={64} className="lab-print-hospital-logo" />
           <div>
             <h1 className="lab-print-hospital-name">{HOSPITAL_PRINT_INFO.name}</h1>
             <p className="lab-print-hospital-sub">{HOSPITAL_PRINT_INFO.subtitle}</p>
-            <p className="lab-print-hospital-meta">
-              {HOSPITAL_PRINT_INFO.address} • Tel: {HOSPITAL_PRINT_INFO.phone}
+            <p className="lab-print-hospital-address">
+              Address: {HOSPITAL_PRINT_INFO.address}
+            </p>
+            <p className="lab-print-hospital-contact">
+              Tel: {HOSPITAL_PRINT_INFO.phone} | Email: {HOSPITAL_PRINT_INFO.email}
             </p>
           </div>
         </div>
 
-        <div className="lab-print-qr-col">
+        {/* Top-Right QR Code with Scan Instructions */}
+        <div className="lab-print-qr-group">
           {qrCodeDataUrl ? (
             <img
               src={qrCodeDataUrl}
-              alt="Verification QR Code"
-              className="lab-print-qr-image"
+              alt="Lab Verification QR Code"
+              className="lab-print-qr-img"
             />
           ) : (
             <div className="lab-print-qr-placeholder">QR CODE</div>
           )}
-          <span className="lab-print-qr-caption">Scan to Verify Result</span>
-          <span className="lab-print-request-number">{request.requestNumber}</span>
+          <span className="lab-print-qr-label">
+            Scan QR to track test & view verified results
+          </span>
+          <span className="lab-print-qr-id">TRACK: {request.requestNumber}</span>
         </div>
       </header>
 
@@ -204,7 +227,7 @@ export default function LaboratoryPrintDocument({
               </tr>
             </thead>
             <tbody>
-              {request.template.fields.map((field: any, idx: number) => {
+              {request.template.fields.map((field, idx) => {
                 const rawVal = request.resultValues?.[field.key];
                 const displayVal =
                   rawVal !== undefined && rawVal !== null && rawVal !== ""
@@ -214,16 +237,16 @@ export default function LaboratoryPrintDocument({
 
                 return (
                   <tr key={idx}>
-                    <td>
-                      <strong>{field.label}</strong>
+                    <td className="lab-print-param-cell">
+                      <strong className="lab-print-param-name">{field.label}</strong>
                     </td>
-                    <td>
+                    <td className="lab-print-val-cell">
                       <span className="lab-print-val-text">{displayVal}</span>
                       {flag && flag !== "NORMAL" && (
                         <span className="lab-print-flag-inline"> {flag}</span>
                       )}
                     </td>
-                    <td>{field.unit || "—"}</td>
+                    <td className="lab-print-unit-cell">{field.unit || "—"}</td>
                     <td className="lab-print-ref-cell">{field.referenceRange || "Standard"}</td>
                   </tr>
                 );
@@ -312,16 +335,19 @@ export default function LaboratoryPrintDocument({
 
         <div className="lab-print-security-stamp">
           <div className="lab-print-stamp-border">
-            <span>MDS HOSPITAL</span>
+            <span>{HOSPITAL_OFFICIAL_DETAILS.name}</span>
             <strong>OFFICIAL VALIDATED</strong>
-            <small>DIAGNOSTIC SERVICE</small>
+            <small>DIAGNOSTIC SERVICE • KANO</small>
+            <div style={{ marginTop: "6px", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", color: "#092a5e" }}>
+              [ OFFICIAL HOSPITAL STAMP ]
+            </div>
           </div>
         </div>
       </footer>
 
       {/* Security Disclaimer */}
       <div className="lab-print-disclaimer">
-        Validated clinical diagnostic document issued by MDS Hospital. Questions? Contact info@mdshospital.com.
+        Validated clinical diagnostic document issued by {HOSPITAL_OFFICIAL_DETAILS.name}, Kano State. Live verification and tracking available by scanning the QR code above or visiting {HOSPITAL_OFFICIAL_DETAILS.web}. Enquiries: {HOSPITAL_OFFICIAL_DETAILS.email} | {HOSPITAL_OFFICIAL_DETAILS.displayPhone}.
       </div>
     </div>
   );

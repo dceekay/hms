@@ -389,7 +389,7 @@ export class ClinicalService {
       throw new ApiError(HttpStatus.NOT_FOUND, "Active patient not found");
     }
 
-    return prisma.clinicalEncounter.create({
+    const encounter = await prisma.clinicalEncounter.create({
       data: {
         encounterNumber: createEncounterNumber(),
         patientId: patient.id,
@@ -398,6 +398,20 @@ export class ClinicalService {
       },
       include: encounterInclude,
     });
+
+    await NotificationService.notifyRoles(["Nurse", "Receptionist", "Administrator", "Super Admin"], {
+      title: "Consultation notes recorded",
+      message: `Dr. ${encounter.doctor.lastName} recorded a consultation encounter for ${patient.firstName} ${patient.lastName}.`,
+      eventKey: "clinical.encounter.created",
+      priority: "info",
+      linkUrl: "/doctor",
+      metadata: {
+        encounterId: encounter.id,
+        patientId: patient.id,
+      },
+    });
+
+    return encounter;
   }
 
   async updateEncounter(id: string, payload: UpdateEncounterDto, doctorId?: string) {

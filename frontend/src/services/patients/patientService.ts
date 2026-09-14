@@ -6,6 +6,7 @@ import {
   PatientInsuranceProvider,
   PatientQr,
 } from "../../types/patient";
+import { CANONICAL_INSURANCE_PROVIDERS } from "../../constants/insuranceProviders";
 
 type ApiErrorBody = {
   message?: string;
@@ -66,17 +67,27 @@ export async function fetchPatientInsuranceProviders(): Promise<{
       data: PatientInsuranceProvider[];
     }>("/patients/insurance-providers");
 
-    return {
-      providers: response.data.data,
-    };
+    const fetched = response.data?.data;
+    if (Array.isArray(fetched) && fetched.length > 0) {
+      return {
+        providers: fetched,
+      };
+    }
   } catch (error) {
-    console.error(error);
-
-    return {
-      providers: null,
-      error: getApiErrorMessage(error),
-    };
+    console.warn("Using canonical insurance providers fallback:", error);
   }
+
+  // Gracefully fallback to all 24 canonical HMO providers
+  const fallbackProviders: PatientInsuranceProvider[] = CANONICAL_INSURANCE_PROVIDERS.map((provider) => ({
+    id: `provider-${provider.code.toLowerCase()}`,
+    name: provider.name,
+    code: provider.code,
+    isActive: true,
+  }));
+
+  return {
+    providers: fallbackProviders,
+  };
 }
 
 const PATIENTS_CACHE_KEY = "hms_cached_patients_directory";
@@ -177,6 +188,21 @@ export async function deactivatePatient(
   try {
     const response = await api.post<{ data: Patient }>(
       `/patients/${patientId}/deactivate`
+    );
+
+    return response.data.data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+export async function deletePatientPermanently(
+  patientId: string
+): Promise<{ success: boolean; message?: string } | null> {
+  try {
+    const response = await api.delete<{ data: { success: boolean; message?: string } }>(
+      `/patients/${patientId}`
     );
 
     return response.data.data;

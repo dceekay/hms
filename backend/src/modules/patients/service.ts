@@ -74,7 +74,12 @@ export class PatientService {
   }
 
   private async createWithCategory(payload: PatientCreateDto, patientCategory: PatientCategory) {
-    const data = normalizePayload(payload);
+    const data = normalizePayload({
+      ...payload,
+      city: payload.city?.trim() || undefined,
+      state: payload.state?.trim() || "Kano",
+      country: payload.country?.trim() || "Nigeria",
+    });
 
     try {
       const patient = await this.patientRepository.createPatient({
@@ -113,22 +118,93 @@ export class PatientService {
   }
 
   async listActiveInsuranceProviders() {
-  return prisma.insuranceProvider.findMany({
-    where: {
-      isActive: true,
-      deletedAt: null,
-    },
-    select: {
-      id: true,
-      name: true,
-      code: true,
-      patientPayPercentage: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-}
+    let providers = await prisma.insuranceProvider.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        patientPayPercentage: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    if (providers.length < 24) {
+      const canonicalProviders = [
+        { name: "AXA Mansard", code: "AXA" },
+        { name: "Novo", code: "NOVO" },
+        { name: "Hygiea", code: "HYGIEA" },
+        { name: "Total Health Trust", code: "THT" },
+        { name: "Avon", code: "AVON" },
+        { name: "SUNU", code: "SUNU" },
+        { name: "Reliance", code: "RELIANCE" },
+        { name: "Leadway", code: "LEADWAY" },
+        { name: "Aspire", code: "ASPIRE" },
+        { name: "Mass Life", code: "MASSLIFE" },
+        { name: "NEM", code: "NEM" },
+        { name: "DOT", code: "DOT" },
+        { name: "Kennedia", code: "KENNEDIA" },
+        { name: "Philip", code: "PHILIP" },
+        { name: "Aman", code: "AMAN" },
+        { name: "MB and O", code: "MB-O" },
+        { name: "Bastion", code: "BASTION" },
+        { name: "Hadiel", code: "HADIEL" },
+        { name: "Zenor", code: "ZENOR" },
+        { name: "HCI", code: "HCI" },
+        { name: "Grooming", code: "GROOMING" },
+        { name: "Life Worth", code: "LIFEWORTH" },
+        { name: "Woot Health", code: "WOOT" },
+        { name: "NNPC", code: "NNPC" },
+      ];
+
+      for (const p of canonicalProviders) {
+        try {
+          const existing = await prisma.insuranceProvider.findFirst({
+            where: { OR: [{ name: p.name }, { code: p.code }] },
+          });
+          if (!existing) {
+            await prisma.insuranceProvider.create({
+              data: {
+                name: p.name,
+                code: p.code,
+                isActive: true,
+              },
+            });
+          } else if (!existing.isActive || existing.deletedAt) {
+            await prisma.insuranceProvider.update({
+              where: { id: existing.id },
+              data: { isActive: true, deletedAt: null },
+            });
+          }
+        } catch {
+          // Ignore individual provider creation errors in concurrent requests
+        }
+      }
+
+      providers = await prisma.insuranceProvider.findMany({
+        where: {
+          isActive: true,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          patientPayPercentage: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      });
+    }
+
+    return providers;
+  }
 
   async create(payload: PatientCreateDto) {
     const patientCategory =
@@ -322,20 +398,125 @@ export class PatientService {
   async reactivate(id: string) {
     const patient = await this.getById(id);
 
-    return this.patientRepository.update(id, {
+    const updated = await this.patientRepository.update(id, {
       patientCategory: PatientCategory.old_patient,
       status: PatientStatus.active,
       reactivatedAt: new Date(),
       version: patient.version + 1,
     });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "Patient Reactivated",
+      message: `${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn || "N/A"}) has been reactivated.`,
+      eventKey: "patient.reactivated",
+      priority: "info",
+      linkUrl: "/patients",
+      metadata: { patientId: patient.id, mrn: patient.mrn },
+    });
+
+    return updated;
   }
 
   async deactivate(id: string) {
     const patient = await this.getById(id);
 
-    return this.patientRepository.update(id, {
+    const updated = await this.patientRepository.update(id, {
       status: PatientStatus.inactive,
       version: patient.version + 1,
     });
+
+    await NotificationService.notifyRoles(["Receptionist", "Administrator", "Super Admin"], {
+      title: "Patient Deactivated",
+      message: `${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn || "N/A"}) has been marked inactive.`,
+      eventKey: "patient.deactivated",
+      priority: "warning",
+      linkUrl: "/patients",
+      metadata: { patientId: patient.id, mrn: patient.mrn },
+    });
+
+    return updated;
+  }
+
+  async deletePermanently(id: string, deletedByUserId?: string) {
+    const patient = await this.getById(id);
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Nurse Order Acknowledgements
+      await tx.nurseOrderAcknowledgement.deleteMany({ where: { patientId: id } });
+
+      // 2. Nursing Notes
+      await tx.nursingNote.deleteMany({ where: { patientId: id } });
+
+      // 3. Vital Sign Records
+      await tx.vitalSignRecord.deleteMany({ where: { patientId: id } });
+
+      // 4. Medication Administration Records & Schedules
+      await tx.medicationAdministrationRecord.deleteMany({
+        where: {
+          schedule: { patientId: id },
+        },
+      });
+      await tx.medicationAdministrationSchedule.deleteMany({ where: { patientId: id } });
+
+      // 5. Prescriptions & items
+      await tx.prescriptionItem.deleteMany({
+        where: {
+          prescription: { patientId: id },
+        },
+      });
+      await tx.prescription.deleteMany({ where: { patientId: id } });
+
+      // 6. Ward Bed Assignments
+      await tx.wardBedAssignment.deleteMany({ where: { patientId: id } });
+
+      // 7. Clinical Admission Requests
+      await tx.clinicalAdmissionRequest.deleteMany({ where: { patientId: id } });
+
+      // 8. Clinical Referrals
+      await tx.clinicalReferral.deleteMany({ where: { patientId: id } });
+
+      // 9. Clinical Encounters
+      await tx.clinicalEncounter.deleteMany({ where: { patientId: id } });
+
+      // 10. Laboratory Requests
+      await tx.laboratoryRequest.deleteMany({ where: { patientId: id } });
+
+      // 11. Pharmacy Sale Items & Sales
+      await tx.pharmacySaleItem.deleteMany({
+        where: {
+          sale: { patientId: id },
+        },
+      });
+      await tx.pharmacySale.deleteMany({ where: { patientId: id } });
+
+      // 12. Pharmacy Dispenses
+      await tx.pharmacyDispense.deleteMany({ where: { patientId: id } });
+
+      // 13. Patient Bills
+      await tx.patientBill.deleteMany({ where: { patientId: id } });
+
+      // 14. Appointments
+      await tx.appointment.deleteMany({ where: { patientId: id } });
+
+      // 15. Semsas Transfers (sever relationship)
+      await tx.semsasTransfer.updateMany({
+        where: { patientId: id },
+        data: { patientId: null },
+      });
+
+      // 16. Finally delete the Patient record
+      await tx.patient.delete({ where: { id } });
+    });
+
+    await NotificationService.notifyRoles(["Super Admin", "Administrator"], {
+      title: "Patient Record Deleted Permanently",
+      message: `${patient.firstName} ${patient.lastName} (MRN: ${patient.mrn || "N/A"}) and all associated medical records have been permanently purged by Super Admin.`,
+      eventKey: "patient.deleted_permanently",
+      priority: "critical",
+      linkUrl: "/patients",
+      metadata: { patientId: patient.id, mrn: patient.mrn, deletedByUserId },
+    });
+
+    return { id, success: true, message: "Patient record permanently deleted." };
   }
 }

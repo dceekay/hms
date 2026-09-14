@@ -87,6 +87,7 @@
   object-fit: contain;
   padding: 2px;
   box-shadow: 0 4px 14px rgba(8, 126, 189, 0.16);
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .sidebar-brand-text {
@@ -344,6 +345,35 @@
   margin: 10px 12px 14px;
   padding-top: 10px;
   border-top: 1px solid var(--border, #e2e8f0);
+}
+
+.sidebar-pwa-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--accent, #087ebd) 8%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--accent, #087ebd) 35%, transparent);
+  border-radius: 8px;
+  color: var(--accent, #087ebd);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-pwa-btn:hover {
+  background: color-mix(in srgb, var(--accent, #087ebd) 16%, transparent);
+  border-color: var(--accent, #087ebd);
+  color: var(--accent-hover, #0284c7);
+  transform: translateY(-1px);
+}
+
+.sidebar.collapsed .sidebar-pwa-btn {
+  padding: 8px 0;
+  justify-content: center;
 }
 
 .sidebar-user-card {

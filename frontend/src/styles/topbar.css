@@ -322,13 +322,24 @@
   grid-template-columns: 10px minmax(0, 1fr);
   gap: 10px;
   width: 100%;
-  padding: 11px;
+  box-sizing: border-box;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+}
+
+.notification-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
 }
 
 .notification-card.unread {
@@ -336,26 +347,52 @@
   background: color-mix(in srgb, var(--primary) 7%, var(--surface));
 }
 
-.notification-card small,
+.notification-body {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.notification-card strong {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.notification-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.79rem;
+  line-height: 1.42;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .notification-card em {
   display: block;
   margin-top: 4px;
   color: var(--muted);
-  line-height: 1.35;
-}
-
-.notification-card em {
   font-style: normal;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
+  opacity: 0.85;
 }
 
 .notification-dot {
   width: 9px;
   height: 9px;
-  margin-top: 4px;
+  margin-top: 5px;
   border-radius: 50%;
   background: var(--accent);
+  flex-shrink: 0;
 }
 
 .notification-card.success .notification-dot {

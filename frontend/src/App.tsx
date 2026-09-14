@@ -1,39 +1,56 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import Loader from "./components/common/Loader";
 
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import LandingPage from "./pages/LandingPage";
-import ServiceDetailPage from "./pages/ServiceDetailPage";
-import ServicesIndexPage from "./pages/ServicesIndexPage";
-import StaffVerificationPage from "./pages/StaffVerificationPage";
-import PatientVerificationPage from "./pages/PatientVerificationPage";
-import DashboardPage from "./pages/DashboardPage";
-import { PatientListPage } from "./pages/patients/PatientListPage";
-import PatientRegistrationPage from "./pages/patients/PatientRegistrationPage";
-import SecurityEntryPage from "./pages/security/SecurityEntryPage";
-import SecurityLogsPage from "./pages/security/SecurityLogsPage";
-import SemsasPage from "./pages/operations/SemsasPage";
-import PharmacyPage from "./pages/pharmacy/PharmacyPage";
-import LaboratoryPage from "./pages/laboratory/LaboratoryPage";
-import LaboratoryTemplatesPage from "./pages/laboratory/LaboratoryTemplatesPage";
-import DeskOfficePage from "./pages/deskOffice/DeskOfficePage";
-import DoctorDashboardPage from "./pages/doctor/DoctorDashboardPage";
-import NurseDashboardPage from "./pages/nurse/NurseDashboardPage";
-import AppointmentsPage from "./pages/appointments/AppointmentsPage";
-import InventoryPage from "./pages/inventory/InventoryPage";
-import InsuranceProvidersPage from "./pages/setup/InsuranceProvidersPage";
-import HospitalServicesPage from "./pages/setup/HospitalServicesPage";
-import WardsBedsPage from "./pages/setup/WardsBedsPage";
-import BillingPage from "./pages/billing/BillingPage";
-import ComingSoonPage from "./pages/ComingSoonPage";
-import AccountSettingsPage from "./pages/AccountSettingsPage";
-
-import APITesterPage from "./pages/APITesterPage";
-
-import RolesPage from "./pages/admin/RolesPage";
-import PermissionsPage from "./pages/admin/PermissionsPage";
-import UsersPage from "./pages/admin/UsersPage";
-import DoctorsPage from "./pages/admin/DoctorsPage";
+const HomePage = lazy(() => import("./pages/HomePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const ServiceDetailPage = lazy(() => import("./pages/ServiceDetailPage"));
+const ServicesIndexPage = lazy(() => import("./pages/ServicesIndexPage"));
+const StaffVerificationPage = lazy(() => import("./pages/StaffVerificationPage"));
+const PatientVerificationPage = lazy(() => import("./pages/PatientVerificationPage"));
+const LaboratoryVerificationPage = lazy(() => import("./pages/LaboratoryVerificationPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const PatientListPage = lazy(() =>
+  import("./pages/patients/PatientListPage").then((m) => ({
+    default: m.PatientListPage,
+  }))
+);
+const PatientRegistrationPage = lazy(
+  () => import("./pages/patients/PatientRegistrationPage")
+);
+const SecurityEntryPage = lazy(() => import("./pages/security/SecurityEntryPage"));
+const SecurityLogsPage = lazy(() => import("./pages/security/SecurityLogsPage"));
+const SemsasPage = lazy(() => import("./pages/operations/SemsasPage"));
+const PharmacyPage = lazy(() => import("./pages/pharmacy/PharmacyPage"));
+const LaboratoryPage = lazy(() => import("./pages/laboratory/LaboratoryPage"));
+const LaboratoryTemplatesPage = lazy(
+  () => import("./pages/laboratory/LaboratoryTemplatesPage")
+);
+const DeskOfficePage = lazy(() => import("./pages/deskOffice/DeskOfficePage"));
+const DoctorDashboardPage = lazy(
+  () => import("./pages/doctor/DoctorDashboardPage")
+);
+const NurseDashboardPage = lazy(() => import("./pages/nurse/NurseDashboardPage"));
+const AppointmentsPage = lazy(
+  () => import("./pages/appointments/AppointmentsPage")
+);
+const InventoryPage = lazy(() => import("./pages/inventory/InventoryPage"));
+const InsuranceProvidersPage = lazy(
+  () => import("./pages/setup/InsuranceProvidersPage")
+);
+const HospitalServicesPage = lazy(
+  () => import("./pages/setup/HospitalServicesPage")
+);
+const WardsBedsPage = lazy(() => import("./pages/setup/WardsBedsPage"));
+const BillingPage = lazy(() => import("./pages/billing/BillingPage"));
+const ComingSoonPage = lazy(() => import("./pages/ComingSoonPage"));
+const AccountSettingsPage = lazy(() => import("./pages/AccountSettingsPage"));
+const APITesterPage = lazy(() => import("./pages/APITesterPage"));
+const RolesPage = lazy(() => import("./pages/admin/RolesPage"));
+const PermissionsPage = lazy(() => import("./pages/admin/PermissionsPage"));
+const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
+const DoctorsPage = lazy(() => import("./pages/admin/DoctorsPage"));
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfflineSyncBridge from "./components/OfflineSyncBridge";
@@ -69,13 +86,15 @@ export default function App() {
       <ScrollToTop />
       <PwaInstallBanner />
       <SweetAlertToastContainer />
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+      <Suspense fallback={<Loader text="Loading MDS Hospital..." size="lg" />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/services" element={<ServicesIndexPage />} />
         <Route path="/services/:slug" element={<ServiceDetailPage />} />
         <Route path="/verify/staff/:id" element={<StaffVerificationPage />} />
         <Route path="/verify/patient/:qrCode" element={<PatientVerificationPage />} />
+        <Route path="/verify/lab/:identifier" element={<LaboratoryVerificationPage />} />
 
         <Route path="/" element={<RootRoute />} />
 
@@ -354,6 +373,7 @@ export default function App() {
           }
         />
       </Routes>
+      </Suspense>
     </>
   );
 }

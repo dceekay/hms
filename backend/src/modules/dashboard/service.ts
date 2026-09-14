@@ -58,6 +58,9 @@ export class DashboardService {
       services,
       usersWithServiceAreas,
       billsForServiceSummary,
+      encountersToday,
+      appointmentsSeenToday,
+      labTestsRequestedToday,
     ] = await prisma.$transaction([
       prisma.patient.count({ where: { deletedAt: null } }),
       prisma.patient.count({ where: { deletedAt: null, status: "active" } }),
@@ -222,6 +225,21 @@ export class DashboardService {
         where: { deletedAt: null, billedAt: { gte: monthStart } },
         include: { service: true },
       }),
+      prisma.clinicalEncounter.findMany({
+        where: { startedAt: { gte: today } },
+        select: { patientId: true },
+      }),
+      prisma.appointment.findMany({
+        where: {
+          deletedAt: null,
+          scheduledFor: { gte: today },
+          status: { in: ["in_consultation", "completed"] },
+        },
+        select: { patientId: true },
+      }),
+      prisma.laboratoryRequest.count({
+        where: { createdAt: { gte: today } },
+      }),
     ]);
 
     const serviceRevenueMap = new Map<
@@ -276,6 +294,17 @@ export class DashboardService {
       staffServiceMap.set(user.serviceArea.id, current);
     }
 
+    const patientsSeenSet = new Set<string>();
+    for (const item of encountersToday) {
+      if (item.patientId) patientsSeenSet.add(item.patientId);
+    }
+    for (const item of appointmentsSeenToday) {
+      if (item.patientId) patientsSeenSet.add(item.patientId);
+    }
+    const patientsSeenToday = patientsSeenSet.size;
+    const occupancyRate =
+      bedsTotal > 0 ? Math.round((bedsOccupied / bedsTotal) * 100) : 0;
+
     return {
       generatedAt: new Date(),
       patients: {
@@ -283,11 +312,19 @@ export class DashboardService {
         active: activePatients,
         inactive: inactivePatients,
         registeredToday,
+        seenToday: patientsSeenToday,
         categories: {
           newPatients,
           oldPatients,
           investigationPatients,
         },
+      },
+      clinical: {
+        patientsSeenToday,
+        labTestsRequestedToday,
+      },
+      laboratory: {
+        requestedToday: labTestsRequestedToday,
       },
       users: {
         total: totalUsers,
@@ -345,6 +382,7 @@ export class DashboardService {
           total: bedsTotal,
           available: bedsAvailable,
           occupied: bedsOccupied,
+          occupancyRate,
         },
       },
       recent: {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FiPrinter, FiX, FiFileText, FiCheckCircle } from "react-icons/fi";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
@@ -20,21 +21,35 @@ export default function LaboratoryPrintModal({
     return request && request.status === "completed" ? "result" : "request";
   });
 
+  useEffect(() => {
+    document.body.classList.add("has-print-modal", "lab-print-modal-active");
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.classList.remove("has-print-modal", "lab-print-modal-active");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
   if (!request) return null;
 
   const handlePrint = () => {
     window.print();
   };
 
-  return (
-    <div className="lab-modal-overlay" onClick={onClose}>
+  return createPortal(
+    <div className="lab-modal-overlay lab-print-modal-overlay" onClick={onClose}>
       <div
-        className="lab-modal-container"
-        style={{ maxWidth: "900px", maxHeight: "92vh" }}
+        className="lab-modal-container lab-print-modal-container"
+        style={{ maxWidth: "900px" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Toolbar (hidden during physical print) */}
-        <div className="lab-modal-header no-print">
+        <div className="lab-modal-header lab-print-modal-header no-print">
           <div>
             <h2>
               <FiPrinter style={{ color: "var(--accent)" }} /> Print Document Preview
@@ -80,10 +95,11 @@ export default function LaboratoryPrintModal({
         </div>
 
         {/* Printable Canvas */}
-        <div className="lab-modal-body" style={{ background: "#e2e8f0", padding: "1.5rem" }}>
+        <div className="lab-modal-body lab-print-modal-body">
           <LaboratoryPrintDocument request={request} documentType={docType} />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

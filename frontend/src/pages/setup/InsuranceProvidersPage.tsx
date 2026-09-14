@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiEdit3, FiPlus, FiRefreshCw, FiSave, FiSearch, FiShield, FiSlash } from "react-icons/fi";
+import InsuranceProviderChip from "../../components/insurance/InsuranceProviderChip";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createInsuranceProvider,
@@ -284,7 +285,11 @@ export default function InsuranceProvidersPage() {
                   <article key={provider.id} className="setup-provider-card">
                     <div>
                       <div className="setup-provider-title">
-                        <strong>{provider.name}</strong>
+                        <InsuranceProviderChip
+                          name={provider.name}
+                          code={provider.code}
+                          compact
+                        />
                         <span className={`patient-status-badge ${provider.isActive ? "active" : "inactive"}`}>
                           {provider.isActive ? "Active" : "Inactive"}
                         </span>

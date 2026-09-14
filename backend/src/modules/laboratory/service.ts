@@ -422,4 +422,90 @@ export class LaboratoryService {
       throw error;
     }
   }
+
+  async verifyRequest(identifier: string) {
+    try {
+      const cleanId = identifier.trim();
+      const request = await prisma.laboratoryRequest.findFirst({
+        where: {
+          OR: [
+            { id: cleanId },
+            { requestNumber: cleanId },
+          ],
+        },
+        include: {
+          patient: true,
+          template: true,
+          recordedBy: {
+            select: { id: true, firstName: true, lastName: true, username: true },
+          },
+          completedBy: {
+            select: { id: true, firstName: true, lastName: true, username: true },
+          },
+        },
+      });
+
+      if (!request) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory request or test not found for this identifier.");
+      }
+
+      return {
+        id: request.id,
+        requestNumber: request.requestNumber,
+        status: request.status,
+        patient: {
+          id: request.patient.id,
+          mrn: request.patient.mrn,
+          fullName: `${request.patient.firstName} ${request.patient.lastName}`.trim(),
+          gender: request.patient.gender,
+          dateOfBirth: request.patient.dateOfBirth,
+        },
+        template: {
+          id: request.template.id,
+          name: request.template.name,
+          code: request.template.code,
+          category: request.template.category,
+          specimen: request.template.specimen,
+          reportTitle: request.template.reportTitle,
+          fields: request.template.fields,
+          notes: request.template.notes,
+        },
+        clinicalNotes: request.clinicalNotes,
+        sampleCollectedAt: request.sampleCollectedAt,
+        completedAt: request.completedAt,
+        createdAt: request.createdAt,
+        resultValues: request.resultValues,
+        interpretation: request.interpretation,
+        technicianNote: request.technicianNote,
+        technician: request.completedBy
+          ? {
+              name: `${request.completedBy.firstName} ${request.completedBy.lastName}`.trim(),
+              username: request.completedBy.username,
+            }
+          : null,
+        recordedBy: request.recordedBy
+          ? {
+              name: `${request.recordedBy.firstName} ${request.recordedBy.lastName}`.trim(),
+              username: request.recordedBy.username,
+            }
+          : null,
+        completedBy: request.completedBy,
+        hospital: {
+          name: "MDS Specialist Hospital",
+          address: "Kano State, Nigeria",
+          phone: "+234 812 345 6789",
+          email: "info@mdshospital.com",
+          accreditation: "Authorized Medical Diagnostic Laboratory",
+        },
+      };
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+
+      if (isDatabaseUnavailableError(error)) {
+        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory verification service is temporarily unavailable.");
+      }
+
+      throw error;
+    }
+  }
 }
