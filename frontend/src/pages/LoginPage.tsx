@@ -77,7 +77,26 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const result = await login({ emailOrUsername: username, password: loginPassword, rememberMe });
+    const deviceDetails = {
+      screen: typeof window !== "undefined" ? `${window.screen?.width || 0}x${window.screen?.height || 0}` : undefined,
+      viewport: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : undefined,
+      platform: typeof navigator !== "undefined" ? navigator.platform : undefined,
+      language: typeof navigator !== "undefined" ? navigator.language : undefined,
+      networkType:
+        typeof navigator !== "undefined"
+          ? (navigator as any).connection?.effectiveType ||
+            (navigator as any).connection?.type ||
+            (navigator.onLine ? "online" : "offline")
+          : undefined,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+
+    const result = await login({
+      emailOrUsername: username,
+      password: loginPassword,
+      rememberMe,
+      deviceDetails,
+    });
     setLoading(false);
 
     if (!result?.accessToken) {

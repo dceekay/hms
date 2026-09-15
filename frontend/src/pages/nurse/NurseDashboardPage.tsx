@@ -23,6 +23,7 @@ import {
   FiX,
   FiChevronDown,
   FiHome,
+  FiHelpCircle,
 } from "react-icons/fi";
 import {
   FaBed,
@@ -32,6 +33,7 @@ import {
   FaStethoscope,
 } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
+import { startRoleTour } from "../../components/tour/RoleTour";
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import { fetchPatientQr } from "../../services/patients/patientService";
 import {
@@ -653,6 +655,15 @@ export default function NurseDashboardPage() {
           <div className="nurse-header-actions">
             <button
               type="button"
+              className="nurse-pill-btn tour-btn"
+              onClick={startRoleTour}
+              title="Need help? Start interactive Nurse Walkthrough"
+            >
+              <FiHelpCircle />
+              <span>Tour & Guide</span>
+            </button>
+            <button
+              type="button"
               className={`nurse-pill-btn ${isMuted ? "muted" : "alert-on"}`}
               onClick={() => setIsMuted(!isMuted)}
               title={isMuted ? "Turn on alert sounds" : "Mute alert sounds"}
@@ -871,6 +882,27 @@ export default function NurseDashboardPage() {
                   </p>
                 </div>
               </div>
+              <div className="nurse-vitals-quick-tools">
+                <button
+                  type="button"
+                  className="nurse-quick-preset-btn"
+                  onClick={() => {
+                    setVitalsForm((prev) => ({
+                      ...prev,
+                      temperatureCelsius: "36.8",
+                      systolicBp: "120",
+                      diastolicBp: "80",
+                      pulse: "75",
+                      spo2: "98",
+                      respiration: "16",
+                      painScore: "0",
+                    }));
+                  }}
+                  title="Auto-fill standard normal adult baseline vitals"
+                >
+                  ⚡ Fill Normal Baseline
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleVitalsSubmit} className="nurse-vitals-form">
@@ -954,10 +986,10 @@ export default function NurseDashboardPage() {
                   <small className="nurse-input-hint">Normal resting: 60 – 100 bpm</small>
                 </div>
 
-                {/* 4. Oxygen SpO2 */}
+                {/* 4. Oxygen Saturation (SpO2) */}
                 <div className="nurse-input-box">
                   <label className="nurse-input-label">
-                    <span>🫁 Oxygen SpO2 (%)</span>
+                    <span>🫁 Oxygen Saturation (SpO2 %)</span>
                     {vitalsAnalysis.spo2Text && (
                       <span className="nurse-calc-pill" style={{ color: vitalsAnalysis.spo2Color, borderColor: vitalsAnalysis.spo2Color }}>
                         {vitalsAnalysis.spo2Text}
@@ -1008,6 +1040,47 @@ export default function NurseDashboardPage() {
                     className="nurse-big-input"
                   />
                   <small className="nurse-input-hint">Normal: 12 – 20 breaths/min</small>
+                </div>
+
+                {/* 6. Pain Level Scale (0 - 10) */}
+                <div className="nurse-input-box full-width">
+                  <label className="nurse-input-label">
+                    <span>😣 Pain Scale Level (0 = No Pain, 10 = Severe)</span>
+                    <span
+                      className="nurse-calc-pill"
+                      style={{
+                        color: Number(vitalsForm.painScore) >= 7 ? "#ef4444" : Number(vitalsForm.painScore) >= 4 ? "#f59e0b" : "#10b981",
+                        borderColor: Number(vitalsForm.painScore) >= 7 ? "#ef4444" : Number(vitalsForm.painScore) >= 4 ? "#f59e0b" : "#10b981",
+                      }}
+                    >
+                      {Number(vitalsForm.painScore) === 0
+                        ? "0 - No Pain"
+                        : Number(vitalsForm.painScore) <= 3
+                        ? `${vitalsForm.painScore} - Mild Pain`
+                        : Number(vitalsForm.painScore) <= 6
+                        ? `${vitalsForm.painScore} - Moderate Pain`
+                        : `${vitalsForm.painScore} - Severe Pain`}
+                    </span>
+                  </label>
+                  <div className="nurse-pain-chips-row">
+                    {[
+                      { val: "0", label: "0 None" },
+                      { val: "2", label: "2 Mild" },
+                      { val: "4", label: "4 Moderate" },
+                      { val: "6", label: "6 Distressing" },
+                      { val: "8", label: "8 Severe" },
+                      { val: "10", label: "10 Unbearable" },
+                    ].map((chip) => (
+                      <button
+                        key={chip.val}
+                        type="button"
+                        className={`nurse-pain-chip ${vitalsForm.painScore === chip.val ? "active" : ""}`}
+                        onClick={() => setVitalsForm({ ...vitalsForm, painScore: chip.val })}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

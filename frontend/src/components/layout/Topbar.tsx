@@ -122,11 +122,11 @@ export default function Topbar() {
           <NotificationCenter />
 
           <button
-            className="icon-btn tour-trigger-btn desktop-only"
+            className="icon-btn tour-trigger-btn"
             type="button"
             onClick={startRoleTour}
-            aria-label="Start guided tour"
-            title="Start guided tour"
+            aria-label="Start guided tour / help"
+            title="Need help? Start guided tour"
             data-tour-target="tour-button"
           >
             <FaCircleQuestion size={28} />

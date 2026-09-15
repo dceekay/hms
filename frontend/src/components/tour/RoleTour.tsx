@@ -622,12 +622,38 @@ function getTourProfile(roles: string[]): RoleOnboardingProfile {
   };
 }
 
+const GLOBAL_HIDDEN_KEY = "mds:onboarding:hidden:all";
+
+function userHiddenKey(userId: string) {
+  return `mds:onboarding:hidden:user:${userId}`;
+}
+
 function hiddenKey(userId: string, profileId: string) {
   return `mds:onboarding:hidden:${userId}:${profileId}`;
 }
 
 function sessionKey(userId: string, profileId: string) {
   return `mds:onboarding:session:${userId}:${profileId}`;
+}
+
+export function isTourDismissed(userId: string, profileId: string): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    localStorage.getItem(GLOBAL_HIDDEN_KEY) === "true" ||
+    localStorage.getItem(userHiddenKey(userId)) === "true" ||
+    localStorage.getItem(hiddenKey(userId, profileId)) === "true"
+  );
+}
+
+export function markTourDismissed(userId: string, profileId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(GLOBAL_HIDDEN_KEY, "true");
+    localStorage.setItem(userHiddenKey(userId), "true");
+    localStorage.setItem(hiddenKey(userId, profileId), "true");
+  } catch {
+    // ignore quota/storage exceptions
+  }
 }
 
 export default function RoleTour() {
@@ -668,39 +694,47 @@ export default function RoleTour() {
   useEffect(() => {
     if (!user?.id || typeof window === "undefined") return;
 
-    const isHidden = localStorage.getItem(hiddenKey(user.id, profile.id)) === "true";
-    const seenThisSession = sessionStorage.getItem(sessionKey(user.id, profile.id)) === "true";
-
-    if (!isHidden && !seenThisSession) {
-      let cancelled = false;
-
-      void getTourStatus(profile.id, TOUR_VERSION)
-        .then((status) => {
-          if (cancelled || status?.shouldShow === false) {
-            if (status?.shouldShow === false) {
-              localStorage.setItem(hiddenKey(user.id, profile.id), "true");
-            }
-            return;
-          }
-
-          const timer = window.setTimeout(() => {
-            setShowWelcomePrompt(true);
-          }, 1200);
-
-          return () => window.clearTimeout(timer);
-        })
-        .catch(() => {
-          const timer = window.setTimeout(() => {
-            setShowWelcomePrompt(true);
-          }, 1200);
-
-          return () => window.clearTimeout(timer);
-        });
-
-      return () => {
-        cancelled = true;
-      };
+    // If user has already chosen 'Don't show again', strictly do NOT show the tour automatically!
+    if (isTourDismissed(user.id, profile.id)) {
+      return;
     }
+
+    const seenThisSession = sessionStorage.getItem(sessionKey(user.id, profile.id)) === "true";
+    if (seenThisSession) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getTourStatus(profile.id, TOUR_VERSION)
+      .then((status) => {
+        if (cancelled) return;
+        if (status?.shouldShow === false) {
+          markTourDismissed(user.id, profile.id);
+          return;
+        }
+
+        const timer = window.setTimeout(() => {
+          if (!isTourDismissed(user.id, profile.id)) {
+            setShowWelcomePrompt(true);
+          }
+        }, 1200);
+
+        return () => window.clearTimeout(timer);
+      })
+      .catch(() => {
+        // If server fails or offline, only prompt if not previously dismissed
+        if (isTourDismissed(user.id, profile.id)) return;
+        const timer = window.setTimeout(() => {
+          setShowWelcomePrompt(true);
+        }, 1200);
+
+        return () => window.clearTimeout(timer);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [profile.id, user?.id]);
 
   useEffect(() => {
@@ -723,15 +757,16 @@ export default function RoleTour() {
   }, [isOpen, sendEvent, stepIndex]);
 
   const handleClose = (action: "skipped" | "completed" | "dont_show_again") => {
+    const isDismiss = action === "dont_show_again" || dontShowAgain;
     if (typeof window !== "undefined") {
       sessionStorage.setItem(sessionKey(userId, profile.id), "true");
 
-      if (action === "dont_show_again" || dontShowAgain) {
-        localStorage.setItem(hiddenKey(userId, profile.id), "true");
+      if (isDismiss) {
+        markTourDismissed(userId, profile.id);
       }
     }
 
-    sendEvent(dontShowAgain ? "dont_show_again" : action);
+    sendEvent(isDismiss ? "dont_show_again" : action);
     setIsOpen(false);
     setShowWelcomePrompt(false);
   };
@@ -801,6 +836,16 @@ export default function RoleTour() {
                 }}
               >
                 Explore on my own
+              </button>
+              <button
+                type="button"
+                className="toast-dont-show-btn"
+                onClick={() => {
+                  handleClose("dont_show_again");
+                }}
+                title="Don't show tour again automatically on login"
+              >
+                Don&apos;t show again
               </button>
             </div>
           </div>
@@ -984,6 +1029,15 @@ export default function RoleTour() {
               </label>
 
               <div className="footer-actions">
+                <button
+                  type="button"
+                  className="footer-dont-show-btn"
+                  onClick={() => handleClose("dont_show_again")}
+                  title="Permanently silence automatic tour popups"
+                >
+                  Don&apos;t show again
+                </button>
+
                 <button
                   type="button"
                   className="footer-skip-btn"

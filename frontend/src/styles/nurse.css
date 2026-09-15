@@ -1675,6 +1675,101 @@ body.light-theme .nurse-patient-banner {
   color: #0284c7;
 }
 
+.nurse-pill-btn.tour-btn {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: #fbbf24;
+}
+
+:root[data-theme="light"] .nurse-pill-btn.tour-btn {
+  background: #fefce8;
+  border-color: #fde047;
+  color: #b45309;
+}
+
+.nurse-vitals-quick-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nurse-quick-preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.nurse-quick-preset-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="light"] .nurse-quick-preset-btn {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.nurse-pain-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.nurse-pain-chip {
+  flex: 1 1 calc(16.66% - 8px);
+  min-width: 60px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.nurse-pain-chip:hover {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.5);
+  transform: translateY(-1px);
+}
+
+.nurse-pain-chip.active {
+  background: #0ea5e9;
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+}
+
+:root[data-theme="light"] .nurse-pain-chip {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+:root[data-theme="light"] .nurse-pain-chip.active {
+  background: #0284c7;
+  border-color: #0369a1;
+  color: #ffffff;
+}
+
 .nurse-pill-btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
@@ -3289,7 +3384,32 @@ body.light-theme .nurse-patient-banner {
 
   .nurse-header-actions {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .nurse-header-actions .nurse-pill-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .nurse-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .nurse-vitals-quick-tools {
+    width: 100%;
+  }
+
+  .nurse-quick-preset-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 0.88rem;
   }
 
   .nurse-simple-tabs {
@@ -3337,6 +3457,8 @@ body.light-theme .nurse-patient-banner {
 
   .nurse-primary-action-btn {
     width: 100%;
+    min-height: 52px;
+    font-size: 1.05rem;
   }
 
   .inpatient-actions-row {
@@ -3361,6 +3483,38 @@ body.light-theme .nurse-patient-banner {
   .nurse-ack-btn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nurse-simple-tabs {
+    gap: 6px;
+  }
+
+  .nurse-tab-btn {
+    padding: 10px 8px;
+    min-height: 58px;
+    gap: 8px;
+  }
+
+  .nurse-tab-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+
+  .nurse-tab-text strong {
+    font-size: 0.84rem;
+  }
+
+  .nurse-tab-text small {
+    font-size: 0.68rem;
+  }
+
+  .nurse-pain-chip {
+    flex: 1 1 calc(33.333% - 6px);
+    min-height: 44px;
   }
 }
 

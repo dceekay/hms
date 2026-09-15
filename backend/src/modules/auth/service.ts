@@ -5,7 +5,8 @@ import { RegisterDto, LoginDto } from "../../shared/dto/auth.dto";
 import { UserRepository, RefreshTokenRepository } from "./repository";
 import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, AuditAction } from "@prisma/client";
+import { parseUserAgent } from "../../shared/helpers/deviceDetector";
 
 const DEFAULT_REFRESH_TOKEN_DAYS = 7;
 const REMEMBER_ME_REFRESH_TOKEN_DAYS = 30;
@@ -141,7 +142,10 @@ export class AuthService {
     };
   }
 
-  async login(payload: LoginDto) {
+  async login(
+    payload: LoginDto,
+    auditMeta?: { ipAddress?: string; userAgent?: string; rawForwardedFor?: string }
+  ) {
     const user = await this.userRepository.findByEmailOrUsernameWithRolesAndPermissions(
       payload.emailOrUsername
     );
@@ -170,15 +174,58 @@ export class AuthService {
       permissions,
     });
 
+    const now = new Date();
+    const parsedDevice = parseUserAgent(auditMeta?.userAgent);
+
     console.log("==================================");
-    console.log("LOGIN SUCCESS");
-    console.log("User:", user.email);
+    console.log("LOGIN SUCCESS & AUDIT RECORDED");
+    console.log("User:", user.email, "Device:", parsedDevice.deviceType, parsedDevice.os);
     console.log("==================================");
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() },
+      data: { lastLogin: now },
     });
+
+    // Save comprehensive login audit log
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: AuditAction.LOGIN,
+          entity: "Staff",
+          entityId: user.id,
+          userId: user.id,
+          ipAddress: auditMeta?.ipAddress || null,
+          userAgent: (auditMeta?.userAgent || "").slice(0, 500) || null,
+          newValues: {
+            loginTime: now.toISOString(),
+            staffId: user.id,
+            staffName: `${user.firstName} ${user.lastName}`.trim(),
+            username: user.username,
+            email: user.email,
+            roles,
+            device: {
+              type: parsedDevice.deviceType,
+              os: parsedDevice.os,
+              browser: parsedDevice.browser,
+              browserVersion: parsedDevice.browserVersion,
+              screen: payload.deviceDetails?.screen,
+              viewport: payload.deviceDetails?.viewport,
+              platform: payload.deviceDetails?.platform,
+              language: payload.deviceDetails?.language,
+              timezone: payload.deviceDetails?.timezone,
+            },
+            network: {
+              ip: auditMeta?.ipAddress || "Unknown",
+              forwardedFor: auditMeta?.rawForwardedFor,
+              connectionType: payload.deviceDetails?.networkType || "unknown",
+            },
+          },
+        },
+      });
+    } catch (auditError) {
+      console.error("Warning: Failed to create login audit trail:", auditError);
+    }
 
     await prisma.refreshToken.updateMany({
       where: {
@@ -259,7 +306,74 @@ export class AuthService {
 
     return { success: true };
   }
+
+  async getLoginAudits(query: { page?: number; limit?: number; search?: string } = {}) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.AuditLogWhereInput = {
+      action: AuditAction.LOGIN,
+    };
+
+    if (query.search) {
+      where.OR = [
+        { user: { firstName: { contains: query.search } } },
+        { user: { lastName: { contains: query.search } } },
+        { user: { username: { contains: query.search } } },
+        { user: { email: { contains: query.search } } },
+        { ipAddress: { contains: query.search } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              username: true,
+              roles: {
+                include: { role: true },
+              },
+            },
+          },
+        },
+      }),
+      prisma.auditLog.count({ where }),
+    ]);
+
+    return {
+      items: items.map((log) => ({
+        id: log.id,
+        action: log.action,
+        createdAt: log.createdAt,
+        ipAddress: log.ipAddress,
+        userAgent: log.userAgent,
+        user: log.user
+          ? {
+              id: log.user.id,
+              name: `${log.user.firstName} ${log.user.lastName}`.trim(),
+              username: log.user.username,
+              email: log.user.email,
+              roles: log.user.roles.map((r) => r.role.name),
+            }
+          : null,
+        details: log.newValues,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }
-
-
-

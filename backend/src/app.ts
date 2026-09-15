@@ -30,6 +30,9 @@ import { notFound } from "./middleware/notFound.middleware";
 
 const app = express();
 
+// Enable reverse proxy trust for Nginx/Cloudflare real IP forwarding
+app.set("trust proxy", 1);
+
 function normalizeCorsOrigin(origin: string) {
   const trimmedOrigin = origin.trim();
 

@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import { AuthService } from "./service";
+import { extractClientIp } from "../../shared/helpers/deviceDetector";
 
 export class AuthController extends BaseController {
   constructor(private readonly authService = new AuthService()) {
@@ -19,8 +20,25 @@ export class AuthController extends BaseController {
 
   login = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const result = await this.authService.login(req.body);
+      const ipAddress = extractClientIp(req.headers, req.socket?.remoteAddress, req.ip);
+      const userAgent = (req.headers["user-agent"] as string) || "Unknown User-Agent";
+      const rawForwardedFor = req.headers["x-forwarded-for"] as string | undefined;
+
+      const result = await this.authService.login(req.body, {
+        ipAddress,
+        userAgent,
+        rawForwardedFor,
+      });
       this.ok(res, "Login successful", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  loginAudits = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.authService.getLoginAudits(req.query as any);
+      this.ok(res, "Staff login audit trail retrieved successfully", result);
     } catch (error) {
       next(error);
     }

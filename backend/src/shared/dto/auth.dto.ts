@@ -13,6 +13,16 @@ export const loginSchema = z.object({
   emailOrUsername: z.string().min(3),
   password: z.string().min(8),
   rememberMe: z.boolean().optional().default(false),
+  deviceDetails: z
+    .object({
+      screen: z.string().optional(),
+      viewport: z.string().optional(),
+      platform: z.string().optional(),
+      language: z.string().optional(),
+      networkType: z.string().optional(),
+      timezone: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>;

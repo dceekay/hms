@@ -144,6 +144,44 @@
   background: color-mix(in srgb, var(--text, #fff) 6%, transparent);
 }
 
+.toast-dont-show-btn {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toast-dont-show-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.footer-dont-show-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.footer-dont-show-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
 @keyframes toastSlideUp {
   from {
     opacity: 0;
@@ -829,18 +867,53 @@
   }
 
   .footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: space-between;
     width: 100%;
   }
 
+  .footer-dont-show-btn,
+  .footer-skip-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+
   .step-stepper-btns {
-    flex: 1;
-    justify-content: flex-end;
+    width: 100%;
+    justify-content: stretch;
+    gap: 8px;
   }
 
   .stepper-btn {
     flex: 1;
     justify-content: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .onboarding-welcome-toast {
+    bottom: 84px; /* Ensure clearance above MobileBottomNav */
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .toast-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .toast-start-btn,
+  .toast-skip-btn,
+  .toast-dont-show-btn {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    text-align: center;
+    min-height: 40px;
   }
 }
 
@@ -855,5 +928,11 @@
 
   .header-left h2 {
     font-size: 1rem;
+  }
+
+  .toast-start-btn,
+  .toast-skip-btn,
+  .toast-dont-show-btn {
+    flex: 1 1 100%;
   }
 }

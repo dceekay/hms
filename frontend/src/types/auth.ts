@@ -4,6 +4,16 @@ export const loginSchema = z.object({
   emailOrUsername: z.string().min(3, "Enter a valid username or email."),
   password: z.string().min(8, "Password must be at least 8 characters."),
   rememberMe: z.boolean().optional(),
+  deviceDetails: z
+    .object({
+      screen: z.string().optional(),
+      viewport: z.string().optional(),
+      platform: z.string().optional(),
+      language: z.string().optional(),
+      networkType: z.string().optional(),
+      timezone: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
@@ -29,4 +39,3 @@ export type User = {
   roles?: string[];
   permissions?: string[];
 };
-

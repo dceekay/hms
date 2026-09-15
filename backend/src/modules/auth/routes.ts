@@ -29,5 +29,11 @@ router.get(
   authorizePermissions(["roles.read"]),
   authController.profile
 );
+router.get(
+  "/login-audits",
+  authenticate,
+  authorizeRoles(["Super Admin", "Administrator"]),
+  authController.loginAudits
+);
 
 export default router;
