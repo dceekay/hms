@@ -3,15 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   FiCalendar,
   FiClock,
-  FiHelpCircle,
   FiLogOut,
-  FiMoon,
-  FiSettings,
-  FiSun,
   FiRefreshCw,
   FiWifi,
   FiWifiOff,
 } from "react-icons/fi";
+import { FaSun, FaMoon, FaCircleQuestion, FaGear } from "react-icons/fa6";
 import { useAuthStore } from "../../store/authStore";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
@@ -119,7 +116,7 @@ export default function Topbar() {
             title={isDark ? "Light mode" : "Dark mode"}
             data-tour-target="theme-toggle"
           >
-            {isDark ? <FiSun size={28} /> : <FiMoon size={28} />}
+            {isDark ? <FaSun size={28} /> : <FaMoon size={28} />}
           </button>
 
           <NotificationCenter />
@@ -132,18 +129,18 @@ export default function Topbar() {
             title="Start guided tour"
             data-tour-target="tour-button"
           >
-            <FiHelpCircle size={28} />
+            <FaCircleQuestion size={28} />
           </button>
 
           <button
-            className="icon-btn desktop-only"
+            className="icon-btn settings-btn desktop-only"
             type="button"
             onClick={() => navigate("/settings")}
             aria-label="Open account settings"
             title="Account settings"
             data-tour-target="settings-button"
           >
-            <FiSettings size={28} />
+            <FaGear size={28} />
           </button>
         </div>
 

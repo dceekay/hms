@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiBell, FiCheckCircle, FiRefreshCw, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
+import { FaBell } from "react-icons/fa6";
 import {
   fetchNotifications,
   fetchPushPublicKey,
@@ -313,7 +314,7 @@ export default function NotificationCenter() {
         title="Notifications"
         onClick={() => setOpen((current) => !current)}
       >
-        <FiBell size={28} />
+        <FaBell size={28} />
         {unreadCount > 0 && <span>{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 

@@ -208,18 +208,19 @@
 }
 
 .icon-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
-  color: var(--text);
+  border-radius: 11px;
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-2px);
 }
 
 .icon-btn svg,
@@ -227,66 +228,124 @@
 .topbar .icon-btn svg,
 .topbar .notification-action svg,
 .topbar .theme-toggle svg,
-.topbar .tour-trigger-btn svg {
+.topbar .tour-trigger-btn svg,
+.topbar .settings-btn svg {
   width: 28px !important;
   height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
   font-size: 28px !important;
-  stroke-width: 2.3;
-  flex-shrink: 0;
+  display: block !important;
+  flex-shrink: 0 !important;
 }
 
-.icon-btn svg path,
-.icon-btn svg circle,
-.icon-btn svg line,
-.icon-btn svg polyline,
-.topbar .icon-btn svg path,
-.topbar .icon-btn svg circle,
-.topbar .icon-btn svg line,
-.topbar .icon-btn svg polyline {
-  stroke-width: 2.3;
+/* 1. Theme Toggle - Radiant Golden Amber Sun / Indigo Twilight Moon */
+.theme-toggle {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.6) !important;
+  color: #fbbf24 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.28), inset 0 0 8px rgba(245, 158, 11, 0.15);
 }
 
-.icon-btn:hover {
-  transform: translateY(-1px);
-  border-color: var(--primary);
-  background: var(--surface-hover);
-  color: var(--text-strong);
+.theme-toggle:hover {
+  background: rgba(245, 158, 11, 0.35) !important;
+  border-color: #fbbf24 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.55), inset 0 0 12px rgba(245, 158, 11, 0.25);
 }
 
+:root[data-theme="light"] .theme-toggle,
+body.light-theme .theme-toggle {
+  background: rgba(79, 70, 229, 0.14) !important;
+  border: 1.5px solid rgba(79, 70, 229, 0.5) !important;
+  color: #4338ca !important;
+  box-shadow: 0 0 10px rgba(79, 70, 229, 0.2);
+}
+
+:root[data-theme="light"] .theme-toggle:hover,
+body.light-theme .theme-toggle:hover {
+  background: rgba(79, 70, 229, 0.28) !important;
+  border-color: #4f46e5 !important;
+  color: #1e1b4b !important;
+  box-shadow: 0 0 16px rgba(79, 70, 229, 0.38);
+}
+
+.theme-toggle svg {
+  color: inherit !important;
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
+}
+
+:root[data-theme="light"] .theme-toggle svg,
+body.light-theme .theme-toggle svg {
+  filter: drop-shadow(0 0 3px rgba(67, 56, 202, 0.4));
+}
+
+/* 2. Notification Center - Electric Sky Blue */
 .notification-center {
   position: relative;
 }
 
 .notification-action {
   position: relative;
+  background: rgba(14, 165, 233, 0.2) !important;
+  border: 1.5px solid rgba(14, 165, 233, 0.6) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.28), inset 0 0 8px rgba(14, 165, 233, 0.15);
+}
+
+.notification-action:hover,
+.notification-action.has-unread {
+  background: rgba(14, 165, 233, 0.35) !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.55), inset 0 0 12px rgba(14, 165, 233, 0.25);
+}
+
+:root[data-theme="light"] .notification-action,
+body.light-theme .notification-action {
+  background: rgba(2, 132, 199, 0.14) !important;
+  border: 1.5px solid rgba(2, 132, 199, 0.5) !important;
+  color: #0284c7 !important;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+}
+
+:root[data-theme="light"] .notification-action:hover,
+body.light-theme .notification-action:hover {
+  background: rgba(2, 132, 199, 0.28) !important;
+  border-color: #0284c7 !important;
+  color: #082f49 !important;
+  box-shadow: 0 0 16px rgba(2, 132, 199, 0.38);
 }
 
 .notification-action svg {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 28px !important;
-  stroke-width: 2.3;
+  color: inherit !important;
+  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.5));
+}
+
+:root[data-theme="light"] .notification-action svg,
+body.light-theme .notification-action svg {
+  filter: drop-shadow(0 0 3px rgba(2, 132, 199, 0.4));
 }
 
 .notification-action span {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 19px;
-  height: 19px;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  border: 2px solid var(--surface-strong);
+  border: 2px solid var(--surface-strong, #081323);
   border-radius: 999px;
-  background: var(--danger);
+  background: #ef4444;
   color: #ffffff;
-  font-size: 0.65rem;
+  font-size: 0.68rem;
   font-weight: 900;
   line-height: 1;
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.65);
   z-index: 3;
 }
 
@@ -812,32 +871,98 @@
   flex-shrink: 0;
 }
 
+/* 3. Tour - Fresh Mint Teal */
 .tour-trigger-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  background: rgba(20, 184, 166, 0.2) !important;
+  border: 1.5px solid rgba(20, 184, 166, 0.6) !important;
+  color: #2dd4bf !important;
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.28), inset 0 0 8px rgba(20, 184, 166, 0.15);
+}
+
+.tour-trigger-btn:hover {
+  background: rgba(20, 184, 166, 0.35) !important;
+  border-color: #2dd4bf !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(20, 184, 166, 0.55), inset 0 0 12px rgba(20, 184, 166, 0.25);
+}
+
+:root[data-theme="light"] .tour-trigger-btn,
+body.light-theme .tour-trigger-btn {
+  background: rgba(13, 148, 136, 0.14) !important;
+  border: 1.5px solid rgba(13, 148, 136, 0.5) !important;
+  color: #0f766e !important;
+  box-shadow: 0 0 10px rgba(13, 148, 136, 0.2);
+}
+
+:root[data-theme="light"] .tour-trigger-btn:hover,
+body.light-theme .tour-trigger-btn:hover {
+  background: rgba(13, 148, 136, 0.28) !important;
+  border-color: #0d9488 !important;
+  color: #042f2e !important;
+  box-shadow: 0 0 16px rgba(13, 148, 136, 0.38);
 }
 
 .tour-trigger-btn svg {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 28px !important;
-  stroke-width: 2.3;
-  flex-shrink: 0;
+  color: inherit !important;
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.5));
 }
 
-.theme-toggle {
-  color: var(--accent);
+:root[data-theme="light"] .tour-trigger-btn svg,
+body.light-theme .tour-trigger-btn svg {
+  filter: drop-shadow(0 0 3px rgba(15, 118, 110, 0.4));
 }
 
-.theme-toggle svg {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 28px !important;
-  stroke-width: 2.3;
+/* 4. Settings - Modern Royal Purple */
+.settings-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(168, 85, 247, 0.2) !important;
+  border: 1.5px solid rgba(168, 85, 247, 0.6) !important;
+  color: #c084fc !important;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.28), inset 0 0 8px rgba(168, 85, 247, 0.15);
+}
+
+.settings-btn:hover {
+  background: rgba(168, 85, 247, 0.35) !important;
+  border-color: #c084fc !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.55), inset 0 0 12px rgba(168, 85, 247, 0.25);
+}
+
+:root[data-theme="light"] .settings-btn,
+body.light-theme .settings-btn {
+  background: rgba(147, 51, 234, 0.14) !important;
+  border: 1.5px solid rgba(147, 51, 234, 0.5) !important;
+  color: #7e22ce !important;
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.2);
+}
+
+:root[data-theme="light"] .settings-btn:hover,
+body.light-theme .settings-btn:hover {
+  background: rgba(147, 51, 234, 0.28) !important;
+  border-color: #9333ea !important;
+  color: #3b0764 !important;
+  box-shadow: 0 0 16px rgba(147, 51, 234, 0.38);
+}
+
+.settings-btn svg {
+  color: inherit !important;
+  filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.5));
+}
+
+:root[data-theme="light"] .settings-btn svg,
+body.light-theme .settings-btn svg {
+  filter: drop-shadow(0 0 3px rgba(126, 34, 206, 0.4));
 }
 
 .logout-btn:hover {
@@ -969,19 +1094,20 @@
   }
 
   .icon-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
   }
 
   .icon-btn svg,
   .topbar button.icon-btn svg,
   .topbar .notification-action svg,
-  .topbar .theme-toggle svg {
-    width: 27px !important;
-    height: 27px !important;
-    font-size: 27px !important;
-    stroke-width: 2.3;
+  .topbar .theme-toggle svg,
+  .topbar .tour-trigger-btn svg,
+  .topbar .settings-btn svg {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 26px !important;
   }
 
   .user-menu-trigger {
