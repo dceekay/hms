@@ -219,41 +219,64 @@
   color: var(--text);
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .icon-btn svg,
-.topbar button.icon-btn svg {
-  width: 23px;
-  height: 23px;
-  font-size: 23px;
+.topbar button.icon-btn svg,
+.topbar .icon-btn svg,
+.topbar .notification-action svg,
+.topbar .theme-toggle svg,
+.topbar .tour-trigger-btn svg {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 28px !important;
+  stroke-width: 2.3;
   flex-shrink: 0;
+}
+
+.icon-btn svg path,
+.icon-btn svg circle,
+.icon-btn svg line,
+.icon-btn svg polyline,
+.topbar .icon-btn svg path,
+.topbar .icon-btn svg circle,
+.topbar .icon-btn svg line,
+.topbar .icon-btn svg polyline {
+  stroke-width: 2.3;
 }
 
 .icon-btn:hover {
   transform: translateY(-1px);
   border-color: var(--primary);
   background: var(--surface-hover);
+  color: var(--text-strong);
 }
 
 .notification-center {
   position: relative;
 }
 
+.notification-action {
+  position: relative;
+}
+
 .notification-action svg {
-  width: 23px;
-  height: 23px;
-  font-size: 23px;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 28px !important;
+  stroke-width: 2.3;
 }
 
 .notification-action span {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 4px;
   border: 2px solid var(--surface-strong);
   border-radius: 999px;
@@ -263,6 +286,8 @@
   font-weight: 900;
   line-height: 1;
   pointer-events: none;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  z-index: 3;
 }
 
 .notification-panel {
@@ -788,20 +813,19 @@
 }
 
 .tour-trigger-btn {
-  width: auto;
-  min-width: 42px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 12px;
-  font-size: 0.85rem;
-  font-weight: 700;
+  padding: 0;
 }
 
 .tour-trigger-btn svg {
-  width: 21px;
-  height: 21px;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 28px !important;
+  stroke-width: 2.3;
   flex-shrink: 0;
 }
 
@@ -810,9 +834,10 @@
 }
 
 .theme-toggle svg {
-  width: 23px;
-  height: 23px;
-  font-size: 23px;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 28px !important;
+  stroke-width: 2.3;
 }
 
 .logout-btn:hover {
@@ -944,16 +969,19 @@
   }
 
   .icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
   }
 
   .icon-btn svg,
-  .topbar button.icon-btn svg {
-    width: 22px;
-    height: 22px;
-    font-size: 22px;
+  .topbar button.icon-btn svg,
+  .topbar .notification-action svg,
+  .topbar .theme-toggle svg {
+    width: 27px !important;
+    height: 27px !important;
+    font-size: 27px !important;
+    stroke-width: 2.3;
   }
 
   .user-menu-trigger {

@@ -310,9 +310,10 @@ export default function NotificationCenter() {
         className={`icon-btn notification-action ${unreadCount > 0 ? "has-unread" : ""}`}
         type="button"
         aria-label="Notifications"
+        title="Notifications"
         onClick={() => setOpen((current) => !current)}
       >
-        <FiBell />
+        <FiBell size={28} />
         {unreadCount > 0 && <span>{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 

@@ -119,7 +119,7 @@ export default function Topbar() {
             title={isDark ? "Light mode" : "Dark mode"}
             data-tour-target="theme-toggle"
           >
-            {isDark ? <FiSun /> : <FiMoon />}
+            {isDark ? <FiSun size={28} /> : <FiMoon size={28} />}
           </button>
 
           <NotificationCenter />
@@ -132,8 +132,7 @@ export default function Topbar() {
             title="Start guided tour"
             data-tour-target="tour-button"
           >
-            <FiHelpCircle />
-            <span>Tour</span>
+            <FiHelpCircle size={28} />
           </button>
 
           <button
@@ -144,7 +143,7 @@ export default function Topbar() {
             title="Account settings"
             data-tour-target="settings-button"
           >
-            <FiSettings />
+            <FiSettings size={28} />
           </button>
         </div>
 
