@@ -262,8 +262,8 @@ export default function LaboratoryTemplatesPage() {
             <div
               style={{
                 padding: "0.85rem 1.25rem",
-                background: "var(--cavendish-emergency-bg)",
-                border: "1px solid var(--cavendish-emergency-border)",
+                background: "var(--mds-emergency-bg, rgba(239, 68, 68, 0.12))",
+                border: "1px solid var(--mds-emergency-border, rgba(239, 68, 68, 0.3))",
                 borderRadius: "10px",
                 color: "var(--danger)",
                 display: "flex",

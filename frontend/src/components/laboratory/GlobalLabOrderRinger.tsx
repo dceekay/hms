@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaFlask, FaPhoneSlash } from "react-icons/fa";
-import { FiCheck, FiExternalLink, FiVolume2, FiVolumeX } from "react-icons/fi";
+import { FaFlask } from "react-icons/fa";
+import { FiCheck, FiExternalLink, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
 import {
   fetchLaboratoryRequests,
@@ -9,54 +9,88 @@ import {
 } from "../../services/laboratoryService";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import {
-  startContinuousPhoneRing,
+  startIntermittentPhoneAlert,
   stopContinuousPhoneRing,
 } from "../../utils/alertSound";
 import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
 } from "../../utils/appEvents";
+import "../../styles/lab-ringer.css";
 
 export default function GlobalLabOrderRinger() {
+  const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
 
+  const userId = user?.id || "global";
+  const userMuteKey = `mds_lab_ringer_muted_${userId}`;
+  const userDismissedKey = `mds_lab_ringer_dismissed_${userId}`;
+  const userMutedOrdersKey = `mds_muted_orders_${userId}`;
+
   const [requests, setRequests] = useState<LaboratoryRequest[]>([]);
-  const [mutedRequestIds, setMutedRequestIds] = useState<Set<string>>(new Set());
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isMuted, setIsMuted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`mds_lab_ringer_muted_${user?.id || "global"}`) === "true";
+  });
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(`mds_lab_ringer_dismissed_${user?.id || "global"}`) === "true";
+  });
+  const [mutedOrderIds, setMutedOrderIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(`mds_muted_orders_${user?.id || "global"}`);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
 
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
-  const isLabOrAdmin = useMemo(() => {
+
+  // Alert is ONLY sent to Laboratory staff and Administrators managing lab operations.
+  // Doctors, Nurses, Cashiers, Billing, Security, etc. do NOT receive this.
+  const isRecipient = useMemo(() => {
+    if (!token || !user) return false;
     const norm = roles.map((r) => r.toLowerCase());
     return (
       norm.includes("laboratory") ||
       norm.includes("super admin") ||
       norm.includes("administrator")
     );
-  }, [roles]);
+  }, [token, user, roles]);
 
-  // If already on the laboratory page, let the laboratory page handle local UI,
-  // but keep background data fresh.
-  const isAlreadyOnLabPage = location.pathname === "/laboratory";
+  // Sync mute state if user ID changes (e.g. switch account)
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      setIsMuted(localStorage.getItem(userMuteKey) === "true");
+      setIsDismissed(sessionStorage.getItem(userDismissedKey) === "true");
+    }
+  }, [user?.id, userMuteKey, userDismissedKey]);
 
   const fetchPending = async () => {
-    if (!isLabOrAdmin) return;
+    if (!isRecipient) return;
     try {
       const res = await fetchLaboratoryRequests({ status: "pending" });
       if (res.result?.items) {
         setRequests(res.result.items);
       }
     } catch {
-      // Quiet fail in background
+      // Background poll - fail silently
     }
   };
 
   useEffect(() => {
-    if (!isLabOrAdmin) return;
+    if (!isRecipient) {
+      stopContinuousPhoneRing();
+      return;
+    }
+
     void fetchPending();
 
-    const interval = setInterval(fetchPending, 5000);
+    const interval = setInterval(fetchPending, 12000);
     const handleMutation = () => void fetchPending();
 
     window.addEventListener(HMS_DATA_MUTATED_EVENT, handleMutation);
@@ -66,36 +100,38 @@ export default function GlobalLabOrderRinger() {
       clearInterval(interval);
       window.removeEventListener(HMS_DATA_MUTATED_EVENT, handleMutation);
       window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleMutation);
+      stopContinuousPhoneRing();
     };
-  }, [isLabOrAdmin]);
+  }, [isRecipient]);
 
   const activePending = useMemo(() => {
     return requests.filter(
-      (r) => r.status === "pending" && !mutedRequestIds.has(r.id)
+      (r) => r.status === "pending" && !mutedOrderIds.has(r.id)
     );
-  }, [requests, mutedRequestIds]);
+  }, [requests, mutedOrderIds]);
 
-  const shouldRingGlobal =
-    isLabOrAdmin &&
-    !isAlreadyOnLabPage &&
-    soundEnabled &&
+  // Repetitive alert for recipients when not muted and not dismissed
+  const shouldAlert =
+    isRecipient &&
+    !isMuted &&
+    !isDismissed &&
     activePending.length > 0;
 
   useEffect(() => {
-    if (shouldRingGlobal) {
-      startContinuousPhoneRing();
-    } else if (!isAlreadyOnLabPage) {
+    if (shouldAlert) {
+      // Gentle intermittent alert spaced out by 50 seconds for lab recipients
+      startIntermittentPhoneAlert(50000, 0.35);
+    } else {
       stopContinuousPhoneRing();
     }
 
     return () => {
-      if (!isAlreadyOnLabPage) {
-        stopContinuousPhoneRing();
-      }
+      stopContinuousPhoneRing();
     };
-  }, [shouldRingGlobal, isAlreadyOnLabPage]);
+  }, [shouldAlert]);
 
-  if (!isLabOrAdmin || isAlreadyOnLabPage || activePending.length === 0) {
+  // If not a recipient, dismissed, or no pending requests, do not render
+  if (!isRecipient || isDismissed || activePending.length === 0) {
     return null;
   }
 
@@ -105,188 +141,125 @@ export default function GlobalLabOrderRinger() {
       "Walk-in Patient"
     : "Walk-in Patient";
 
-  const handleMuteAll = () => {
+  const handleToggleMute = () => {
     stopContinuousPhoneRing();
-    setMutedRequestIds((prev) => {
-      const next = new Set(prev);
-      activePending.forEach((r) => next.add(r.id));
-      return next;
-    });
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (nextMuted) {
+      localStorage.setItem(userMuteKey, "true");
+    } else {
+      localStorage.removeItem(userMuteKey);
+    }
+  };
+
+  const handleDismiss = () => {
+    stopContinuousPhoneRing();
+    setIsDismissed(true);
+    sessionStorage.setItem(userDismissedKey, "true");
   };
 
   const handleAccept = async () => {
     stopContinuousPhoneRing();
-    setMutedRequestIds((prev) => new Set(prev).add(latest.id));
+    const updatedMuted = new Set(mutedOrderIds).add(latest.id);
+    setMutedOrderIds(updatedMuted);
+    try {
+      localStorage.setItem(userMutedOrdersKey, JSON.stringify(Array.from(updatedMuted)));
+    } catch {}
+
     await updateLaboratoryRequestStatus(latest.id, "sample_collected");
-    navigate("/laboratory");
+    if (location.pathname !== "/laboratory") {
+      navigate("/laboratory");
+    }
+  };
+
+  const handleOpenLab = () => {
+    stopContinuousPhoneRing();
+    if (location.pathname !== "/laboratory") {
+      navigate("/laboratory");
+    }
   };
 
   return (
-    <div
-      className="global-lab-order-alert-strip"
-      role="alert"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 99999,
-        background: "linear-gradient(135deg, #092a5e 0%, #0369a1 100%)",
-        color: "#ffffff",
-        padding: "10px 18px",
-        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "14px",
-        borderBottom: "2px solid #38bdf8",
-        animation: "slideDown 0.3s ease-out",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-        <div
-          style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            background: "#f59e0b",
-            color: "#ffffff",
-            display: "grid",
-            placeItems: "center",
-            flexShrink: 0,
-            fontSize: "1.1rem",
-            animation: "pulse 1.2s infinite",
-          }}
-        >
-          <FaFlask />
+    <aside className="global-lab-order-toast" role="alert" aria-live="polite">
+      <div className="lab-toast-header">
+        <div className="lab-toast-title-row">
+          <div className="lab-toast-pulse-icon">
+            <FaFlask />
+          </div>
+          <div className="lab-toast-title-text">
+            <strong>New Lab Order</strong>
+            <span className="lab-toast-sub">Sample Collection Needed</span>
+          </div>
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                background: "rgba(245, 158, 11, 0.25)",
-                border: "1px solid #f59e0b",
-                color: "#fef3c7",
-                padding: "2px 7px",
-                borderRadius: "999px",
-              }}
-            >
-              Doctor Ordered Test • Immediate Attention
+
+        <div className="lab-toast-header-actions">
+          {activePending.length > 1 && (
+            <span className="lab-toast-badge-more">
+              +{activePending.length - 1} more
             </span>
-            {activePending.length > 1 && (
-              <span
-                style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  background: "rgba(255, 255, 255, 0.2)",
-                  padding: "2px 7px",
-                  borderRadius: "999px",
-                }}
-              >
-                +{activePending.length - 1} more pending
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: "0.92rem", fontWeight: 700, marginTop: "2px" }}>
-            {patientDisplayName} —{" "}
-            <span style={{ color: "#7dd3fc" }}>{latest.template?.name}</span>
-            {latest.patient?.mrn && (
-              <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.8)", marginLeft: "6px" }}>
-                (MRN: {latest.patient.mrn})
-              </span>
-            )}
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            title={isMuted ? "Sound is muted for you (click to unmute)" : "Mute alert sound for your session"}
+            className={`lab-toast-icon-btn ${isMuted ? "muted" : ""}`}
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+          >
+            {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            title="Dismiss alert card"
+            className="lab-toast-icon-btn close"
+            aria-label="Dismiss alert"
+          >
+            <FiX />
+          </button>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+      <div className="lab-toast-body">
+        <div className="lab-toast-patient-row">
+          <span className="lab-toast-patient-name">{patientDisplayName}</span>
+          {latest.patient?.mrn && (
+            <span className="lab-toast-mrn">MRN: {latest.patient.mrn}</span>
+          )}
+        </div>
+
+        <div className="lab-toast-test-chip">
+          {latest.template?.name || "Laboratory Investigation"}
+        </div>
+      </div>
+
+      <div className="lab-toast-footer">
         <button
           type="button"
           onClick={handleAccept}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "#10b981",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "8px",
-            padding: "7px 14px",
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          className="lab-toast-btn-primary"
         >
-          <FiCheck /> Accept / Collect Sample
+          <FiCheck /> Collect Sample
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            stopContinuousPhoneRing();
-            navigate("/laboratory");
-          }}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "rgba(255, 255, 255, 0.15)",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            borderRadius: "8px",
-            padding: "7px 12px",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          onClick={handleOpenLab}
+          className="lab-toast-btn-secondary"
         >
-          <FiExternalLink /> Open Lab Station
+          <FiExternalLink /> Open Lab
         </button>
 
         <button
           type="button"
-          onClick={handleMuteAll}
-          title="Mute continuous ringing"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "rgba(239, 68, 68, 0.2)",
-            color: "#fecaca",
-            border: "1px solid rgba(239, 68, 68, 0.4)",
-            borderRadius: "8px",
-            padding: "7px 12px",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          onClick={handleToggleMute}
+          className={`lab-toast-btn-mute ${isMuted ? "active" : ""}`}
         >
-          <FaPhoneSlash /> Mute
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (soundEnabled) stopContinuousPhoneRing();
-            setSoundEnabled(!soundEnabled);
-          }}
-          title={soundEnabled ? "Disable sound" : "Enable sound"}
-          style={{
-            background: "transparent",
-            color: "#ffffff",
-            border: "none",
-            padding: "6px",
-            fontSize: "1rem",
-            cursor: "pointer",
-          }}
-        >
-          {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
+          {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+          <span>{isMuted ? "Muted" : "Mute"}</span>
         </button>
       </div>
-    </div>
+    </aside>
   );
 }

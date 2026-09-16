@@ -7,7 +7,7 @@ import {
   FileText as FiFileText,
   RefreshCw as FiRefreshCw,
 } from "lucide-react";
-import { CavendishMark } from "../common/CavendishLogo";
+import { MdsMark } from "../common/CavendishLogo";
 import { HOSPITAL_OFFICIAL_DETAILS } from "../../constants/hospitalInfo";
 import type { LaboratoryTemplateField, LaboratoryTemplateFormValues } from "../../types/laboratory";
 
@@ -128,7 +128,7 @@ export default function LaboratoryReportPreview({
       <div className="lab-report-sheet lab-print-page">
         {/* Hospital Official Branding Header */}
         <div className="lab-report-branding" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <CavendishMark size={48} />
+          <MdsMark size={48} />
           <div className="lab-report-logo-text" style={{ flex: 1 }}>
             <h2>{HOSPITAL_OFFICIAL_DETAILS.name}</h2>
             <p>Department of Laboratory Medicine & Diagnostic Pathology</p>

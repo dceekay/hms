@@ -4,7 +4,7 @@ import { Sidebar } from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
 import MobileBottomNav from "../components/layout/MobileBottomNav";
 import RoleTour from "../components/tour/RoleTour";
-import GlobalLabOrderRinger from "../components/laboratory/GlobalLabOrderRinger";
+import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
 
 import "../styles/sidebar.css";
 import "../styles/topbar.css";
@@ -37,15 +37,16 @@ export default function AdminLayout({
           collapsed ? "collapsed" : ""
         }`}
       >
-        <Topbar />
+        <Topbar onOpenSidebar={() => setMobileOpen(true)} />
 
         <section className="page-content">
           {children}
         </section>
+
+        <PoweredByCeekayX variant="subtle" />
       </main>
 
       <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />
-      <GlobalLabOrderRinger />
       <RoleTour />
     </div>
   );

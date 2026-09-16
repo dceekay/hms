@@ -38,7 +38,7 @@ import {
   FaUserNurse,
 } from "react-icons/fa";
 import { useAuthStore } from "../../store/authStore";
-import mdsLogo from "../../assets/optimized/logo.png";
+import mdsLogo from "../../assets/optimized/logo-sm.webp";
 import { getUserDisplayName } from "../../utils/userDisplay";
 import { getRoleHomePath } from "../../utils/roleHome";
 import { getCachedDoctorWorkspace } from "../../services/clinicalService";

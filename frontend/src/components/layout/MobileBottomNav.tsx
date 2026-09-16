@@ -19,6 +19,7 @@ import {
   Stethoscope as FaUserNurse,
   UserRound,
   UsersRound as FiUsers,
+  Menu as FiMenuIcon,
   X as FiX,
 } from "lucide-react";
 
@@ -269,6 +270,33 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
               </button>
             </div>
             <div className="mobile-nav-sheet-grid">
+              {onOpenMenu && (
+                <button
+                  type="button"
+                  className="mobile-nav-sheet-item mobile-nav-full-menu-btn"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    onOpenMenu();
+                  }}
+                  style={{
+                    gridColumn: "1 / -1",
+                    background: "rgba(14, 165, 233, 0.12)",
+                    border: "1px solid rgba(56, 189, 248, 0.3)",
+                    color: "#38bdf8",
+                    fontWeight: 700,
+                    borderRadius: "10px",
+                    padding: "10px 14px",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <FiMenuIcon size={20} />
+                  <span>Open Full Sidebar Menu</span>
+                </button>
+              )}
               {overflowItems.map((item) => (
                 <NavLink
                   key={item.path}

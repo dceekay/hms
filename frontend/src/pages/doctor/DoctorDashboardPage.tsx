@@ -324,7 +324,7 @@ function defaultReminderForm(): ReminderForm {
 }
 
 function reminderStorageKey(userId?: string) {
-  return `cavendish:doctor-reminders:${userId || "local"}`;
+  return `mds:doctor-reminders:${userId || "local"}`;
 }
 
 function createReminderId() {

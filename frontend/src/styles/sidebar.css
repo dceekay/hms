@@ -469,7 +469,7 @@
 /* --------------------------------------------------------------------------
    Responsive Layout & Mobile Drawer
    -------------------------------------------------------------------------- */
-@media (max-width: 920px) {
+@media (min-width: 901px) and (max-width: 1120px) {
   .sidebar {
     width: 92px;
   }
@@ -488,7 +488,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .admin-layout {
     min-height: 100dvh;
   }
