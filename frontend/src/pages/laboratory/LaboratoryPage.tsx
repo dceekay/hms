@@ -918,11 +918,11 @@ export default function LaboratoryPage() {
                   <thead>
                     <tr>
                       <th style={{ width: "13%" }}>Status</th>
-                      <th style={{ width: "12%" }}>Track / QR</th>
-                      <th style={{ width: "26%" }}>Patient (Full Name & Card)</th>
-                      <th style={{ width: "20%" }}>Investigation & Specimen</th>
-                      <th style={{ width: "13%" }}>Ordered</th>
-                      <th style={{ width: "16%", textAlign: "right" }}>1-Tap Actions</th>
+                      <th className="hide-mobile" style={{ width: "12%" }}>Track / QR</th>
+                      <th style={{ width: "32%" }}>Patient (Full Name & Card)</th>
+                      <th style={{ width: "24%" }}>Investigation & Specimen</th>
+                      <th className="hide-mobile" style={{ width: "13%" }}>Ordered</th>
+                      <th style={{ width: "18%", textAlign: "right" }}>1-Tap Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -948,7 +948,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 2. Track & QR Preview */}
-                          <td className="lab-td-track">
+                          <td className="lab-td-track hide-mobile">
                             <strong className="lab-track-number">{request.requestNumber}</strong>
                             <div>
                               <button
@@ -997,7 +997,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 5. Ordered Time */}
-                          <td className="lab-td-time">
+                          <td className="lab-td-time hide-mobile">
                             <span className="lab-date-primary">{formatDate(request.createdAt)}</span>
                           </td>
 
@@ -1450,12 +1450,12 @@ export default function LaboratoryPage() {
                 <table className="lab-requests-table completed-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "11%", textAlign: "center" }}>Verified QR</th>
-                      <th style={{ width: "13%" }}>Track No. & Date</th>
-                      <th style={{ width: "24%" }}>Patient Name & Demographics</th>
-                      <th style={{ width: "20%" }}>Test Panel & Specimen</th>
-                      <th style={{ width: "16%" }}>Clinical Impression</th>
-                      <th style={{ width: "16%", textAlign: "right" }}>1-Tap Print & Actions</th>
+                      <th className="hide-mobile" style={{ width: "11%", textAlign: "center" }}>Verified QR</th>
+                      <th className="hide-mobile" style={{ width: "13%" }}>Track No. & Date</th>
+                      <th style={{ width: "36%" }}>Patient Name & Demographics</th>
+                      <th style={{ width: "32%" }}>Test Panel & Specimen</th>
+                      <th className="hide-mobile" style={{ width: "16%" }}>Clinical Impression</th>
+                      <th style={{ width: "21%", textAlign: "right" }}>1-Tap Print & Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1472,12 +1472,12 @@ export default function LaboratoryPage() {
                       return (
                         <tr key={request.id} className="lab-table-row completed">
                           {/* 1. Live Scannable QR Code */}
-                          <td className="lab-td-qr" style={{ textAlign: "center" }}>
+                          <td className="lab-td-qr hide-mobile" style={{ textAlign: "center" }}>
                             <LabQrThumbnail request={request} onOpenQuickQr={setQuickQrRequest} />
                           </td>
 
                           {/* 2. Track & Date */}
-                          <td className="lab-td-track">
+                          <td className="lab-td-track hide-mobile">
                             <strong className="lab-track-number">{request.requestNumber}</strong>
                             <div className="lab-date-primary">{formatDate(request.completedAt || request.createdAt)}</div>
                             <span className="lab-badge-status completed">✓ AUTHORIZED</span>
@@ -1509,7 +1509,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 5. Impression */}
-                          <td className="lab-td-notes">
+                          <td className="lab-td-notes hide-mobile">
                             {request.interpretation ? (
                               <div className="lab-table-notes-snippet impression" title={request.interpretation}>
                                 <strong>Impression:</strong> {request.interpretation}

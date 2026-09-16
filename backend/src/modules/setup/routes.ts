@@ -7,8 +7,9 @@ const router = Router();
 const controller = new SetupController();
 const seedController = new SeedController();
 
-// Unauthenticated / token-guarded bootstrap seed endpoint
+// Unauthenticated / token-guarded bootstrap seed endpoints
 router.post("/seed-users", seedController.seedUsers);
+router.post("/seed-lab-templates", seedController.seedLabTemplates);
 
 router.use(authenticate);
 

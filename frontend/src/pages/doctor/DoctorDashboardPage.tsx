@@ -2880,8 +2880,8 @@ export default function DoctorDashboardPage() {
                                     <tr>
                                       <th>Parameter / Analyte</th>
                                       <th>Observed Value</th>
-                                      <th>Unit</th>
-                                      <th>Reference Range</th>
+                                      <th className="hide-mobile">Unit</th>
+                                      <th className="hide-mobile">Reference Range</th>
                                       <th>Evaluation</th>
                                     </tr>
                                   </thead>
@@ -2897,8 +2897,8 @@ export default function DoctorDashboardPage() {
                                           <td>
                                             <strong style={{ fontSize: "0.92rem" }}>{displayVal}</strong>
                                           </td>
-                                          <td style={{ color: "var(--muted)" }}>{field.unit || "—"}</td>
-                                          <td style={{ color: "var(--muted)" }}>{field.referenceRange || "Standard"}</td>
+                                          <td className="hide-mobile" style={{ color: "var(--muted)" }}>{field.unit || "—"}</td>
+                                          <td className="hide-mobile" style={{ color: "var(--muted)" }}>{field.referenceRange || "Standard"}</td>
                                           <td>
                                             {flag ? (
                                               <span className={`doctor-lab-flag-pill ${flag.status}`}>

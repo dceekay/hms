@@ -116,25 +116,25 @@ export default function BillingReceiptPrintDocument({
       </section>
 
       {/* 3. Itemized Bill Breakdown */}
-      <section className="receipt-items-section">
+      <section className="receipt-items-section table-responsive">
         <table className="receipt-items-table">
           <thead>
             <tr>
-              <th style={{ width: "8%" }}>#</th>
+              <th className="hide-mobile" style={{ width: "8%" }}>#</th>
               <th style={{ width: "48%" }}>Service / Charge Description</th>
               <th style={{ width: "12%", textAlign: "center" }}>Qty</th>
-              <th style={{ width: "16%", textAlign: "right" }}>Unit Price</th>
+              <th className="hide-mobile" style={{ width: "16%", textAlign: "right" }}>Unit Price</th>
               <th style={{ width: "16%", textAlign: "right" }}>Total Amount</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>1</td>
+              <td className="hide-mobile">1</td>
               <td>
                 <strong>{bill.service?.name || "Hospital Medical Service"}</strong>
               </td>
               <td style={{ textAlign: "center" }}>{bill.quantity || 1}</td>
-              <td style={{ textAlign: "right" }}>{money(bill.unitPrice)}</td>
+              <td className="hide-mobile" style={{ textAlign: "right" }}>{money(bill.unitPrice)}</td>
               <td style={{ textAlign: "right" }}>
                 <strong>{money(bill.totalAmount)}</strong>
               </td>

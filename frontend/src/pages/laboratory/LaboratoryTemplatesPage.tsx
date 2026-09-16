@@ -17,6 +17,7 @@ import {
   XCircle as FiXCircle,
   Sliders as FiSliders,
   Zap as FiZap,
+  Sparkles as FiSparkles,
   FileText as FiFileText,
   X as FiX,
   Check as FiCheck,
@@ -26,6 +27,7 @@ import {
   createLaboratoryTemplate,
   deleteLaboratoryTemplate,
   fetchLaboratoryTemplates,
+  seedStandardNigerianTemplates,
   updateLaboratoryTemplate,
 } from "../../services/laboratoryService";
 import { useAuthStore } from "../../store/authStore";
@@ -66,6 +68,7 @@ export default function LaboratoryTemplatesPage() {
   const [previewTemplate, setPreviewTemplate] = useState<LaboratoryTemplate | null>(null);
   const [isPresetLibraryOpen, setIsPresetLibraryOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -80,6 +83,22 @@ export default function LaboratoryTemplatesPage() {
     }
 
     setTemplates(templateResult.result.items);
+  };
+
+  const handleSeedNigerianTemplates = async () => {
+    if (!window.confirm("Seed / restore all 29 standard accredited Nigerian clinical lab templates into your database?")) {
+      return;
+    }
+    setSeeding(true);
+    setError(null);
+    const res = await seedStandardNigerianTemplates();
+    setSeeding(false);
+    if (res.success) {
+      setSuccess(res.message || "Successfully seeded Nigerian laboratory templates!");
+      void loadTemplates();
+    } else {
+      setError(res.error || "Failed to seed laboratory templates");
+    }
   };
 
   useEffect(() => {
@@ -347,6 +366,17 @@ export default function LaboratoryTemplatesPage() {
                     onClick={() => setIsPresetLibraryOpen(true)}
                   >
                     <FiZap style={{ color: "#10a9d6" }} /> Starter Library
+                  </button>
+
+                  <button
+                    type="button"
+                    className="lab-btn-secondary"
+                    onClick={handleSeedNigerianTemplates}
+                    disabled={seeding || (!canCreate && !canUpdate)}
+                    title="Seed / Restore all 29 accredited Nigerian clinical templates"
+                  >
+                    <FiSparkles style={{ color: "#38bdf8" }} />
+                    {seeding ? "Seeding..." : "Seed Nigerian Templates"}
                   </button>
 
                   <button

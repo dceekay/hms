@@ -8,6 +8,7 @@ import { queryClient } from "./lib/queryClient";
 import "./styles.css";
 import "./styles/sweetalert.css";
 import "./styles/sidebar.css";
+import "./styles/tables.css";
 import "./styles/theme-visibility.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

@@ -199,7 +199,7 @@ export default function LaboratoryVerificationPage() {
 
             {/* Results Section (If Completed) */}
             {data.status === "completed" && data.template.fields && (
-              <div className="verification-results-panel" style={{ marginTop: "16px", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+              <div className="verification-results-panel table-responsive" style={{ marginTop: "16px", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
                 <div style={{ background: "#f8fafc", padding: "10px 14px", borderBottom: "1px solid #e2e8f0", fontWeight: 800, fontSize: "0.88rem", color: "#0f172a" }}>
                   Investigation Parameters & Observations
                 </div>
@@ -208,8 +208,8 @@ export default function LaboratoryVerificationPage() {
                     <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
                       <th style={{ padding: "8px 12px", color: "#475569" }}>Parameter</th>
                       <th style={{ padding: "8px 12px", color: "#475569" }}>Observed Value</th>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Unit</th>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Reference Range</th>
+                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Unit</th>
+                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Reference Range</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -220,8 +220,8 @@ export default function LaboratoryVerificationPage() {
                         <tr key={field.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
                           <td style={{ padding: "8px 12px", fontWeight: 600 }}>{field.label}</td>
                           <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0f766e" }}>{displayVal}</td>
-                          <td style={{ padding: "8px 12px", color: "#64748b" }}>{field.unit || "—"}</td>
-                          <td style={{ padding: "8px 12px", color: "#64748b" }}>{field.referenceRange || "Standard"}</td>
+                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.unit || "—"}</td>
+                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.referenceRange || "Standard"}</td>
                         </tr>
                       );
                     })}

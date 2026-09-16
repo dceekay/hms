@@ -984,29 +984,31 @@ export default function PharmacyPage() {
                 </span>
               </div>
 
-              <table className="pharmacy-print-table">
-                <thead>
-                  <tr>
-                    <th>Medicine</th>
-                    <th>Qty</th>
-                    <th>Unit</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedInvoice.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <strong>{medicationLabel(item.medication)}</strong>
-                        <small>{item.instructions || "No instructions"}</small>
-                      </td>
-                      <td>{item.quantity}</td>
-                      <td>{money(item.unitPrice)}</td>
-                      <td>{money(item.totalAmount)}</td>
+              <div className="table-responsive">
+                <table className="pharmacy-print-table">
+                  <thead>
+                    <tr>
+                      <th>Medicine</th>
+                      <th>Qty</th>
+                      <th className="hide-mobile">Unit</th>
+                      <th>Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {selectedInvoice.items.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <strong>{medicationLabel(item.medication)}</strong>
+                          <small>{item.instructions || "No instructions"}</small>
+                        </td>
+                        <td>{item.quantity}</td>
+                        <td className="hide-mobile">{money(item.unitPrice)}</td>
+                        <td>{money(item.totalAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               <div className="pharmacy-print-totals">
                 <span><small>Subtotal</small><strong>{money(selectedInvoice.subtotalAmount)}</strong></span>
