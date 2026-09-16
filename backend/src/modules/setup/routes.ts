@@ -1,9 +1,14 @@
 import { Router } from "express";
 import { authenticate, authorizePermissions } from "../../shared/middleware/auth.middleware";
 import { SetupController } from "./controller";
+import { SeedController } from "./seedController";
 
 const router = Router();
 const controller = new SetupController();
+const seedController = new SeedController();
+
+// Unauthenticated / token-guarded bootstrap seed endpoint
+router.post("/seed-users", seedController.seedUsers);
 
 router.use(authenticate);
 

@@ -165,12 +165,51 @@ export function startContinuousPhoneRing(volume = 0.55): boolean {
 }
 
 /**
- * Stops continuous loud telephone ringing immediately
+ * Stops continuous or intermittent telephone ringing immediately
  */
 export function stopContinuousPhoneRing() {
   if (phoneRingerIntervalId !== null) {
     window.clearInterval(phoneRingerIntervalId);
     phoneRingerIntervalId = null;
+  }
+}
+
+/**
+ * Starts INTERMITTENT telephone alert that sounds gently, then pauses for intervalMs (default: 60s).
+ * This prevents ear fatigue and annoying non-stop ringing while keeping staff informed.
+ */
+export function startIntermittentPhoneAlert(intervalMs = 60000, volume = 0.38): boolean {
+  if (phoneRingerIntervalId !== null) {
+    return true; // Already active
+  }
+
+  try {
+    const audioContext = getAudioContext();
+    if (!audioContext) return false;
+
+    if (audioContext.state === "suspended") {
+      void audioContext.resume().catch(() => {});
+    }
+
+    phoneRingerAudioContext = audioContext;
+
+    // Play initial gentle alert
+    playPhoneRingBurst(audioContext, 0.02, volume);
+
+    // Repeat intermittently every intervalMs (e.g. 60s)
+    phoneRingerIntervalId = window.setInterval(() => {
+      if (phoneRingerAudioContext && phoneRingerAudioContext.state !== "closed") {
+        if (phoneRingerAudioContext.state === "suspended") {
+          void phoneRingerAudioContext.resume().catch(() => {});
+        }
+        playPhoneRingBurst(phoneRingerAudioContext, 0.02, volume);
+      }
+    }, intervalMs);
+
+    return true;
+  } catch (err) {
+    console.error("Failed to start intermittent phone alert", err);
+    return false;
   }
 }
 

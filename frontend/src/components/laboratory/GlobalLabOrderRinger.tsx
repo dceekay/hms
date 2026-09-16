@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaFlask, FaPhoneSlash } from "react-icons/fa";
-import { FiCheck, FiExternalLink, FiVolume2, FiVolumeX } from "react-icons/fi";
+import { FiCheck, FiExternalLink, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
 import {
   fetchLaboratoryRequests,
@@ -9,13 +9,16 @@ import {
 } from "../../services/laboratoryService";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import {
-  startContinuousPhoneRing,
+  startIntermittentPhoneAlert,
   stopContinuousPhoneRing,
 } from "../../utils/alertSound";
 import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
 } from "../../utils/appEvents";
+import "../../styles/lab-ringer.css";
+
+const LAB_RINGER_DISMISSED_KEY = "mds_lab_order_ringer_dismissed";
 
 export default function GlobalLabOrderRinger() {
   const user = useAuthStore((state) => state.user);
@@ -25,6 +28,10 @@ export default function GlobalLabOrderRinger() {
   const [requests, setRequests] = useState<LaboratoryRequest[]>([]);
   const [mutedRequestIds, setMutedRequestIds] = useState<Set<string>>(new Set());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(LAB_RINGER_DISMISSED_KEY) === "true";
+  });
 
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
   const isLabOrAdmin = useMemo(() => {
@@ -36,12 +43,17 @@ export default function GlobalLabOrderRinger() {
     );
   }, [roles]);
 
-  // If already on the laboratory page, let the laboratory page handle local UI,
-  // but keep background data fresh.
+  // Only show on laboratory workspace or dashboard. Do NOT follow onto unrelated pages
+  // (e.g. Doctor desk, Nurse ward, Billing, Patients, Settings)
+  const isRelevantPage = useMemo(() => {
+    const p = location.pathname;
+    return p === "/laboratory" || p.startsWith("/laboratory/") || p === "/dashboard";
+  }, [location.pathname]);
+
   const isAlreadyOnLabPage = location.pathname === "/laboratory";
 
   const fetchPending = async () => {
-    if (!isLabOrAdmin) return;
+    if (!isLabOrAdmin || !isRelevantPage) return;
     try {
       const res = await fetchLaboratoryRequests({ status: "pending" });
       if (res.result?.items) {
@@ -53,10 +65,14 @@ export default function GlobalLabOrderRinger() {
   };
 
   useEffect(() => {
-    if (!isLabOrAdmin) return;
+    if (!isLabOrAdmin || !isRelevantPage) {
+      stopContinuousPhoneRing();
+      return;
+    }
+
     void fetchPending();
 
-    const interval = setInterval(fetchPending, 5000);
+    const interval = setInterval(fetchPending, 10000);
     const handleMutation = () => void fetchPending();
 
     window.addEventListener(HMS_DATA_MUTATED_EVENT, handleMutation);
@@ -66,8 +82,9 @@ export default function GlobalLabOrderRinger() {
       clearInterval(interval);
       window.removeEventListener(HMS_DATA_MUTATED_EVENT, handleMutation);
       window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleMutation);
+      stopContinuousPhoneRing();
     };
-  }, [isLabOrAdmin]);
+  }, [isLabOrAdmin, isRelevantPage]);
 
   const activePending = useMemo(() => {
     return requests.filter(
@@ -75,27 +92,28 @@ export default function GlobalLabOrderRinger() {
     );
   }, [requests, mutedRequestIds]);
 
-  const shouldRingGlobal =
+  // Intermittent alert only on relevant pages when not dismissed
+  const shouldAlertIntermittent =
     isLabOrAdmin &&
-    !isAlreadyOnLabPage &&
+    isRelevantPage &&
+    !dismissed &&
     soundEnabled &&
     activePending.length > 0;
 
   useEffect(() => {
-    if (shouldRingGlobal) {
-      startContinuousPhoneRing();
-    } else if (!isAlreadyOnLabPage) {
+    if (shouldAlertIntermittent) {
+      // Intermittent alert spaced out by 90 seconds (never annoying non-stop ringing)
+      startIntermittentPhoneAlert(90000, 0.35);
+    } else {
       stopContinuousPhoneRing();
     }
 
     return () => {
-      if (!isAlreadyOnLabPage) {
-        stopContinuousPhoneRing();
-      }
+      stopContinuousPhoneRing();
     };
-  }, [shouldRingGlobal, isAlreadyOnLabPage]);
+  }, [shouldAlertIntermittent]);
 
-  if (!isLabOrAdmin || isAlreadyOnLabPage || activePending.length === 0) {
+  if (!isLabOrAdmin || !isRelevantPage || dismissed || activePending.length === 0) {
     return null;
   }
 
@@ -114,6 +132,12 @@ export default function GlobalLabOrderRinger() {
     });
   };
 
+  const handleDismiss = () => {
+    stopContinuousPhoneRing();
+    setDismissed(true);
+    sessionStorage.setItem(LAB_RINGER_DISMISSED_KEY, "true");
+  };
+
   const handleAccept = async () => {
     stopContinuousPhoneRing();
     setMutedRequestIds((prev) => new Set(prev).add(latest.id));
@@ -122,76 +146,23 @@ export default function GlobalLabOrderRinger() {
   };
 
   return (
-    <div
-      className="global-lab-order-alert-strip"
-      role="alert"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 99999,
-        background: "linear-gradient(135deg, #092a5e 0%, #0369a1 100%)",
-        color: "#ffffff",
-        padding: "10px 18px",
-        boxShadow: "0 8px 30px rgba(0, 0, 0, 0.45)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "14px",
-        borderBottom: "2px solid #38bdf8",
-        animation: "slideDown 0.3s ease-out",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-        <div
-          style={{
-            width: "36px",
-            height: "36px",
-            borderRadius: "50%",
-            background: "#f59e0b",
-            color: "#ffffff",
-            display: "grid",
-            placeItems: "center",
-            flexShrink: 0,
-            fontSize: "1.1rem",
-            animation: "pulse 1.2s infinite",
-          }}
-        >
+    <div className="global-lab-order-alert-strip" role="alert">
+      <div className="lab-ringer-left">
+        <div className="lab-ringer-icon-box">
           <FaFlask />
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                background: "rgba(245, 158, 11, 0.25)",
-                border: "1px solid #f59e0b",
-                color: "#fef3c7",
-                padding: "2px 7px",
-                borderRadius: "999px",
-              }}
-            >
+        <div className="lab-ringer-content">
+          <div className="lab-ringer-meta-row">
+            <span className="lab-ringer-badge">
               Doctor Ordered Test • Immediate Attention
             </span>
             {activePending.length > 1 && (
-              <span
-                style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  background: "rgba(255, 255, 255, 0.2)",
-                  padding: "2px 7px",
-                  borderRadius: "999px",
-                }}
-              >
+              <span className="lab-ringer-more-badge">
                 +{activePending.length - 1} more pending
               </span>
             )}
           </div>
-          <div style={{ fontSize: "0.92rem", fontWeight: 700, marginTop: "2px" }}>
+          <div className="lab-ringer-patient-line">
             {patientDisplayName} —{" "}
             <span style={{ color: "#7dd3fc" }}>{latest.template?.name}</span>
             {latest.patient?.mrn && (
@@ -203,23 +174,11 @@ export default function GlobalLabOrderRinger() {
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+      <div className="lab-ringer-actions">
         <button
           type="button"
           onClick={handleAccept}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "#10b981",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "8px",
-            padding: "7px 14px",
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          className="lab-ringer-btn lab-ringer-btn-accept"
         >
           <FiCheck /> Accept / Collect Sample
         </button>
@@ -230,19 +189,7 @@ export default function GlobalLabOrderRinger() {
             stopContinuousPhoneRing();
             navigate("/laboratory");
           }}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "rgba(255, 255, 255, 0.15)",
-            color: "#ffffff",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            borderRadius: "8px",
-            padding: "7px 12px",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          className="lab-ringer-btn lab-ringer-btn-station"
         >
           <FiExternalLink /> Open Lab Station
         </button>
@@ -250,20 +197,8 @@ export default function GlobalLabOrderRinger() {
         <button
           type="button"
           onClick={handleMuteAll}
-          title="Mute continuous ringing"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "rgba(239, 68, 68, 0.2)",
-            color: "#fecaca",
-            border: "1px solid rgba(239, 68, 68, 0.4)",
-            borderRadius: "8px",
-            padding: "7px 12px",
-            fontWeight: 600,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-          }}
+          title="Mute pending order alert"
+          className="lab-ringer-btn lab-ringer-btn-mute"
         >
           <FaPhoneSlash /> Mute
         </button>
@@ -275,16 +210,18 @@ export default function GlobalLabOrderRinger() {
             setSoundEnabled(!soundEnabled);
           }}
           title={soundEnabled ? "Disable sound" : "Enable sound"}
-          style={{
-            background: "transparent",
-            color: "#ffffff",
-            border: "none",
-            padding: "6px",
-            fontSize: "1rem",
-            cursor: "pointer",
-          }}
+          className="lab-ringer-btn-icon"
         >
           {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDismiss}
+          title="Dismiss banner for this session"
+          className="lab-ringer-btn-icon lab-ringer-btn-dismiss"
+        >
+          <FiX size={18} />
         </button>
       </div>
     </div>

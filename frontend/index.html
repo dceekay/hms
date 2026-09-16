@@ -31,6 +31,7 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="preconnect" href="https://www.google.com" />
     <link rel="dns-prefetch" href="https://www.google.com" />
+    <link rel="preload" href="/logo-sm.webp" as="image" type="image/webp" fetchpriority="high" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
@@ -319,7 +320,7 @@
         <div class="app-loader-ring-wrap">
           <div class="app-loader-ring"></div>
           <div class="app-loader-ring-pulse"></div>
-          <img src="/logo.png" alt="MDS Hospital" class="app-loader-logo-img" width="52" height="52" />
+          <img src="/logo-sm.webp" alt="MDS Hospital" class="app-loader-logo-img" width="52" height="52" fetchpriority="high" decoding="async" />
         </div>
         <div class="app-loader-brand">
           <strong class="app-loader-title">MDS Hospital</strong>

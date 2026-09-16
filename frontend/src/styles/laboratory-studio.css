@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CAVENDISH HOSPITAL MANAGEMENT SYSTEM - LABORATORY TEMPLATE STUDIO
+   MDS SPECIALIST HOSPITAL - LABORATORY TEMPLATE STUDIO
    Ultra-Premium Visual Builder & Diagnostic Report Simulator
    ========================================================================== */
 
@@ -462,7 +462,7 @@
 }
 
 .lab-icon-btn.danger:hover {
-  background: var(--cavendish-emergency-bg);
+  background: var(--mds-emergency-bg, rgba(239, 68, 68, 0.12));
   border-color: var(--danger);
   color: var(--danger);
 }

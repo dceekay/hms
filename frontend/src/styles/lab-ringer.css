@@ -1,0 +1,186 @@
+/* ==========================================================================
+   MDS Hospital - Intermittent Lab Order Ringer & Responsive Alert Strip
+   ========================================================================== */
+
+.global-lab-order-alert-strip {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 75;
+  background: linear-gradient(135deg, #092a5e 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 10px 18px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 2px solid #38bdf8;
+  animation: slideDown 0.3s ease-out;
+}
+
+.lab-ringer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lab-ringer-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+.lab-ringer-content {
+  min-width: 0;
+}
+
+.lab-ringer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lab-ringer-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(245, 158, 11, 0.25);
+  border: 1px solid #f59e0b;
+  color: #fef3c7;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.lab-ringer-more-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.lab-ringer-patient-line {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-ringer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.lab-ringer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  border: 0;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.lab-ringer-btn-accept {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.lab-ringer-btn-accept:hover {
+  background: #059669;
+}
+
+.lab-ringer-btn-station {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.lab-ringer-btn-station:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.lab-ringer-btn-mute {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.lab-ringer-btn-mute:hover {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.lab-ringer-btn-icon {
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  opacity: 0.85;
+}
+
+.lab-ringer-btn-icon:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lab-ringer-btn-dismiss {
+  color: #94a3b8;
+}
+
+.lab-ringer-btn-dismiss:hover {
+  color: #ffffff;
+  background: rgba(239, 68, 68, 0.25);
+}
+
+@media (max-width: 768px) {
+  .global-lab-order-alert-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .lab-ringer-patient-line {
+    white-space: normal;
+    font-size: 0.84rem;
+  }
+
+  .lab-ringer-actions {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .lab-ringer-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    flex: 1;
+    justify-content: center;
+  }
+}

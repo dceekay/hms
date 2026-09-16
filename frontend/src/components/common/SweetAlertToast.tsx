@@ -22,7 +22,7 @@ export interface SweetAlertOptions {
 }
 
 const SWEETALERT_EVENT = "hms:sweetalert";
-const LEGACY_SWEETALERT_EVENT = "cavendish:sweetalert";
+const LEGACY_SWEETALERT_EVENT = "mds:sweetalert";
 
 /**
  * Programmatic helper to trigger a SweetAlert anywhere in the frontend.

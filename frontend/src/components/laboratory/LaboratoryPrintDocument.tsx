@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { CavendishMark } from "../common/CavendishLogo";
+import { MdsMark } from "../common/CavendishLogo";
 import { getAppUrl } from "../../utils/appUrl";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
@@ -127,7 +127,7 @@ export default function LaboratoryPrintDocument({
       {/* 1. Official Hospital Header */}
       <header className="lab-print-header-banner">
         <div className="lab-print-brand-left">
-          <CavendishMark size={64} className="lab-print-hospital-logo" />
+          <MdsMark size={64} className="lab-print-hospital-logo" />
           <div>
             <h1 className="lab-print-hospital-name">{HOSPITAL_PRINT_INFO.name}</h1>
             <p className="lab-print-hospital-sub">{HOSPITAL_PRINT_INFO.subtitle}</p>

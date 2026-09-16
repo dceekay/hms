@@ -1,15 +1,17 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiCheck } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import mdsLogo from "../assets/optimized/logo.png";
+import mdsLogo from "../assets/optimized/logo-sm.webp";
 import mdsHospital from "../assets/optimized/login_back.webp";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
+import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
 import "../styles/login.css";
 
 interface SeededAccount {
   role: string;
+  category: "admin" | "clinical" | "diagnostics" | "operations" | "security";
   name: string;
   username: string;
   password: string;
@@ -18,17 +20,17 @@ interface SeededAccount {
 }
 
 const seededAccounts: SeededAccount[] = [
-  { role: "Super Admin", name: "A. Yakubu", username: "admin", password: "Admin@123", badge: "Root", color: "#ef4444" },
-  { role: "Administrator", name: "Hosp Admin", username: "administrator", password: "Administrator@123", badge: "Admin", color: "#f97316" },
-  { role: "Doctor", name: "Dr. John Doe", username: "drjohn", password: "Doctor@123", badge: "Clinic", color: "#06b6d4" },
-  { role: "Nurse", name: "Nurse Amina", username: "nurseama", password: "Nurse@123", badge: "Triage", color: "#10b981" },
-  { role: "Receptionist", name: "Jane Smith", username: "reception", password: "Reception@123", badge: "Front Desk", color: "#8b5cf6" },
-  { role: "Laboratory", name: "Samuel Okoro", username: "labtech", password: "Lab@12345", badge: "Diagnostics", color: "#ec4899" },
-  { role: "Pharmacist", name: "Fatima Musa", username: "pharm", password: "Pharm@123", badge: "Pharmacy", color: "#14b8a6" },
-  { role: "Cashier", name: "Cash Desk", username: "cashier", password: "Cashier@123", badge: "POS", color: "#f59e0b" },
-  { role: "Billing Officer", name: "David Ibrahim", username: "billing", password: "Billing@123", badge: "Billing", color: "#eab308" },
-  { role: "Desk Office", name: "Desk Officer", username: "deskoffice", password: "Desk@123", badge: "Desk", color: "#6366f1" },
-  { role: "Security", name: "Peter Gate", username: "security", password: "Security@123", badge: "Security", color: "#64748b" },
+  { role: "Super Admin", category: "admin", name: "A. Yakubu", username: "admin", password: "Admin@123", badge: "Root", color: "#ef4444" },
+  { role: "Administrator", category: "admin", name: "Hosp Admin", username: "administrator", password: "Administrator@123", badge: "Admin", color: "#f97316" },
+  { role: "Doctor", category: "clinical", name: "Dr. John Doe", username: "drjohn", password: "Doctor@123", badge: "Clinic", color: "#06b6d4" },
+  { role: "Nurse", category: "clinical", name: "Nurse Amina", username: "nurseama", password: "Nurse@123", badge: "Triage", color: "#10b981" },
+  { role: "Receptionist", category: "operations", name: "Jane Smith", username: "reception", password: "Reception@123", badge: "Front Desk", color: "#8b5cf6" },
+  { role: "Laboratory", category: "diagnostics", name: "Samuel Okoro", username: "labtech", password: "Lab@12345", badge: "Diagnostics", color: "#ec4899" },
+  { role: "Pharmacist", category: "diagnostics", name: "Fatima Musa", username: "pharm", password: "Pharm@123", badge: "Pharmacy", color: "#14b8a6" },
+  { role: "Cashier", category: "operations", name: "Cash Desk", username: "cashier", password: "Cashier@123", badge: "POS", color: "#f59e0b" },
+  { role: "Billing Officer", category: "operations", name: "David Ibrahim", username: "billing", password: "Billing@123", badge: "Billing", color: "#eab308" },
+  { role: "Desk Office", category: "operations", name: "Desk Officer", username: "deskoffice", password: "Desk@123", badge: "Desk", color: "#6366f1" },
+  { role: "Security", category: "security", name: "Peter Gate", username: "security", password: "Security@123", badge: "Security", color: "#64748b" },
 ];
 
 function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
@@ -72,6 +74,12 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const filteredAccounts = useMemo(() => {
+    if (activeCategory === "all") return seededAccounts;
+    return seededAccounts.filter((a) => a.category === activeCategory);
+  }, [activeCategory]);
 
   async function submitLogin(username: string, loginPassword: string) {
     setLoading(true);
@@ -134,13 +142,20 @@ export default function LoginPage() {
           fetchPriority="high"
         />
         <div className="login-brand">
-          <img className="login-logo" src={mdsLogo} alt="MDS Hospital Logo" decoding="async" />
+          <img
+            className="login-logo"
+            src={mdsLogo}
+            alt="MDS Hospital Logo"
+            decoding="async"
+            fetchPriority="high"
+            width="48"
+            height="48"
+          />
           <div>
             <strong>MDS Specialist Hospital</strong>
             <small>Staff & Clinical Portal</small>
           </div>
         </div>
-
 
         <div className="login-copy">
           <p className="eyebrow">MDS Specialist Hospital</p>
@@ -220,11 +235,35 @@ export default function LoginPage() {
                   <p>Click any staff role for instant one-click sign in</p>
                 </div>
               </div>
-              <span className="test-login-count">{seededAccounts.length} Staff</span>
+              <span className="test-login-count">{filteredAccounts.length} Staff</span>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="test-login-categories" role="tablist" aria-label="Staff role categories">
+              {[
+                { id: "all", label: "All", count: seededAccounts.length },
+                { id: "admin", label: "Admin", count: 2 },
+                { id: "clinical", label: "Clinical", count: 2 },
+                { id: "diagnostics", label: "Diagnostics", count: 2 },
+                { id: "operations", label: "Operations", count: 4 },
+                { id: "security", label: "Security", count: 1 },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCategory === cat.id}
+                  className={`test-category-pill ${activeCategory === cat.id ? "active" : ""}`}
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  {cat.label}
+                  <span className="pill-count">{cat.count}</span>
+                </button>
+              ))}
             </div>
 
             <div className="test-login-grid">
-              {seededAccounts.map((account) => (
+              {filteredAccounts.map((account) => (
                 <button
                   key={account.username}
                   type="button"
@@ -264,6 +303,8 @@ export default function LoginPage() {
             View hospital landing page
             <FiArrowRight />
           </Link>
+
+          <PoweredByCeekayX variant="login" />
         </form>
       </section>
     </main>
