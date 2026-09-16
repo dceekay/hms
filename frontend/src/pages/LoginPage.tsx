@@ -3,13 +3,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiCheck } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
-import mdsHospital from "../assets/optimized/login_back.webp";
+import mdsHospital from "../assets/optimized/login_bright.webp";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
 import "../styles/login.css";
 
-interface SeededAccount {
+interface MdsTestAccount {
   role: string;
   category: "admin" | "clinical" | "diagnostics" | "operations" | "security";
   name: string;
@@ -19,7 +19,7 @@ interface SeededAccount {
   color: string;
 }
 
-const seededAccounts: SeededAccount[] = [
+const mdsTestAccounts: MdsTestAccount[] = [
   { role: "Super Admin", category: "admin", name: "A. Yakubu", username: "admin", password: "Admin@123", badge: "Root", color: "#ef4444" },
   { role: "Administrator", category: "admin", name: "Hosp Admin", username: "administrator", password: "Administrator@123", badge: "Admin", color: "#f97316" },
   { role: "Doctor", category: "clinical", name: "Dr. John Doe", username: "drjohn", password: "Doctor@123", badge: "Clinic", color: "#06b6d4" },
@@ -77,8 +77,8 @@ export default function LoginPage() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const filteredAccounts = useMemo(() => {
-    if (activeCategory === "all") return seededAccounts;
-    return seededAccounts.filter((a) => a.category === activeCategory);
+    if (activeCategory === "all") return mdsTestAccounts;
+    return mdsTestAccounts.filter((a) => a.category === activeCategory);
   }, [activeCategory]);
 
   async function submitLogin(username: string, loginPassword: string) {
@@ -123,7 +123,7 @@ export default function LoginPage() {
     await submitLogin(emailOrUsername, password);
   }
 
-  const handleTestLogin = async (account: SeededAccount) => {
+  const handleTestLogin = async (account: MdsTestAccount) => {
     setEmailOrUsername(account.username);
     setPassword(account.password);
     await submitLogin(account.username, account.password);
@@ -231,17 +231,17 @@ export default function LoginPage() {
               <div className="test-login-title-group">
                 <FiUsers className="test-login-icon" />
                 <div>
-                  <strong>Seeded Staff Accounts</strong>
-                  <p>Click any staff role for instant one-click sign in</p>
+                  <strong>MDS Test Logins</strong>
+                  <p>Click any account for instant one-click sign in</p>
                 </div>
               </div>
-              <span className="test-login-count">{filteredAccounts.length} Staff</span>
+              <span className="test-login-count">{filteredAccounts.length} Logins</span>
             </div>
 
             {/* Category Filter Pills */}
-            <div className="test-login-categories" role="tablist" aria-label="Staff role categories">
+            <div className="test-login-categories" role="tablist" aria-label="Account role categories">
               {[
-                { id: "all", label: "All", count: seededAccounts.length },
+                { id: "all", label: "All", count: mdsTestAccounts.length },
                 { id: "admin", label: "Admin", count: 2 },
                 { id: "clinical", label: "Clinical", count: 2 },
                 { id: "diagnostics", label: "Diagnostics", count: 2 },
