@@ -58,6 +58,7 @@ import { SessionExpiryWatcher } from "./components/SessionExpiryWatcher";
 import { ScrollToTop } from "./components/ScrollToTop";
 import PwaInstallBanner from "./components/pwa/PwaInstallBanner";
 import { SweetAlertToastContainer } from "./components/common/SweetAlertToast";
+import GlobalLabOrderRinger from "./components/laboratory/GlobalLabOrderRinger";
 import { FiDatabase, FiPieChart } from "react-icons/fi";
 import { useAuthStore } from "./store/authStore";
 import { isJwtExpired } from "./utils/session";
@@ -86,6 +87,7 @@ export default function App() {
       <ScrollToTop />
       <PwaInstallBanner />
       <SweetAlertToastContainer />
+      <GlobalLabOrderRinger />
       <Suspense fallback={<Loader text="Loading MDS Hospital..." size="lg" />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

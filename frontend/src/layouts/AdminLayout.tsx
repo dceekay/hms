@@ -4,7 +4,6 @@ import { Sidebar } from "../components/layout/Sidebar";
 import Topbar from "../components/layout/Topbar";
 import MobileBottomNav from "../components/layout/MobileBottomNav";
 import RoleTour from "../components/tour/RoleTour";
-import GlobalLabOrderRinger from "../components/laboratory/GlobalLabOrderRinger";
 import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
 
 import "../styles/sidebar.css";
@@ -48,7 +47,6 @@ export default function AdminLayout({
       </main>
 
       <MobileBottomNav onOpenMenu={() => setMobileOpen(true)} />
-      <GlobalLabOrderRinger />
       <RoleTour />
     </div>
   );

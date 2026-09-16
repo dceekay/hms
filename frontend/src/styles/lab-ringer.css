@@ -1,186 +1,313 @@
 /* ==========================================================================
-   MDS Hospital - Intermittent Lab Order Ringer & Responsive Alert Strip
+   MDS Hospital - Sleek Floating Lab Order Toast Alert
+   Positioned in bottom-right corner - Never covers topbar or main content
    ========================================================================== */
 
-.global-lab-order-alert-strip {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 75;
-  background: linear-gradient(135deg, #092a5e 0%, #0369a1 100%);
-  color: #ffffff;
-  padding: 10px 18px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+.global-lab-order-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1050;
+  width: min(440px, calc(100vw - 44px));
+  background: rgba(9, 23, 44, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 20px;
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(14, 165, 233, 0.16);
+  padding: 16px 18px;
+  color: #f0f9ff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: toastFloatUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+@keyframes toastFloatUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lab-toast-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  border-bottom: 2px solid #38bdf8;
-  animation: slideDown 0.3s ease-out;
+  gap: 10px;
 }
 
-.lab-ringer-left {
+.lab-toast-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   min-width: 0;
-  flex: 1;
 }
 
-.lab-ringer-icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #f59e0b;
+.lab-toast-pulse-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(125, 211, 252, 0.4);
   color: #ffffff;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  font-size: 1.05rem;
-  animation: pulse 1.6s infinite ease-in-out;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+  animation: ringerIconPulse 2s infinite ease-in-out;
 }
 
-.lab-ringer-content {
+@keyframes ringerIconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+  }
+}
+
+.lab-toast-title-text {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-.lab-ringer-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.lab-ringer-badge {
-  font-size: 0.7rem;
+.lab-toast-title-text strong {
+  font-size: 0.95rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: rgba(245, 158, 11, 0.25);
-  border: 1px solid #f59e0b;
-  color: #fef3c7;
-  padding: 2px 7px;
-  border-radius: 999px;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-.lab-ringer-more-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 7px;
-  border-radius: 999px;
+.lab-toast-sub {
+  font-size: 0.73rem;
+  color: #38bdf8;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.lab-ringer-patient-line {
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lab-ringer-actions {
+.lab-toast-header-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.lab-ringer-btn {
-  display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-radius: 8px;
-  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.lab-toast-badge-more {
+  font-size: 0.7rem;
   font-weight: 700;
-  font-size: 0.82rem;
-  cursor: pointer;
-  border: 0;
-  transition: all 0.15s ease;
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fef08a;
+  padding: 2px 7px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.lab-ringer-btn-accept {
-  background: #10b981;
-  color: #ffffff;
-}
-
-.lab-ringer-btn-accept:hover {
-  background: #059669;
-}
-
-.lab-ringer-btn-station {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.lab-ringer-btn-station:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.lab-ringer-btn-mute {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fecaca;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-}
-
-.lab-ringer-btn-mute:hover {
-  background: rgba(239, 68, 68, 0.35);
-}
-
-.lab-ringer-btn-icon {
-  background: transparent;
-  color: #ffffff;
-  border: none;
-  padding: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 6px;
+.lab-toast-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e0f2fe;
   display: grid;
   place-items: center;
-  opacity: 0.85;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-size: 0.95rem;
+  padding: 0;
 }
 
-.lab-ringer-btn-icon:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.lab-ringer-btn-dismiss {
-  color: #94a3b8;
-}
-
-.lab-ringer-btn-dismiss:hover {
+.lab-toast-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
-  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
-@media (max-width: 768px) {
-  .global-lab-order-alert-strip {
-    flex-direction: column;
-    align-items: stretch;
+.lab-toast-icon-btn.muted {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.lab-toast-icon-btn.close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+.lab-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(4, 13, 27, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.lab-toast-patient-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lab-toast-patient-name {
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: #ffffff;
+}
+
+.lab-toast-mrn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.14);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.lab-toast-test-chip {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7dd3fc;
+  line-height: 1.3;
+}
+
+.lab-toast-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lab-toast-btn-primary {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.lab-toast-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+  filter: brightness(1.1);
+}
+
+.lab-toast-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e0f2fe;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.lab-toast-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.lab-toast-btn-mute {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.lab-toast-btn-mute:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.lab-toast-btn-mute.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Mobile viewport adjustments */
+@media (max-width: 680px) {
+  .global-lab-order-toast {
+    bottom: 78px; /* Sits right above the mobile bottom navigation dock */
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    padding: 13px 14px;
+    border-radius: 16px;
     gap: 10px;
-    padding: 10px 14px;
   }
 
-  .lab-ringer-patient-line {
-    white-space: normal;
-    font-size: 0.84rem;
+  .lab-toast-pulse-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+    border-radius: 10px;
   }
 
-  .lab-ringer-actions {
-    justify-content: flex-start;
-    gap: 6px;
+  .lab-toast-title-text strong {
+    font-size: 0.88rem;
   }
 
-  .lab-ringer-btn {
-    padding: 6px 10px;
+  .lab-toast-sub {
+    font-size: 0.7rem;
+  }
+
+  .lab-toast-body {
+    padding: 8px 10px;
+  }
+
+  .lab-toast-btn-primary,
+  .lab-toast-btn-secondary,
+  .lab-toast-btn-mute {
+    padding: 7px 10px;
     font-size: 0.78rem;
-    flex: 1;
-    justify-content: center;
   }
 }

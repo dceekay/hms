@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaFlask, FaPhoneSlash } from "react-icons/fa";
+import { FaFlask } from "react-icons/fa";
 import { FiCheck, FiExternalLink, FiVolume2, FiVolumeX, FiX } from "react-icons/fi";
 import { useAuthStore } from "../../store/authStore";
 import {
@@ -18,61 +18,79 @@ import {
 } from "../../utils/appEvents";
 import "../../styles/lab-ringer.css";
 
-const LAB_RINGER_DISMISSED_KEY = "mds_lab_order_ringer_dismissed";
-
 export default function GlobalLabOrderRinger() {
+  const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
 
+  const userId = user?.id || "global";
+  const userMuteKey = `mds_lab_ringer_muted_${userId}`;
+  const userDismissedKey = `mds_lab_ringer_dismissed_${userId}`;
+  const userMutedOrdersKey = `mds_muted_orders_${userId}`;
+
   const [requests, setRequests] = useState<LaboratoryRequest[]>([]);
-  const [mutedRequestIds, setMutedRequestIds] = useState<Set<string>>(new Set());
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [dismissed, setDismissed] = useState(() => {
+  const [isMuted, setIsMuted] = useState(() => {
     if (typeof window === "undefined") return false;
-    return sessionStorage.getItem(LAB_RINGER_DISMISSED_KEY) === "true";
+    return localStorage.getItem(`mds_lab_ringer_muted_${user?.id || "global"}`) === "true";
+  });
+  const [isDismissed, setIsDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(`mds_lab_ringer_dismissed_${user?.id || "global"}`) === "true";
+  });
+  const [mutedOrderIds, setMutedOrderIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(`mds_muted_orders_${user?.id || "global"}`);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+      return new Set();
+    }
   });
 
   const roles = useMemo(() => user?.roles ?? [], [user?.roles]);
-  const isLabOrAdmin = useMemo(() => {
+
+  // Alert is ONLY sent to Laboratory staff and Administrators managing lab operations.
+  // Doctors, Nurses, Cashiers, Billing, Security, etc. do NOT receive this.
+  const isRecipient = useMemo(() => {
+    if (!token || !user) return false;
     const norm = roles.map((r) => r.toLowerCase());
     return (
       norm.includes("laboratory") ||
       norm.includes("super admin") ||
       norm.includes("administrator")
     );
-  }, [roles]);
+  }, [token, user, roles]);
 
-  // Only show on laboratory workspace or dashboard. Do NOT follow onto unrelated pages
-  // (e.g. Doctor desk, Nurse ward, Billing, Patients, Settings)
-  const isRelevantPage = useMemo(() => {
-    const p = location.pathname;
-    return p === "/laboratory" || p.startsWith("/laboratory/") || p === "/dashboard";
-  }, [location.pathname]);
-
-  const isAlreadyOnLabPage = location.pathname === "/laboratory";
+  // Sync mute state if user ID changes (e.g. switch account)
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      setIsMuted(localStorage.getItem(userMuteKey) === "true");
+      setIsDismissed(sessionStorage.getItem(userDismissedKey) === "true");
+    }
+  }, [user?.id, userMuteKey, userDismissedKey]);
 
   const fetchPending = async () => {
-    if (!isLabOrAdmin || !isRelevantPage) return;
+    if (!isRecipient) return;
     try {
       const res = await fetchLaboratoryRequests({ status: "pending" });
       if (res.result?.items) {
         setRequests(res.result.items);
       }
     } catch {
-      // Quiet fail in background
+      // Background poll - fail silently
     }
   };
 
   useEffect(() => {
-    if (!isLabOrAdmin || !isRelevantPage) {
+    if (!isRecipient) {
       stopContinuousPhoneRing();
       return;
     }
 
     void fetchPending();
 
-    const interval = setInterval(fetchPending, 10000);
+    const interval = setInterval(fetchPending, 12000);
     const handleMutation = () => void fetchPending();
 
     window.addEventListener(HMS_DATA_MUTATED_EVENT, handleMutation);
@@ -84,26 +102,25 @@ export default function GlobalLabOrderRinger() {
       window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleMutation);
       stopContinuousPhoneRing();
     };
-  }, [isLabOrAdmin, isRelevantPage]);
+  }, [isRecipient]);
 
   const activePending = useMemo(() => {
     return requests.filter(
-      (r) => r.status === "pending" && !mutedRequestIds.has(r.id)
+      (r) => r.status === "pending" && !mutedOrderIds.has(r.id)
     );
-  }, [requests, mutedRequestIds]);
+  }, [requests, mutedOrderIds]);
 
-  // Intermittent alert only on relevant pages when not dismissed
-  const shouldAlertIntermittent =
-    isLabOrAdmin &&
-    isRelevantPage &&
-    !dismissed &&
-    soundEnabled &&
+  // Repetitive alert for recipients when not muted and not dismissed
+  const shouldAlert =
+    isRecipient &&
+    !isMuted &&
+    !isDismissed &&
     activePending.length > 0;
 
   useEffect(() => {
-    if (shouldAlertIntermittent) {
-      // Intermittent alert spaced out by 90 seconds (never annoying non-stop ringing)
-      startIntermittentPhoneAlert(90000, 0.35);
+    if (shouldAlert) {
+      // Gentle intermittent alert spaced out by 50 seconds for lab recipients
+      startIntermittentPhoneAlert(50000, 0.35);
     } else {
       stopContinuousPhoneRing();
     }
@@ -111,9 +128,10 @@ export default function GlobalLabOrderRinger() {
     return () => {
       stopContinuousPhoneRing();
     };
-  }, [shouldAlertIntermittent]);
+  }, [shouldAlert]);
 
-  if (!isLabOrAdmin || !isRelevantPage || dismissed || activePending.length === 0) {
+  // If not a recipient, dismissed, or no pending requests, do not render
+  if (!isRecipient || isDismissed || activePending.length === 0) {
     return null;
   }
 
@@ -123,107 +141,125 @@ export default function GlobalLabOrderRinger() {
       "Walk-in Patient"
     : "Walk-in Patient";
 
-  const handleMuteAll = () => {
+  const handleToggleMute = () => {
     stopContinuousPhoneRing();
-    setMutedRequestIds((prev) => {
-      const next = new Set(prev);
-      activePending.forEach((r) => next.add(r.id));
-      return next;
-    });
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (nextMuted) {
+      localStorage.setItem(userMuteKey, "true");
+    } else {
+      localStorage.removeItem(userMuteKey);
+    }
   };
 
   const handleDismiss = () => {
     stopContinuousPhoneRing();
-    setDismissed(true);
-    sessionStorage.setItem(LAB_RINGER_DISMISSED_KEY, "true");
+    setIsDismissed(true);
+    sessionStorage.setItem(userDismissedKey, "true");
   };
 
   const handleAccept = async () => {
     stopContinuousPhoneRing();
-    setMutedRequestIds((prev) => new Set(prev).add(latest.id));
+    const updatedMuted = new Set(mutedOrderIds).add(latest.id);
+    setMutedOrderIds(updatedMuted);
+    try {
+      localStorage.setItem(userMutedOrdersKey, JSON.stringify(Array.from(updatedMuted)));
+    } catch {}
+
     await updateLaboratoryRequestStatus(latest.id, "sample_collected");
-    navigate("/laboratory");
+    if (location.pathname !== "/laboratory") {
+      navigate("/laboratory");
+    }
+  };
+
+  const handleOpenLab = () => {
+    stopContinuousPhoneRing();
+    if (location.pathname !== "/laboratory") {
+      navigate("/laboratory");
+    }
   };
 
   return (
-    <div className="global-lab-order-alert-strip" role="alert">
-      <div className="lab-ringer-left">
-        <div className="lab-ringer-icon-box">
-          <FaFlask />
+    <aside className="global-lab-order-toast" role="alert" aria-live="polite">
+      <div className="lab-toast-header">
+        <div className="lab-toast-title-row">
+          <div className="lab-toast-pulse-icon">
+            <FaFlask />
+          </div>
+          <div className="lab-toast-title-text">
+            <strong>New Lab Order</strong>
+            <span className="lab-toast-sub">Sample Collection Needed</span>
+          </div>
         </div>
-        <div className="lab-ringer-content">
-          <div className="lab-ringer-meta-row">
-            <span className="lab-ringer-badge">
-              Doctor Ordered Test • Immediate Attention
+
+        <div className="lab-toast-header-actions">
+          {activePending.length > 1 && (
+            <span className="lab-toast-badge-more">
+              +{activePending.length - 1} more
             </span>
-            {activePending.length > 1 && (
-              <span className="lab-ringer-more-badge">
-                +{activePending.length - 1} more pending
-              </span>
-            )}
-          </div>
-          <div className="lab-ringer-patient-line">
-            {patientDisplayName} —{" "}
-            <span style={{ color: "#7dd3fc" }}>{latest.template?.name}</span>
-            {latest.patient?.mrn && (
-              <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.8)", marginLeft: "6px" }}>
-                (MRN: {latest.patient.mrn})
-              </span>
-            )}
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            title={isMuted ? "Sound is muted for you (click to unmute)" : "Mute alert sound for your session"}
+            className={`lab-toast-icon-btn ${isMuted ? "muted" : ""}`}
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+          >
+            {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            title="Dismiss alert card"
+            className="lab-toast-icon-btn close"
+            aria-label="Dismiss alert"
+          >
+            <FiX />
+          </button>
         </div>
       </div>
 
-      <div className="lab-ringer-actions">
+      <div className="lab-toast-body">
+        <div className="lab-toast-patient-row">
+          <span className="lab-toast-patient-name">{patientDisplayName}</span>
+          {latest.patient?.mrn && (
+            <span className="lab-toast-mrn">MRN: {latest.patient.mrn}</span>
+          )}
+        </div>
+
+        <div className="lab-toast-test-chip">
+          {latest.template?.name || "Laboratory Investigation"}
+        </div>
+      </div>
+
+      <div className="lab-toast-footer">
         <button
           type="button"
           onClick={handleAccept}
-          className="lab-ringer-btn lab-ringer-btn-accept"
+          className="lab-toast-btn-primary"
         >
-          <FiCheck /> Accept / Collect Sample
+          <FiCheck /> Collect Sample
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            stopContinuousPhoneRing();
-            navigate("/laboratory");
-          }}
-          className="lab-ringer-btn lab-ringer-btn-station"
+          onClick={handleOpenLab}
+          className="lab-toast-btn-secondary"
         >
-          <FiExternalLink /> Open Lab Station
+          <FiExternalLink /> Open Lab
         </button>
 
         <button
           type="button"
-          onClick={handleMuteAll}
-          title="Mute pending order alert"
-          className="lab-ringer-btn lab-ringer-btn-mute"
+          onClick={handleToggleMute}
+          className={`lab-toast-btn-mute ${isMuted ? "active" : ""}`}
         >
-          <FaPhoneSlash /> Mute
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (soundEnabled) stopContinuousPhoneRing();
-            setSoundEnabled(!soundEnabled);
-          }}
-          title={soundEnabled ? "Disable sound" : "Enable sound"}
-          className="lab-ringer-btn-icon"
-        >
-          {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleDismiss}
-          title="Dismiss banner for this session"
-          className="lab-ringer-btn-icon lab-ringer-btn-dismiss"
-        >
-          <FiX size={18} />
+          {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+          <span>{isMuted ? "Muted" : "Mute"}</span>
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
