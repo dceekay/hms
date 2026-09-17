@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiCheck } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
-import mdsHospital from "../assets/optimized/login_doctors_nurses.webp";
+import mdsHospital from "../assets/optimized/22mds.webp";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
