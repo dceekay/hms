@@ -1,6 +1,6 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiCheck } from "react-icons/fi";
+import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
 import mdsHospital from "../assets/optimized/22mds.webp";
@@ -74,12 +74,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-
-  const filteredAccounts = useMemo(() => {
-    if (activeCategory === "all") return mdsTestAccounts;
-    return mdsTestAccounts.filter((a) => a.category === activeCategory);
-  }, [activeCategory]);
 
   async function submitLogin(username: string, loginPassword: string) {
     setLoading(true);
@@ -235,35 +229,11 @@ export default function LoginPage() {
                   <p>Click any account for instant one-click sign in</p>
                 </div>
               </div>
-              <span className="test-login-count">{filteredAccounts.length} Logins</span>
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="test-login-categories" role="tablist" aria-label="Account role categories">
-              {[
-                { id: "all", label: "All", count: mdsTestAccounts.length },
-                { id: "admin", label: "Admin", count: 2 },
-                { id: "clinical", label: "Clinical", count: 2 },
-                { id: "diagnostics", label: "Diagnostics", count: 2 },
-                { id: "operations", label: "Operations", count: 4 },
-                { id: "security", label: "Security", count: 1 },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeCategory === cat.id}
-                  className={`test-category-pill ${activeCategory === cat.id ? "active" : ""}`}
-                  onClick={() => setActiveCategory(cat.id)}
-                >
-                  {cat.label}
-                  <span className="pill-count">{cat.count}</span>
-                </button>
-              ))}
+              <span className="test-login-count">{mdsTestAccounts.length} Staff Logins</span>
             </div>
 
             <div className="test-login-grid">
-              {filteredAccounts.map((account) => (
+              {mdsTestAccounts.map((account) => (
                 <button
                   key={account.username}
                   type="button"
