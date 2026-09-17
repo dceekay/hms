@@ -13,6 +13,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { FaFlask } from "react-icons/fa";
+import QRCode from "qrcode";
 import mdsLogo from "../assets/optimized/logo.png";
 import {
   type LaboratoryVerificationData,
@@ -44,6 +45,25 @@ export default function LaboratoryVerificationPage() {
   const [data, setData] = useState<LaboratoryVerificationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!identifier) return;
+    let active = true;
+    QRCode.toDataURL(window.location.href, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#0f766e", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setQrCodeDataUrl(url);
+      })
+      .catch((err) => console.error("Lab verification QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [identifier]);
 
   useEffect(() => {
     let active = true;
@@ -85,12 +105,25 @@ export default function LaboratoryVerificationPage() {
     <main className="verification-page lab-verification-page">
       <section className="verification-card lab-verification-card">
         {/* Brand Header */}
-        <div className="verification-brand">
-          <img src={mdsLogo} alt="MDS Hospital" />
-          <div>
-            <strong>MDS Hospital</strong>
-            <span>Diagnostic Pathology & Laboratory Services</span>
+        <div className="verification-brand" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <img src={mdsLogo} alt="MDS Specialist Hospital Logo" style={{ width: 56, height: 56, objectFit: "contain" }} />
+            <div>
+              <strong style={{ fontSize: "1.15rem", color: "#0f172a" }}>MDS Specialist Hospital Kano</strong>
+              <span style={{ fontSize: "0.82rem", color: "#0f766e", fontWeight: 600 }}>Diagnostic Pathology &amp; Laboratory Services</span>
+            </div>
           </div>
+
+          {qrCodeDataUrl && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+              <img
+                src={qrCodeDataUrl}
+                alt="Scan to verify result"
+                style={{ width: 56, height: 56, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+              />
+              <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}

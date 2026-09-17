@@ -1,36 +1,30 @@
 import React from "react";
+import mdsLogoImg from "../../assets/optimized/logo.png";
 
 interface LogoProps {
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export const MdsMark: React.FC<LogoProps> = ({ size = 48, className = "" }) => {
+export const MdsMark: React.FC<LogoProps> = ({ size = 48, className = "", style = {} }) => {
   return (
-    <svg
+    <img
+      src={mdsLogoImg}
       width={size}
       height={size}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="MDS Hospital Logo"
-    >
-      <rect width="100" height="100" rx="22" fill="url(#mdsBrandGrad)" />
-      <path
-        d="M50 20V80M20 50H80"
-        stroke="#FFFFFF"
-        strokeWidth="12"
-        strokeLinecap="round"
-      />
-      <circle cx="50" cy="50" r="8" fill="#38BDF8" />
-      <defs>
-        <linearGradient id="mdsBrandGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0284C7" />
-          <stop offset="1" stopColor="#0369A1" />
-        </linearGradient>
-      </defs>
-    </svg>
+      alt="MDS Specialist Hospital Logo"
+      className={`mds-hospital-logo ${className}`.trim()}
+      style={{
+        width: size,
+        height: size,
+        objectFit: "contain",
+        imageRendering: "-webkit-optimize-contrast",
+        display: "inline-block",
+        verticalAlign: "middle",
+        ...style,
+      }}
+    />
   );
 };
 

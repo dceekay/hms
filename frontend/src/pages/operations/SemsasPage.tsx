@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiArchive, FiFileText, FiPrinter, FiRefreshCw, FiSave, FiSearch, FiTruck } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
+import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { createSemsasTransfer, fetchSemsasTransfers, fileSemsasMonth } from "../../services/semsasService";
 import { useAuthStore } from "../../store/authStore";
@@ -58,6 +59,7 @@ export default function SemsasPage() {
   const [filing, setFiling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [semsasQrDataUrl, setSemsasQrDataUrl] = useState<string>("");
 
   const totals = useMemo(() => {
     const amount = transfers.reduce((sum, transfer) => sum + Number(transfer.feeAmount ?? 0), 0);
@@ -70,6 +72,33 @@ export default function SemsasPage() {
 
     return { amount, filed, filedAmount, unfiled, unfiledAmount };
   }, [transfers]);
+
+  useEffect(() => {
+    let active = true;
+    const qrData = JSON.stringify({
+      hospital: "MDS Specialist Hospital Kano",
+      document: "SEMSAS Monthly Ambulance Filing Report",
+      month: filterMonth || "All Months",
+      status: filingStatus || "All Statuses",
+      records: transfers.length,
+      amount: totals.amount,
+      verify: "https://mds01.vercel.app/operations/semsas",
+    });
+
+    QRCode.toDataURL(qrData, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#0f172a", light: "#ffffff" },
+    })
+      .then((dataUrl) => {
+        if (active) setSemsasQrDataUrl(dataUrl);
+      })
+      .catch((err) => console.error("SEMSAS QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [filterMonth, filingStatus, transfers.length, totals.amount]);
 
   const loadTransfers = async () => {
     setLoading(true);
@@ -359,15 +388,28 @@ export default function SemsasPage() {
               {!loading && transfers.length === 0 && <p className="muted-text">No SEMSAS records found.</p>}
 
               <section className="semsas-print-template" aria-label="Printable SEMSAS report">
-                <div className="semsas-print-header">
-                  <img src={mdsLogo} alt="MDS Hospital" />
-                  <div>
-                    <p>MDS Hospital</p>
-                    <h2>SEMSAS Monthly Filing Report</h2>
-                    <span>
-                      Month: {filterMonth || "All"} | Status: {filingStatus || "All"} | Records: {transfers.length}
-                    </span>
+                <div className="semsas-print-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <img src={mdsLogo} alt="MDS Specialist Hospital Kano Logo" style={{ width: 54, height: 54, objectFit: "contain" }} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: "0.82rem", color: "#0284c7", fontWeight: 700, textTransform: "uppercase" }}>MDS SPECIALIST HOSPITAL KANO</p>
+                      <h2 style={{ margin: "2px 0 0", fontSize: "1.2rem", fontWeight: 800, color: "#0f172a" }}>SEMSAS Monthly Ambulance Filing Report</h2>
+                      <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                        Month: {filterMonth || "All"} | Status: {filingStatus || "All"} | Records: {transfers.length}
+                      </span>
+                    </div>
                   </div>
+
+                  {semsasQrDataUrl && (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                      <img
+                        src={semsasQrDataUrl}
+                        alt="Scan QR to verify SEMSAS report"
+                        style={{ width: 58, height: 58, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+                      />
+                      <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
+                    </div>
+                  )}
                 </div>
 
                 <div className="semsas-print-summary">

@@ -13,6 +13,7 @@ import {
 import { FaCapsules } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
+import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
@@ -165,10 +166,47 @@ export default function PharmacyPage() {
   const [stockReason, setStockReason] = useState("");
   const [stockNotes, setStockNotes] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<PharmacySale | null>(null);
+  const [pharmacyQrDataUrl, setPharmacyQrDataUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedInvoice) {
+      setPharmacyQrDataUrl("");
+      return;
+    }
+    let active = true;
+    const pName = selectedInvoice.patient
+      ? `${selectedInvoice.patient.firstName || ""} ${selectedInvoice.patient.lastName || ""}`.trim()
+      : "Walk-in";
+    const qrData = JSON.stringify({
+      hospital: "MDS Specialist Hospital Kano",
+      invoice: selectedInvoice.invoiceNumber,
+      patient: pName,
+      mrn: selectedInvoice.patient?.mrn || "N/A",
+      total: money(selectedInvoice.totalAmount),
+      paid: money(selectedInvoice.amountPaid),
+      status: selectedInvoice.paymentStatus.toUpperCase(),
+      date: formatDate(selectedInvoice.soldAt),
+      verify: `https://mds01.vercel.app/verify/pharmacy/${encodeURIComponent(selectedInvoice.invoiceNumber)}`,
+    });
+
+    QRCode.toDataURL(qrData, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#0f766e", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setPharmacyQrDataUrl(url);
+      })
+      .catch((err) => console.error("Pharmacy QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [selectedInvoice]);
 
   const selectedPatient = useMemo(
     () => patients.find((patient) => patient.id === saleForm.patientId),
@@ -952,13 +990,32 @@ export default function PharmacyPage() {
 
           {selectedInvoice && (
             <section className="pharmacy-print-template" aria-label="Printable pharmacy invoice">
-              <div className="pharmacy-print-header">
-                <img src={mdsLogo} alt="MDS Hospital" />
-                <div>
-                  <h2>MDS Hospital</h2>
-                  <p>{selectedInvoice.paymentStatus === "paid" ? "Pharmacy Receipt" : "Pharmacy Invoice"}</p>
+              <div className="pharmacy-print-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <img src={mdsLogo} alt="MDS Specialist Hospital Logo" style={{ width: 52, height: 52, objectFit: "contain" }} />
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0f766e" }}>MDS SPECIALIST HOSPITAL</h2>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#64748b" }}>
+                      {selectedInvoice.paymentStatus === "paid" ? "Official Pharmacy Dispensing Receipt" : "Pharmacy Dispensing Invoice"} · Kano State
+                    </p>
+                  </div>
                 </div>
-                <span>{selectedInvoice.invoiceNumber}</span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <span style={{ fontFamily: "monospace", fontSize: "0.95rem", fontWeight: 800, color: "#0f766e" }}>
+                    {selectedInvoice.invoiceNumber}
+                  </span>
+                  {pharmacyQrDataUrl && (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                      <img
+                        src={pharmacyQrDataUrl}
+                        alt="Scan QR to verify pharmacy receipt"
+                        style={{ width: 56, height: 56, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+                      />
+                      <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pharmacy-print-meta">

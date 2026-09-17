@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import type { PatientBill } from "../../types/billing";
 import { useAuthStore } from "../../store/authStore";
@@ -8,11 +9,11 @@ export interface BillingReceiptPrintDocumentProps {
 }
 
 const HOSPITAL_PRINT_INFO = {
-  name: "MDS HOSPITAL",
-  subtitle: "Revenue & Billing Services",
-  address: "Kano State, Nigeria",
+  name: "MDS SPECIALIST HOSPITAL",
+  subtitle: "Revenue & Billing Services · Kano State",
+  address: "Eastern Bypass, Giginyu, Kano State, Nigeria",
   phone: "+234 812 345 6789",
-  email: "info@mdshospital.com",
+  email: "billing@mdshospital.com.ng",
 };
 
 function money(value?: number | string | null) {
@@ -39,6 +40,7 @@ export default function BillingReceiptPrintDocument({
   bill,
 }: BillingReceiptPrintDocumentProps) {
   const currentUser = useAuthStore((state) => state.user);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
   const patientName = bill.patient
     ? `${bill.patient.firstName || ""} ${bill.patient.lastName || ""}`.trim() || "Walk-in Patient"
@@ -56,32 +58,85 @@ export default function BillingReceiptPrintDocument({
   const paidAmount = Number(bill.amountPaid || 0);
   const balance = Math.max(0, totalAmount - paidAmount);
   const isSettled = bill.paymentStatus === "paid" || balance === 0;
+  const invoiceNum = bill.invoiceNumber || `INV-${bill.id.slice(0, 8).toUpperCase()}`;
+
+  useEffect(() => {
+    let active = true;
+    const qrData = JSON.stringify({
+      hospital: "MDS Specialist Hospital Kano",
+      invoice: invoiceNum,
+      patient: patientName,
+      mrn: mrn,
+      amount: money(totalAmount),
+      paid: money(paidAmount),
+      status: isSettled ? "PAID" : bill.paymentStatus.toUpperCase(),
+      date: formatDate(bill.billedAt),
+      verify: `https://mds01.vercel.app/verify/billing/${encodeURIComponent(invoiceNum)}`,
+    });
+
+    QRCode.toDataURL(qrData, {
+      margin: 1,
+      width: 160,
+      color: { dark: "#092a5e", light: "#ffffff" },
+    })
+      .then((dataUrl) => {
+        if (active) setQrCodeDataUrl(dataUrl);
+      })
+      .catch((err) => console.error("Billing receipt QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [invoiceNum, patientName, mrn, totalAmount, paidAmount, isSettled, bill.paymentStatus, bill.billedAt]);
 
   return (
     <div className="billing-receipt-canvas" id="printable-billing-receipt">
       {/* 1. Official Receipt Header */}
-      <header className="billing-receipt-header">
-        <div className="receipt-brand-row">
+      <header className="billing-receipt-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px" }}>
+        <div className="receipt-brand-row" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <img
             src={mdsLogo}
-            alt="MDS Hospital"
+            alt="MDS Specialist Hospital Kano Logo"
             className="receipt-logo"
-            style={{ width: 44, height: 44, objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
+            style={{ width: 56, height: 56, objectFit: "contain", imageRendering: "-webkit-optimize-contrast" }}
           />
           <div className="receipt-brand-text">
-            <h1>{HOSPITAL_PRINT_INFO.name}</h1>
-            <p className="receipt-subtitle">{HOSPITAL_PRINT_INFO.subtitle}</p>
-            <p className="receipt-contact-meta">
+            <h1 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#092a5e", letterSpacing: "0.02em" }}>
+              {HOSPITAL_PRINT_INFO.name}
+            </h1>
+            <p className="receipt-subtitle" style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#0284c7", fontWeight: 600 }}>
+              {HOSPITAL_PRINT_INFO.subtitle}
+            </p>
+            <p className="receipt-contact-meta" style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748b" }}>
               {HOSPITAL_PRINT_INFO.address} • Tel: {HOSPITAL_PRINT_INFO.phone}
             </p>
           </div>
         </div>
 
-        <div className="receipt-title-box">
-          <h2>OFFICIAL RECEIPT / PAYMENT INVOICE</h2>
-          <div className="receipt-number-badge">
-            <span>INV NO:</span>
-            <strong>{bill.invoiceNumber || `INV-${bill.id.slice(0, 8).toUpperCase()}`}</strong>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div className="receipt-title-box" style={{ textAlign: "right" }}>
+            <h2 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#0f172a" }}>
+              OFFICIAL RECEIPT / PAYMENT INVOICE
+            </h2>
+            <div className="receipt-number-badge" style={{ marginTop: "4px" }}>
+              <span style={{ fontSize: "0.75rem", color: "#64748b", marginRight: "4px" }}>INV NO:</span>
+              <strong style={{ fontSize: "0.9rem", color: "#0284c7", fontFamily: "monospace" }}>{invoiceNum}</strong>
+            </div>
+          </div>
+
+          <div className="receipt-qr-block" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", flexShrink: 0 }}>
+            {qrCodeDataUrl ? (
+              <img
+                src={qrCodeDataUrl}
+                alt="Scan QR to verify payment"
+                style={{ width: 62, height: 62, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+              />
+            ) : (
+              <div style={{ width: 62, height: 62, background: "#f1f5f9", borderRadius: 6 }} />
+            )}
+            <span style={{ fontSize: "0.6rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.02em" }}>
+              Scan to Verify
+            </span>
           </div>
         </div>
       </header>
