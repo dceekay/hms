@@ -1569,15 +1569,16 @@ export function PatientListPage() {
 
                     <button
                       type="button"
-                      className="icon-only-btn"
+                      className="icon-only-btn modal-close-btn"
                       onClick={() =>
                         setSelectedPatient(
                           null
                         )
                       }
                       aria-label="Close patient ID card"
+                      title="Close"
                     >
-                      <FiX />
+                      <FiX size={18} strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>
@@ -1649,13 +1650,14 @@ export function PatientListPage() {
 
                     <button
                       type="button"
-                      className="icon-only-btn"
+                      className="icon-only-btn modal-close-btn"
                       onClick={
                         closeEditPatient
                       }
                       aria-label="Close edit patient form"
+                      title="Close"
                     >
-                      <FiX />
+                      <FiX size={18} strokeWidth={2.5} />
                     </button>
                   </div>
 

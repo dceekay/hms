@@ -639,8 +639,9 @@ export default function BillingPage() {
                           fontSize: "1.1rem",
                         }}
                         title="Deselect patient"
+                        aria-label="Deselect patient"
                       >
-                        <FiX />
+                        <FiX size={16} strokeWidth={2.5} />
                       </button>
                     </div>
                   )}

@@ -136,11 +136,12 @@ export default function PushAlertPrompt() {
           </button>
           <button
             type="button"
-            className="push-dismiss-btn"
+            className="push-dismiss-btn modal-close-btn"
             onClick={handleDismiss}
             aria-label="Dismiss notification prompt"
+            title="Dismiss"
           >
-            <FiX />
+            <FiX size={18} strokeWidth={2.5} />
           </button>
         </div>
       )}

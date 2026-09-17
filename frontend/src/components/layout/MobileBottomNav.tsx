@@ -265,8 +265,14 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
                 <span>Navigation</span>
                 <h2 id="mobile-nav-sheet-title">More destinations</h2>
               </div>
-              <button type="button" onClick={() => setMoreOpen(false)} aria-label="Close more navigation">
-                <FiX />
+              <button
+                type="button"
+                className="mobile-nav-close-btn modal-close-btn"
+                onClick={() => setMoreOpen(false)}
+                aria-label="Close more navigation"
+                title="Close"
+              >
+                <FiX size={18} strokeWidth={2.5} />
               </button>
             </div>
             <div className="mobile-nav-sheet-grid">

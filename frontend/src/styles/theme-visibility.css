@@ -1433,7 +1433,7 @@ body.light-theme .service-index-status-title {
 }
 
 /* Individual Button Non-Overlap Guarantees */
-.admin-layout button,
+.admin-layout button:not(.icon-btn):not(.notification-action):not(.notification-close-btn):not(.modal-close-btn):not(.modal-close):not(.icon-only-btn):not(.patient-id-close-btn):not(.toast-close-btn):not(.close-modal-btn):not(.sweetalert-btn-close):not(.lab-icon-btn):not(.lab-toast-icon-btn):not(.nurse-search-clear):not(.search-clear-btn):not(.clear-selection-btn):not(.picker-close-btn):not(.snapshot-clear-btn):not(.table-action-btn):not(.action-icon-btn):not(.sidebar-mobile-close):not(.mobile-nav-close-btn):not(.pwa-close-btn):not(.pwa-modal-close):not(.push-dismiss-btn):not(.pqc-clear-btn):not(.notification-tool-btn):not([aria-label*="close" i]):not([aria-label*="cancel" i]):not([aria-label*="dismiss" i]):not([title*="close" i]):not([title*="cancel" i]):not([title*="dismiss" i]),
 a.command-btn,
 .command-btn,
 .doctor-action-btn,
@@ -1630,7 +1630,7 @@ body.dark-theme .nurse-action-btn.active {
     gap: 0.5rem !important;
   }
 
-  .admin-layout button,
+  .admin-layout button:not(.icon-btn):not(.notification-action):not(.notification-close-btn):not(.modal-close-btn):not(.modal-close):not(.icon-only-btn):not(.patient-id-close-btn):not(.toast-close-btn):not(.close-modal-btn):not(.sweetalert-btn-close):not(.lab-icon-btn):not(.lab-toast-icon-btn):not(.nurse-search-clear):not(.search-clear-btn):not(.clear-selection-btn):not(.picker-close-btn):not(.snapshot-clear-btn):not(.table-action-btn):not(.action-icon-btn):not(.sidebar-mobile-close):not(.mobile-nav-close-btn):not(.pwa-close-btn):not(.pwa-modal-close):not(.push-dismiss-btn):not(.pqc-clear-btn):not(.notification-tool-btn):not([aria-label*="close" i]):not([aria-label*="cancel" i]):not([aria-label*="dismiss" i]):not([title*="close" i]):not([title*="cancel" i]):not([title*="dismiss" i]),
   .command-btn,
   .doctor-action-btn,
   .nurse-action-btn,
@@ -1645,4 +1645,369 @@ body.dark-theme .nurse-action-btn.active {
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   15. UNIVERSAL CLOSE/CANCEL/DISMISS & ICON BUTTON CONTRAST (LIGHT & DARK)
+   Guarantees that all X (cancel/close/dismiss) icons, modal dismissals,
+   and icon-only buttons are prominently visible, never squished,
+   have crisp high-contrast 18-20px SVGs across both Light & Dark themes.
+   ========================================================================== */
+
+/* Universal Reset & Sizing for All Close / Cancel / Icon-Only Buttons */
+.notification-close-btn,
+.notification-panel-header button,
+.icon-only-btn,
+.modal-close-btn,
+.modal-close,
+.close-modal-btn,
+.patient-id-close-btn,
+.sweetalert-btn-close,
+.lab-icon-btn,
+.lab-toast-icon-btn,
+.nurse-search-clear,
+.search-clear-btn,
+.clear-selection-btn,
+.picker-close-btn,
+.clear-search-btn,
+.snapshot-clear-btn,
+.sidebar-mobile-close,
+.mobile-nav-close-btn,
+.mobile-nav-sheet-header button,
+.pwa-close-btn,
+.pwa-modal-close,
+.push-dismiss-btn,
+.pqc-clear-btn,
+.lab-alert-banner button,
+.nurse-alert-banner button,
+button[aria-label*="close" i],
+button[aria-label*="cancel" i],
+button[aria-label*="dismiss" i],
+button[title*="close" i],
+button[title*="cancel" i],
+button[title*="dismiss" i] {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* Ensure ALL SVGs inside Close / Cancel / Icon-Only Buttons Are Perfectly Sized & Rendered */
+.notification-close-btn svg,
+.notification-panel-header button svg,
+.icon-only-btn svg,
+.modal-close-btn svg,
+.modal-close svg,
+.close-modal-btn svg,
+.patient-id-close-btn svg,
+.sweetalert-btn-close svg,
+.lab-icon-btn svg,
+.lab-toast-icon-btn svg,
+.nurse-search-clear svg,
+.search-clear-btn svg,
+.clear-selection-btn svg,
+.picker-close-btn svg,
+.clear-search-btn svg,
+.snapshot-clear-btn svg,
+.sidebar-mobile-close svg,
+.mobile-nav-close-btn svg,
+.mobile-nav-sheet-header button svg,
+.pwa-close-btn svg,
+.pwa-modal-close svg,
+.push-dismiss-btn svg,
+.pqc-clear-btn svg,
+.lab-alert-banner button svg,
+.nurse-alert-banner button svg,
+button[aria-label*="close" i] svg,
+button[aria-label*="cancel" i] svg,
+button[aria-label*="dismiss" i] svg,
+button[title*="close" i] svg,
+button[title*="cancel" i] svg,
+button[title*="dismiss" i] svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: none !important;
+  max-height: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
+  fill: none !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  flex-shrink: 0 !important;
+}
+
+/* Specific Circular Styling for Modal Corner Close Buttons */
+.icon-only-btn,
+.patient-id-close-btn,
+.sweetalert-btn-close,
+.modal-close-btn {
+  border-radius: 50% !important;
+}
+
+/* Option Tag Removal in Template Studio */
+.lab-option-tag button {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  padding: 0 !important;
+  margin: 0 0 0 4px !important;
+  background: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+.lab-option-tag button svg {
+  width: 13px !important;
+  height: 13px !important;
+  min-width: 13px !important;
+  min-height: 13px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Light Theme High Contrast for Close & Cancel Buttons */
+:root[data-theme="light"] .notification-close-btn,
+:root[data-theme="light"] .notification-panel-header button,
+:root[data-theme="light"] .icon-only-btn,
+:root[data-theme="light"] .modal-close-btn,
+:root[data-theme="light"] .modal-close,
+:root[data-theme="light"] .close-modal-btn,
+:root[data-theme="light"] .patient-id-close-btn,
+:root[data-theme="light"] .sweetalert-btn-close,
+:root[data-theme="light"] .lab-icon-btn,
+:root[data-theme="light"] .sidebar-mobile-close,
+:root[data-theme="light"] .mobile-nav-close-btn,
+:root[data-theme="light"] .mobile-nav-sheet-header button,
+:root[data-theme="light"] .nurse-search-clear,
+:root[data-theme="light"] .search-clear-btn,
+:root[data-theme="light"] .clear-selection-btn,
+:root[data-theme="light"] .clear-search-btn,
+:root[data-theme="light"] .snapshot-clear-btn,
+:root[data-theme="light"] .pwa-close-btn,
+:root[data-theme="light"] .pwa-modal-close,
+:root[data-theme="light"] .push-dismiss-btn,
+:root[data-theme="light"] .lab-alert-banner button,
+:root[data-theme="light"] .nurse-alert-banner button,
+:root[data-theme="light"] button[aria-label*="close" i],
+:root[data-theme="light"] button[aria-label*="cancel" i],
+:root[data-theme="light"] button[aria-label*="dismiss" i],
+body.light-theme .notification-close-btn,
+body.light-theme .notification-panel-header button,
+body.light-theme .icon-only-btn,
+body.light-theme .modal-close-btn,
+body.light-theme .modal-close,
+body.light-theme .close-modal-btn,
+body.light-theme .patient-id-close-btn,
+body.light-theme .sweetalert-btn-close,
+body.light-theme .lab-icon-btn,
+body.light-theme .sidebar-mobile-close,
+body.light-theme .mobile-nav-close-btn,
+body.light-theme .mobile-nav-sheet-header button,
+body.light-theme .nurse-search-clear,
+body.light-theme .search-clear-btn,
+body.light-theme .clear-selection-btn,
+body.light-theme .clear-search-btn,
+body.light-theme .snapshot-clear-btn,
+body.light-theme .pwa-close-btn,
+body.light-theme .pwa-modal-close,
+body.light-theme .push-dismiss-btn,
+body.light-theme .lab-alert-banner button,
+body.light-theme .nurse-alert-banner button,
+body.light-theme button[aria-label*="close" i],
+body.light-theme button[aria-label*="cancel" i],
+body.light-theme button[aria-label*="dismiss" i] {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #092a5e !important;
+  box-shadow: 0 1px 4px rgba(9, 42, 94, 0.08) !important;
+}
+
+:root[data-theme="light"] .notification-close-btn:hover,
+:root[data-theme="light"] .notification-panel-header button:hover,
+:root[data-theme="light"] .icon-only-btn:hover,
+:root[data-theme="light"] .modal-close-btn:hover,
+:root[data-theme="light"] .modal-close:hover,
+:root[data-theme="light"] .close-modal-btn:hover,
+:root[data-theme="light"] .patient-id-close-btn:hover,
+:root[data-theme="light"] .sweetalert-btn-close:hover,
+:root[data-theme="light"] .lab-icon-btn:hover,
+:root[data-theme="light"] .sidebar-mobile-close:hover,
+:root[data-theme="light"] .mobile-nav-close-btn:hover,
+:root[data-theme="light"] .mobile-nav-sheet-header button:hover,
+:root[data-theme="light"] .nurse-search-clear:hover,
+:root[data-theme="light"] .search-clear-btn:hover,
+:root[data-theme="light"] .clear-selection-btn:hover,
+:root[data-theme="light"] .clear-search-btn:hover,
+:root[data-theme="light"] .snapshot-clear-btn:hover,
+:root[data-theme="light"] .pwa-close-btn:hover,
+:root[data-theme="light"] .pwa-modal-close:hover,
+:root[data-theme="light"] .push-dismiss-btn:hover,
+:root[data-theme="light"] .lab-alert-banner button:hover,
+:root[data-theme="light"] .nurse-alert-banner button:hover,
+:root[data-theme="light"] button[aria-label*="close" i]:hover,
+:root[data-theme="light"] button[aria-label*="cancel" i]:hover,
+:root[data-theme="light"] button[aria-label*="dismiss" i]:hover,
+body.light-theme .notification-close-btn:hover,
+body.light-theme .notification-panel-header button:hover,
+body.light-theme .icon-only-btn:hover,
+body.light-theme .modal-close-btn:hover,
+body.light-theme .modal-close:hover,
+body.light-theme .close-modal-btn:hover,
+body.light-theme .patient-id-close-btn:hover,
+body.light-theme .sweetalert-btn-close:hover,
+body.light-theme .lab-icon-btn:hover,
+body.light-theme .sidebar-mobile-close:hover,
+body.light-theme .mobile-nav-close-btn:hover,
+body.light-theme .mobile-nav-sheet-header button:hover,
+body.light-theme .nurse-search-clear:hover,
+body.light-theme .search-clear-btn:hover,
+body.light-theme .clear-selection-btn:hover,
+body.light-theme .clear-search-btn:hover,
+body.light-theme .snapshot-clear-btn:hover,
+body.light-theme .pwa-close-btn:hover,
+body.light-theme .pwa-modal-close:hover,
+body.light-theme .push-dismiss-btn:hover,
+body.light-theme .lab-alert-banner button:hover,
+body.light-theme .nurse-alert-banner button:hover,
+body.light-theme button[aria-label*="close" i]:hover,
+body.light-theme button[aria-label*="cancel" i]:hover,
+body.light-theme button[aria-label*="dismiss" i]:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: scale(1.06) !important;
+}
+
+/* Dark Theme High Contrast for Close & Cancel Buttons */
+:root[data-theme="dark"] .notification-close-btn,
+:root[data-theme="dark"] .notification-panel-header button,
+:root[data-theme="dark"] .icon-only-btn,
+:root[data-theme="dark"] .modal-close-btn,
+:root[data-theme="dark"] .modal-close,
+:root[data-theme="dark"] .close-modal-btn,
+:root[data-theme="dark"] .patient-id-close-btn,
+:root[data-theme="dark"] .sweetalert-btn-close,
+:root[data-theme="dark"] .lab-icon-btn,
+:root[data-theme="dark"] .sidebar-mobile-close,
+:root[data-theme="dark"] .mobile-nav-close-btn,
+:root[data-theme="dark"] .mobile-nav-sheet-header button,
+:root[data-theme="dark"] .nurse-search-clear,
+:root[data-theme="dark"] .search-clear-btn,
+:root[data-theme="dark"] .clear-selection-btn,
+:root[data-theme="dark"] .clear-search-btn,
+:root[data-theme="dark"] .snapshot-clear-btn,
+:root[data-theme="dark"] .pwa-close-btn,
+:root[data-theme="dark"] .pwa-modal-close,
+:root[data-theme="dark"] .push-dismiss-btn,
+:root[data-theme="dark"] .lab-alert-banner button,
+:root[data-theme="dark"] .nurse-alert-banner button,
+:root[data-theme="dark"] button[aria-label*="close" i],
+:root[data-theme="dark"] button[aria-label*="cancel" i],
+:root[data-theme="dark"] button[aria-label*="dismiss" i],
+body.dark-theme .notification-close-btn,
+body.dark-theme .notification-panel-header button,
+body.dark-theme .icon-only-btn,
+body.dark-theme .modal-close-btn,
+body.dark-theme .modal-close,
+body.dark-theme .close-modal-btn,
+body.dark-theme .patient-id-close-btn,
+body.dark-theme .sweetalert-btn-close,
+body.dark-theme .lab-icon-btn,
+body.dark-theme .sidebar-mobile-close,
+body.dark-theme .mobile-nav-close-btn,
+body.dark-theme .mobile-nav-sheet-header button,
+body.dark-theme .nurse-search-clear,
+body.dark-theme .search-clear-btn,
+body.dark-theme .clear-selection-btn,
+body.dark-theme .clear-search-btn,
+body.dark-theme .snapshot-clear-btn,
+body.dark-theme .pwa-close-btn,
+body.dark-theme .pwa-modal-close,
+body.dark-theme .push-dismiss-btn,
+body.dark-theme .lab-alert-banner button,
+body.dark-theme .nurse-alert-banner button,
+body.dark-theme button[aria-label*="close" i],
+body.dark-theme button[aria-label*="cancel" i],
+body.dark-theme button[aria-label*="dismiss" i] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}
+
+:root[data-theme="dark"] .notification-close-btn:hover,
+:root[data-theme="dark"] .notification-panel-header button:hover,
+:root[data-theme="dark"] .icon-only-btn:hover,
+:root[data-theme="dark"] .modal-close-btn:hover,
+:root[data-theme="dark"] .modal-close:hover,
+:root[data-theme="dark"] .close-modal-btn:hover,
+:root[data-theme="dark"] .patient-id-close-btn:hover,
+:root[data-theme="dark"] .sweetalert-btn-close:hover,
+:root[data-theme="dark"] .lab-icon-btn:hover,
+:root[data-theme="dark"] .sidebar-mobile-close:hover,
+:root[data-theme="dark"] .mobile-nav-close-btn:hover,
+:root[data-theme="dark"] .mobile-nav-sheet-header button:hover,
+:root[data-theme="dark"] .nurse-search-clear:hover,
+:root[data-theme="dark"] .search-clear-btn:hover,
+:root[data-theme="dark"] .clear-selection-btn:hover,
+:root[data-theme="dark"] .clear-search-btn:hover,
+:root[data-theme="dark"] .snapshot-clear-btn:hover,
+:root[data-theme="dark"] .pwa-close-btn:hover,
+:root[data-theme="dark"] .pwa-modal-close:hover,
+:root[data-theme="dark"] .push-dismiss-btn:hover,
+:root[data-theme="dark"] .lab-alert-banner button:hover,
+:root[data-theme="dark"] .nurse-alert-banner button:hover,
+:root[data-theme="dark"] button[aria-label*="close" i]:hover,
+:root[data-theme="dark"] button[aria-label*="cancel" i]:hover,
+:root[data-theme="dark"] button[aria-label*="dismiss" i]:hover,
+body.dark-theme .notification-close-btn:hover,
+body.dark-theme .notification-panel-header button:hover,
+body.dark-theme .icon-only-btn:hover,
+body.dark-theme .modal-close-btn:hover,
+body.dark-theme .modal-close:hover,
+body.dark-theme .close-modal-btn:hover,
+body.dark-theme .patient-id-close-btn:hover,
+body.dark-theme .sweetalert-btn-close:hover,
+body.dark-theme .lab-icon-btn:hover,
+body.dark-theme .sidebar-mobile-close:hover,
+body.dark-theme .mobile-nav-close-btn:hover,
+body.dark-theme .mobile-nav-sheet-header button:hover,
+body.dark-theme .nurse-search-clear:hover,
+body.dark-theme .search-clear-btn:hover,
+body.dark-theme .clear-selection-btn:hover,
+body.dark-theme .clear-search-btn:hover,
+body.dark-theme .snapshot-clear-btn:hover,
+body.dark-theme .pwa-close-btn:hover,
+body.dark-theme .pwa-modal-close:hover,
+body.dark-theme .push-dismiss-btn:hover,
+body.dark-theme .lab-alert-banner button:hover,
+body.dark-theme .nurse-alert-banner button:hover,
+body.dark-theme button[aria-label*="close" i]:hover,
+body.dark-theme button[aria-label*="cancel" i]:hover,
+body.dark-theme button[aria-label*="dismiss" i]:hover {
+  background: rgba(239, 68, 68, 0.28) !important;
+  border-color: #f87171 !important;
+  color: #fca5a5 !important;
+  transform: scale(1.06) !important;
+}
+
 

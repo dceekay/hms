@@ -291,7 +291,7 @@ export default function PatientSearchSelect({
               title="Clear selection"
               aria-label="Clear selected patient"
             >
-              <FiX />
+              <FiX size={16} strokeWidth={2.5} />
             </button>
           )}
           <FiChevronDown className={`chevron-icon ${isOpen ? "rotate" : ""}`} />
@@ -326,11 +326,12 @@ export default function PatientSearchSelect({
               </div>
               <button
                 type="button"
-                className="picker-close-btn"
+                className="picker-close-btn modal-close-btn"
                 onClick={() => setIsOpen(false)}
                 aria-label="Close patient picker"
+                title="Close"
               >
-                <FiX />
+                <FiX size={18} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -357,8 +358,10 @@ export default function PatientSearchSelect({
                   type="button"
                   className="search-clear-btn"
                   onClick={() => setSearchQuery("")}
+                  aria-label="Clear search query"
+                  title="Clear search"
                 >
-                  <FiX />
+                  <FiX size={16} strokeWidth={2.5} />
                 </button>
               )}
             </div>

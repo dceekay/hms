@@ -655,8 +655,9 @@ export default function LaboratoryTemplateStudio({
                                   type="button"
                                   onClick={() => removeOptionFromField(index, optIdx)}
                                   title="Remove option"
+                                  aria-label="Remove option"
                                 >
-                                  <FiX />
+                                  <FiX size={12} strokeWidth={2.5} />
                                 </button>
                               </span>
                             ))}

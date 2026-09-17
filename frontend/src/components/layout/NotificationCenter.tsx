@@ -325,8 +325,14 @@ export default function NotificationCenter() {
               <strong>Notifications</strong>
               <small>{unreadCount} unread</small>
             </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close notifications">
-              <FiX />
+            <button
+              type="button"
+              className="notification-close-btn"
+              onClick={() => setOpen(false)}
+              aria-label="Close notifications"
+              title="Close notifications"
+            >
+              <FiX size={18} strokeWidth={2.5} />
             </button>
           </div>
 
@@ -334,24 +340,24 @@ export default function NotificationCenter() {
             <span className={`notification-live-status ${streamConnected ? "online" : "polling"}`}>
               {streamConnected ? "Live" : "Polling"}
             </span>
-            <button type="button" onClick={requestPermission}>
-              <FiBell />
+            <button type="button" className="notification-tool-btn" onClick={requestPermission}>
+              <FiBell size={14} />
               {pushStatus === "saving"
                 ? "Saving"
                 : pushStatus === "subscribed"
                   ? "Subscribed"
                   : permissionLabel(permission)}
             </button>
-            <button type="button" onClick={toggleSound}>
-              {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
+            <button type="button" className="notification-tool-btn" onClick={toggleSound}>
+              {soundEnabled ? <FiVolume2 size={14} /> : <FiVolumeX size={14} />}
               {soundEnabled ? "Sound on" : "Sound off"}
             </button>
-            <button type="button" onClick={loadNotifications}>
-              <FiRefreshCw />
+            <button type="button" className="notification-tool-btn" onClick={loadNotifications}>
+              <FiRefreshCw size={14} />
               Refresh
             </button>
-            <button type="button" onClick={handleReadAll} disabled={unreadItems.length === 0}>
-              <FiCheckCircle />
+            <button type="button" className="notification-tool-btn" onClick={handleReadAll} disabled={unreadItems.length === 0}>
+              <FiCheckCircle size={14} />
               Read all
             </button>
           </div>

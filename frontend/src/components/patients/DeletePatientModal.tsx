@@ -116,12 +116,13 @@ export default function DeletePatientModal({
           </div>
           <button
             type="button"
-            className="patient-id-close-btn"
+            className="patient-id-close-btn modal-close-btn"
             onClick={onClose}
             disabled={deleting}
             aria-label="Close"
+            title="Close"
           >
-            <FiX />
+            <FiX size={18} strokeWidth={2.5} />
           </button>
         </div>
 

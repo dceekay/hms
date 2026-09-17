@@ -761,14 +761,18 @@ export default function LaboratoryPage() {
           <div className="lab-alert-banner success">
             <FiCheckCircle />
             <span>{success}</span>
-            <button type="button" onClick={() => setSuccess(null)}><FiX /></button>
+            <button type="button" onClick={() => setSuccess(null)} aria-label="Dismiss success message" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
         {error && (
           <div className="lab-alert-banner error">
             <FiAlertTriangle />
             <span>{error}</span>
-            <button type="button" onClick={() => setError(null)}><FiX /></button>
+            <button type="button" onClick={() => setError(null)} aria-label="Dismiss error message" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
 
@@ -1576,10 +1580,12 @@ export default function LaboratoryPage() {
                 </div>
                 <button
                   type="button"
-                  className="lab-icon-btn"
+                  className="lab-icon-btn modal-close-btn"
                   onClick={() => setQuickQrRequest(null)}
+                  aria-label="Close QR modal"
+                  title="Close"
                 >
-                  <FiX />
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
               </div>
 

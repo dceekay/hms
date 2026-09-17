@@ -385,24 +385,67 @@ body.light-theme .notification-action svg {
   color: var(--muted);
 }
 
-.notification-panel-header button,
-.notification-tools button {
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-  font-weight: 800;
+.notification-panel-header .notification-close-btn,
+.notification-panel-header button {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  max-width: 34px !important;
+  max-height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25)) !important;
+  background: var(--surface, rgba(15, 31, 54, 0.8)) !important;
+  color: var(--text-strong, #ffffff) !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  flex-shrink: 0 !important;
 }
 
-.notification-panel-header button {
-  width: 36px;
-  padding: 0;
+.notification-panel-header .notification-close-btn svg,
+.notification-panel-header button svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
+  fill: none !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.notification-panel-header .notification-close-btn:hover,
+.notification-panel-header button:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: #f87171 !important;
+  color: #fca5a5 !important;
+  transform: scale(1.05);
+}
+
+:root[data-theme="light"] .notification-panel-header .notification-close-btn,
+:root[data-theme="light"] .notification-panel-header button,
+body.light-theme .notification-panel-header .notification-close-btn,
+body.light-theme .notification-panel-header button {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+:root[data-theme="light"] .notification-panel-header .notification-close-btn:hover,
+:root[data-theme="light"] .notification-panel-header button:hover,
+body.light-theme .notification-panel-header .notification-close-btn:hover,
+body.light-theme .notification-panel-header button:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
 }
 
 .notification-tools {
@@ -411,15 +454,68 @@ body.light-theme .notification-action svg {
   gap: 8px;
 }
 
-.notification-tools button {
-  min-width: 0;
-  padding: 0 8px;
-  font-size: 0.78rem;
+.notification-tools button,
+.notification-tools .notification-tool-btn {
+  min-width: 0 !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  font-size: 0.76rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25)) !important;
+  border-radius: 8px !important;
+  background: var(--surface, rgba(15, 31, 54, 0.8)) !important;
+  color: var(--text-strong, #ffffff) !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
 }
 
-.notification-tools button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+.notification-tools button svg,
+.notification-tools .notification-tool-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.2px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
+
+.notification-tools button:hover:not(:disabled),
+.notification-tools .notification-tool-btn:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(37, 99, 235, 0.16)) !important;
+  border-color: var(--accent, #38bdf8) !important;
+  color: var(--accent, #38bdf8) !important;
+}
+
+:root[data-theme="light"] .notification-tools button,
+:root[data-theme="light"] .notification-tools .notification-tool-btn,
+body.light-theme .notification-tools button,
+body.light-theme .notification-tools .notification-tool-btn {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light"] .notification-tools button:hover:not(:disabled),
+:root[data-theme="light"] .notification-tools .notification-tool-btn:hover:not(:disabled),
+body.light-theme .notification-tools button:hover:not(:disabled),
+body.light-theme .notification-tools .notification-tool-btn:hover:not(:disabled) {
+  background: #e2e8f0 !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.notification-tools button:disabled,
+.notification-tools .notification-tool-btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.55 !important;
 }
 
 .notification-list {
