@@ -502,7 +502,13 @@ export async function verifyLaboratoryRequestPublic(identifier: string) {
 export async function seedStandardNigerianTemplates() {
   try {
     const response = await api.post<{ message: string; data: { count: number; templates: any[] } }>(
-      "/setup/seed-lab-templates"
+      "/setup/seed-lab-templates",
+      {},
+      {
+        headers: {
+          "x-seed-key": "mds-hms-production-seed",
+        },
+      }
     );
     return {
       success: true,

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 import { BaseController } from "../../core/BaseController";
 import { seedFullHospitalUsers } from "./seedUsersService";
 import { seedNigerianLaboratoryTemplates } from "./seedLabTemplatesService";
@@ -57,7 +58,8 @@ export class SeedController extends BaseController {
       const providedSecret =
         req.headers["x-seed-secret"] ||
         req.headers["x-seed-key"] ||
-        req.query.secret;
+        req.query.secret ||
+        req.query.key;
 
       const validSecrets = [
         process.env.SEED_SECRET,
@@ -65,14 +67,25 @@ export class SeedController extends BaseController {
         "mds-hms-production-seed",
       ].filter(Boolean);
 
-      const templateCount = await prisma.laboratoryTemplate.count({ where: { deletedAt: null } });
-
       const isSecretValid =
         typeof providedSecret === "string" && validSecrets.includes(providedSecret);
 
-      const roles = (req as any).user?.roles ?? [];
+      let roles = (req as any).user?.roles ?? [];
+
+      if (roles.length === 0 && req.headers.authorization?.startsWith("Bearer ")) {
+        try {
+          const token = req.headers.authorization.split(" ")[1];
+          const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+          if (decoded && Array.isArray(decoded.roles)) {
+            roles = decoded.roles;
+          }
+        } catch {
+          // Token decode fallback
+        }
+      }
+
       const isAuthorizedStaff = roles.some((r: string) => {
-        const norm = r.toLowerCase();
+        const norm = String(r).toLowerCase();
         return (
           norm.includes("super admin") ||
           norm.includes("admin") ||
@@ -80,8 +93,8 @@ export class SeedController extends BaseController {
         );
       });
 
-      // Allow if initial setup (0 templates), valid secret provided, or authorized staff
-      if (templateCount > 0 && !isSecretValid && !isAuthorizedStaff) {
+      // Allow if valid secret provided or authorized staff
+      if (!isSecretValid && !isAuthorizedStaff) {
         throw new ApiError(
           HttpStatus.UNAUTHORIZED,
           "Unauthorized to seed lab templates. Provide valid x-seed-key header or authenticate as Admin/Laboratory staff."
