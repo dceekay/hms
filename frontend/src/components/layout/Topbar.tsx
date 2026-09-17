@@ -4,7 +4,6 @@ import {
   FiCalendar,
   FiClock,
   FiLogOut,
-  FiMenu,
   FiRefreshCw,
   FiWifi,
   FiWifiOff,
@@ -24,7 +23,7 @@ interface TopbarProps {
   onOpenSidebar?: () => void;
 }
 
-export default function Topbar({ onOpenSidebar }: TopbarProps = {}) {
+export default function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps = {}) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const { status, latencyMs } = useBackendHealth();
@@ -67,17 +66,6 @@ export default function Topbar({ onOpenSidebar }: TopbarProps = {}) {
   return (
     <header className="topbar" data-tour-region="topbar">
       <div className="topbar-left">
-        {onOpenSidebar && (
-          <button
-            className="mobile-menu-toggle"
-            type="button"
-            onClick={onOpenSidebar}
-            aria-label="Open navigation menu"
-            title="Open menu"
-          >
-            <FiMenu size={24} />
-          </button>
-        )}
         <div>
           <p className="topbar-kicker">{primaryRole}</p>
           <h2>
