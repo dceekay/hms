@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiAlertTriangle } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
 import mdsHospital from "../assets/optimized/22mds.webp";
@@ -152,9 +152,20 @@ export default function LoginPage() {
         </div>
 
         <div className="login-copy">
+          <div className="login-statutory-pill">
+            <span className="live-status-dot" aria-hidden="true" />
+            <span>24/7 Monitored Clinical Network</span>
+          </div>
           <p className="eyebrow">MDS Specialist Hospital</p>
           <h1>Welcome to MDS staff portal.</h1>
-          <p>Secure clinical and administrative portal for doctors, nurses, specialists, and hospital staff.</p>
+          <p>
+            Secure clinical and administrative portal for authorized hospital personnel. All Hospital Medical Records (HMR) and electronic health transactions are actively monitored 24/7 for patient safety, data integrity, and statutory compliance.
+          </p>
+          <div className="login-law-badges">
+            <span>NDPA 2023 Compliant</span>
+            <span>Cybercrimes Act 2015</span>
+            <span>National Health Act 2014</span>
+          </div>
         </div>
       </section>
 
@@ -261,6 +272,46 @@ export default function LoginPage() {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="login-compliance-card" role="region" aria-label="HMR Access and Compliance Notice">
+            <div className="login-compliance-header">
+              <div className="login-live-pulse">
+                <span className="live-pulse-dot" aria-hidden="true" />
+                <span>Restricted HMR Access • 24/7 Monitored</span>
+              </div>
+              <span className="login-security-tag">Statutory Notice</span>
+            </div>
+
+            <p className="login-compliance-text">
+              Notice: Access to this Hospital Medical Records (HMR) system is strictly restricted to <strong>authorized clinical and administrative personnel only</strong>. Unauthorized access, alteration, extraction, or disclosure of patient health records is strictly prohibited and subject to immediate administrative sanctions, civil liabilities, and criminal prosecution.
+            </p>
+
+            <div className="login-applicable-laws">
+              <span className="login-laws-title">Applicable Healthcare & Cybersecurity Laws:</span>
+              <ul className="login-laws-list">
+                <li>
+                  <strong>Nigeria Data Protection Act (NDPA) 2023:</strong> Strict protection of sensitive personal health and biometric data.
+                </li>
+                <li>
+                  <strong>Cybercrimes (Prohibition, Prevention, etc.) Act 2015:</strong> Criminal penalties for unauthorized system penetration, data alteration, and breaches.
+                </li>
+                <li>
+                  <strong>National Health Act 2014 (Sections 26–29):</strong> Statutory confidentiality and mandatory protection of health records.
+                </li>
+                <li>
+                  <strong>MDCN Code of Medical Ethics:</strong> Strict professional confidentiality and duty of care regarding medical privacy.
+                </li>
+              </ul>
+            </div>
+
+            <div className="login-audit-warning">
+              <FiAlertTriangle className="audit-icon" aria-hidden="true" />
+              <div>
+                <strong>Notice: Active 24/7 Audit Logging</strong>
+                <div>All user sessions, patient record lookups, modifications, and IP addresses are continuously logged, cryptographically fingerprinted, and monitored 24/7.</div>
+              </div>
             </div>
           </div>
 

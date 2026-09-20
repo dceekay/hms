@@ -349,7 +349,12 @@ export function PatientListPage() {
       state.user?.roles ?? []
   );
 
-  const isSuperAdmin = roles.includes("Super Admin");
+  const isSuperAdmin =
+    roles.some(
+      (r) =>
+        r.toLowerCase().includes("super admin") ||
+        r.toLowerCase().includes("super_admin")
+    ) || permissions.includes("patients.delete");
 
   const [patients, setPatients] =
     useState<Patient[]>([]);

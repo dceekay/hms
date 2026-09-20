@@ -127,12 +127,22 @@ export default function DeletePatientModal({
         </div>
 
         <div className="delete-warning-banner">
-          <strong>IRREVERSIBLE DATA REMOVAL</strong>
+          <strong>IRREVERSIBLE DATA PURGE — SUPER ADMIN CLEARANCE REQUIRED</strong>
           <p>
-            This action will permanently purge the entire patient&apos;s record from
-            the system, including all clinical consultations, doctor notes,
-            appointments, billing records, prescriptions, and lab tests. This cannot
-            be undone.
+            This action will permanently purge the entire patient&apos;s Electronic Health &amp; Medical Records (HMR)
+            from the database, including all associated records:
+          </p>
+          <ul style={{ margin: "8px 0 0 18px", padding: 0, fontSize: "0.82rem", lineHeight: 1.5 }}>
+            <li>Clinical consultations, doctor notes, diagnoses &amp; treatment histories</li>
+            <li>Nursing progress notes, vital signs logs &amp; MAR medication administration schedules</li>
+            <li>Pharmacy prescriptions, medicine dispenses &amp; invoice items</li>
+            <li>Laboratory investigation orders, diagnostic results &amp; templates</li>
+            <li>Patient bills, payment invoices, financial ledger &amp; receipt records</li>
+            <li>Hospital admissions, ward bed assignments &amp; clinical referrals</li>
+            <li>Appointments, scheduling history &amp; ambulance transfer links</li>
+          </ul>
+          <p style={{ margin: "8px 0 0", fontWeight: 700, color: "#ef4444" }}>
+            ⚠️ This deletion cannot be undone. A mandatory 10-second safety countdown lock is active.
           </p>
         </div>
 
