@@ -10,6 +10,7 @@ import {
   FiTrash2,
   FiUserPlus,
 } from "react-icons/fi";
+import AppDatePicker from "../../components/common/AppDatePicker";
 import InsuranceProviderPicker from "../../components/insurance/InsuranceProviderPicker";
 import { PatientIdPanel } from "../../components/patients/PatientIdCard";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -523,17 +524,16 @@ export default function PatientRegistrationPage() {
                   />
                 </label>
 
-                <label>
-                  Date of birth
-                  <input
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={(event) =>
-                      update("dateOfBirth", event.target.value)
-                    }
+                <div className="form-group-datepicker">
+                  <AppDatePicker
+                    label="Date of birth"
                     required
+                    presetType="dob"
+                    value={form.dateOfBirth}
+                    onChange={(val) => update("dateOfBirth", val)}
+                    placeholder="Select DOB or calculate from age..."
                   />
-                </label>
+                </div>
 
                 <label>
                   Gender

@@ -28,6 +28,7 @@ import { FaFlask, FaPhoneSlash } from "react-icons/fa";
 import QRCode from "qrcode";
 import { getAppUrl } from "../../utils/appUrl";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import TestSearchSelect from "../../components/common/TestSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import { flushOfflineQueue } from "../../utils/offlineQueue";
@@ -1355,50 +1356,21 @@ export default function LaboratoryPage() {
                 </div>
               )}
 
-              {/* Template Picker */}
-              <div className="lab-template-section">
-                <label className="lab-section-title">Diagnostic Test Template <span className="req">*</span></label>
-                <input
-                  list="lab-templates-datalist"
-                  value={templatePicker}
-                  onChange={(e) => handleTemplatePick(e.target.value)}
-                  placeholder="Type to search test panels (e.g. Full Blood Count, Malaria, Lipid Profile...)"
-                  className="lab-text-input big"
+              {/* Diagnostic Test Chooser */}
+              <div className="lab-template-section" style={{ marginBottom: "1rem" }}>
+                <TestSearchSelect
+                  label="Diagnostic Test Template"
                   required
+                  templates={activeTemplates}
+                  selectedTemplateId={requestForm.templateId}
+                  onSelectTemplate={(template) => {
+                    setRequestForm((current) => ({
+                      ...current,
+                      templateId: template?.id ?? "",
+                    }));
+                  }}
+                  placeholder="Search test panel by name, code (FBC, MP, PCV, LFT), or specimen..."
                 />
-                <datalist id="lab-templates-datalist">
-                  {activeTemplates.map((t) => (
-                    <option key={t.id} value={templateLabel(t)} />
-                  ))}
-                </datalist>
-
-                {/* Category Chips & Quick List */}
-                <div className="lab-category-chips-row">
-                  {templateCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      className={`lab-category-chip ${templateCategory === cat ? "active" : ""}`}
-                      onClick={() => setTemplateCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="lab-templates-quick-grid">
-                  {visibleTemplates.map((template) => (
-                    <button
-                      key={template.id}
-                      type="button"
-                      className={`lab-template-btn ${requestForm.templateId === template.id ? "active" : ""}`}
-                      onClick={() => handleTemplateSelect(template)}
-                    >
-                      <strong>{template.name}</strong>
-                      <small>{template.specimen || "Standard Specimen"}</small>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Clinical Indication / Notes */}

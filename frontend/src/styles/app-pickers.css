@@ -1,0 +1,915 @@
+/* ==========================================================================
+   HMS Modern App Pickers: AppDatePicker & TestSearchSelect
+   Supports Desktop Floating Popovers and Mobile Native-Feel Bottom Sheets
+   ========================================================================== */
+
+:root {
+  --picker-primary: #0f766e;
+  --picker-primary-hover: #0d655e;
+  --picker-primary-light: rgba(15, 118, 110, 0.08);
+  --picker-primary-border: rgba(15, 118, 110, 0.25);
+  --picker-accent: #0284c7;
+  --picker-bg: #ffffff;
+  --picker-border: #e2e8f0;
+  --picker-text: #0f172a;
+  --picker-muted: #64748b;
+  --picker-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 118, 110, 0.08);
+  --picker-radius: 14px;
+}
+
+/* Base Wrapper */
+.app-picker-wrapper {
+  position: relative;
+  width: 100%;
+  font-family: inherit;
+}
+
+.app-picker-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  margin-bottom: 6px;
+}
+
+.app-picker-label .required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.app-picker-label .helper-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--picker-muted);
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* Trigger Button */
+.app-picker-trigger {
+  min-height: 46px;
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--picker-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.app-picker-trigger:hover:not(.disabled) {
+  border-color: var(--picker-primary);
+  background: var(--bg-card-hover, #f8fafc);
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.1);
+}
+
+.app-picker-trigger.open,
+.app-picker-trigger:focus-visible {
+  border-color: var(--picker-primary);
+  box-shadow: 0 0 0 3.5px rgba(15, 118, 110, 0.16);
+}
+
+.app-picker-trigger.has-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.app-picker-trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-muted, #f1f5f9);
+}
+
+.app-picker-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--picker-primary-light);
+  color: var(--picker-primary);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.app-picker-content {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.app-picker-placeholder {
+  color: var(--picker-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-picker-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--picker-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-picker-subvalue {
+  font-size: 0.78rem;
+  color: var(--picker-muted);
+  font-weight: 500;
+}
+
+.app-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--picker-muted);
+  flex-shrink: 0;
+}
+
+.app-picker-clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--picker-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s ease;
+}
+
+.app-picker-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.app-picker-chevron {
+  transition: transform 0.2s ease;
+}
+
+.app-picker-chevron.open {
+  transform: rotate(180deg);
+}
+
+.app-picker-error-msg {
+  display: block;
+  font-size: 0.78rem;
+  color: #ef4444;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Backdrop & Popover / Mobile Sheet
+   ========================================================================== */
+
+.app-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  animation: pickerFadeIn 0.2s ease;
+}
+
+.app-picker-popover {
+  position: fixed;
+  z-index: 9999;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--picker-radius);
+  box-shadow: var(--picker-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--picker-text);
+  animation: pickerScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pickerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pickerScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.app-picker-mobile-handle {
+  display: none;
+}
+
+/* Header */
+.app-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-subtle, #f8fafc);
+}
+
+.app-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--picker-text);
+}
+
+.app-picker-close-btn {
+  border: none;
+  background: transparent;
+  color: var(--picker-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s ease;
+}
+
+.app-picker-close-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--picker-text);
+}
+
+/* ==========================================================================
+   DATE PICKER SPECIFIC STYLES
+   ========================================================================== */
+
+.date-picker-card {
+  width: 340px;
+  max-width: 96vw;
+}
+
+/* Quick Presets Bar */
+.calendar-presets-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.calendar-preset-pill {
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--picker-text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.calendar-preset-pill:hover {
+  border-color: var(--picker-primary);
+  background: var(--picker-primary-light);
+  color: var(--picker-primary);
+}
+
+.calendar-preset-pill.active {
+  background: var(--picker-primary);
+  border-color: var(--picker-primary);
+  color: #ffffff;
+}
+
+/* Month/Year Navigation Bar */
+.calendar-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+}
+
+.calendar-nav-selects {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-select-dropdown {
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--picker-text);
+  cursor: pointer;
+  outline: none;
+}
+
+.calendar-select-dropdown:focus {
+  border-color: var(--picker-primary);
+}
+
+.calendar-nav-btn {
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--picker-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.calendar-nav-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: var(--picker-primary);
+  color: var(--picker-primary);
+}
+
+.calendar-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Age Calculation Panel (for Date of Birth) */
+.calendar-age-calc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(2, 132, 199, 0.08);
+  border-top: 1px solid rgba(2, 132, 199, 0.2);
+  border-bottom: 1px solid rgba(2, 132, 199, 0.2);
+  font-size: 0.78rem;
+  color: #0369a1;
+}
+
+.calendar-age-calc-row input {
+  width: 60px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1.5px solid #0284c7;
+  font-weight: 700;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.calendar-age-calc-row button {
+  border: none;
+  background: #0284c7;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* Calendar Days Grid */
+.calendar-grid-wrapper {
+  padding: 8px 14px 12px;
+}
+
+.calendar-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--picker-muted);
+  margin-bottom: 6px;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--picker-text);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.calendar-day-cell:hover:not(.disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.calendar-day-cell.other-month {
+  color: #94a3b8;
+  opacity: 0.45;
+}
+
+.calendar-day-cell.today {
+  font-weight: 800;
+  color: var(--picker-accent);
+  border-color: rgba(2, 132, 199, 0.4);
+}
+
+.calendar-day-cell.today::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--picker-accent);
+}
+
+.calendar-day-cell.selected {
+  background: var(--picker-primary) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.35);
+}
+
+.calendar-day-cell.selected::after {
+  display: none;
+}
+
+.calendar-day-cell.disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Time Picker Section (AppDateTimePicker) */
+.calendar-time-section {
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  background: #f8fafc;
+  padding: 12px 14px;
+}
+
+.calendar-time-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--picker-muted);
+  margin-bottom: 8px;
+}
+
+.calendar-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.calendar-time-input {
+  width: 58px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+}
+
+.calendar-time-input:focus {
+  border-color: var(--picker-primary);
+}
+
+.calendar-time-ampm-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--picker-primary);
+  cursor: pointer;
+}
+
+.calendar-quick-slots-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+
+.calendar-slot-chip {
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--picker-text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.calendar-slot-chip:hover {
+  background: var(--picker-primary-light);
+  border-color: var(--picker-primary);
+  color: var(--picker-primary);
+}
+
+.calendar-slot-chip.active {
+  background: var(--picker-primary);
+  border-color: var(--picker-primary);
+  color: #ffffff;
+}
+
+/* Footer Actions */
+.app-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+}
+
+.app-picker-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.app-picker-btn.secondary {
+  background: #f1f5f9;
+  color: var(--picker-text);
+  border-color: #e2e8f0;
+}
+
+.app-picker-btn.secondary:hover {
+  background: #e2e8f0;
+}
+
+.app-picker-btn.primary {
+  background: var(--picker-primary);
+  color: #ffffff;
+}
+
+.app-picker-btn.primary:hover {
+  background: var(--picker-primary-hover);
+}
+
+/* ==========================================================================
+   TEST SEARCH SELECT (DIAGNOSTIC TEST CHOOSER)
+   ========================================================================== */
+
+.test-search-popover {
+  width: 480px;
+  max-width: 96vw;
+  max-height: 580px;
+}
+
+/* Category Filter Tabs */
+.test-picker-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.test-tab-chip {
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--picker-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.test-tab-chip:hover {
+  color: var(--picker-primary);
+  border-color: var(--picker-primary);
+}
+
+.test-tab-chip.active {
+  background: var(--picker-primary);
+  border-color: var(--picker-primary);
+  color: #ffffff;
+}
+
+/* Search Box Inside Test Chooser */
+.test-picker-search-bar {
+  position: relative;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.test-picker-search-bar .search-icon {
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--picker-muted);
+}
+
+.test-picker-search-input {
+  width: 100%;
+  padding: 9px 36px 9px 36px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color, #cbd5e1);
+  background: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.test-picker-search-input:focus {
+  border-color: var(--picker-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.test-picker-clear-search {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--picker-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Quick Common Test Chips */
+.test-quick-chips-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(15, 118, 110, 0.04);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.test-quick-add-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  background: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--picker-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.test-quick-add-chip:hover {
+  background: var(--picker-primary);
+  color: #ffffff;
+}
+
+.test-quick-add-chip.selected {
+  background: var(--picker-primary);
+  color: #ffffff;
+}
+
+/* Test List & Items */
+.test-picker-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 340px;
+  padding: 8px;
+}
+
+.test-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 4px;
+}
+
+.test-picker-row:hover,
+.test-picker-row.highlighted {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.test-picker-row.selected {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.3);
+}
+
+.test-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.test-row-name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+
+.test-row-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--picker-text);
+}
+
+.test-row-code-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #0f172a;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+}
+
+.test-specimen-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Specimen Color Variations */
+.test-specimen-badge.edta {
+  background: #ede9fe;
+  color: #6b21a8;
+  border: 1px solid #d8b4fe;
+}
+
+.test-specimen-badge.serum {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.test-specimen-badge.urine {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.test-specimen-badge.fluoride {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.test-specimen-badge.swab,
+.test-specimen-badge.stool {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.test-row-subtext {
+  font-size: 0.75rem;
+  color: var(--picker-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.test-row-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 0.75rem;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.test-picker-row.selected .test-row-checkbox {
+  background: var(--picker-primary);
+  border-color: var(--picker-primary);
+}
+
+/* Selected Basket Banner in Multi Mode */
+.test-basket-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(15, 118, 110, 0.1);
+  border-top: 1px solid rgba(15, 118, 110, 0.2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--picker-primary);
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS: NATIVE-FEEL BOTTOM SHEET (< 768px)
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .app-picker-popover {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 86vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.3) !important;
+    animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  @keyframes sheetSlideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .app-picker-mobile-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    margin: 8px auto 4px;
+  }
+
+  .date-picker-card,
+  .test-search-popover {
+    width: 100% !important;
+  }
+
+  .calendar-day-cell {
+    min-height: 42px;
+    font-size: 0.92rem;
+  }
+
+  .app-picker-trigger {
+    min-height: 50px;
+  }
+}

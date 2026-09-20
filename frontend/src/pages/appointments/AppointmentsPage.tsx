@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { FaStethoscope, FaUserInjured, FaUserMd } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import AppDateTimePicker from "../../components/common/AppDateTimePicker";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createAppointment,
@@ -605,11 +606,11 @@ export default function AppointmentsPage() {
 
               {timingMode === "scheduled" && (
                 <div style={{ marginTop: "10px" }}>
-                  <input
-                    type="datetime-local"
-                    className="studio-textarea"
+                  <AppDateTimePicker
                     value={form.scheduledFor}
-                    onChange={(event) => setForm((cur) => ({ ...cur, scheduledFor: event.target.value }))}
+                    onChange={(val) => setForm((cur) => ({ ...cur, scheduledFor: val }))}
+                    placeholder="Pick appointment date & time..."
+                    required
                   />
                 </div>
               )}

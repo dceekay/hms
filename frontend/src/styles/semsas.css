@@ -1,0 +1,1379 @@
+/* ==========================================================================
+   SEMSAS (Ambulance Service Register & Filing) Modern Stylesheet
+   ========================================================================== */
+
+.semsas-page {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+/* --------------------------------------------------------------------------
+   Hero Section & Key Performance Indicators
+   -------------------------------------------------------------------------- */
+.semsas-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 95% 10%, rgba(15, 118, 110, 0.15), transparent 40%),
+    radial-gradient(circle at 5% 90%, rgba(14, 165, 233, 0.1), transparent 35%),
+    var(--surface-strong);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.semsas-hero-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.semsas-hero-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 700px;
+}
+
+.semsas-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: #0d9488;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.semsas-hero-title-group h1 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: clamp(1.6rem, 3.5vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.semsas-hero-title-group p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.semsas-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* KPI Summary Cards */
+.semsas-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.semsas-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.semsas-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.4);
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.06);
+}
+
+.semsas-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.semsas-kpi-icon.teal {
+  background: rgba(15, 118, 110, 0.14);
+  color: #0d9488;
+}
+
+.semsas-kpi-icon.amber {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.semsas-kpi-icon.blue {
+  background: rgba(14, 165, 233, 0.14);
+  color: #0284c7;
+}
+
+.semsas-kpi-icon.emerald {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+}
+
+.semsas-kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.semsas-kpi-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.semsas-kpi-value {
+  color: var(--text-strong);
+  font-size: 1.28rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.semsas-kpi-sub {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+/* --------------------------------------------------------------------------
+   Modern Tab Navigation Bar
+   -------------------------------------------------------------------------- */
+.semsas-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 76px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.semsas-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px;
+  flex: 1;
+}
+
+.semsas-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.semsas-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.semsas-tab-btn:hover {
+  background: var(--surface-strong);
+  color: var(--text-strong);
+}
+
+.semsas-tab-btn.active {
+  background: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+}
+
+.semsas-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--surface-strong);
+  color: var(--text-strong);
+}
+
+.semsas-tab-btn.active .semsas-tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.semsas-tab-badge.warning {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.semsas-tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Filter & Search Toolbar
+   -------------------------------------------------------------------------- */
+.semsas-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.semsas-toolbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.semsas-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.semsas-search-box:focus-within {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.semsas-search-box svg {
+  color: var(--muted);
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.semsas-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.semsas-search-box input::placeholder {
+  color: var(--muted);
+}
+
+.semsas-clear-search-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.semsas-clear-search-btn:hover {
+  color: var(--text-strong);
+}
+
+.semsas-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.semsas-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.semsas-filter-chip {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.semsas-filter-chip:hover {
+  border-color: #0f766e;
+  color: var(--text-strong);
+}
+
+.semsas-filter-chip.active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.semsas-month-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.semsas-month-picker input[type="month"] {
+  border: none;
+  background: transparent;
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Transfers Register Grid & Cards
+   -------------------------------------------------------------------------- */
+.semsas-register-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.semsas-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.semsas-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.4);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.07);
+}
+
+.semsas-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.semsas-card-patient {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.semsas-patient-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.semsas-patient-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.semsas-patient-text strong {
+  color: var(--text-strong);
+  font-size: 0.96rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.semsas-patient-text span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status Badges */
+.semsas-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.semsas-status-badge.filed {
+  background: rgba(16, 185, 129, 0.14);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.semsas-status-badge.unfiled {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Route Visualizer */
+.semsas-route-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+
+.semsas-route-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0f766e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.semsas-route-arrow-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--text-strong);
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.semsas-route-facility {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.semsas-route-facility.origin {
+  color: var(--muted);
+}
+
+.semsas-route-arrow-icon {
+  color: #0d9488;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+/* Card Details Meta Grid */
+.semsas-card-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.semsas-card-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface-strong);
+}
+
+.semsas-card-meta-item small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.semsas-card-meta-item strong {
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.semsas-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.semsas-card-fee {
+  display: flex;
+  flex-direction: column;
+}
+
+.semsas-card-fee small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.semsas-card-fee strong {
+  color: #0f766e;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.semsas-card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.semsas-card-action-btn:hover {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #0f766e;
+}
+
+/* --------------------------------------------------------------------------
+   New Transfer Form Layout
+   -------------------------------------------------------------------------- */
+.semsas-form-wrapper {
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.semsas-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.semsas-form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.semsas-form-section-title svg {
+  color: #0f766e;
+  font-size: 1.2rem;
+}
+
+/* Direction Cards */
+.semsas-direction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.semsas-direction-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface-strong);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.semsas-direction-card:hover {
+  border-color: rgba(15, 118, 110, 0.5);
+  background: var(--surface);
+  transform: translateY(-2px);
+}
+
+.semsas-direction-card.active {
+  border-color: #0f766e;
+  background: rgba(15, 118, 110, 0.08);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
+}
+
+.semsas-direction-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.semsas-direction-header strong {
+  color: var(--text-strong);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.semsas-direction-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.semsas-direction-card.active .semsas-direction-icon {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.semsas-direction-desc {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+/* Mode Switch: Registered vs External */
+.semsas-patient-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.semsas-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.semsas-toggle-btn.active {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #0f766e;
+}
+
+/* Facility Preset Chips */
+.semsas-preset-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.semsas-preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.semsas-preset-chip:hover {
+  border-color: #0f766e;
+  color: #0f766e;
+  background: rgba(15, 118, 110, 0.05);
+}
+
+/* Collapsible Ambulance Accordion */
+.semsas-accordion {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  overflow: hidden;
+}
+
+.semsas-accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease;
+}
+
+.semsas-accordion-summary:hover {
+  background: var(--surface);
+}
+
+.semsas-accordion-content {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* Form Action Buttons */
+.semsas-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.semsas-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.3);
+}
+
+.semsas-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.semsas-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.semsas-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.semsas-btn-secondary:hover {
+  background: var(--surface);
+  border-color: #0f766e;
+}
+
+/* --------------------------------------------------------------------------
+   Monthly Accounts Filing View
+   -------------------------------------------------------------------------- */
+.semsas-filing-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.semsas-filing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.semsas-filing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.semsas-filing-header h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1.28rem;
+  font-weight: 800;
+}
+
+.semsas-filing-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.semsas-filing-highlight-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  flex-wrap: wrap;
+}
+
+.semsas-filing-highlight-box.clean {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.semsas-filing-highlight-text strong {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--text-strong);
+}
+
+.semsas-filing-highlight-text span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+/* --------------------------------------------------------------------------
+   Transfer Details Modal
+   -------------------------------------------------------------------------- */
+.semsas-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+  animation: semsasFadeIn 0.2s ease;
+}
+
+@keyframes semsasFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.semsas-modal-panel {
+  width: min(100%, 640px);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+  color: var(--text-strong);
+}
+
+.semsas-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.semsas-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.semsas-modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.semsas-modal-close-btn:hover {
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.semsas-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.semsas-modal-section h4 {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.semsas-modal-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.semsas-modal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+}
+
+.semsas-modal-item small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.semsas-modal-item strong {
+  color: var(--text-strong);
+  font-size: 0.88rem;
+  word-break: break-word;
+}
+
+.semsas-tel-link {
+  color: #0284c7;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.semsas-tel-link:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Empty State
+   -------------------------------------------------------------------------- */
+.semsas-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  border-radius: 12px;
+  border: 2px dashed var(--border);
+  background: var(--surface);
+  text-align: center;
+}
+
+.semsas-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.semsas-empty-state h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.semsas-empty-state p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 420px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   Printable Template (Screen Preview & Clean Print)
+   -------------------------------------------------------------------------- */
+.semsas-print-wrapper {
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.semsas-print-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #0f766e;
+}
+
+.semsas-print-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.semsas-print-brand img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.semsas-print-brand h2 {
+  margin: 2px 0 0;
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.semsas-print-brand p {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0284c7;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.semsas-print-meta {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.semsas-print-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.semsas-print-qr-box img {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  padding: 2px;
+  background: #ffffff;
+}
+
+.semsas-print-qr-box small {
+  font-size: 0.58rem;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.semsas-print-summary-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.semsas-print-summary-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.semsas-print-summary-box small {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.semsas-print-summary-box strong {
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.semsas-print-table-container {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.semsas-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.semsas-print-table th,
+.semsas-print-table td {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+  vertical-align: top;
+}
+
+.semsas-print-table th {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.semsas-print-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Media Queries
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .semsas-hero-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .semsas-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .semsas-print-summary-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .semsas-page {
+    gap: 16px;
+  }
+
+  .semsas-hero-card {
+    padding: 18px;
+    gap: 16px;
+  }
+
+  .semsas-hero-title-group h1 {
+    font-size: 1.5rem;
+  }
+
+  .semsas-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-tabs-container {
+    top: 64px;
+  }
+
+  .semsas-tab-btn {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+
+  .semsas-toolbar {
+    padding: 12px;
+  }
+
+  .semsas-toolbar-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .semsas-toolbar-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .semsas-filter-chips {
+    width: 100%;
+  }
+
+  .semsas-month-picker {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .semsas-register-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-card-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-modal-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semsas-print-summary-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print Overrides */
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .semsas-print-wrapper,
+  .semsas-print-wrapper * {
+    visibility: visible;
+  }
+
+  .semsas-print-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12mm;
+    border: none;
+    box-shadow: none;
+  }
+
+  .semsas-print-table tr {
+    page-break-inside: avoid;
+  }
+}
