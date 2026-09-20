@@ -39,22 +39,22 @@ const transferTypesMeta: Record<
   { label: string; desc: string; icon: typeof FiTruck; routeTag: string; badgeClass: string }
 > = {
   hospital_ambulance_to_other_hospital: {
-    label: "MDS Ambulance to Another Hospital",
-    desc: "MDS ambulance dispatched to transport patient outbound to another hospital",
+    label: "Ambulance to Another Hospital",
+    desc: "Outbound dispatch from MDS to another hospital",
     icon: FiArrowUpRight,
-    routeTag: "Outbound Dispatch",
+    routeTag: "Outbound",
     badgeClass: "blue",
   },
   hospital_ambulance_to_this_hospital: {
-    label: "MDS Ambulance Retrieval to MDS",
-    desc: "MDS ambulance dispatched to retrieve patient inbound to MDS Hospital",
+    label: "MDS Ambulance to MDS",
+    desc: "Inbound patient retrieval dispatch to MDS",
     icon: FiArrowDownLeft,
     routeTag: "Inbound Retrieval",
     badgeClass: "teal",
   },
   external_ambulance_to_this_hospital: {
     label: "External Ambulance to MDS",
-    desc: "State SEMSAS or third-party ambulance bringing incoming patient to MDS Hospital",
+    desc: "State SEMSAS or private ambulance arrival at MDS",
     icon: FiTruck,
     routeTag: "External Arrival",
     badgeClass: "amber",
@@ -766,7 +766,7 @@ export default function SemsasPage() {
                   <span>1. Transfer Type & Direction</span>
                 </div>
 
-                <div className="semsas-direction-grid">
+                <div className="semsas-direction-grid" role="radiogroup" aria-label="Transfer direction toggle">
                   {(Object.keys(transferTypesMeta) as SemsasTransferType[]).map((type) => {
                     const meta = transferTypesMeta[type];
                     const active = form.transferType === type;
@@ -776,16 +776,31 @@ export default function SemsasPage() {
                       <button
                         key={type}
                         type="button"
+                        role="radio"
+                        aria-checked={active}
                         className={`semsas-direction-card ${active ? "active" : ""}`}
                         onClick={() => handleTransferType(type)}
                       >
                         <div className="semsas-direction-header">
-                          <strong>{meta.label}</strong>
                           <div className="semsas-direction-icon">
                             <Icon />
                           </div>
+                          <span className={`semsas-direction-tag ${meta.badgeClass}`}>
+                            {meta.routeTag}
+                          </span>
+                          <div className="semsas-direction-indicator" aria-hidden="true">
+                            {active ? (
+                              <FiCheckCircle className="semsas-indicator-active" />
+                            ) : (
+                              <span className="semsas-indicator-dot" />
+                            )}
+                          </div>
                         </div>
-                        <p className="semsas-direction-desc">{meta.desc}</p>
+
+                        <div className="semsas-direction-content">
+                          <strong className="semsas-direction-title">{meta.label}</strong>
+                          <p className="semsas-direction-desc">{meta.desc}</p>
+                        </div>
                       </button>
                     );
                   })}
