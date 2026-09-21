@@ -1448,13 +1448,34 @@
     background: #ffffff !important;
   }
 
-  body * {
-    visibility: hidden;
-  }
-
+  /* Universal HMS Print Documents Whitelist */
   .semsas-print-wrapper,
-  .semsas-print-wrapper * {
-    visibility: visible;
+  .semsas-print-wrapper *,
+  .semsas-print-template,
+  .semsas-print-template *,
+  .lab-print-document-container,
+  .lab-print-document-container *,
+  .lab-print-page,
+  .lab-print-page *,
+  .lab-modal-overlay,
+  .lab-modal-overlay *,
+  .lab-print-modal-overlay,
+  .lab-print-modal-overlay *,
+  .lab-report-sheet,
+  .lab-report-sheet *,
+  .billing-receipt-print-page,
+  .billing-receipt-print-page *,
+  .billing-receipt-canvas,
+  .billing-receipt-canvas *,
+  .pharmacy-print-template,
+  .pharmacy-print-template *,
+  .doctor-print-template,
+  .doctor-print-template *,
+  .printable-area,
+  .printable-area *,
+  .print-canvas,
+  .print-canvas * {
+    visibility: visible !important;
   }
 
   .semsas-print-wrapper {

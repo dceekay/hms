@@ -1776,10 +1776,9 @@
     margin: 8mm 10mm;
   }
 
-  /* When any print modal is open in portal, hide #root completely so it takes 0px and 0 blank pages */
-  body.has-print-modal #root,
-  body.lab-print-modal-active #root,
-  body:has(.lab-print-modal-overlay) #root {
+  /* When print modal is portaled outside #root into body, hide #root only if #root does NOT contain the print document */
+  body.has-print-modal > #root:not(:has(.lab-print-page, .lab-print-document-container, .billing-receipt-canvas, .billing-receipt-print-page, .print-canvas, .printable-area)),
+  body.lab-print-modal-active > #root:not(:has(.lab-print-page, .lab-print-document-container, .billing-receipt-canvas, .billing-receipt-print-page, .print-canvas, .printable-area)) {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;

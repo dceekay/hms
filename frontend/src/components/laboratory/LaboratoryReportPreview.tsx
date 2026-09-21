@@ -125,7 +125,7 @@ export default function LaboratoryReportPreview({
         </div>
       </div>
 
-      <div className="lab-report-sheet lab-print-page">
+      <div className="lab-report-sheet lab-print-page print-canvas printable-area">
         {/* Hospital Official Branding Header */}
         <div className="lab-report-branding" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <MdsMark size={48} />

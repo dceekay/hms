@@ -7671,24 +7671,74 @@
 
 @media print {
   body {
-    background: #ffffff;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   body * {
     visibility: hidden;
   }
 
-  .semsas-print-template,
-  .semsas-print-template *,
-  .pharmacy-print-template,
-  .pharmacy-print-template *,
+  /* Universal HMS Print Documents Whitelist */
+  .lab-modal-overlay,
+  .lab-modal-overlay *,
+  .lab-print-modal-overlay,
+  .lab-print-modal-overlay *,
+  .lab-modal-container,
+  .lab-modal-container *,
+  .lab-print-modal-container,
+  .lab-print-modal-container *,
+  .lab-modal-body,
+  .lab-modal-body *,
+  .lab-print-modal-body,
+  .lab-print-modal-body *,
+  .lab-print-document-container,
+  .lab-print-document-container *,
+  .lab-print-page,
+  .lab-print-page *,
+  .lab-report-sheet,
+  .lab-report-sheet *,
   .laboratory-print-template,
   .laboratory-print-template *,
+  .billing-receipt-print-page,
+  .billing-receipt-print-page *,
+  .billing-receipt-canvas,
+  .billing-receipt-canvas *,
+  .billing-print-modal-overlay,
+  .billing-print-modal-overlay *,
+  .pharmacy-print-template,
+  .pharmacy-print-template *,
   .doctor-print-template,
   .doctor-print-template *,
+  .semsas-print-wrapper,
+  .semsas-print-wrapper *,
+  .semsas-print-template,
+  .semsas-print-template *,
   .patient-id-print-area,
-  .patient-id-print-area * {
-    visibility: visible;
+  .patient-id-print-area *,
+  .patient-id-card,
+  .patient-id-card *,
+  .patient-id-modal,
+  .patient-id-modal *,
+  .employee-id-print-area,
+  .employee-id-print-area *,
+  .employee-id-card,
+  .employee-id-card *,
+  .printable-area,
+  .printable-area *,
+  .print-canvas,
+  .print-canvas *,
+  .patient-profile-dossier,
+  .patient-profile-dossier *,
+  .patient-visits-dossier,
+  .patient-visits-dossier *,
+  .verification-card,
+  .verification-card *,
+  .lab-verification-page,
+  .lab-verification-page * {
+    visibility: visible !important;
   }
 
   .patient-id-print-area {

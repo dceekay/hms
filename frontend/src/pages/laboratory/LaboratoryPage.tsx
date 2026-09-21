@@ -579,7 +579,12 @@ export default function LaboratoryPage() {
 
   const handleOpenPrint = (request: LaboratoryRequest, docType?: "result" | "request") => {
     setPrintModalRequest(request);
-    setPrintModalDocType(docType || (request.status === "completed" ? "result" : "request"));
+    const hasResults =
+      (request.resultValues && Object.keys(request.resultValues).length > 0) ||
+      Boolean(request.interpretation) ||
+      Boolean(request.technicianNote) ||
+      request.status === "completed";
+    setPrintModalDocType(docType || (hasResults ? "result" : "request"));
   };
 
   // Filtered requests according to search and active queue filter

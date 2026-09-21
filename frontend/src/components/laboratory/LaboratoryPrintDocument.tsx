@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { MdsMark } from "../common/CavendishLogo";
 import { getAppUrl } from "../../utils/appUrl";
-import type { LaboratoryRequest } from "../../types/laboratory";
+import type { LaboratoryFieldType, LaboratoryRequest, LaboratoryTemplateField } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
 
 import { HOSPITAL_OFFICIAL_DETAILS } from "../../constants/hospitalInfo";
@@ -47,8 +47,56 @@ export default function LaboratoryPrintDocument({
 }: LaboratoryPrintDocumentProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
 
+  // 1. Safely normalize result values (handles JSON string or object)
+  const normalizedResults = useMemo<Record<string, unknown>>(() => {
+    const raw = request.resultValues;
+    if (!raw) return {};
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        return typeof parsed === "object" && parsed !== null ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+    if (typeof raw === "object" && !Array.isArray(raw)) {
+      return raw as Record<string, unknown>;
+    }
+    return {};
+  }, [request.resultValues]);
+
+  // 2. Safely normalize template fields (handles JSON string or array)
+  const templateFields = useMemo<LaboratoryTemplateField[]>(() => {
+    const raw = request.template?.fields;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [request.template?.fields]);
+
+  // Check if any results or observations are present
+  const hasResultData = useMemo(() => {
+    const hasValues = Object.values(normalizedResults).some(
+      (v) => v !== undefined && v !== null && String(v).trim() !== "" && String(v).trim() !== "—"
+    );
+    return (
+      hasValues ||
+      Boolean(request.interpretation?.trim()) ||
+      Boolean(request.technicianNote?.trim()) ||
+      request.status === "completed"
+    );
+  }, [normalizedResults, request.interpretation, request.technicianNote, request.status]);
+
   const isCompleted = request.status === "completed";
-  const actualDocType = documentType ?? (isCompleted ? "result" : "request");
+  // Default to "result" whenever result data is present, even if status is in_progress
+  const actualDocType = documentType ?? (hasResultData || isCompleted ? "result" : "request");
 
   const labIdentifier = request.id || request.requestNumber;
   const verificationUrl =
@@ -115,6 +163,78 @@ export default function LaboratoryPrintDocument({
     return null;
   };
 
+  // 3. Compile full rows: defined template fields + any extra result values
+  const resultRows = useMemo(() => {
+    const rows: Array<{
+      key: string;
+      label: string;
+      value: string;
+      unit: string;
+      referenceRange: string;
+      flag: string | null;
+    }> = [];
+
+    const handledKeys = new Set<string>();
+
+    // A. Defined template fields
+    templateFields.forEach((field) => {
+      handledKeys.add(field.key.toLowerCase());
+      // Try exact key match, then lowercase key match
+      let rawVal = normalizedResults[field.key];
+      if (rawVal === undefined) {
+        const found = Object.entries(normalizedResults).find(
+          ([k]) => k.toLowerCase() === field.key.toLowerCase()
+        );
+        if (found) rawVal = found[1];
+      }
+
+      const displayVal =
+        rawVal !== undefined && rawVal !== null && String(rawVal).trim() !== ""
+          ? String(rawVal).trim()
+          : "—";
+      const flag = evaluateFlag(field.referenceRange, rawVal);
+
+      rows.push({
+        key: field.key,
+        label: field.label || field.key,
+        value: displayVal,
+        unit: field.unit || "—",
+        referenceRange: field.referenceRange || "Standard",
+        flag,
+      });
+    });
+
+    // B. Include any extra keys present in normalizedResults that weren't in templateFields
+    Object.entries(normalizedResults).forEach(([key, val]) => {
+      if (
+        !handledKeys.has(key.toLowerCase()) &&
+        val !== undefined &&
+        val !== null &&
+        String(val).trim() !== ""
+      ) {
+        rows.push({
+          key,
+          label: key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (char) => char.toUpperCase()),
+          value: String(val).trim(),
+          unit: "—",
+          referenceRange: "—",
+          flag: null,
+        });
+      }
+    });
+
+    return rows;
+  }, [templateFields, normalizedResults]);
+
+  const templateName = request.template?.name || "Diagnostic Pathology Investigation";
+  const templateCategory = request.template?.category || "Clinical Laboratory";
+  const templateSpecimen = request.template?.specimen || "Standard Clinical Specimen";
+  const reportTitle =
+    request.template?.reportTitle ||
+    `${templateName.toUpperCase()} - OFFICIAL DIAGNOSTIC REPORT`;
+
   const technicianName =
     "technician" in request && request.technician
       ? request.technician.name
@@ -123,7 +243,7 @@ export default function LaboratoryPrintDocument({
       : "Medical Laboratory Scientist";
 
   return (
-    <div className="lab-print-document-container lab-print-page">
+    <div className="lab-print-document-container lab-print-page print-canvas printable-area">
       {/* 1. Official Hospital Header */}
       <header className="lab-print-header-banner">
         <div className="lab-print-brand-left">
@@ -162,7 +282,7 @@ export default function LaboratoryPrintDocument({
       <div className="lab-print-doc-title-bar">
         <h2>
           {actualDocType === "result"
-            ? request.template.reportTitle || `${request.template.name.toUpperCase()} - DIAGNOSTIC REPORT`
+            ? reportTitle
             : `LABORATORY TEST REQUISITION & TRACKING SLIP`}
         </h2>
         <span className={`lab-print-status-tag ${request.status}`}>
@@ -186,15 +306,15 @@ export default function LaboratoryPrintDocument({
         </div>
         <div className="lab-print-demo-item">
           <span className="lab-demo-label">Test Ordered</span>
-          <strong className="lab-demo-value">{request.template.name}</strong>
+          <strong className="lab-demo-value">{templateName}</strong>
         </div>
         <div className="lab-print-demo-item">
           <span className="lab-demo-label">Diagnostic Category</span>
-          <strong className="lab-demo-value">{request.template.category || "General"}</strong>
+          <strong className="lab-demo-value">{templateCategory}</strong>
         </div>
         <div className="lab-print-demo-item">
           <span className="lab-demo-label">Required Specimen</span>
-          <strong className="lab-demo-value">{request.template.specimen || "Standard Specimen"}</strong>
+          <strong className="lab-demo-value">{templateSpecimen}</strong>
         </div>
         <div className="lab-print-demo-item">
           <span className="lab-demo-label">Requested On</span>
@@ -209,12 +329,12 @@ export default function LaboratoryPrintDocument({
         {actualDocType === "result" && (
           <div className="lab-print-demo-item">
             <span className="lab-demo-label">Report Authorized</span>
-            <strong className="lab-demo-value">{formatDate(request.completedAt)}</strong>
+            <strong className="lab-demo-value">{formatDate(request.completedAt || request.createdAt)}</strong>
           </div>
         )}
       </section>
 
-      {/* 4. MAIN CONTENT: Result Table (if completed) OR Requisition Instructions (if pending) */}
+      {/* 4. MAIN CONTENT: Result Table (if completed or has result values) OR Requisition Instructions (if pending) */}
       {actualDocType === "result" ? (
         <section className="lab-print-results-section">
           <table className="lab-print-results-table">
@@ -227,35 +347,40 @@ export default function LaboratoryPrintDocument({
               </tr>
             </thead>
             <tbody>
-              {request.template.fields.map((field, idx) => {
-                const rawVal = request.resultValues?.[field.key];
-                const displayVal =
-                  rawVal !== undefined && rawVal !== null && rawVal !== ""
-                    ? String(rawVal)
-                    : "—";
-                const flag = evaluateFlag(field.referenceRange, rawVal);
-
-                return (
+              {resultRows.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: "center", padding: "1.5rem", color: "#64748b" }}>
+                    No specific parameter fields configured for this test.
+                  </td>
+                </tr>
+              ) : (
+                resultRows.map((row, idx) => (
                   <tr key={idx}>
                     <td className="lab-print-param-cell">
-                      <strong className="lab-print-param-name">{field.label}</strong>
+                      <strong className="lab-print-param-name">{row.label}</strong>
                     </td>
                     <td className="lab-print-val-cell">
-                      <span className="lab-print-val-text">{displayVal}</span>
-                      {flag && flag !== "NORMAL" && (
-                        <span className="lab-print-flag-inline"> {flag}</span>
+                      <span className="lab-print-val-text">{row.value}</span>
+                      {row.flag && row.flag !== "NORMAL" && (
+                        <span className="lab-print-flag-inline"> {row.flag}</span>
                       )}
                     </td>
-                    <td className="lab-print-unit-cell">{field.unit || "—"}</td>
-                    <td className="lab-print-ref-cell">{field.referenceRange || "Standard"}</td>
+                    <td className="lab-print-unit-cell">{row.unit}</td>
+                    <td className="lab-print-ref-cell">{row.referenceRange}</td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
 
           {/* Clinical Interpretation & Notes */}
           <div className="lab-print-remarks-box">
+            {request.clinicalNotes && (
+              <div className="lab-print-remark-row">
+                <strong>Clinical Notes / Indication: </strong>
+                <span>{request.clinicalNotes}</span>
+              </div>
+            )}
             {request.interpretation && (
               <div className="lab-print-remark-row">
                 <strong>Clinical Interpretation: </strong>
@@ -268,7 +393,7 @@ export default function LaboratoryPrintDocument({
                 <span>{request.technicianNote}</span>
               </div>
             )}
-            {request.template.notes && (
+            {request.template?.notes && (
               <div className="lab-print-remark-row" style={{ color: "#64748b" }}>
                 <strong>Methodology / Specimen Note: </strong>
                 <span>{request.template.notes}</span>

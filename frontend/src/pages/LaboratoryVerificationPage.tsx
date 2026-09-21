@@ -102,8 +102,8 @@ export default function LaboratoryVerificationPage() {
   };
 
   return (
-    <main className="verification-page lab-verification-page">
-      <section className="verification-card lab-verification-card">
+    <main className="verification-page lab-verification-page print-canvas printable-area">
+      <section className="verification-card lab-verification-card print-canvas printable-area">
         {/* Brand Header */}
         <div className="verification-brand" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
