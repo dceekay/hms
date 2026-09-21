@@ -4463,8 +4463,9 @@
 }
 
 .semsas-page {
-  display: grid;
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .semsas-hero {

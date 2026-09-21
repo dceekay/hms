@@ -55,11 +55,12 @@ export default function BillingReceiptModal({
             </button>
             <button
               type="button"
-              className="lab-btn-secondary"
+              className="icon-only-btn modal-close-btn"
               onClick={onClose}
+              aria-label="Close modal"
               title="Close modal"
             >
-              <FiX />
+              <FiX size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>

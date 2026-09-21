@@ -689,14 +689,18 @@ export default function NurseDashboardPage() {
           <div className="nurse-alert-banner success">
             <FiCheckCircle />
             <span>{message}</span>
-            <button type="button" onClick={() => setMessage(null)}><FiX /></button>
+            <button type="button" onClick={() => setMessage(null)} aria-label="Dismiss message" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
         {error && (
           <div className="nurse-alert-banner error">
             <FiAlertCircle />
             <span>{error}</span>
-            <button type="button" onClick={() => setError(null)}><FiX /></button>
+            <button type="button" onClick={() => setError(null)} aria-label="Dismiss error" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
 
@@ -1500,8 +1504,14 @@ export default function NurseDashboardPage() {
             <div className="nurse-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="nurse-modal-header">
                 <h3>Official Patient Health & ID Card</h3>
-                <button type="button" onClick={() => setShowIdCard(false)} className="modal-close-btn">
-                  <FiX />
+                <button
+                  type="button"
+                  onClick={() => setShowIdCard(false)}
+                  className="modal-close-btn"
+                  aria-label="Close patient ID card"
+                  title="Close"
+                >
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
               </div>
               <div style={{ padding: "16px", display: "flex", justifyContent: "center" }}>

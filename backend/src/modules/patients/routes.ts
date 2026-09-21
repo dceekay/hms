@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { PatientController } from "./controller";
-import { authenticate, authorizePermissions, authorizeRoles } from "../../shared/middleware/auth.middleware";
+import {
+  authenticate,
+  authorizePermissions,
+  authorizePermissionsOrRoles,
+  authorizeRoles,
+} from "../../shared/middleware/auth.middleware";
 import { validateBody } from "../../shared/middleware/validation.middleware";
 import { patientCreateSchema, patientUpdateSchema } from "./validators";
 
@@ -56,7 +61,7 @@ router.post(
 );
 router.delete(
   "/:id",
-  authorizeRoles(["Super Admin"]),
+  authorizePermissionsOrRoles(["patients.delete"], ["Super Admin", "super_admin"]),
   controller.deletePermanently
 );
 router.get("/:id", authorizePermissions(["patients.read"]), controller.getById);

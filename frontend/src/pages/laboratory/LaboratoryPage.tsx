@@ -28,6 +28,7 @@ import { FaFlask, FaPhoneSlash } from "react-icons/fa";
 import QRCode from "qrcode";
 import { getAppUrl } from "../../utils/appUrl";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import TestSearchSelect from "../../components/common/TestSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import { flushOfflineQueue } from "../../utils/offlineQueue";
@@ -761,14 +762,18 @@ export default function LaboratoryPage() {
           <div className="lab-alert-banner success">
             <FiCheckCircle />
             <span>{success}</span>
-            <button type="button" onClick={() => setSuccess(null)}><FiX /></button>
+            <button type="button" onClick={() => setSuccess(null)} aria-label="Dismiss success message" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
         {error && (
           <div className="lab-alert-banner error">
             <FiAlertTriangle />
             <span>{error}</span>
-            <button type="button" onClick={() => setError(null)}><FiX /></button>
+            <button type="button" onClick={() => setError(null)} aria-label="Dismiss error message" title="Dismiss">
+              <FiX size={18} strokeWidth={2.5} />
+            </button>
           </div>
         )}
 
@@ -918,11 +923,11 @@ export default function LaboratoryPage() {
                   <thead>
                     <tr>
                       <th style={{ width: "13%" }}>Status</th>
-                      <th style={{ width: "12%" }}>Track / QR</th>
-                      <th style={{ width: "26%" }}>Patient (Full Name & Card)</th>
-                      <th style={{ width: "20%" }}>Investigation & Specimen</th>
-                      <th style={{ width: "13%" }}>Ordered</th>
-                      <th style={{ width: "16%", textAlign: "right" }}>1-Tap Actions</th>
+                      <th className="hide-mobile" style={{ width: "12%" }}>Track / QR</th>
+                      <th style={{ width: "32%" }}>Patient (Full Name & Card)</th>
+                      <th style={{ width: "24%" }}>Investigation & Specimen</th>
+                      <th className="hide-mobile" style={{ width: "13%" }}>Ordered</th>
+                      <th style={{ width: "18%", textAlign: "right" }}>1-Tap Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -948,7 +953,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 2. Track & QR Preview */}
-                          <td className="lab-td-track">
+                          <td className="lab-td-track hide-mobile">
                             <strong className="lab-track-number">{request.requestNumber}</strong>
                             <div>
                               <button
@@ -997,7 +1002,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 5. Ordered Time */}
-                          <td className="lab-td-time">
+                          <td className="lab-td-time hide-mobile">
                             <span className="lab-date-primary">{formatDate(request.createdAt)}</span>
                           </td>
 
@@ -1351,50 +1356,21 @@ export default function LaboratoryPage() {
                 </div>
               )}
 
-              {/* Template Picker */}
-              <div className="lab-template-section">
-                <label className="lab-section-title">Diagnostic Test Template <span className="req">*</span></label>
-                <input
-                  list="lab-templates-datalist"
-                  value={templatePicker}
-                  onChange={(e) => handleTemplatePick(e.target.value)}
-                  placeholder="Type to search test panels (e.g. Full Blood Count, Malaria, Lipid Profile...)"
-                  className="lab-text-input big"
+              {/* Diagnostic Test Chooser */}
+              <div className="lab-template-section" style={{ marginBottom: "1rem" }}>
+                <TestSearchSelect
+                  label="Diagnostic Test Template"
                   required
+                  templates={activeTemplates}
+                  selectedTemplateId={requestForm.templateId}
+                  onSelectTemplate={(template) => {
+                    setRequestForm((current) => ({
+                      ...current,
+                      templateId: template?.id ?? "",
+                    }));
+                  }}
+                  placeholder="Search test panel by name, code (FBC, MP, PCV, LFT), or specimen..."
                 />
-                <datalist id="lab-templates-datalist">
-                  {activeTemplates.map((t) => (
-                    <option key={t.id} value={templateLabel(t)} />
-                  ))}
-                </datalist>
-
-                {/* Category Chips & Quick List */}
-                <div className="lab-category-chips-row">
-                  {templateCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      className={`lab-category-chip ${templateCategory === cat ? "active" : ""}`}
-                      onClick={() => setTemplateCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="lab-templates-quick-grid">
-                  {visibleTemplates.map((template) => (
-                    <button
-                      key={template.id}
-                      type="button"
-                      className={`lab-template-btn ${requestForm.templateId === template.id ? "active" : ""}`}
-                      onClick={() => handleTemplateSelect(template)}
-                    >
-                      <strong>{template.name}</strong>
-                      <small>{template.specimen || "Standard Specimen"}</small>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Clinical Indication / Notes */}
@@ -1450,12 +1426,12 @@ export default function LaboratoryPage() {
                 <table className="lab-requests-table completed-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "11%", textAlign: "center" }}>Verified QR</th>
-                      <th style={{ width: "13%" }}>Track No. & Date</th>
-                      <th style={{ width: "24%" }}>Patient Name & Demographics</th>
-                      <th style={{ width: "20%" }}>Test Panel & Specimen</th>
-                      <th style={{ width: "16%" }}>Clinical Impression</th>
-                      <th style={{ width: "16%", textAlign: "right" }}>1-Tap Print & Actions</th>
+                      <th className="hide-mobile" style={{ width: "11%", textAlign: "center" }}>Verified QR</th>
+                      <th className="hide-mobile" style={{ width: "13%" }}>Track No. & Date</th>
+                      <th style={{ width: "36%" }}>Patient Name & Demographics</th>
+                      <th style={{ width: "32%" }}>Test Panel & Specimen</th>
+                      <th className="hide-mobile" style={{ width: "16%" }}>Clinical Impression</th>
+                      <th style={{ width: "21%", textAlign: "right" }}>1-Tap Print & Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1472,12 +1448,12 @@ export default function LaboratoryPage() {
                       return (
                         <tr key={request.id} className="lab-table-row completed">
                           {/* 1. Live Scannable QR Code */}
-                          <td className="lab-td-qr" style={{ textAlign: "center" }}>
+                          <td className="lab-td-qr hide-mobile" style={{ textAlign: "center" }}>
                             <LabQrThumbnail request={request} onOpenQuickQr={setQuickQrRequest} />
                           </td>
 
                           {/* 2. Track & Date */}
-                          <td className="lab-td-track">
+                          <td className="lab-td-track hide-mobile">
                             <strong className="lab-track-number">{request.requestNumber}</strong>
                             <div className="lab-date-primary">{formatDate(request.completedAt || request.createdAt)}</div>
                             <span className="lab-badge-status completed">✓ AUTHORIZED</span>
@@ -1509,7 +1485,7 @@ export default function LaboratoryPage() {
                           </td>
 
                           {/* 5. Impression */}
-                          <td className="lab-td-notes">
+                          <td className="lab-td-notes hide-mobile">
                             {request.interpretation ? (
                               <div className="lab-table-notes-snippet impression" title={request.interpretation}>
                                 <strong>Impression:</strong> {request.interpretation}
@@ -1576,10 +1552,12 @@ export default function LaboratoryPage() {
                 </div>
                 <button
                   type="button"
-                  className="lab-icon-btn"
+                  className="lab-icon-btn modal-close-btn"
                   onClick={() => setQuickQrRequest(null)}
+                  aria-label="Close QR modal"
+                  title="Close"
                 >
-                  <FiX />
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
               </div>
 

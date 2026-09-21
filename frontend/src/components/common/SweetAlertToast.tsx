@@ -161,11 +161,12 @@ export const SweetAlertToastContainer: React.FC = () => {
 
                 <button
                   type="button"
-                  className="sweetalert-btn-close"
+                  className="sweetalert-btn-close modal-close-btn"
                   onClick={() => closeToast(toast.id)}
                   aria-label="Close alert"
+                  title="Close"
                 >
-                  <FiX />
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
 
                 {duration > 0 && (
@@ -191,11 +192,12 @@ export const SweetAlertToastContainer: React.FC = () => {
           <div className="sweetalert-box" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              className="sweetalert-btn-close"
+              className="sweetalert-btn-close modal-close-btn"
               onClick={() => setModal(null)}
               aria-label="Close modal"
+              title="Close"
             >
-              <FiX />
+              <FiX size={18} strokeWidth={2.5} />
             </button>
 
             <div className={`sweetalert-icon-wrap ${modal.type || "success"}`}>

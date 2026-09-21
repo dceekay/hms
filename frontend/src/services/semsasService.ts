@@ -22,10 +22,12 @@ function getApiErrorMessage(error: unknown) {
 }
 
 function cleanPayload(values: SemsasTransferFormValues) {
+  const entries = Object.entries(values).map(([key, value]) => [
+    key,
+    value === "" || value === null ? undefined : value,
+  ]);
   return {
-    ...Object.fromEntries(
-      Object.entries(values).map(([key, value]) => [key, value === "" ? undefined : value])
-    ),
+    ...Object.fromEntries(entries),
     feeAmount: Number(values.feeAmount || 0),
   };
 }

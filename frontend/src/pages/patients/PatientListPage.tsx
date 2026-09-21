@@ -349,7 +349,12 @@ export function PatientListPage() {
       state.user?.roles ?? []
   );
 
-  const isSuperAdmin = roles.includes("Super Admin");
+  const isSuperAdmin =
+    roles.some(
+      (r) =>
+        r.toLowerCase().includes("super admin") ||
+        r.toLowerCase().includes("super_admin")
+    ) || permissions.includes("patients.delete");
 
   const [patients, setPatients] =
     useState<Patient[]>([]);
@@ -1569,15 +1574,16 @@ export function PatientListPage() {
 
                     <button
                       type="button"
-                      className="icon-only-btn"
+                      className="icon-only-btn modal-close-btn"
                       onClick={() =>
                         setSelectedPatient(
                           null
                         )
                       }
                       aria-label="Close patient ID card"
+                      title="Close"
                     >
-                      <FiX />
+                      <FiX size={18} strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>
@@ -1649,13 +1655,14 @@ export function PatientListPage() {
 
                     <button
                       type="button"
-                      className="icon-only-btn"
+                      className="icon-only-btn modal-close-btn"
                       onClick={
                         closeEditPatient
                       }
                       aria-label="Close edit patient form"
+                      title="Close"
                     >
-                      <FiX />
+                      <FiX size={18} strokeWidth={2.5} />
                     </button>
                   </div>
 

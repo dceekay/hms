@@ -213,10 +213,10 @@ export default function GlobalLabOrderRinger() {
             type="button"
             onClick={handleDismiss}
             title="Dismiss alert card"
-            className="lab-toast-icon-btn close"
+            className="lab-toast-icon-btn close modal-close-btn"
             aria-label="Dismiss alert"
           >
-            <FiX />
+            <FiX size={18} strokeWidth={2.5} />
           </button>
         </div>
       </div>

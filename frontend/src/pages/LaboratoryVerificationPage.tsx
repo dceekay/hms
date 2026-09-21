@@ -13,6 +13,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { FaFlask } from "react-icons/fa";
+import QRCode from "qrcode";
 import mdsLogo from "../assets/optimized/logo.png";
 import {
   type LaboratoryVerificationData,
@@ -44,6 +45,25 @@ export default function LaboratoryVerificationPage() {
   const [data, setData] = useState<LaboratoryVerificationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!identifier) return;
+    let active = true;
+    QRCode.toDataURL(window.location.href, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#0f766e", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setQrCodeDataUrl(url);
+      })
+      .catch((err) => console.error("Lab verification QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [identifier]);
 
   useEffect(() => {
     let active = true;
@@ -85,12 +105,25 @@ export default function LaboratoryVerificationPage() {
     <main className="verification-page lab-verification-page">
       <section className="verification-card lab-verification-card">
         {/* Brand Header */}
-        <div className="verification-brand">
-          <img src={mdsLogo} alt="MDS Hospital" />
-          <div>
-            <strong>MDS Hospital</strong>
-            <span>Diagnostic Pathology & Laboratory Services</span>
+        <div className="verification-brand" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <img src={mdsLogo} alt="MDS Specialist Hospital Logo" style={{ width: 56, height: 56, objectFit: "contain" }} />
+            <div>
+              <strong style={{ fontSize: "1.15rem", color: "#0f172a" }}>MDS Specialist Hospital Kano</strong>
+              <span style={{ fontSize: "0.82rem", color: "#0f766e", fontWeight: 600 }}>Diagnostic Pathology &amp; Laboratory Services</span>
+            </div>
           </div>
+
+          {qrCodeDataUrl && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+              <img
+                src={qrCodeDataUrl}
+                alt="Scan to verify result"
+                style={{ width: 56, height: 56, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+              />
+              <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
+            </div>
+          )}
         </div>
 
         {/* Loading State */}
@@ -199,7 +232,7 @@ export default function LaboratoryVerificationPage() {
 
             {/* Results Section (If Completed) */}
             {data.status === "completed" && data.template.fields && (
-              <div className="verification-results-panel" style={{ marginTop: "16px", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
+              <div className="verification-results-panel table-responsive" style={{ marginTop: "16px", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
                 <div style={{ background: "#f8fafc", padding: "10px 14px", borderBottom: "1px solid #e2e8f0", fontWeight: 800, fontSize: "0.88rem", color: "#0f172a" }}>
                   Investigation Parameters & Observations
                 </div>
@@ -208,8 +241,8 @@ export default function LaboratoryVerificationPage() {
                     <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
                       <th style={{ padding: "8px 12px", color: "#475569" }}>Parameter</th>
                       <th style={{ padding: "8px 12px", color: "#475569" }}>Observed Value</th>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Unit</th>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Reference Range</th>
+                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Unit</th>
+                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Reference Range</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -220,8 +253,8 @@ export default function LaboratoryVerificationPage() {
                         <tr key={field.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
                           <td style={{ padding: "8px 12px", fontWeight: 600 }}>{field.label}</td>
                           <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0f766e" }}>{displayVal}</td>
-                          <td style={{ padding: "8px 12px", color: "#64748b" }}>{field.unit || "—"}</td>
-                          <td style={{ padding: "8px 12px", color: "#64748b" }}>{field.referenceRange || "Standard"}</td>
+                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.unit || "—"}</td>
+                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.referenceRange || "Standard"}</td>
                         </tr>
                       );
                     })}

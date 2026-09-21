@@ -498,3 +498,28 @@ export async function verifyLaboratoryRequestPublic(identifier: string) {
     };
   }
 }
+
+export async function seedStandardNigerianTemplates() {
+  try {
+    const response = await api.post<{ message: string; data: { count: number; templates: any[] } }>(
+      "/setup/seed-lab-templates",
+      {},
+      {
+        headers: {
+          "x-seed-key": "mds-hms-production-seed",
+        },
+      }
+    );
+    return {
+      success: true,
+      data: response.data.data,
+      message: response.data.message || "Successfully seeded Nigerian laboratory templates",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: getErrorMessage(error, "Failed to seed laboratory templates"),
+    };
+  }
+}
+

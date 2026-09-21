@@ -88,8 +88,14 @@ export default function LaboratoryPrintModal({
               <FiPrinter /> Print Document
             </button>
 
-            <button type="button" className="lab-icon-btn" onClick={onClose}>
-              <FiX />
+            <button
+              type="button"
+              className="lab-icon-btn modal-close-btn"
+              onClick={onClose}
+              aria-label="Close report print preview"
+              title="Close"
+            >
+              <FiX size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>

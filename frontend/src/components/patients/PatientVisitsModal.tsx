@@ -17,6 +17,7 @@ import type { ClinicalEncounter } from "../../types/clinical";
 import type { Appointment } from "../../types/appointment";
 import { fetchClinicalEncounters } from "../../services/clinicalService";
 import { fetchAppointments } from "../../services/appointmentService";
+import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 
 interface PatientVisitsModalProps {
@@ -36,6 +37,37 @@ export default function PatientVisitsModal({
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visitsQrDataUrl, setVisitsQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!isOpen || !patient) {
+      setVisitsQrDataUrl("");
+      return;
+    }
+    let active = true;
+    const qrData = JSON.stringify({
+      hospital: "MDS Specialist Hospital Kano",
+      document: "Clinical Encounter History & Consultation Dossier",
+      patient: `${patient.firstName || ""} ${patient.lastName || ""}`.trim(),
+      mrn: patient.mrn || "Pending",
+      gender: patient.gender || "N/A",
+      verify: `https://mds01.vercel.app/patients/${patient.id}`,
+    });
+
+    QRCode.toDataURL(qrData, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#092a5e", light: "#ffffff" },
+    })
+      .then((dataUrl) => {
+        if (active) setVisitsQrDataUrl(dataUrl);
+      })
+      .catch((err) => console.error("Visits QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [isOpen, patient]);
 
   useEffect(() => {
     if (!isOpen || !patient) return;
@@ -135,26 +167,39 @@ export default function PatientVisitsModal({
 
             <button
               type="button"
-              className="icon-only-btn"
+              className="icon-only-btn modal-close-btn"
               onClick={onClose}
               aria-label="Close visits modal"
+              title="Close"
             >
-              <FiX />
+              <FiX size={18} strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
         {/* Printable History Header */}
-        <div className="visits-print-header printable-only">
-          <img src={mdsLogo} alt="MDS Hospital" className="dossier-logo" />
-          <div>
-            <h2>MDS HOSPITAL KANO</h2>
-            <p>CLINICAL CONSULTATION NOTES &amp; ENCOUNTER HISTORY</p>
-            <p>
-              Patient: <strong>{patient.firstName} {patient.lastName}</strong> · MRN:{" "}
-              <strong>{patient.mrn || "Pending"}</strong> · Gender: {patient.gender || "N/A"}
-            </p>
+        <div className="visits-print-header printable-only" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "16px", borderBottom: "2px solid #0284c7", paddingBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img src={mdsLogo} alt="MDS Specialist Hospital Logo" className="dossier-logo" style={{ width: 56, height: 56, objectFit: "contain" }} />
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800, color: "#092a5e" }}>MDS SPECIALIST HOSPITAL KANO</h2>
+              <p style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "#0284c7", fontWeight: 700 }}>CLINICAL CONSULTATION NOTES &amp; ENCOUNTER HISTORY</p>
+              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#475569" }}>
+                Patient: <strong>{patient.firstName} {patient.lastName}</strong> · MRN:{" "}
+                <strong>{patient.mrn || "Pending"}</strong> · Gender: {patient.gender || "N/A"}
+              </p>
+            </div>
           </div>
+          {visitsQrDataUrl && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+              <img
+                src={visitsQrDataUrl}
+                alt="Scan to verify clinical dossier"
+                style={{ width: 58, height: 58, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+              />
+              <span style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</span>
+            </div>
+          )}
         </div>
 
         {/* Patient Summary Quick Bar */}

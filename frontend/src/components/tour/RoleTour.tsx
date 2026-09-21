@@ -801,14 +801,15 @@ export default function RoleTour() {
               <span className="toast-badge">{profile.roleLabel} Guide</span>
               <button
                 type="button"
-                className="toast-close-btn"
+                className="toast-close-btn modal-close-btn"
                 onClick={() => {
                   setShowWelcomePrompt(false);
                   sessionStorage.setItem(sessionKey(userId, profile.id), "true");
                 }}
                 aria-label="Dismiss guide invitation"
+                title="Dismiss"
               >
-                <FiX />
+                <FiX size={18} strokeWidth={2.5} />
               </button>
             </div>
             <strong>New here? Take a 1-min walkthrough</strong>
@@ -910,11 +911,12 @@ export default function RoleTour() {
 
                 <button
                   type="button"
-                  className="close-modal-btn"
+                  className="close-modal-btn modal-close-btn"
                   onClick={() => handleClose(dontShowAgain ? "dont_show_again" : "skipped")}
                   aria-label="Close onboarding guide"
+                  title="Close"
                 >
-                  <FiX />
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
               </div>
             </header>

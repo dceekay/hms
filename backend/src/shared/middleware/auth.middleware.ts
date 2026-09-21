@@ -95,7 +95,7 @@ export function authorizePermissionsOrRoles(
     }
 
     const hasFallbackRole = (user.roles ?? []).some((role) =>
-      fallbackRoles.includes(role)
+      fallbackRoles.some((fallbackRole) => fallbackRole.toLowerCase() === role.toLowerCase())
     );
 
     if (hasFallbackRole) {

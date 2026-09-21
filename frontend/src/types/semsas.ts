@@ -29,6 +29,7 @@ export type SemsasTransfer = {
 
 export type SemsasTransferFormValues = {
   transferType: SemsasTransferType;
+  patientId?: string | null;
   patientName: string;
   patientPhone: string;
   fromFacility: string;

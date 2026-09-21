@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FiCheckCircle, FiCreditCard, FiLoader, FiSlash } from "react-icons/fi";
+import QRCode from "qrcode";
 import mdsLogo from "../assets/optimized/logo.png";
 import {
   PatientVerification,
@@ -20,6 +21,25 @@ export default function PatientVerificationPage() {
   const { qrCode } = useParams();
   const [patient, setPatient] = useState<PatientVerification | null>(null);
   const [loading, setLoading] = useState(true);
+  const [patientQrDataUrl, setPatientQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (!qrCode) return;
+    let active = true;
+    QRCode.toDataURL(window.location.href, {
+      margin: 1,
+      width: 140,
+      color: { dark: "#092a5e", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setPatientQrDataUrl(url);
+      })
+      .catch((err) => console.error("Patient QR error:", err));
+
+    return () => {
+      active = false;
+    };
+  }, [qrCode]);
 
   useEffect(() => {
     let active = true;
@@ -47,12 +67,25 @@ export default function PatientVerificationPage() {
   return (
     <main className="verification-page">
       <section className="verification-card">
-        <div className="verification-brand">
-          <img src={mdsLogo} alt="MDS Hospital" />
-          <div>
-            <strong>MDS Hospital</strong>
-            <span>Patient ID Verification</span>
+        <div className="verification-brand" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <img src={mdsLogo} alt="MDS Hospital" style={{ width: 54, height: 54, objectFit: "contain" }} />
+            <div>
+              <strong style={{ fontSize: "1.15rem", color: "#092a5e" }}>MDS Specialist Hospital Kano</strong>
+              <span style={{ fontSize: "0.82rem", color: "#0284c7", fontWeight: 600 }}>Patient Identity &amp; Digital Health Record Verification</span>
+            </div>
           </div>
+
+          {patientQrDataUrl && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+              <img
+                src={patientQrDataUrl}
+                alt="Scan to verify patient identity"
+                style={{ width: 56, height: 56, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
+              />
+              <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
+            </div>
+          )}
         </div>
 
         {loading && (

@@ -1,0 +1,270 @@
+/* ==========================================================================
+   MDS Specialist Hospital - Universal Mobile Table & List Responsiveness
+   Gracefully adapts all data tables, queues, and registers across all roles.
+   Hides secondary/unnecessary fields on mobile to ensure razor-sharp clarity.
+   ========================================================================== */
+
+/* Universal table wrapper with smooth momentum scrolling */
+.table-responsive,
+.table-container,
+.data-table-wrap,
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+/* Base table adjustments */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Mobile Visibility Utility Classes */
+@media (max-width: 900px) {
+  .hide-tablet {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-mobile,
+  .col-secondary,
+  .col-time-sec,
+  .col-doctor,
+  .col-specimen,
+  .col-created-at,
+  .col-policy-num,
+  .col-notes {
+    display: none !important;
+  }
+
+  /* Table padding reduction for touch screens */
+  table th,
+  table td {
+    padding: 8px 10px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Compact button actions inside table cells */
+  table td .icon-text-btn,
+  table td button {
+    padding: 5px 9px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .hide-mobile-sm,
+  .col-tertiary,
+  .col-email,
+  .col-gender-full,
+  .col-reference,
+  .col-id {
+    display: none !important;
+  }
+
+  table th,
+  table td {
+    padding: 7px 8px !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+@media (max-width: 440px) {
+  .hide-mobile-xs,
+  .col-badge-minor {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   1. LABORATORY WORKSPACE TABLES (Pending & Completed Queues)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .lab-requests-table th:nth-child(1),
+  .lab-requests-table td:nth-child(1) {
+    /* Hide Request ID / Req # */
+    display: none;
+  }
+
+  .lab-requests-table th:nth-child(2),
+  .lab-requests-table td:nth-child(2) {
+    /* Compact date time */
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .lab-requests-table th:nth-child(5),
+  .lab-requests-table td:nth-child(5) {
+    /* Hide Specimen column on mobile */
+    display: none;
+  }
+
+  .lab-requests-table th:nth-child(8),
+  .lab-requests-table td:nth-child(8) {
+    /* Hide Ordering Doctor on mobile */
+    display: none;
+  }
+
+  .lab-requests-table td .lab-table-actions {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .lab-requests-table td .lab-table-actions button {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .lab-requests-table th:nth-child(2),
+  .lab-requests-table td:nth-child(2) {
+    /* On tiny mobile, hide date column - patient & test take priority */
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. DOCTOR WORKSPACE (Patient Consultations & Triage Queues)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .doctor-patient-queue-table th:nth-child(1),
+  .doctor-patient-queue-table td:nth-child(1) {
+    /* Hide Serial / Queue Number */
+    display: none;
+  }
+
+  .doctor-patient-queue-table .col-insurance,
+  .doctor-patient-queue-table .col-visit-type,
+  .doctor-patient-queue-table .col-checked-in-time {
+    display: none !important;
+  }
+
+  .doctor-workspace-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. NURSE WORKSPACE (Vitals & Wards/Beds)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .nurse-vitals-table .col-bmi,
+  .nurse-vitals-table .col-recorded-by,
+  .nurse-vitals-table .col-notes {
+    display: none !important;
+  }
+
+  .ward-beds-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. PHARMACY WORKSPACE (Prescriptions & Dispensing)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .pharmacy-queue-table th:nth-child(1),
+  .pharmacy-queue-table td:nth-child(1) {
+    /* Hide Rx ID */
+    display: none;
+  }
+
+  .pharmacy-queue-table .col-prescriber,
+  .pharmacy-queue-table .col-dosage-instructions,
+  .pharmacy-queue-table .col-time {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. BILLING & CASHIER WORKSPACE (Invoices & Payments)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .billing-invoices-table .col-invoice-id,
+  .billing-invoices-table .col-cashier,
+  .billing-invoices-table .col-created-time {
+    display: none !important;
+  }
+
+  .billing-invoices-table th,
+  .billing-invoices-table td {
+    padding: 8px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. APPOINTMENTS WORKSPACE
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .appointments-table .col-booking-ref,
+  .appointments-table .col-department,
+  .appointments-table .col-notes {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   7. SECURITY & RECEPTION LOGS
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .security-logs-table .col-destination,
+  .security-logs-table .col-driver-license,
+  .security-logs-table .col-officer {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. ADMIN (Users & Inventory)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .users-table .col-user-id,
+  .users-table .col-created-at,
+  .users-table .col-last-login {
+    display: none !important;
+  }
+
+  .inventory-table .col-sku,
+  .inventory-table .col-reorder-point,
+  .inventory-table .col-supplier {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   9. MOBILE CARDS CONVERSION HELPER
+   -------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .mobile-stack-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .mobile-stack-cards tr {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 14px !important;
+    background: var(--surface, rgba(15, 31, 54, 0.86)) !important;
+    border: 1px solid var(--border, rgba(125, 211, 252, 0.16)) !important;
+    border-radius: 12px !important;
+    gap: 6px !important;
+  }
+
+  .mobile-stack-cards thead {
+    display: none !important;
+  }
+}

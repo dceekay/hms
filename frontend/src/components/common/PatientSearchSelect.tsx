@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FiCheck,
   FiChevronDown,
+  FiClock,
   FiCreditCard,
   FiLoader,
   FiPhone,
@@ -11,9 +12,23 @@ import {
   FiX,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  size,
+  useDismiss,
+  useRole,
+  useInteractions,
+  FloatingPortal,
+} from "@floating-ui/react";
 import type { Patient } from "../../types/patient";
 import { fetchPatients } from "../../services/patients/patientService";
 import "../../styles/patient-search-select.css";
+
+const RECENT_PATIENTS_STORAGE_KEY = "hms_recent_patients_v1";
 
 export interface PatientSearchSelectProps {
   patients: Patient[];
@@ -73,6 +88,25 @@ export function calculateAge(dob?: string | null): string {
   return age > 0 ? `${age}y` : "Infant";
 }
 
+function getStoredRecentPatients(): Patient[] {
+  try {
+    const raw = localStorage.getItem(RECENT_PATIENTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeRecentPatient(patient: Patient) {
+  try {
+    const current = getStoredRecentPatients();
+    const updated = [patient, ...current.filter((p) => p.id !== patient.id)].slice(0, 8);
+    localStorage.setItem(RECENT_PATIENTS_STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore localStorage errors
+  }
+}
+
 export default function PatientSearchSelect({
   patients,
   selectedPatientId,
@@ -90,9 +124,52 @@ export default function PatientSearchSelect({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [remotePatients, setRemotePatients] = useState<Patient[]>([]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  // Monitor viewport size for mobile sheet vs desktop popover
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Floating UI positioning for desktop
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen && !isMobile,
+    onOpenChange: setIsOpen,
+    placement: "bottom-start",
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(6),
+      flip({ padding: 12 }),
+      shift({ padding: 12 }),
+      size({
+        apply({ rects, elements }) {
+          Object.assign(elements.floating.style, {
+            width: `${Math.max(rects.reference.width, 360)}px`,
+            maxWidth: "96vw",
+          });
+        },
+      }),
+    ],
+  });
+
+  const dismiss = useDismiss(context, { outsidePress: true });
+  const role = useRole(context, { role: "listbox" });
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, role]);
+
+  // Load recent patients when opened
+  useEffect(() => {
+    if (isOpen) {
+      setRecentPatients(getStoredRecentPatients());
+    }
+  }, [isOpen]);
 
   // Combine parent-provided patients with remote search results
   const mergedPatients = useMemo(() => {
@@ -174,25 +251,18 @@ export default function PatientSearchSelect({
     }
   }, [isOpen]);
 
-  // Click outside to close (desktop dropdown)
+  // Scroll active item into view when navigating with keys
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
+    if (isOpen && listRef.current) {
+      const activeEl = listRef.current.querySelector(".patient-row-card.highlighted") as HTMLElement | null;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest" });
       }
     }
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
+  }, [highlightedIndex, isOpen]);
 
   const handleSelect = (patient: Patient) => {
+    storeRecentPatient(patient);
     onSelectPatient(patient);
     setIsOpen(false);
   };
@@ -201,6 +271,16 @@ export default function PatientSearchSelect({
     e.stopPropagation();
     onSelectPatient(null);
     setSearchQuery("");
+  };
+
+  const clearRecentHistory = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      localStorage.removeItem(RECENT_PATIENTS_STORAGE_KEY);
+      setRecentPatients([]);
+    } catch {
+      // ignore
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -229,9 +309,216 @@ export default function PatientSearchSelect({
     }
   };
 
+  const popoverContent = (
+    <>
+      {/* Mobile Backdrop */}
+      {isMobile && (
+        <div
+          className="patient-picker-backdrop"
+          style={{ display: "block" }}
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <div
+        ref={isMobile ? undefined : refs.setFloating}
+        style={isMobile ? undefined : floatingStyles}
+        {...(!isMobile ? getFloatingProps() : {})}
+        className={`patient-picker-popover ${isMobile ? "mobile-sheet" : ""}`}
+        role="listbox"
+        aria-label="Patients list"
+      >
+        {/* Sheet Handle for Mobile */}
+        <div className="mobile-sheet-handle" />
+
+        <div className="picker-header">
+          <div className="picker-header-title">
+            <FiUser />
+            <span>Select Patient</span>
+            <span className="picker-count-badge">
+              {filteredPatients.length} found
+            </span>
+          </div>
+          <button
+            type="button"
+            className="picker-close-btn modal-close-btn"
+            style={{ display: isMobile ? "flex" : "none" }}
+            onClick={() => setIsOpen(false)}
+            aria-label="Close patient picker"
+            title="Close"
+          >
+            <FiX size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* Search Field */}
+        <div className="picker-search-wrapper">
+          <FiSearch className="search-input-icon" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="picker-search-input"
+            placeholder="Type name, MRN, P-File No., or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {isSearchingRemote && (
+            <div className="picker-search-spinner" title="Searching database...">
+              <FiLoader className="spin" />
+            </div>
+          )}
+          {searchQuery && !isSearchingRemote && (
+            <button
+              type="button"
+              className="search-clear-btn"
+              onClick={() => setSearchQuery("")}
+              aria-label="Clear search query"
+              title="Clear search"
+            >
+              <FiX size={16} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+
+        {/* Recent Patients Quick Shelf (Visible when search query is empty) */}
+        {!searchQuery.trim() && recentPatients.length > 0 && (
+          <div className="picker-recent-section">
+            <div className="picker-recent-header">
+              <span>
+                <FiClock style={{ marginRight: 4 }} /> Recent Patients
+              </span>
+              <button
+                type="button"
+                className="picker-recent-clear-btn"
+                onClick={clearRecentHistory}
+                title="Clear recent history"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="picker-recent-chips">
+              {recentPatients.map((rp) => (
+                <button
+                  key={rp.id}
+                  type="button"
+                  className="picker-recent-chip"
+                  onClick={() => handleSelect(rp)}
+                  title={`Select ${rp.firstName} ${rp.lastName}`}
+                >
+                  <FiUser size={12} />
+                  <span>
+                    {rp.firstName} {rp.lastName}
+                  </span>
+                  {rp.mrn && <span className="patient-mrn-chip">{rp.mrn}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Patient Cards List */}
+        <div ref={listRef} className="picker-list">
+          {filteredPatients.length === 0 ? (
+            <div className="picker-empty-state">
+              <div className="empty-icon-wrap">
+                <FiUser />
+              </div>
+              <strong>No patients matched your search</strong>
+              <p>Check spelling or register a new patient profile.</p>
+              <Link
+                to="/register-patient"
+                className="picker-new-patient-btn"
+                onClick={() => setIsOpen(false)}
+              >
+                <FiPlus /> Register New Patient
+              </Link>
+            </div>
+          ) : (
+            filteredPatients.map((patient, index) => {
+              const isSelected = patient.id === selectedPatientId;
+              const isHighlighted = index === highlightedIndex;
+              const initials = `${patient.firstName?.[0] || ""}${patient.lastName?.[0] || ""}`.toUpperCase();
+
+              return (
+                <div
+                  key={patient.id}
+                  className={`patient-row-card ${isSelected ? "selected" : ""} ${isHighlighted ? "highlighted" : ""}`}
+                  onClick={() => handleSelect(patient)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <div className="patient-avatar-circle">
+                    {initials || <FiUser />}
+                  </div>
+
+                  <div className="patient-row-info">
+                    <div className="patient-row-name-line">
+                      <strong className="patient-name">
+                        {highlightMatch(`${patient.firstName} ${patient.lastName}`.trim(), searchQuery)}
+                      </strong>
+                      {patient.physicalFileNumber && (
+                        <span className="patient-pfile-chip" title="Physical File / Folder Number">
+                          📁 {highlightMatch(patient.physicalFileNumber, searchQuery)}
+                        </span>
+                      )}
+                      {patient.mrn && (
+                        <span className="patient-mrn-chip">
+                          {highlightMatch(patient.mrn, searchQuery)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="patient-row-subtext">
+                      {patient.phone && (
+                        <span className="subtext-item phone-subtext">
+                          <FiPhone /> {highlightMatch(patient.phone, searchQuery)}
+                        </span>
+                      )}
+                      {patient.gender && (
+                        <span className="subtext-item">
+                          {patient.gender}
+                          {patient.dateOfBirth && ` • ${calculateAge(patient.dateOfBirth)}`}
+                        </span>
+                      )}
+                      {(patient.insuranceProvider || patient.insurancePolicyNumber) && (
+                        <span className="subtext-item insurance-tag">
+                          <FiCreditCard /> {patient.insuranceProvider?.name || "HMO"}
+                          {patient.insurancePolicyNumber ? ` (${patient.insurancePolicyNumber})` : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <div className="check-icon-wrap">
+                      <FiCheck />
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer Action */}
+        <div className="picker-footer">
+          <Link
+            to="/register-patient"
+            className="picker-footer-link"
+            onClick={() => setIsOpen(false)}
+          >
+            <FiPlus /> New Patient Registration
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div
-      ref={containerRef}
       className={`patient-search-select-container ${className} ${disabled ? "disabled" : ""} ${error ? "has-error" : ""}`}
       onKeyDown={handleKeyDown}
     >
@@ -243,6 +530,8 @@ export default function PatientSearchSelect({
 
       {/* Main Trigger Button */}
       <div
+        ref={refs.setReference}
+        {...getReferenceProps()}
         className={`patient-select-trigger ${isOpen ? "open" : ""} ${selectedPatient ? "has-value" : ""}`}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         role="combobox"
@@ -291,7 +580,7 @@ export default function PatientSearchSelect({
               title="Clear selection"
               aria-label="Clear selected patient"
             >
-              <FiX />
+              <FiX size={16} strokeWidth={2.5} />
             </button>
           )}
           <FiChevronDown className={`chevron-icon ${isOpen ? "rotate" : ""}`} />
@@ -302,163 +591,9 @@ export default function PatientSearchSelect({
 
       {/* Dropdown / Mobile Bottom-Sheet */}
       {isOpen && (
-        <>
-          <div
-            className="patient-picker-backdrop"
-            onClick={() => setIsOpen(false)}
-          />
-
-          <div
-            className="patient-picker-popover"
-            role="listbox"
-            aria-label="Patients list"
-          >
-            {/* Sheet Handle for Mobile */}
-            <div className="mobile-sheet-handle" />
-
-            <div className="picker-header">
-              <div className="picker-header-title">
-                <FiUser />
-                <span>Select Patient</span>
-                <span className="picker-count-badge">
-                  {filteredPatients.length} found
-                </span>
-              </div>
-              <button
-                type="button"
-                className="picker-close-btn"
-                onClick={() => setIsOpen(false)}
-                aria-label="Close patient picker"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            {/* Search Field */}
-            <div className="picker-search-wrapper">
-              <FiSearch className="search-input-icon" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                className="picker-search-input"
-                placeholder="Type name, MRN (e.g. MRN-001), or phone number..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-              />
-              {isSearchingRemote && (
-                <div className="picker-search-spinner" title="Searching database...">
-                  <FiLoader className="spin" />
-                </div>
-              )}
-              {searchQuery && !isSearchingRemote && (
-                <button
-                  type="button"
-                  className="search-clear-btn"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <FiX />
-                </button>
-              )}
-            </div>
-
-            {/* Patient Cards List */}
-            <div ref={listRef} className="picker-list">
-              {filteredPatients.length === 0 ? (
-                <div className="picker-empty-state">
-                  <div className="empty-icon-wrap">
-                    <FiUser />
-                  </div>
-                  <strong>No patients matched your search</strong>
-                  <p>Check spelling or register a new patient profile.</p>
-                  <Link
-                    to="/register-patient"
-                    className="picker-new-patient-btn"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <FiPlus /> Register New Patient
-                  </Link>
-                </div>
-              ) : (
-                filteredPatients.map((patient, index) => {
-                  const isSelected = patient.id === selectedPatientId;
-                  const isHighlighted = index === highlightedIndex;
-                  const initials = `${patient.firstName?.[0] || ""}${patient.lastName?.[0] || ""}`.toUpperCase();
-
-                  return (
-                    <div
-                      key={patient.id}
-                      className={`patient-row-card ${isSelected ? "selected" : ""} ${isHighlighted ? "highlighted" : ""}`}
-                      onClick={() => handleSelect(patient)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      role="option"
-                      aria-selected={isSelected}
-                    >
-                      <div className="patient-avatar-circle">
-                        {initials || <FiUser />}
-                      </div>
-
-                      <div className="patient-row-info">
-                        <div className="patient-row-name-line">
-                          <strong className="patient-name">
-                            {highlightMatch(`${patient.firstName} ${patient.lastName}`.trim(), searchQuery)}
-                          </strong>
-                          {patient.physicalFileNumber && (
-                            <span className="patient-pfile-chip" title="Physical File / Folder Number">
-                              📁 {highlightMatch(patient.physicalFileNumber, searchQuery)}
-                            </span>
-                          )}
-                          {patient.mrn && (
-                            <span className="patient-mrn-chip">
-                              {highlightMatch(patient.mrn, searchQuery)}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="patient-row-subtext">
-                          {patient.phone && (
-                            <span className="subtext-item phone-subtext">
-                              <FiPhone /> {highlightMatch(patient.phone, searchQuery)}
-                            </span>
-                          )}
-                          {patient.gender && (
-                            <span className="subtext-item">
-                              {patient.gender}
-                              {patient.dateOfBirth && ` • ${calculateAge(patient.dateOfBirth)}`}
-                            </span>
-                          )}
-                          {(patient.insuranceProvider || patient.insurancePolicyNumber) && (
-                            <span className="subtext-item insurance-tag">
-                              <FiCreditCard /> {patient.insuranceProvider?.name || "HMO"}{patient.insurancePolicyNumber ? ` (${patient.insurancePolicyNumber})` : ""}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {isSelected && (
-                        <div className="check-icon-wrap">
-                          <FiCheck />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Footer Action */}
-            <div className="picker-footer">
-              <Link
-                to="/register-patient"
-                className="picker-footer-link"
-                onClick={() => setIsOpen(false)}
-              >
-                <FiPlus /> New Patient Registration
-              </Link>
-            </div>
-          </div>
-        </>
+        <FloatingPortal>
+          {popoverContent}
+        </FloatingPortal>
       )}
     </div>
   );

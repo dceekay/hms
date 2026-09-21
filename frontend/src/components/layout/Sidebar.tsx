@@ -717,12 +717,13 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
           {/* Mobile Close Button */}
           {mobileOpen && (
             <button
-              className="sidebar-mobile-close"
+              className="sidebar-mobile-close modal-close-btn"
               onClick={onCloseMobile}
               type="button"
               aria-label="Close navigation"
+              title="Close navigation"
             >
-              <FiX size={20} />
+              <FiX size={20} strokeWidth={2.5} />
             </button>
           )}
         </div>

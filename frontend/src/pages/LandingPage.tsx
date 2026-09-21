@@ -1050,11 +1050,12 @@ export default function LandingPage() {
               {serviceSearch && (
                 <button
                   type="button"
-                  className="clear-search-btn"
+                  className="clear-search-btn modal-close-btn"
                   onClick={() => setServiceSearch("")}
                   aria-label="Clear search"
+                  title="Clear search"
                 >
-                  <FiX />
+                  <FiX size={16} strokeWidth={2.5} />
                 </button>
               )}
             </div>

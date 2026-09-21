@@ -293,7 +293,77 @@
   place-items: center;
 }
 
+/* Recent Patients Quick Bar */
+.picker-recent-section {
+  padding: 8px 12px;
+  background: rgba(8, 126, 189, 0.04);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.picker-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted, #64748b);
+  margin-bottom: 6px;
+}
+
+.picker-recent-clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.picker-recent-clear-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.picker-recent-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.picker-recent-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.picker-recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(8, 126, 189, 0.25);
+  background: var(--bg-card, #ffffff);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.picker-recent-chip:hover {
+  border-color: #087ebd;
+  background: rgba(8, 126, 189, 0.08);
+  color: #087ebd;
+}
+
 /* Patient List */
+
 .picker-list {
   max-height: 310px;
   overflow-y: auto;

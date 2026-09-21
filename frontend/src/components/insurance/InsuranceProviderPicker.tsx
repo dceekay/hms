@@ -133,11 +133,12 @@ export default function InsuranceProviderPicker({
                 </div>
                 <button
                   type="button"
-                  className="insurance-picker-close-btn"
+                  className="insurance-picker-close-btn modal-close-btn"
                   onClick={() => setOpen(false)}
                   aria-label="Close insurance list"
+                  title="Close"
                 >
-                  <FiX />
+                  <FiX size={18} strokeWidth={2.5} />
                 </button>
               </div>
 

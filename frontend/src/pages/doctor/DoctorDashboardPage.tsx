@@ -41,6 +41,7 @@ import {
   FaPhoneSlash,
 } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import TestSearchSelect from "../../components/common/TestSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
 import LaboratoryPrintModal from "../../components/laboratory/LaboratoryPrintModal";
@@ -2637,50 +2638,18 @@ export default function DoctorDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Dropdown Catalog Picker & Filter */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
+                  {/* Modern Diagnostic Test Chooser (Multi Mode) */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
                     <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                        <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", margin: 0 }}>
-                          Select Test from Hospital Catalog
-                        </label>
-                        {availableLabCategories.length > 2 && (
-                          <select
-                            className="form-control"
-                            style={{ width: "auto", padding: "0.15rem 0.5rem", fontSize: "0.75rem", height: "auto" }}
-                            value={labCategoryFilter}
-                            onChange={(e) => setLabCategoryFilter(e.target.value)}
-                          >
-                            {availableLabCategories.map((cat) => (
-                              <option key={cat} value={cat}>Category: {cat}</option>
-                            ))}
-                          </select>
-                        )}
-                      </div>
-
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <select
-                          className="form-control"
-                          value={labTemplateId}
-                          onChange={(e) => setLabTemplateId(e.target.value)}
-                        >
-                          <option value="">-- Choose Diagnostic Test --</option>
-                          {filteredCatalogTemplates.map((tpl) => (
-                            <option key={tpl.id} value={tpl.id}>
-                              {tpl.name} ({tpl.category ?? "General"}) {tpl.specimen ? `• [${tpl.specimen}]` : ""}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="doctor-action-btn secondary"
-                          style={{ whiteSpace: "nowrap" }}
-                          disabled={!labTemplateId}
-                          onClick={handleAddDropdownLabOrder}
-                        >
-                          <FiPlus /> Add
-                        </button>
-                      </div>
+                      <TestSearchSelect
+                        label="Select Test from Hospital Catalog"
+                        mode="multi"
+                        templates={templates}
+                        selectedTemplateIds={selectedLabOrders.map((o) => o.templateId)}
+                        onToggleTemplate={handleToggleLabOrder}
+                        onClearMulti={handleClearLabOrders}
+                        placeholder="Search test by name, shortcode (FBC, MP, LFT), or specimen..."
+                      />
                     </div>
 
                     <div>
@@ -2880,8 +2849,8 @@ export default function DoctorDashboardPage() {
                                     <tr>
                                       <th>Parameter / Analyte</th>
                                       <th>Observed Value</th>
-                                      <th>Unit</th>
-                                      <th>Reference Range</th>
+                                      <th className="hide-mobile">Unit</th>
+                                      <th className="hide-mobile">Reference Range</th>
                                       <th>Evaluation</th>
                                     </tr>
                                   </thead>
@@ -2897,8 +2866,8 @@ export default function DoctorDashboardPage() {
                                           <td>
                                             <strong style={{ fontSize: "0.92rem" }}>{displayVal}</strong>
                                           </td>
-                                          <td style={{ color: "var(--muted)" }}>{field.unit || "—"}</td>
-                                          <td style={{ color: "var(--muted)" }}>{field.referenceRange || "Standard"}</td>
+                                          <td className="hide-mobile" style={{ color: "var(--muted)" }}>{field.unit || "—"}</td>
+                                          <td className="hide-mobile" style={{ color: "var(--muted)" }}>{field.referenceRange || "Standard"}</td>
                                           <td>
                                             {flag ? (
                                               <span className={`doctor-lab-flag-pill ${flag.status}`}>

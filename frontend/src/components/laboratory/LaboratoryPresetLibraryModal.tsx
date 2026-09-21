@@ -84,8 +84,14 @@ export default function LaboratoryPresetLibraryModal({
               Choose a standard accredited diagnostic panel to populate your template in 1 click.
             </p>
           </div>
-          <button type="button" className="lab-icon-btn" onClick={onClose}>
-            <FiX />
+          <button
+            type="button"
+            className="lab-icon-btn modal-close-btn"
+            onClick={onClose}
+            aria-label="Close library modal"
+            title="Close"
+          >
+            <FiX size={18} strokeWidth={2.5} />
           </button>
         </div>
 

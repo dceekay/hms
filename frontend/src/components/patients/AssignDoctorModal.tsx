@@ -145,11 +145,12 @@ export default function AssignDoctorModal({
 
           <button
             type="button"
-            className="icon-only-btn"
+            className="icon-only-btn modal-close-btn"
             onClick={onClose}
             aria-label="Close assign doctor modal"
+            title="Close"
           >
-            <FiX />
+            <FiX size={18} strokeWidth={2.5} />
           </button>
         </div>
 

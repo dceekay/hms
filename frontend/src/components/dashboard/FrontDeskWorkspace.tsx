@@ -400,8 +400,9 @@ export default function FrontDeskWorkspace({
                 className="pqc-clear-btn"
                 onClick={() => setSelectedPatient(null)}
                 title="Clear selection"
+                aria-label="Clear selected patient"
               >
-                <FiX />
+                <FiX size={16} strokeWidth={2.5} />
                 <span>Clear</span>
               </button>
             </div>

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { FaStethoscope, FaUserInjured, FaUserMd } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import AppDateTimePicker from "../../components/common/AppDateTimePicker";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   createAppointment,
@@ -496,11 +497,12 @@ export default function AppointmentsPage() {
                   </div>
                   <button
                     type="button"
-                    className="snapshot-clear-btn"
+                    className="snapshot-clear-btn modal-close-btn"
                     onClick={() => setForm((c) => ({ ...c, patientId: "" }))}
                     title="Change patient"
+                    aria-label="Change patient"
                   >
-                    <FiX />
+                    <FiX size={18} strokeWidth={2.5} />
                   </button>
                 </div>
               )}
@@ -604,11 +606,11 @@ export default function AppointmentsPage() {
 
               {timingMode === "scheduled" && (
                 <div style={{ marginTop: "10px" }}>
-                  <input
-                    type="datetime-local"
-                    className="studio-textarea"
+                  <AppDateTimePicker
                     value={form.scheduledFor}
-                    onChange={(event) => setForm((cur) => ({ ...cur, scheduledFor: event.target.value }))}
+                    onChange={(val) => setForm((cur) => ({ ...cur, scheduledFor: val }))}
+                    placeholder="Pick appointment date & time..."
+                    required
                   />
                 </div>
               )}
@@ -675,8 +677,14 @@ export default function AppointmentsPage() {
                   placeholder="Search patient, MRN, doctor, or complaint..."
                 />
                 {search && (
-                  <button type="button" onClick={() => setSearch("")} style={{ background: "none", border: 0, color: "#94a3b8", cursor: "pointer" }}>
-                    <FiX />
+                  <button
+                    type="button"
+                    className="search-clear-btn"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <FiX size={16} strokeWidth={2.5} />
                   </button>
                 )}
               </div>

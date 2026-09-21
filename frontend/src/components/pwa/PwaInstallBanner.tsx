@@ -116,11 +116,12 @@ export default function PwaInstallBanner() {
             </button>
             <button
               type="button"
-              className="pwa-close-btn"
+              className="pwa-close-btn modal-close-btn"
               onClick={handleDismiss}
               aria-label="Dismiss app install banner"
+              title="Dismiss"
             >
-              <FiX />
+              <FiX size={18} strokeWidth={2.5} />
             </button>
           </div>
         </aside>
@@ -136,10 +137,12 @@ export default function PwaInstallBanner() {
               </div>
               <button
                 type="button"
-                className="pwa-modal-close"
+                className="pwa-modal-close modal-close-btn"
                 onClick={() => setShowIosGuide(false)}
+                aria-label="Close guide"
+                title="Close"
               >
-                <FiX />
+                <FiX size={18} strokeWidth={2.5} />
               </button>
             </div>
 
