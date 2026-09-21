@@ -90,7 +90,7 @@ export default function BillingReceiptPrintDocument({
   }, [invoiceNum, patientName, mrn, totalAmount, paidAmount, isSettled, bill.paymentStatus, bill.billedAt]);
 
   return (
-    <div className="billing-receipt-canvas" id="printable-billing-receipt">
+    <div className="billing-receipt-canvas billing-receipt-print-page print-canvas printable-area" id="printable-billing-receipt">
       {/* 1. Official Receipt Header */}
       <header className="billing-receipt-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px" }}>
         <div className="receipt-brand-row" style={{ display: "flex", alignItems: "center", gap: "12px" }}>

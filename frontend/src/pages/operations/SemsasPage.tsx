@@ -1226,7 +1226,7 @@ export default function SemsasPage() {
                 </button>
               </div>
 
-              <div className="semsas-print-wrapper" aria-label="Official Kano SEMSAS Report">
+              <div className="semsas-print-wrapper semsas-print-template print-canvas printable-area" aria-label="Official Kano SEMSAS Report">
                 <div className="semsas-print-header-top">
                   <div className="semsas-print-brand">
                     <img src={mdsLogo} alt="MDS Specialist Hospital Logo" />
@@ -1341,7 +1341,7 @@ export default function SemsasPage() {
 
           {/* Hidden Print Area Triggered by window.print() regardless of active tab */}
           {activeTab !== "report" && (
-            <div className="semsas-print-wrapper" style={{ display: "none" }} aria-hidden="true">
+            <div className="semsas-print-wrapper semsas-print-template print-canvas printable-area" style={{ display: "none" }} aria-hidden="true">
               <div className="semsas-print-header-top">
                 <div className="semsas-print-brand">
                   <img src={mdsLogo} alt="MDS Specialist Hospital Logo" />

@@ -16,9 +16,14 @@ export default function LaboratoryPrintModal({
   onClose,
   initialDocumentType,
 }: LaboratoryPrintModalProps) {
+  const hasResults =
+    (request?.resultValues && Object.keys(request.resultValues).length > 0) ||
+    Boolean(request?.interpretation) ||
+    Boolean(request?.technicianNote);
+
   const [docType, setDocType] = useState<"result" | "request">(() => {
     if (initialDocumentType) return initialDocumentType;
-    return request && request.status === "completed" ? "result" : "request";
+    return (hasResults || (request && request.status === "completed")) ? "result" : "request";
   });
 
   useEffect(() => {
@@ -42,7 +47,7 @@ export default function LaboratoryPrintModal({
   };
 
   return createPortal(
-    <div className="lab-modal-overlay lab-print-modal-overlay" onClick={onClose}>
+    <div className="lab-modal-overlay lab-print-modal-overlay print-canvas printable-area" onClick={onClose}>
       <div
         className="lab-modal-container lab-print-modal-container"
         style={{ maxWidth: "900px" }}
@@ -60,8 +65,8 @@ export default function LaboratoryPrintModal({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            {/* Format toggle if result is available */}
-            {request.status === "completed" && (
+            {/* Format toggle if result is available or test completed */}
+            {(request.status === "completed" || hasResults) && (
               <div className="lab-view-mode-toggle">
                 <button
                   type="button"

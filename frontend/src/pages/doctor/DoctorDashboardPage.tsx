@@ -3279,7 +3279,12 @@ export default function DoctorDashboardPage() {
           <LaboratoryPrintModal
             request={viewingLabResult}
             onClose={() => setViewingLabResult(null)}
-            initialDocumentType={viewingLabResult.status === "completed" ? "result" : "request"}
+            initialDocumentType={
+              viewingLabResult.status === "completed" ||
+              (viewingLabResult.resultValues && Object.keys(viewingLabResult.resultValues).length > 0)
+                ? "result"
+                : "request"
+            }
           />
         )}
       </main>
