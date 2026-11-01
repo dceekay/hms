@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowRight, FiLock, FiShield, FiUser, FiUsers, FiAlertTriangle } from "react-icons/fi";
+import { FiArrowRight, FiLock, FiShield, FiUser, FiAlertTriangle } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
 import mdsHospital from "../assets/optimized/22mds.webp";
@@ -8,30 +8,6 @@ import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
 import "../styles/login.css";
-
-interface MdsTestAccount {
-  role: string;
-  category: "admin" | "clinical" | "diagnostics" | "operations" | "security";
-  name: string;
-  username: string;
-  password: string;
-  badge: string;
-  color: string;
-}
-
-const mdsTestAccounts: MdsTestAccount[] = [
-  { role: "Super Admin", category: "admin", name: "A. Yakubu", username: "admin", password: "Admin@123", badge: "Root", color: "#ef4444" },
-  { role: "Administrator", category: "admin", name: "Hosp Admin", username: "administrator", password: "Administrator@123", badge: "Admin", color: "#f97316" },
-  { role: "Doctor", category: "clinical", name: "Dr. John Doe", username: "drjohn", password: "Doctor@123", badge: "Clinic", color: "#06b6d4" },
-  { role: "Nurse", category: "clinical", name: "Nurse Amina", username: "nurseama", password: "Nurse@123", badge: "Triage", color: "#10b981" },
-  { role: "Receptionist", category: "operations", name: "Jane Smith", username: "reception", password: "Reception@123", badge: "Front Desk", color: "#8b5cf6" },
-  { role: "Laboratory", category: "diagnostics", name: "Samuel Okoro", username: "labtech", password: "Lab@12345", badge: "Diagnostics", color: "#ec4899" },
-  { role: "Pharmacist", category: "diagnostics", name: "Fatima Musa", username: "pharm", password: "Pharm@123", badge: "Pharmacy", color: "#14b8a6" },
-  { role: "Cashier", category: "operations", name: "Cash Desk", username: "cashier", password: "Cashier@123", badge: "POS", color: "#f59e0b" },
-  { role: "Billing Officer", category: "operations", name: "David Ibrahim", username: "billing", password: "Billing@123", badge: "Billing", color: "#eab308" },
-  { role: "Desk Office", category: "operations", name: "Desk Officer", username: "deskoffice", password: "Desk@123", badge: "Desk", color: "#6366f1" },
-  { role: "Security", category: "security", name: "Peter Gate", username: "security", password: "Security@123", badge: "Security", color: "#64748b" },
-];
 
 function getPostLoginPath(roles: string[] = [], permissions: string[] = []) {
   const normalizedRoles = roles.map((role) => role.toLowerCase());
@@ -116,12 +92,6 @@ export default function LoginPage() {
     event.preventDefault();
     await submitLogin(emailOrUsername, password);
   }
-
-  const handleTestLogin = async (account: MdsTestAccount) => {
-    setEmailOrUsername(account.username);
-    setPassword(account.password);
-    await submitLogin(account.username, account.password);
-  };
 
 
   return (
@@ -230,50 +200,6 @@ export default function LoginPage() {
           {!error && searchParams.get("session") === "expired" && (
             <p className="login-error">Your session expired. Please sign in again.</p>
           )}
-
-          <div className="test-login-panel">
-            <div className="test-login-panel-header">
-              <div className="test-login-title-group">
-                <FiUsers className="test-login-icon" />
-                <div>
-                  <strong>MDS Test Logins</strong>
-                  <p>Click any account for instant one-click sign in</p>
-                </div>
-              </div>
-              <span className="test-login-count">{mdsTestAccounts.length} Staff Logins</span>
-            </div>
-
-            <div className="test-login-grid">
-              {mdsTestAccounts.map((account) => (
-                <button
-                  key={account.username}
-                  type="button"
-                  onClick={() => handleTestLogin(account)}
-                  className="test-login-btn"
-                  disabled={loading}
-                  title={`Sign in as ${account.role} (${account.username} / ${account.password})`}
-                >
-                  <div className="test-login-btn-top">
-                    <span className="test-login-role">{account.role}</span>
-                    <span
-                      className="test-login-badge"
-                      style={{
-                        borderColor: `${account.color}50`,
-                        color: account.color,
-                        background: `${account.color}15`,
-                      }}
-                    >
-                      {account.badge}
-                    </span>
-                  </div>
-                  <div className="test-login-btn-meta">
-                    <span className="test-login-user">{account.username}</span>
-                    <span className="test-login-name">{account.name}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="login-compliance-card" role="region" aria-label="HMR Access and Compliance Notice">
             <div className="login-compliance-header">

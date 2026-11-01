@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FiDownload, FiInfo, FiShare, FiSmartphone, FiX } from "react-icons/fi";
 import mdsLogo from "../../assets/optimized/logo.png";
 import "../../styles/pwa.css";
@@ -9,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function PwaInstallBanner() {
+  const location = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -61,6 +63,16 @@ export default function PwaInstallBanner() {
       window.removeEventListener("open-pwa-install", handleOpenTrigger);
     };
   }, [deferredPrompt, isIos]);
+
+  const isLandingOrPublicPage =
+    location.pathname === "/" ||
+    location.pathname === "/landing" ||
+    location.pathname.startsWith("/services") ||
+    location.pathname === "/login";
+
+  if (isLandingOrPublicPage && !showIosGuide) {
+    return null;
+  }
 
   if (isStandalone || (dismissed && !showIosGuide)) {
     return null;
