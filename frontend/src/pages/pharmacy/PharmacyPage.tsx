@@ -974,13 +974,13 @@ export default function PharmacyPage() {
                   <table className="hms-data-table">
                     <thead>
                       <tr>
-                        <th style={{ width: "26%" }}>Medicine</th>
-                        <th style={{ width: "14%" }}>Category</th>
-                        <th style={{ width: "15%" }}>Batch & Exp</th>
-                        <th style={{ width: "15%" }}>Selling / Cost</th>
-                        <th style={{ width: "12%" }}>Stock</th>
-                        <th style={{ width: "8%" }}>Status</th>
-                        <th style={{ width: "10%", textAlign: "right" }}>Actions</th>
+                        <th style={{ minWidth: "220px" }}>Medicine</th>
+                        <th style={{ minWidth: "120px" }}>Category</th>
+                        <th style={{ minWidth: "130px" }}>Batch & Exp</th>
+                        <th style={{ minWidth: "140px" }}>Selling / Cost</th>
+                        <th style={{ minWidth: "110px" }}>Stock</th>
+                        <th style={{ width: "85px", minWidth: "85px" }}>Status</th>
+                        <th className="sticky-action" style={{ width: "160px", minWidth: "160px", textAlign: "right" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1014,15 +1014,27 @@ export default function PharmacyPage() {
                               {stockState(medication)}
                             </span>
                           </td>
-                          <td className="cell-actions">
-                            <div style={{ display: "inline-flex", gap: "6px" }}>
+                          <td className="cell-actions sticky-action">
+                            <div className="table-actions-cluster">
                               {canUpdate && (
                                 <>
-                                  <button type="button" className="icon-text-btn" onClick={() => startEditMedication(medication)}>
-                                    <FiEdit3 /> Edit
+                                  <button
+                                    type="button"
+                                    className="table-action-btn primary"
+                                    onClick={() => startEditMedication(medication)}
+                                    title="Edit Medicine"
+                                  >
+                                    <FiEdit3 />
+                                    <span>Edit</span>
                                   </button>
-                                  <button type="button" className="icon-text-btn" onClick={() => setStockTarget(medication)}>
-                                    <FiArchive /> Stock
+                                  <button
+                                    type="button"
+                                    className="table-action-btn"
+                                    onClick={() => setStockTarget(medication)}
+                                    title="Adjust Stock"
+                                  >
+                                    <FiArchive />
+                                    <span>Stock</span>
                                   </button>
                                 </>
                               )}

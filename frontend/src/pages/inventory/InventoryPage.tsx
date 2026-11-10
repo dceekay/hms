@@ -843,13 +843,13 @@ export default function InventoryPage() {
                     <table className="hms-data-table">
                       <thead>
                         <tr>
-                          <th>Item</th>
-                          <th>Code / Cat</th>
-                          <th>Location</th>
-                          <th>Cost Price</th>
-                          <th>Current Stock</th>
-                          <th>Status</th>
-                          <th style={{ textAlign: "right" }}>Actions</th>
+                          <th style={{ minWidth: "220px" }}>Item</th>
+                          <th style={{ minWidth: "120px" }}>Code / Cat</th>
+                          <th style={{ minWidth: "110px" }}>Location</th>
+                          <th style={{ minWidth: "100px" }}>Cost Price</th>
+                          <th style={{ minWidth: "120px" }}>Current Stock</th>
+                          <th style={{ width: "95px", minWidth: "95px" }}>Status</th>
+                          <th className="sticky-action" style={{ width: "160px", minWidth: "160px", textAlign: "right" }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -897,16 +897,28 @@ export default function InventoryPage() {
                                 </span>
                               )}
                             </td>
-                            <td className="cell-actions">
-                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                            <td className="cell-actions sticky-action">
+                              <div className="table-actions-cluster">
                                 {canUpdate && (
-                                  <button type="button" className="icon-text-btn" onClick={() => startEdit(item)}>
-                                    <FiEdit3 /> Edit
+                                  <button
+                                    type="button"
+                                    className="table-action-btn primary"
+                                    onClick={() => startEdit(item)}
+                                    title="Edit Item"
+                                  >
+                                    <FiEdit3 />
+                                    <span>Edit</span>
                                   </button>
                                 )}
                                 {canIssue && (
-                                  <button type="button" className="icon-text-btn" onClick={() => startMovement(item)}>
-                                    <FiTruck /> Move
+                                  <button
+                                    type="button"
+                                    className="table-action-btn"
+                                    onClick={() => startMovement(item)}
+                                    title="Move Stock"
+                                  >
+                                    <FiTruck />
+                                    <span>Move</span>
                                   </button>
                                 )}
                               </div>

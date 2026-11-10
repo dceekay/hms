@@ -250,12 +250,12 @@ export default function InsuranceProvidersPage() {
                 <table className="hms-data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "32%" }}>Provider Name & Details</th>
-                      <th style={{ width: "12%" }}>Code</th>
-                      <th style={{ width: "14%" }}>Patient Pays</th>
-                      <th style={{ width: "22%" }}>Contact Info</th>
-                      <th style={{ width: "10%" }}>Status</th>
-                      <th style={{ width: "10%", textAlign: "right" }}>Actions</th>
+                      <th style={{ minWidth: "220px" }}>Provider Name & Details</th>
+                      <th style={{ minWidth: "110px" }}>Code</th>
+                      <th style={{ minWidth: "120px" }}>Patient Pays</th>
+                      <th style={{ minWidth: "160px" }}>Contact Info</th>
+                      <th style={{ width: "90px", minWidth: "90px" }}>Status</th>
+                      <th className="sticky-action" style={{ width: "170px", minWidth: "170px", textAlign: "right" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -296,18 +296,28 @@ export default function InsuranceProvidersPage() {
                             {provider.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="cell-actions">
-                          <div style={{ display: "inline-flex", gap: "6px" }}>
+                        <td className="cell-actions sticky-action">
+                          <div className="table-actions-cluster">
                             {canUpdate && (
-                              <button type="button" className="icon-text-btn" onClick={() => startEdit(provider)}>
+                              <button
+                                type="button"
+                                className="table-action-btn primary"
+                                onClick={() => startEdit(provider)}
+                                title="Edit Provider"
+                              >
                                 <FiEdit3 />
-                                Edit
+                                <span>Edit</span>
                               </button>
                             )}
                             {canDelete && provider.isActive && (
-                              <button type="button" className="icon-text-btn danger" onClick={() => handleDeactivate(provider)}>
+                              <button
+                                type="button"
+                                className="table-action-btn danger"
+                                onClick={() => handleDeactivate(provider)}
+                                title="Deactivate Provider"
+                              >
                                 <FiSlash />
-                                Deactivate
+                                <span>Disable</span>
                               </button>
                             )}
                           </div>

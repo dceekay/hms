@@ -546,11 +546,11 @@ export default function UsersPage() {
                 <table className="hms-data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "28%" }}>Staff Member</th>
-                      <th style={{ width: "22%" }}>Roles & Department</th>
-                      <th style={{ width: "20%" }}>Contact Info</th>
-                      <th style={{ width: "10%" }}>Status</th>
-                      <th style={{ width: "20%", textAlign: "right" }}>Actions</th>
+                      <th style={{ minWidth: "220px" }}>Staff Member</th>
+                      <th style={{ minWidth: "170px" }}>Roles & Department</th>
+                      <th style={{ minWidth: "160px" }}>Contact Info</th>
+                      <th style={{ width: "90px", minWidth: "90px" }}>Status</th>
+                      <th className="sticky-action" style={{ width: "260px", minWidth: "260px", textAlign: "right" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -586,25 +586,47 @@ export default function UsersPage() {
                             {user.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
-                        <td className="cell-actions">
-                          <div style={{ display: "inline-flex", gap: "6px" }}>
-                            <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)} title="Print Staff ID Card">
-                              <FiShield /> ID Card
-                            </button>
+                        <td className="cell-actions sticky-action">
+                          <div className="table-actions-cluster">
                             {canUpdate && (
-                              <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}>
-                                <FiEdit3 /> Edit
+                              <button
+                                type="button"
+                                className="table-action-btn primary"
+                                onClick={() => startEdit(user)}
+                                title="Edit Staff User"
+                              >
+                                <FiEdit3 />
+                                <span>Edit</span>
                               </button>
                             )}
+                            <button
+                              type="button"
+                              className="table-action-btn"
+                              onClick={() => setIdCardUser(user)}
+                              title="Print Staff ID Card"
+                            >
+                              <FiShield />
+                              <span>ID Card</span>
+                            </button>
                             {canUpdate && (
-                              <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
+                              <button
+                                type="button"
+                                className={`table-action-btn ${user.isActive ? "warning" : "success"}`}
+                                onClick={() => handleActiveToggle(user)}
+                                title={user.isActive ? "Deactivate User Account" : "Activate User Account"}
+                              >
                                 {user.isActive ? <FiSlash /> : <FiCheckCircle />}
-                                {user.isActive ? "Deactivate" : "Activate"}
+                                <span>{user.isActive ? "Disable" : "Enable"}</span>
                               </button>
                             )}
                             {canDelete && (
-                              <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(user)}>
-                                <FiTrash2 /> Delete
+                              <button
+                                type="button"
+                                className="table-action-btn danger"
+                                onClick={() => handleDelete(user)}
+                                title="Delete User"
+                              >
+                                <FiTrash2 />
                               </button>
                             )}
                           </div>
