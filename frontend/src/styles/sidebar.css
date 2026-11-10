@@ -581,4 +581,112 @@
   .mobile-nav-item.active svg {
     filter: drop-shadow(0 2px 5px rgba(8, 126, 189, 0.4));
   }
+
+  .mobile-nav-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 115;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px 10px calc(84px + env(safe-area-inset-bottom));
+    background: rgba(2, 10, 24, 0.58);
+    backdrop-filter: blur(8px);
+    animation: mobileSheetFade 0.2s ease both;
+  }
+
+  .mobile-nav-sheet {
+    width: min(520px, 100%);
+    max-height: min(68vh, 520px);
+    margin: 0 auto;
+    padding: 18px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface-strong);
+    color: var(--text);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+    animation: mobileSheetIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .mobile-nav-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .mobile-nav-sheet-header span {
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .mobile-nav-sheet-header h2 {
+    margin: 3px 0 0;
+    color: var(--text-strong);
+    font-size: 1.25rem;
+  }
+
+  .mobile-nav-sheet-header button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-strong);
+    font-size: 1.2rem;
+  }
+
+  .mobile-nav-sheet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .mobile-nav-sheet-item {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
+  .mobile-nav-sheet-item svg {
+    flex: 0 0 auto;
+    color: var(--accent);
+    font-size: 1.15rem;
+  }
+
+  .mobile-nav-sheet-item.active {
+    border-color: transparent;
+    background: linear-gradient(135deg, #087ebd, #10a9d6);
+    color: #ffffff;
+  }
+
+  .mobile-nav-sheet-item.active svg {
+    color: #ffffff;
+  }
+
+  @keyframes mobileSheetFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes mobileSheetIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 }

@@ -1,5 +1,6 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { AuditAction, Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { STANDARD_NIGERIAN_LAB_TEMPLATES } from "../src/modules/setup/seedLabTemplatesService";
 
 const prisma = new PrismaClient();
 
@@ -202,6 +203,121 @@ const hospitalServices = [
     code: "DESK",
     description: "Insurance filing and claims desk",
     price: 0,
+  },
+  // Laboratory Diagnostic Services (Seeded from HMS Copy)
+  {
+    name: "Malaria Parasite Examination (MP)",
+    code: "LAB-MP",
+    description: "Thick and thin Giemsa blood film microscopy and RDT for malaria parasites",
+    price: 2500,
+  },
+  {
+    name: "Full Blood Count (FBC / CBC)",
+    code: "LAB-FBC",
+    description: "Automated complete blood count with differential leukocyte count",
+    price: 4500,
+  },
+  {
+    name: "Packed Cell Volume (PCV)",
+    code: "LAB-PCV",
+    description: "Microhaematocrit determination of red cell mass",
+    price: 1500,
+  },
+  {
+    name: "Erythrocyte Sedimentation Rate (ESR)",
+    code: "LAB-ESR",
+    description: "Westergren method erythrocyte sedimentation rate",
+    price: 2000,
+  },
+  {
+    name: "ABO Blood Group & Rhesus Factor",
+    code: "LAB-BG-RH",
+    description: "Forward and reverse ABO and Rh(D) typing",
+    price: 2000,
+  },
+  {
+    name: "Haemoglobin Genotype (Hb Electrophoresis)",
+    code: "LAB-GENOTYPE",
+    description: "Alkaline cellulose acetate haemoglobin electrophoresis",
+    price: 3500,
+  },
+  {
+    name: "Widal Agglutination Test",
+    code: "LAB-WIDAL",
+    description: "Salmonella typhi and paratyphi O & H antibody titre panel",
+    price: 3000,
+  },
+  {
+    name: "Urinalysis (Combi-10 & Microscopy)",
+    code: "LAB-URINE",
+    description: "Dipstick biochemical analysis and spun urine deposit microscopy",
+    price: 2000,
+  },
+  {
+    name: "Stool Microscopy, Culture & Sensitivity",
+    code: "LAB-STOOL-MCS",
+    description: "Faecal parasitology and enteric pathogen culture",
+    price: 4500,
+  },
+  {
+    name: "Urine Microscopy, Culture & Sensitivity (M/C/S)",
+    code: "LAB-URINE-MCS",
+    description: "Mid-stream urine microscopy, culture and antibiotic sensitivity",
+    price: 5500,
+  },
+  {
+    name: "Fasting / Random Blood Glucose",
+    code: "LAB-GLUCOSE",
+    description: "Enzymatic plasma glucose assay (FBS / RBS / 2HPP)",
+    price: 2000,
+  },
+  {
+    name: "Glycated Haemoglobin (HbA1c)",
+    code: "LAB-HBA1C",
+    description: "8-12 week glycaemic control assessment",
+    price: 8500,
+  },
+  {
+    name: "Electrolytes, Urea & Creatinine (E/U/Cr)",
+    code: "LAB-EUCR",
+    description: "Renal function panel with serum electrolytes and eGFR",
+    price: 7500,
+  },
+  {
+    name: "Liver Function Test (LFT)",
+    code: "LAB-LFT",
+    description: "Comprehensive hepatic panel (Bilirubin, AST, ALT, ALP, Proteins)",
+    price: 8000,
+  },
+  {
+    name: "Fasting Lipid Profile",
+    code: "LAB-LIPID",
+    description: "Cardiovascular lipid risk panel (TC, TG, HDL, LDL, VLDL)",
+    price: 8500,
+  },
+  {
+    name: "Thyroid Function Panel (TSH, FT3, FT4)",
+    code: "LAB-TFT",
+    description: "Quantitative thyroid hormone immunoassay",
+    price: 18000,
+  },
+  {
+    name: "Viral Screening Panel (HIV / HBsAg / HCV)",
+    code: "LAB-VIRAL",
+    description: "Combined retroviral and viral hepatitis rapid screening",
+    price: 6000,
+  },
+  {
+    name: "Prostate Specific Antigen (Total PSA)",
+    code: "LAB-PSA",
+    description: "Quantitative serum total PSA assay",
+    price: 9500,
+  },
+  {
+    name: "Pregnancy Test (Serum / Urine Beta-hCG)",
+    code: "LAB-PT",
+    description: "Qualitative beta-hCG rapid immunoassay",
+    price: 2000,
   },
 ] as const;
 
@@ -1125,33 +1241,46 @@ async function upsertTestUsers(
       ? serviceMap[userData.serviceCode]
       : null;
 
-    const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {
-        username: userData.username,
-        passwordHash,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone,
-        serviceAreaId,
-        isActive: true,
-        isEmailVerified: true,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        deletedAt: null,
-      },
-      create: {
-        email: userData.email,
-        username: userData.username,
-        passwordHash,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        phone: userData.phone,
-        serviceAreaId,
-        isActive: true,
-        isEmailVerified: true,
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: userData.email },
+          { username: userData.username },
+        ],
       },
     });
+
+    let user;
+    if (existing) {
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          firstName: existing.firstName || userData.firstName,
+          lastName: existing.lastName || userData.lastName,
+          phone: existing.phone || userData.phone,
+          serviceAreaId: existing.serviceAreaId || serviceAreaId,
+          isActive: true,
+          isEmailVerified: true,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+          deletedAt: null,
+        },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email: userData.email,
+          username: userData.username,
+          passwordHash,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phone: userData.phone,
+          serviceAreaId,
+          isActive: true,
+          isEmailVerified: true,
+        },
+      });
+    }
 
     await prisma.userRole.upsert({
       where: {
@@ -1393,18 +1522,20 @@ async function seedSetupData() {
   let primaryInsuranceProvider: any = null;
 
   for (const hmo of hmoProviders) {
-    const existingProvider = await prisma.insuranceProvider.findFirst({
-      where: {
-        OR: [{ name: hmo.name }, { code: hmo.code }],
-      },
+    const existingByCode = await prisma.insuranceProvider.findUnique({
+      where: { code: hmo.code },
     });
+    const existingByName = await prisma.insuranceProvider.findUnique({
+      where: { name: hmo.name },
+    });
+    const existingProvider = existingByCode ?? existingByName;
 
     const provider = existingProvider
       ? await prisma.insuranceProvider.update({
           where: { id: existingProvider.id },
           data: {
-            name: hmo.name,
-            code: hmo.code,
+            ...(existingByName && existingByName.id !== existingProvider.id ? {} : { name: hmo.name }),
+            ...(existingByCode && existingByCode.id !== existingProvider.id ? {} : { code: hmo.code }),
             email: hmo.email,
             phone: hmo.phone,
             description: hmo.description,
@@ -1535,23 +1666,45 @@ async function seedDemoPatient(insuranceProviderId: string) {
 }
 
 async function seedDemoDoctorWorkspace(patientId: string) {
-  const [doctor, receptionist, labTech, fbcTemplate, malariaTemplate, medication, ward, bed] =
-    await Promise.all([
-      prisma.user.findUnique({ where: { username: "drjohn" } }),
-      prisma.user.findUnique({ where: { username: "reception" } }),
-      prisma.user.findUnique({ where: { username: "labtech" } }),
-      prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-FBC" } }),
-      prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-MP" } }),
-      prisma.medication.findFirst({
-        where: {
-          name: "Paracetamol",
-          strength: "500mg",
-          dosageForm: "Tablet",
-        },
-      }),
-      prisma.ward.findUnique({ where: { name: "General Ward" } }),
-      prisma.bed.findUnique({ where: { bedNumber: "GW-101-A" } }),
-    ]);
+  const [
+    doctor,
+    receptionist,
+    labTech,
+    fbcTemplate,
+    malariaTemplate,
+    eucrTemplate,
+    lftTemplate,
+    widalTemplate,
+    urineTemplate,
+    glucoseTemplate,
+    patient2Record,
+    patient3Record,
+    medication,
+    ward,
+    bed,
+  ] = await Promise.all([
+    prisma.user.findUnique({ where: { username: "drjohn" } }),
+    prisma.user.findUnique({ where: { username: "reception" } }),
+    prisma.user.findUnique({ where: { username: "labtech" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-FBC" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-MP" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-EUCR" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-LFT" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-WIDAL" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-URINE" } }),
+    prisma.laboratoryTemplate.findUnique({ where: { code: "LAB-GLUCOSE" } }),
+    prisma.patient.findUnique({ where: { mrn: "CXHMS-2026-SEED0002" } }),
+    prisma.patient.findUnique({ where: { mrn: "CXHMS-2026-SEED0003" } }),
+    prisma.medication.findFirst({
+      where: {
+        name: "Paracetamol",
+        strength: "500mg",
+        dosageForm: "Tablet",
+      },
+    }),
+    prisma.ward.findUnique({ where: { name: "General Ward" } }),
+    prisma.bed.findUnique({ where: { bedNumber: "GW-101-A" } }),
+  ]);
 
   if (!doctor) {
     return;
@@ -1658,6 +1811,11 @@ async function seedDemoDoctorWorkspace(patientId: string) {
     },
   });
 
+  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+  // 1. COMPLETED: Full Blood Count (Grace Adeyemi)
   if (fbcTemplate) {
     await prisma.laboratoryRequest.upsert({
       where: { requestNumber: "MDSLAB-DEMO-001" },
@@ -1665,15 +1823,22 @@ async function seedDemoDoctorWorkspace(patientId: string) {
         patientId,
         templateId: fbcTemplate.id,
         status: "completed",
-        clinicalNotes: "Baseline blood count for febrile illness.",
+        clinicalNotes: "Baseline blood count for acute febrile illness.",
         resultValues: {
-          hb: "12.8",
-          pcv: "38",
-          wbc: "6.2",
-          platelets: "242",
+          hb: "13.2",
+          pcv: "39",
+          rbc: "4.6",
+          wbc: "6.8",
+          neutrophils: "61",
+          lymphocytes: "31",
+          monocytes: "5",
+          eosinophils: "2",
+          basophils: "1",
+          platelets: "248",
+          film_comment: "Normocytic normochromic red cells. Platelets appear adequate on film.",
         },
-        interpretation: "Full blood count is within acceptable range.",
-        technicianNote: "Sample processed successfully.",
+        interpretation: "Normal full blood count parameters; no haematological evidence of bacterial sepsis.",
+        technicianNote: "Automated 5-part differential verified on blood film.",
         sampleCollectedAt: yesterday,
         completedAt: new Date(yesterday.getTime() + 90 * 60 * 1000),
         recordedById: doctor.id,
@@ -1684,15 +1849,22 @@ async function seedDemoDoctorWorkspace(patientId: string) {
         patientId,
         templateId: fbcTemplate.id,
         status: "completed",
-        clinicalNotes: "Baseline blood count for febrile illness.",
+        clinicalNotes: "Baseline blood count for acute febrile illness.",
         resultValues: {
-          hb: "12.8",
-          pcv: "38",
-          wbc: "6.2",
-          platelets: "242",
+          hb: "13.2",
+          pcv: "39",
+          rbc: "4.6",
+          wbc: "6.8",
+          neutrophils: "61",
+          lymphocytes: "31",
+          monocytes: "5",
+          eosinophils: "2",
+          basophils: "1",
+          platelets: "248",
+          film_comment: "Normocytic normochromic red cells. Platelets appear adequate on film.",
         },
-        interpretation: "Full blood count is within acceptable range.",
-        technicianNote: "Sample processed successfully.",
+        interpretation: "Normal full blood count parameters; no haematological evidence of bacterial sepsis.",
+        technicianNote: "Automated 5-part differential verified on blood film.",
         sampleCollectedAt: yesterday,
         completedAt: new Date(yesterday.getTime() + 90 * 60 * 1000),
         recordedById: doctor.id,
@@ -1701,28 +1873,187 @@ async function seedDemoDoctorWorkspace(patientId: string) {
     });
   }
 
+  // 2. COMPLETED: Malaria Parasite Examination (Grace Adeyemi)
   if (malariaTemplate) {
     await prisma.laboratoryRequest.upsert({
       where: { requestNumber: "MDSLAB-DEMO-002" },
       update: {
         patientId,
         templateId: malariaTemplate.id,
-        status: "pending",
-        clinicalNotes: "Repeat malaria test if symptoms persist.",
-        resultValues: Prisma.JsonNull,
-        interpretation: null,
-        technicianNote: null,
-        sampleCollectedAt: null,
-        completedAt: null,
+        status: "completed",
+        clinicalNotes: "Intermittent fever and chills for 3 days.",
+        resultValues: {
+          microscopy_result: "Trophozoites of P. falciparum seen (+)",
+          parasite_density: "1,240",
+          rdt_result: "Positive (P. falciparum)",
+          technician_remark: "Ring forms of Plasmodium falciparum confirmed on thin film.",
+        },
+        interpretation: "Positive for Plasmodium falciparum malaria (mild parasitaemia).",
+        technicianNote: "Giemsa thick & thin film read at 100x oil immersion.",
+        sampleCollectedAt: yesterday,
+        completedAt: new Date(yesterday.getTime() + 75 * 60 * 1000),
         recordedById: doctor.id,
-        completedById: null,
+        completedById: labTech?.id ?? doctor.id,
       },
       create: {
         requestNumber: "MDSLAB-DEMO-002",
         patientId,
         templateId: malariaTemplate.id,
+        status: "completed",
+        clinicalNotes: "Intermittent fever and chills for 3 days.",
+        resultValues: {
+          microscopy_result: "Trophozoites of P. falciparum seen (+)",
+          parasite_density: "1,240",
+          rdt_result: "Positive (P. falciparum)",
+          technician_remark: "Ring forms of Plasmodium falciparum confirmed on thin film.",
+        },
+        interpretation: "Positive for Plasmodium falciparum malaria (mild parasitaemia).",
+        technicianNote: "Giemsa thick & thin film read at 100x oil immersion.",
+        sampleCollectedAt: yesterday,
+        completedAt: new Date(yesterday.getTime() + 75 * 60 * 1000),
+        recordedById: doctor.id,
+        completedById: labTech?.id ?? doctor.id,
+      },
+    });
+  }
+
+  // 3. COMPLETED: E/U/Cr Renal Function Panel (Ibrahim Musa)
+  if (eucrTemplate && patient2Record) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-003" },
+      update: {
+        patientId: patient2Record.id,
+        templateId: eucrTemplate.id,
+        status: "completed",
+        clinicalNotes: "Routine renal function check for hypertension follow-up.",
+        resultValues: {
+          sodium: "139",
+          potassium: "4.2",
+          chloride: "102",
+          bicarbonate: "25",
+          urea: "4.8",
+          creatinine: "88",
+          egfr: "94",
+        },
+        interpretation: "Renal function and serum electrolytes are within normal reference limits.",
+        technicianNote: "ISE and enzymatic creatinine assay QC passed.",
+        sampleCollectedAt: twoDaysAgo,
+        completedAt: new Date(twoDaysAgo.getTime() + 120 * 60 * 1000),
+        recordedById: doctor.id,
+        completedById: labTech?.id ?? doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-003",
+        patientId: patient2Record.id,
+        templateId: eucrTemplate.id,
+        status: "completed",
+        clinicalNotes: "Routine renal function check for hypertension follow-up.",
+        resultValues: {
+          sodium: "139",
+          potassium: "4.2",
+          chloride: "102",
+          bicarbonate: "25",
+          urea: "4.8",
+          creatinine: "88",
+          egfr: "94",
+        },
+        interpretation: "Renal function and serum electrolytes are within normal reference limits.",
+        technicianNote: "ISE and enzymatic creatinine assay QC passed.",
+        sampleCollectedAt: twoDaysAgo,
+        completedAt: new Date(twoDaysAgo.getTime() + 120 * 60 * 1000),
+        recordedById: doctor.id,
+        completedById: labTech?.id ?? doctor.id,
+      },
+    });
+  }
+
+  // 4. IN PROGRESS: Liver Function Test (Ibrahim Musa)
+  if (lftTemplate && patient2Record) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-004" },
+      update: {
+        patientId: patient2Record.id,
+        templateId: lftTemplate.id,
+        status: "in_progress",
+        clinicalNotes: "Evaluate hepatic enzymes prior to statin therapy.",
+        sampleCollectedAt: twoHoursAgo,
+        recordedById: doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-004",
+        patientId: patient2Record.id,
+        templateId: lftTemplate.id,
+        status: "in_progress",
+        clinicalNotes: "Evaluate hepatic enzymes prior to statin therapy.",
+        sampleCollectedAt: twoHoursAgo,
+        recordedById: doctor.id,
+      },
+    });
+  }
+
+  // 5. SAMPLE COLLECTED: Widal Agglutination Test (Grace Adeyemi)
+  if (widalTemplate) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-005" },
+      update: {
+        patientId,
+        templateId: widalTemplate.id,
+        status: "sample_collected",
+        clinicalNotes: "Rule out enteric fever in persistent pyrexia.",
+        sampleCollectedAt: thirtyMinsAgo,
+        recordedById: doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-005",
+        patientId,
+        templateId: widalTemplate.id,
+        status: "sample_collected",
+        clinicalNotes: "Rule out enteric fever in persistent pyrexia.",
+        sampleCollectedAt: thirtyMinsAgo,
+        recordedById: doctor.id,
+      },
+    });
+  }
+
+  // 6. PENDING: Urinalysis (Zainab Haruna)
+  if (urineTemplate && patient3Record) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-006" },
+      update: {
+        patientId: patient3Record.id,
+        templateId: urineTemplate.id,
         status: "pending",
-        clinicalNotes: "Repeat malaria test if symptoms persist.",
+        clinicalNotes: "Walk-in investigation for dysuria and frequency.",
+        recordedById: receptionist?.id ?? doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-006",
+        patientId: patient3Record.id,
+        templateId: urineTemplate.id,
+        status: "pending",
+        clinicalNotes: "Walk-in investigation for dysuria and frequency.",
+        recordedById: receptionist?.id ?? doctor.id,
+      },
+    });
+  }
+
+  // 7. PENDING: Fasting Blood Glucose (Ibrahim Musa)
+  if (glucoseTemplate && patient2Record) {
+    await prisma.laboratoryRequest.upsert({
+      where: { requestNumber: "MDSLAB-DEMO-007" },
+      update: {
+        patientId: patient2Record.id,
+        templateId: glucoseTemplate.id,
+        status: "pending",
+        clinicalNotes: "Morning fasting blood glucose check.",
+        recordedById: doctor.id,
+      },
+      create: {
+        requestNumber: "MDSLAB-DEMO-007",
+        patientId: patient2Record.id,
+        templateId: glucoseTemplate.id,
+        status: "pending",
+        clinicalNotes: "Morning fasting blood glucose check.",
         recordedById: doctor.id,
       },
     });
@@ -1822,16 +2153,111 @@ async function seedDemoInventoryItems() {
 }
 
 async function seedDemoLaboratoryTemplates() {
-  for (const template of demoLaboratoryTemplates) {
-    await prisma.laboratoryTemplate.upsert({
+  for (const template of STANDARD_NIGERIAN_LAB_TEMPLATES) {
+    const existingByCode = await prisma.laboratoryTemplate.findUnique({
       where: { code: template.code },
-      update: {
-        ...template,
-        isActive: true,
-        deletedAt: null,
-      },
-      create: template,
     });
+    const existingByName = await prisma.laboratoryTemplate.findUnique({
+      where: { name: template.name },
+    });
+    const existing = existingByCode ?? existingByName;
+
+    if (existing) {
+      await prisma.laboratoryTemplate.update({
+        where: { id: existing.id },
+        data: {
+          ...(existingByName && existingByName.id !== existing.id ? {} : { name: template.name }),
+          ...(existingByCode && existingByCode.id !== existing.id ? {} : { code: template.code }),
+          category: template.category,
+          specimen: template.specimen,
+          reportTitle: template.reportTitle,
+          notes: template.notes ?? null,
+          fields: template.fields,
+          isActive: true,
+          deletedAt: null,
+        },
+      });
+    } else {
+      await prisma.laboratoryTemplate.create({
+        data: {
+          name: template.name,
+          code: template.code,
+          category: template.category,
+          specimen: template.specimen,
+          reportTitle: template.reportTitle,
+          notes: template.notes ?? null,
+          fields: template.fields,
+          isActive: true,
+        },
+      });
+    }
+  }
+}
+
+async function seedDemoSystemActivity() {
+  const existingCount = await prisma.auditLog.count();
+  if (existingCount > 0) return;
+
+  const [superAdmin, doctor, labTech, receptionist] = await Promise.all([
+    prisma.user.findUnique({ where: { username: "superadmin" } }),
+    prisma.user.findUnique({ where: { username: "drjohn" } }),
+    prisma.user.findUnique({ where: { username: "labtech" } }),
+    prisma.user.findUnique({ where: { username: "reception" } }),
+  ]);
+
+  const entries = [
+    {
+      action: AuditAction.CREATE,
+      entity: "Patient",
+      userId: receptionist?.id ?? superAdmin?.id ?? null,
+      newValues: {
+        summary: "Registered patient Grace Adeyemi",
+        reference: "CXHMS-2026-SEED0001",
+        changes: [{ field: "category", after: "new_patient" }],
+      },
+    },
+    {
+      action: AuditAction.CREATE,
+      entity: "Laboratory request",
+      userId: doctor?.id ?? superAdmin?.id ?? null,
+      newValues: {
+        summary: "Ordered Full Blood Count (FBC / CBC) & Malaria Parasite Examination (MP) for Grace Adeyemi",
+        reference: "MDSLAB-DEMO-001, MDSLAB-DEMO-002",
+      },
+    },
+    {
+      action: AuditAction.UPDATE,
+      entity: "Laboratory result",
+      userId: labTech?.id ?? superAdmin?.id ?? null,
+      newValues: {
+        summary: "Completed laboratory result for Full Blood Count (FBC / CBC) (MDSLAB-DEMO-001)",
+        reference: "MDSLAB-DEMO-001",
+        changes: [{ field: "status", before: "in_progress", after: "completed" }],
+      },
+    },
+    {
+      action: AuditAction.UPDATE,
+      entity: "Laboratory result",
+      userId: labTech?.id ?? superAdmin?.id ?? null,
+      newValues: {
+        summary: "Completed laboratory result for Malaria Parasite Examination (MP) (MDSLAB-DEMO-002)",
+        reference: "MDSLAB-DEMO-002",
+        changes: [{ field: "status", before: "in_progress", after: "completed" }],
+      },
+    },
+    {
+      action: AuditAction.CREATE,
+      entity: "Laboratory template",
+      userId: superAdmin?.id ?? null,
+      newValues: {
+        summary: `Seeded ${STANDARD_NIGERIAN_LAB_TEMPLATES.length} diagnostic laboratory test panels`,
+        reference: "LAB-CATALOG-2026",
+      },
+    },
+  ];
+
+  for (const entry of entries) {
+    await prisma.auditLog.create({ data: entry });
   }
 }
 
@@ -1894,6 +2320,7 @@ async function main() {
   await seedDemoInventoryItems();
   await seedDemoLaboratoryTemplates();
   await seedDemoDoctorWorkspace(demoPatient.id);
+  await seedDemoSystemActivity();
 
   console.log("Database Seeded Successfully");
 }

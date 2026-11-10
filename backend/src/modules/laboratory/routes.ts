@@ -31,11 +31,22 @@ router.patch(
   authorizePermissions(["laboratory.update"]),
   controller.updateTemplate
 );
+router.delete(
+  "/templates/:id",
+  authorizeRoles(["Laboratory", "Super Admin"]),
+  authorizePermissions(["laboratory.update"]),
+  controller.deleteTemplate
+);
 
 router.get(
   "/requests",
   authorizePermissionsOrRoles(["laboratory.read"], ["Doctor", "Laboratory", "Administrator", "Super Admin"]),
   controller.listRequests
+);
+router.post(
+  "/requests/batch",
+  authorizePermissionsOrRoles(["laboratory.create"], ["Doctor", "Laboratory", "Administrator", "Super Admin"]),
+  controller.createRequests
 );
 router.post(
   "/requests",

@@ -2,6 +2,8 @@ import { NextFunction, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import { BillingService } from "./service";
+import { AuditAction } from "@prisma/client";
+import { recordAudit } from "../audit/service";
 import {
   createPatientBillSchema,
   listPatientBillsQuerySchema,
@@ -38,6 +40,18 @@ export class BillingController extends BaseController {
         createPatientBillSchema.parse(req.body),
         req.user?.sub
       );
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Patient bill",
+        entityId: bill.id,
+        userId: req.user?.sub,
+        summary: `Created patient bill ${bill.invoiceNumber}`,
+        reference: bill.invoiceNumber,
+        changes: [
+          { field: "payment status", after: bill.paymentStatus },
+          { field: "total amount", after: Number(bill.totalAmount) },
+        ],
+      });
 
       this.created(res, "Patient bill created successfully", bill);
     } catch (error) {

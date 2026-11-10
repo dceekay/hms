@@ -8,6 +8,8 @@ import {
   updateInventoryItemSchema,
 } from "./dto";
 import { InventoryService } from "./service";
+import { AuditAction } from "@prisma/client";
+import { recordAudit } from "../audit/service";
 
 export class InventoryController extends BaseController {
   constructor(private readonly inventoryService = new InventoryService()) {
@@ -31,6 +33,14 @@ export class InventoryController extends BaseController {
       const item = await this.inventoryService.createItem(
         inventoryItemSchema.parse(req.body)
       );
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Inventory item",
+        entityId: item.id,
+        userId: req.user?.sub,
+        summary: `Added inventory item ${item.name}`,
+        reference: item.code ?? item.name,
+      });
 
       this.created(res, "Inventory item created successfully", item);
     } catch (error) {
@@ -44,6 +54,14 @@ export class InventoryController extends BaseController {
         String(req.params.id),
         updateInventoryItemSchema.parse(req.body)
       );
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "Inventory item",
+        entityId: item.id,
+        userId: req.user?.sub,
+        summary: `Updated inventory item ${item.name}`,
+        reference: item.code ?? item.name,
+      });
 
       this.ok(res, "Inventory item updated successfully", item);
     } catch (error) {
@@ -58,6 +76,18 @@ export class InventoryController extends BaseController {
         inventoryMovementSchema.parse(req.body),
         req.user?.sub
       );
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "Inventory stock",
+        entityId: item.id,
+        userId: req.user?.sub,
+        summary: `Recorded ${req.body.movementType} stock movement for ${item.name}`,
+        reference: item.code ?? item.name,
+        changes: [
+          { field: "quantity change", after: req.body.quantityChange },
+          { field: "stock after", after: item.currentStock },
+        ],
+      });
 
       this.ok(res, "Inventory movement recorded successfully", item);
     } catch (error) {

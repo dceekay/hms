@@ -5,6 +5,8 @@ import { ApiError } from "../../shared/errors/ApiError";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import { UserService } from "./service";
 import { listUsersQuerySchema } from "./dto";
+import { AuditAction } from "@prisma/client";
+import { recordAudit } from "../audit/service";
 
 function getParamId(req: AuthRequest): string {
   return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -58,6 +60,14 @@ export class UserController extends BaseController {
   create = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.create(req.body);
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "User account",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Created staff account ${user.username}`,
+        reference: user.username,
+      });
       this.created(res, "User account created successfully", user);
     } catch (error) {
       next(error);
@@ -67,6 +77,14 @@ export class UserController extends BaseController {
   createDoctor = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.createDoctor(req.body);
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "User account",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Created doctor account ${user.username}`,
+        reference: user.username,
+      });
       this.created(res, "Doctor account created successfully", user);
     } catch (error) {
       next(error);
@@ -76,6 +94,14 @@ export class UserController extends BaseController {
   update = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.update(getParamId(req), req.body);
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "User account",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Updated staff account ${user.username}`,
+        reference: user.username,
+      });
       this.ok(res, "User updated successfully", user);
     } catch (error) {
       next(error);
@@ -100,6 +126,15 @@ export class UserController extends BaseController {
       }
 
       const user = await this.userService.assignRoles(id, req.body);
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "User access",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Changed access roles for ${user.username}`,
+        reference: user.username,
+        changes: [{ field: "role count", after: user.roles?.length ?? 0 }],
+      });
       this.ok(res, "User roles updated successfully", user);
     } catch (error) {
       next(error);
@@ -109,6 +144,15 @@ export class UserController extends BaseController {
   activate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = await this.userService.activate(getParamId(req));
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "User account",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Activated staff account ${user.username}`,
+        reference: user.username,
+        changes: [{ field: "account status", after: "active" }],
+      });
       this.ok(res, "User activated successfully", user);
     } catch (error) {
       next(error);
@@ -124,6 +168,15 @@ export class UserController extends BaseController {
       }
 
       const user = await this.userService.deactivate(id);
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "User account",
+        entityId: user.id,
+        userId: req.user?.sub,
+        summary: `Deactivated staff account ${user.username}`,
+        reference: user.username,
+        changes: [{ field: "account status", after: "inactive" }],
+      });
       this.ok(res, "User deactivated successfully", user);
     } catch (error) {
       next(error);
@@ -139,6 +192,14 @@ export class UserController extends BaseController {
       }
 
       const result = await this.userService.remove(id);
+      await recordAudit({
+        action: AuditAction.DELETE,
+        entity: "User account",
+        entityId: id,
+        userId: req.user?.sub,
+        summary: `Deleted staff account (${id.slice(0, 8)})`,
+        reference: id,
+      });
       this.ok(res, "User deleted successfully", result);
     } catch (error) {
       next(error);

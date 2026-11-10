@@ -10,6 +10,7 @@ import "../styles/sidebar.css";
 import "../styles/topbar.css";
 import "../styles/dashboard.css";
 import "../styles/cards.css";
+import "../styles/workspace.css";
 import "../styles/tour.css";
 import "../styles/theme-visibility.css";
 

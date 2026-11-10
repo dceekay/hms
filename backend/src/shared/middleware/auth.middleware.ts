@@ -3,6 +3,7 @@ import { ApiError } from "../errors/ApiError";
 import { verifyAccessToken } from "../helpers/jwt";
 import { HttpStatus } from "../../core/HttpStatus";
 import { JwtPayload } from "../types/JwtPayload";
+import { PresenceService } from "../../modules/notifications/presence";
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -11,9 +12,13 @@ export interface AuthRequest extends Request {
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
+    let token = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : undefined;
+
+    if (!token && req.cookies) {
+      token = req.cookies.accessToken || req.cookies.hms_access_token || req.cookies.token;
+    }
 
     if (!token) {
       throw new ApiError(HttpStatus.UNAUTHORIZED, "Authentication token is required");
@@ -26,6 +31,9 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     }
 
     req.user = payload;
+    if (payload.sub) {
+      PresenceService.touch(payload.sub);
+    }
 
     next();
   } catch (error) {
@@ -49,7 +57,10 @@ export function authorizeRoles(requiredRoles: string[]) {
       return next();
     }
 
-    const hasRole = (user.roles ?? []).some((role) => requiredRoles.includes(role));
+    const normalizedRequired = requiredRoles.map((r) => r.trim().toLowerCase());
+    const hasRole = (user.roles ?? []).some((role) =>
+      normalizedRequired.includes(role.trim().toLowerCase())
+    );
 
     if (!hasRole) {
       return next(new ApiError(HttpStatus.FORBIDDEN, "Insufficient role"));
@@ -76,6 +87,30 @@ export function authorizePermissions(requiredPermissions: string[]) {
     );
 
     if (!hasPermission) {
+      return next(new ApiError(HttpStatus.FORBIDDEN, "Insufficient permissions"));
+    }
+
+    next();
+  };
+}
+
+export function authorizeAnyPermission(possiblePermissions: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ApiError(HttpStatus.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    if (possiblePermissions.length === 0) {
+      return next();
+    }
+
+    const hasAny = possiblePermissions.some((permission) =>
+      (user.permissions ?? []).includes(permission)
+    );
+
+    if (!hasAny) {
       return next(new ApiError(HttpStatus.FORBIDDEN, "Insufficient permissions"));
     }
 

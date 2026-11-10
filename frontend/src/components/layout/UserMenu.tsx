@@ -15,9 +15,10 @@ import { useAuthStore } from "../../store/authStore";
 import { endSession } from "../../services/sessionManager";
 import { getUserDisplayName } from "../../utils/userDisplay";
 import { startRoleTour } from "../tour/RoleTour";
+import type { BackendHealth } from "../../hooks/useBackendHealth";
 
 interface UserMenuProps {
-  status: "online" | "offline" | "checking";
+  status: BackendHealth;
   latencyMs?: number | null;
   pendingCount?: number | null;
   isBrowserOnline?: boolean;

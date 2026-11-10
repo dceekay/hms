@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { FiPrinter, FiX, FiFileText, FiCheckCircle } from "react-icons/fi";
+import { FiPrinter, FiX, FiFileText, FiCheckCircle, FiShare2 } from "react-icons/fi";
 import type { LaboratoryRequest } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
 import LaboratoryPrintDocument from "./LaboratoryPrintDocument";
+import ShareLabResultModal from "./ShareLabResultModal";
 
 interface LaboratoryPrintModalProps {
   request: LaboratoryRequest | LaboratoryVerificationData | null;
@@ -23,8 +24,9 @@ export default function LaboratoryPrintModal({
 
   const [docType, setDocType] = useState<"result" | "request">(() => {
     if (initialDocumentType) return initialDocumentType;
-    return (hasResults || (request && request.status === "completed")) ? "result" : "request";
+    return hasResults || (request && request.status === "completed") ? "result" : "request";
   });
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("has-print-modal", "lab-print-modal-active");
@@ -64,8 +66,8 @@ export default function LaboratoryPrintModal({
             </p>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            {/* Format toggle if result is available or test completed */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            {/* Format toggle if result is available */}
             {(request.status === "completed" || hasResults) && (
               <div className="lab-view-mode-toggle">
                 <button
@@ -84,6 +86,15 @@ export default function LaboratoryPrintModal({
                 </button>
               </div>
             )}
+
+            <button
+              type="button"
+              className="lab-action-btn share"
+              onClick={() => setShowShareModal(true)}
+              style={{ padding: "0.45rem 0.95rem", borderRadius: "8px" }}
+            >
+              <FiShare2 /> Share Result
+            </button>
 
             <button
               type="button"
@@ -110,6 +121,15 @@ export default function LaboratoryPrintModal({
           <LaboratoryPrintDocument request={request} documentType={docType} />
         </div>
       </div>
+
+      {showShareModal && (
+        <div className="no-print" onClick={(e) => e.stopPropagation()}>
+          <ShareLabResultModal
+            request={request}
+            onClose={() => setShowShareModal(false)}
+          />
+        </div>
+      )}
     </div>,
     document.body
   );

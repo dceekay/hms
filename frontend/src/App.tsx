@@ -51,6 +51,7 @@ const RolesPage = lazy(() => import("./pages/admin/RolesPage"));
 const PermissionsPage = lazy(() => import("./pages/admin/PermissionsPage"));
 const UsersPage = lazy(() => import("./pages/admin/UsersPage"));
 const DoctorsPage = lazy(() => import("./pages/admin/DoctorsPage"));
+const SystemActivityPage = lazy(() => import("./pages/admin/SystemActivityPage"));
 
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import OfflineSyncBridge from "./components/OfflineSyncBridge";
@@ -371,6 +372,15 @@ export default function App() {
           element={
             <ProtectedRoute requiredPermissions={["permissions.read"]}>
               <PermissionsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/activity"
+          element={
+            <ProtectedRoute requiredRoles={["Super Admin", "Administrator"]}>
+              <SystemActivityPage />
             </ProtectedRoute>
           }
         />

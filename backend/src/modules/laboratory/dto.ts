@@ -33,11 +33,55 @@ export const listLaboratoryTemplatesQuerySchema = z.object({
   activeOnly: z.coerce.boolean().optional(),
 });
 
-export const createLaboratoryRequestSchema = z.object({
-  patientId: z.string().uuid(),
+const laboratoryRequestFieldsSchema = z.object({
+  patientId: z.string().uuid().optional().or(z.literal("")),
+  manualPatientName: optionalText(150),
+  manualPatientGender: z.enum(["male", "female", "other"]).optional().default("other"),
+  manualPatientPhone: optionalText(30),
+  manualPatientAge: z.coerce.number().int().min(0).max(150).optional(),
   templateId: z.string().uuid(),
   clinicalNotes: optionalText(500),
 });
+
+const hasPatientIdentity = (data: {
+  patientId?: string;
+  manualPatientName?: string;
+}) =>
+  Boolean(
+    (data.patientId && data.patientId.trim()) ||
+      (data.manualPatientName && data.manualPatientName.trim())
+  );
+
+export const createLaboratoryRequestSchema = laboratoryRequestFieldsSchema.refine(
+  hasPatientIdentity,
+  {
+    message: "Please select an existing hospital patient or enter a walk-in patient name",
+    path: ["patientId"],
+  }
+);
+
+export const createLaboratoryRequestsSchema = laboratoryRequestFieldsSchema
+  .omit({ templateId: true })
+  .extend({
+    templateIds: z.array(z.string().uuid()).min(1).max(25),
+  })
+  .superRefine((data, context) => {
+    if (!hasPatientIdentity(data)) {
+      context.addIssue({
+        code: "custom",
+        message: "Please select an existing hospital patient or enter a walk-in patient name",
+        path: ["patientId"],
+      });
+    }
+
+    if (new Set(data.templateIds).size !== data.templateIds.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Each test can only be included once",
+        path: ["templateIds"],
+      });
+    }
+  });
 
 export const updateLaboratoryRequestSchema = z.object({
   status: z.enum(["pending", "sample_collected", "in_progress", "completed", "cancelled"]).optional(),
@@ -63,6 +107,7 @@ export type LaboratoryTemplateDto = z.infer<typeof laboratoryTemplateSchema>;
 export type UpdateLaboratoryTemplateDto = z.infer<typeof updateLaboratoryTemplateSchema>;
 export type ListLaboratoryTemplatesQueryDto = z.infer<typeof listLaboratoryTemplatesQuerySchema>;
 export type CreateLaboratoryRequestDto = z.infer<typeof createLaboratoryRequestSchema>;
+export type CreateLaboratoryRequestsDto = z.infer<typeof createLaboratoryRequestsSchema>;
 export type UpdateLaboratoryRequestDto = z.infer<typeof updateLaboratoryRequestSchema>;
 export type CompleteLaboratoryRequestDto = z.infer<typeof completeLaboratoryRequestSchema>;
 export type ListLaboratoryRequestsQueryDto = z.infer<typeof listLaboratoryRequestsQuerySchema>;

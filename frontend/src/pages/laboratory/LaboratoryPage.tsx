@@ -11,33 +11,31 @@ import {
   FiUser,
   FiLayers,
   FiClock,
-  FiActivity,
   FiSliders,
-  FiWifi,
-  FiWifiOff,
   FiAlertTriangle,
   FiPlus,
   FiCheck,
   FiX,
+  FiSlash,
+  FiRotateCcw,
   FiVolume2,
   FiVolumeX,
-  FiExternalLink,
-  FiCopy,
+  FiShare2,
 } from "react-icons/fi";
 import { FaFlask, FaPhoneSlash } from "react-icons/fa";
-import QRCode from "qrcode";
-import { getAppUrl } from "../../utils/appUrl";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import TestSearchSelect from "../../components/common/TestSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
+import { WorkspaceHeader, WorkspaceKpiGrid } from "../../components/dashboard/WorkspacePrimitives";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import { flushOfflineQueue } from "../../utils/offlineQueue";
 import LaboratoryPrintModal from "../../components/laboratory/LaboratoryPrintModal";
+import ShareLabResultModal from "../../components/laboratory/ShareLabResultModal";
 import "../../styles/laboratory-studio.css";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
   completeLaboratoryRequest,
-  createLaboratoryRequest,
+  createLaboratoryRequests,
   fetchLaboratoryRequests,
   fetchLaboratoryTemplates,
   updateLaboratoryRequestStatus,
@@ -155,95 +153,6 @@ function evaluateLiveFlag(referenceRange?: string | null, value?: string) {
   return null;
 }
 
-function LabQrThumbnail({
-  request,
-  onOpenQuickQr,
-}: {
-  request: LaboratoryRequest;
-  onOpenQuickQr: (req: LaboratoryRequest) => void;
-}) {
-  const [dataUrl, setDataUrl] = useState<string>("");
-  const targetId = request.requestNumber || request.id;
-  const verificationUrl = getAppUrl(`/verify/lab/${encodeURIComponent(targetId)}`);
-
-  useEffect(() => {
-    let active = true;
-    QRCode.toDataURL(verificationUrl, {
-      width: 72,
-      margin: 1,
-      color: { dark: "#092a5e", light: "#ffffff" },
-    })
-      .then((url) => {
-        if (active) setDataUrl(url);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [verificationUrl]);
-
-  return (
-    <div className="lab-table-qr-wrap" title="Scan with smartphone camera to view verified results">
-      {dataUrl ? (
-        <img
-          src={dataUrl}
-          alt={`QR ${targetId}`}
-          className="lab-table-qr-img"
-          onClick={() => onOpenQuickQr(request)}
-        />
-      ) : (
-        <div className="lab-table-qr-placeholder" onClick={() => onOpenQuickQr(request)}>
-          QR
-        </div>
-      )}
-      <button
-        type="button"
-        className="lab-table-qr-action-btn"
-        onClick={() => onOpenQuickQr(request)}
-      >
-        Scan / Verify ↗
-      </button>
-    </div>
-  );
-}
-
-function LabQrLargeView({ requestNumber }: { requestNumber: string }) {
-  const [dataUrl, setDataUrl] = useState<string>("");
-  const verificationUrl = getAppUrl(`/verify/lab/${encodeURIComponent(requestNumber)}`);
-
-  useEffect(() => {
-    let active = true;
-    QRCode.toDataURL(verificationUrl, {
-      width: 200,
-      margin: 1,
-      color: { dark: "#092a5e", light: "#ffffff" },
-    })
-      .then((url) => {
-        if (active) setDataUrl(url);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [verificationUrl]);
-
-  if (!dataUrl) {
-    return (
-      <div style={{ width: 200, height: 200, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: "0.85rem" }}>
-        Generating QR...
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={dataUrl}
-      alt={`Verification QR ${requestNumber}`}
-      style={{ width: "200px", height: "200px", display: "block" }}
-    />
-  );
-}
-
 export default function LaboratoryPage() {
   const user = useAuthStore((state) => state.user);
   const permissions = user?.permissions ?? [];
@@ -266,19 +175,22 @@ export default function LaboratoryPage() {
   const [summary, setSummary] = useState<LaboratorySummary>({});
   const [activeTab, setActiveTab] = useState<LabTab>("queue");
   const [requestSearch, setRequestSearch] = useState("");
-  const [queueFilter, setQueueFilter] = useState<"all" | "pending" | "in_progress" | "completed">("all");
+  const [queueFilter, setQueueFilter] = useState<"all" | "pending" | "in_progress" | "completed" | "cancelled">("all");
   const [templatePicker, setTemplatePicker] = useState("");
   const [templateCategory, setTemplateCategory] = useState("All");
   const [patientSelectionMode, setPatientSelectionMode] = useState<"registered" | "manual">("registered");
   const [requestForm, setRequestForm] = useState<LaboratoryRequestFormValues>(emptyRequestForm);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [activeResult, setActiveResult] = useState<LaboratoryRequest | null>(null);
   const [resultForm, setResultForm] = useState<LaboratoryResultFormValues>(emptyResultForm);
   const activeResultRef = useRef<LaboratoryRequest | null>(null);
   activeResultRef.current = activeResult;
   const [printModalRequest, setPrintModalRequest] = useState<LaboratoryRequest | null>(null);
   const [printModalDocType, setPrintModalDocType] = useState<"result" | "request">("result");
-  const [quickQrRequest, setQuickQrRequest] = useState<LaboratoryRequest | null>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [shareModalRequest, setShareModalRequest] = useState<LaboratoryRequest | null>(null);
+  const [skipTargetRequest, setSkipTargetRequest] = useState<LaboratoryRequest | null>(null);
+  const [skipReason, setSkipReason] = useState<string>("Patient declined investigation");
+  const [skipCustomNote, setSkipCustomNote] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -289,9 +201,10 @@ export default function LaboratoryPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [mutedRequestIds, setMutedRequestIds] = useState<Set<string>>(new Set());
 
-  const pendingCollectionCount = summary.pending ?? 0;
+  const pendingCollectionCount = summary.pending ?? requests.filter((r) => r.status === "pending").length;
   const inProgressCount = (summary.sample_collected ?? 0) + (summary.in_progress ?? 0);
-  const completedCount = summary.completed ?? 0;
+  const completedCount = summary.completed ?? requests.filter((r) => r.status === "completed").length;
+  const cancelledCount = summary.cancelled ?? requests.filter((r) => r.status === "cancelled").length;
 
   // Unhandled / fresh incoming laboratory test orders
   const unhandledRequests = useMemo(() => {
@@ -316,11 +229,6 @@ export default function LaboratoryPage() {
       stopContinuousPhoneRing();
     };
   }, [shouldRing]);
-
-  const selectedTemplate = useMemo(
-    () => templates.find((template) => template.id === requestForm.templateId),
-    [requestForm.templateId, templates]
-  );
 
   const selectedPatient = useMemo(
     () => patients.find((patient) => patient.id === requestForm.patientId),
@@ -450,13 +358,13 @@ export default function LaboratoryPage() {
 
   const handleTemplateSelect = (template: LaboratoryTemplate) => {
     setTemplatePicker(templateLabel(template));
-    setRequestForm((current) => ({ ...current, templateId: template.id }));
-  };
-
-  const handleTemplatePick = (value: string) => {
-    setTemplatePicker(value);
-    const template = templates.find((item) => templateLabel(item) === value);
-    setRequestForm((current) => ({ ...current, templateId: template?.id ?? "" }));
+    setSelectedTemplateIds((current) => {
+      const next = current.includes(template.id)
+        ? current.filter((id) => id !== template.id)
+        : [...current, template.id];
+      setRequestForm((form) => ({ ...form, templateId: next[0] ?? "" }));
+      return next;
+    });
   };
 
   const handleRequestSubmit = async (event: FormEvent) => {
@@ -472,8 +380,8 @@ export default function LaboratoryPage() {
       return;
     }
 
-    if (!requestForm.templateId) {
-      setError("Please choose a diagnostic test template.");
+    if (selectedTemplateIds.length === 0) {
+      setError("Choose at least one diagnostic test.");
       return;
     }
 
@@ -487,33 +395,53 @@ export default function LaboratoryPage() {
       manualPatientName: patientSelectionMode === "manual" ? requestForm.manualPatientName?.trim() : undefined,
     };
 
-    const result = await createLaboratoryRequest(submissionPayload);
+    const result = await createLaboratoryRequests({ ...submissionPayload, templateIds: selectedTemplateIds });
     setSaving(false);
 
-    if (!result.request) {
-      setError(result.error ?? "Unable to create laboratory test order.");
+    if (!result.requests || result.requests.length === 0) {
+      setError(result.error ?? "Unable to create laboratory test orders.");
       return;
     }
 
-    const createdPatName = patientName(result.request.patient);
+    const createdPatName = patientName(result.requests[0].patient);
     setSuccess(
       result.queued
-        ? `✓ Test order saved offline for ${createdPatName}. Tracking slip ready to print.`
-        : `✓ Test order #${result.request.requestNumber} created for ${createdPatName}!`
+        ? `✓ ${result.requests.length} test orders saved offline for ${createdPatName}.`
+        : `✓ ${result.requests.length} test orders created for ${createdPatName}.`
     );
 
     setRequestForm(emptyRequestForm);
+    setSelectedTemplateIds([]);
     setTemplatePicker("");
 
-    // Open tracking slip print modal & switch to queue
-    handleOpenPrint(result.request, "request");
+    handleOpenPrint(result.requests[0], "request");
     setActiveTab("queue");
     await loadData();
   };
 
   const openResultForm = (request: LaboratoryRequest) => {
-    setActiveResult(request);
-    setResultForm(requestToResultForm(request));
+    const nowIso = new Date().toISOString();
+    const collectedRequest: LaboratoryRequest =
+      request.status === "pending"
+        ? {
+            ...request,
+            status: "sample_collected",
+            sampleCollectedAt: request.sampleCollectedAt || nowIso,
+          }
+        : {
+            ...request,
+            sampleCollectedAt: request.sampleCollectedAt || nowIso,
+          };
+
+    if (request.status === "pending" && canUpdate) {
+      void updateLaboratoryRequestStatus(request.id, "sample_collected");
+      setRequests((prev) =>
+        prev.map((item) => (item.id === request.id ? collectedRequest : item))
+      );
+    }
+
+    setActiveResult(collectedRequest);
+    setResultForm(requestToResultForm(collectedRequest));
     setActiveTab("results");
   };
 
@@ -540,8 +468,18 @@ export default function LaboratoryPage() {
     setSaving(false);
 
     if (result.queued) {
+      const nowIso = new Date().toISOString();
+      const offlineCompleted: LaboratoryRequest = result.request ?? {
+        ...activeResult,
+        status: "completed",
+        resultValues: resultForm.resultValues,
+        interpretation: resultForm.interpretation,
+        technicianNote: resultForm.technicianNote,
+        sampleCollectedAt: activeResult.sampleCollectedAt || nowIso,
+        completedAt: nowIso,
+      };
       setSuccess("✓ Result saved on this device. It will sync automatically when online.");
-      handleOpenPrint(activeResult, "result");
+      handleOpenPrint(offlineCompleted, "result");
       setActiveTab("completed");
       await loadData();
       return;
@@ -552,8 +490,17 @@ export default function LaboratoryPage() {
       return;
     }
 
-    setSuccess(`✓ Test results for ${result.request.requestNumber} authorized and ready to print!`);
-    handleOpenPrint(result.request, "result");
+    const completedWithSample: LaboratoryRequest = {
+      ...result.request,
+      sampleCollectedAt:
+        result.request.sampleCollectedAt ||
+        activeResult.sampleCollectedAt ||
+        result.request.completedAt ||
+        result.request.createdAt,
+    };
+
+    setSuccess(`✓ Test results for ${completedWithSample.requestNumber} authorized and ready to print!`);
+    handleOpenPrint(completedWithSample, "result");
     setActiveTab("completed");
     await loadData();
   };
@@ -572,19 +519,67 @@ export default function LaboratoryPage() {
     setSuccess(
       result.queued
         ? `Status updated offline to ${statusLabel(status)}.`
+        : status === "cancelled"
+        ? `✓ Test marked as skipped.`
+        : status === "pending"
+        ? `✓ Test restored to pending queue.`
         : `✓ Sample collected and marked as ${statusLabel(status)}.`
     );
     await loadData();
   };
 
+  const handleConfirmSkipTest = async () => {
+    if (!skipTargetRequest) return;
+    const finalReason = skipCustomNote.trim()
+      ? `${skipReason}: ${skipCustomNote.trim()}`
+      : skipReason;
+    const noteToSave = skipTargetRequest.clinicalNotes
+      ? `${skipTargetRequest.clinicalNotes} | [SKIPPED]: ${finalReason}`
+      : `[SKIPPED]: ${finalReason}`;
+
+    setSaving(true);
+    setError(null);
+    const result = await updateLaboratoryRequestStatus(skipTargetRequest.id, "cancelled", noteToSave);
+    setSaving(false);
+    const skippedName = requestDisplayName(skipTargetRequest);
+    const skippedId = skipTargetRequest.id;
+    setSkipTargetRequest(null);
+    setSkipCustomNote("");
+
+    if (!result.request && !result.queued) {
+      setError(result.error ?? "Unable to skip request.");
+      return;
+    }
+
+    setSuccess(
+      result.queued
+        ? `Test "${skippedName}" marked as skipped offline.`
+        : `✓ Investigation "${skippedName}" has been skipped.`
+    );
+    if (activeResult?.id === skippedId) {
+      setActiveResult(null);
+    }
+    await loadData();
+  };
+
+  const handleRestoreTest = async (request: LaboratoryRequest) => {
+    setSaving(true);
+    setError(null);
+    const result = await updateLaboratoryRequestStatus(request.id, "pending");
+    setSaving(false);
+
+    if (!result.request && !result.queued) {
+      setError(result.error ?? "Unable to restore request.");
+      return;
+    }
+
+    setSuccess(`✓ Investigation "${requestDisplayName(request)}" restored to active queue.`);
+    await loadData();
+  };
+
   const handleOpenPrint = (request: LaboratoryRequest, docType?: "result" | "request") => {
     setPrintModalRequest(request);
-    const hasResults =
-      (request.resultValues && Object.keys(request.resultValues).length > 0) ||
-      Boolean(request.interpretation) ||
-      Boolean(request.technicianNote) ||
-      request.status === "completed";
-    setPrintModalDocType(docType || (hasResults ? "result" : "request"));
+    setPrintModalDocType(docType || (request.status === "completed" ? "result" : "request"));
   };
 
   // Filtered requests according to search and active queue filter
@@ -600,6 +595,11 @@ export default function LaboratoryPage() {
         list = list.filter((r) => r.status === "sample_collected" || r.status === "in_progress");
       } else if (queueFilter === "completed") {
         list = list.filter((r) => r.status === "completed");
+      } else if (queueFilter === "cancelled") {
+        list = list.filter((r) => r.status === "cancelled");
+      } else {
+        // "all" - show all active (non-cancelled) investigations
+        list = list.filter((r) => r.status !== "cancelled");
       }
     }
 
@@ -622,6 +622,18 @@ export default function LaboratoryPage() {
     );
   }, [requests, activeTab, queueFilter, requestSearch]);
 
+  const completedRequestGroups = useMemo(() => {
+    const groups = new Map<string, { patient: Patient; requests: LaboratoryRequest[] }>();
+    for (const request of visibleRequests.filter((item) => item.status === "completed")) {
+      const group = groups.get(request.patientId) ?? { patient: request.patient, requests: [] };
+      group.requests.push(request);
+      groups.set(request.patientId, group);
+    }
+    return Array.from(groups.values()).sort((left, right) =>
+      patientName(left.patient).localeCompare(patientName(right.patient))
+    );
+  }, [visibleRequests]);
+
   // Tests that are awaiting result recording
   const testsAwaitingResults = useMemo(() => {
     return requests.filter((r) => r.status !== "completed" && r.status !== "cancelled");
@@ -630,65 +642,119 @@ export default function LaboratoryPage() {
   return (
     <AdminLayout>
       <div className="lab-simple-page">
-        {/* 1. FRIENDLY LAB STATION HEADER */}
-        <header className="lab-simple-header">
-          <div className="lab-header-left">
-            <div className="lab-header-avatar">
-              <FaFlask />
-            </div>
-            <div>
-              <div className="lab-greeting-row">
-                <h1>Medical Laboratory</h1>
-                <span className="lab-status-badge on-duty">
-                  <span className="lab-status-dot" /> On Duty
-                </span>
-                {isBrowserOnline ? (
-                  <span className="lab-status-badge online"><FiWifi /> Cloud Connected</span>
-                ) : (
-                  <span className="lab-status-badge offline"><FiWifiOff /> Offline Mode</span>
-                )}
-              </div>
-              <p className="lab-greeting-sub">
-                Welcome, <strong>{user?.firstName} {user?.lastName}</strong> • MDS Diagnostic Laboratory, Kano
-              </p>
-            </div>
-          </div>
+        {/* 1. CLEAN UNIFIED WORKSPACE HEADER */}
+        <WorkspaceHeader
+          eyebrow="Diagnostic Laboratory"
+          title="Medical Laboratory"
+          subtitle={`${user?.firstName ?? ""} ${user?.lastName ?? ""} • Manage test requests, sample collection, and diagnostic reports`}
+          actions={
+            <>
+              <button
+                type="button"
+                className={`ws-btn ${soundEnabled ? "primary" : ""}`}
+                onClick={() => {
+                  if (soundEnabled) stopContinuousPhoneRing();
+                  setSoundEnabled(!soundEnabled);
+                }}
+                title={soundEnabled ? "Mute test alert ring chime" : "Enable test alert ring chime"}
+              >
+                {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
+                <span>{soundEnabled ? "Chime On" : "Chime Muted"}</span>
+              </button>
 
-          <div className="lab-header-actions">
+              {canManageTemplates && (
+                <Link to="/laboratory/templates" className="ws-btn" title="Manage test templates">
+                  <FiSliders />
+                  <span>Test Panels</span>
+                </Link>
+              )}
+
+              <button
+                type="button"
+                className="ws-btn"
+                disabled={loading}
+                onClick={() => void loadData()}
+                title="Refresh laboratory records"
+              >
+                <FiRefreshCw className={loading ? "spin" : ""} />
+                <span>Refresh</span>
+              </button>
+            </>
+          }
+        />
+
+        {/* OFFLINE QUEUE BAR IF ITEMS ARE PENDING */}
+        {offlinePendingCount > 0 && (
+          <div className="lab-offline-sync-bar">
+            <span>
+              {offlinePendingCount} laboratory operation{offlinePendingCount === 1 ? "" : "s"} queued offline
+              {!isBrowserOnline ? " (Waiting for network)" : ""}
+            </span>
             <button
               type="button"
-              className={`lab-pill-btn ${soundEnabled ? "alert-on" : "muted"}`}
-              onClick={() => {
-                if (soundEnabled) stopContinuousPhoneRing();
-                setSoundEnabled(!soundEnabled);
-              }}
-              title={soundEnabled ? "Mute test alert ring chime" : "Enable test alert ring chime"}
+              className="lab-sync-btn"
+              disabled={!isBrowserOnline || syncing}
+              onClick={handleManualSync}
             >
-              {soundEnabled ? <FiVolume2 /> : <FiVolumeX />}
-              <span>{soundEnabled ? "Chime On" : "Chime Muted"}</span>
-            </button>
-
-            {canManageTemplates && (
-              <Link to="/laboratory/templates" className="lab-pill-btn templates" title="Manage test templates">
-                <FiSliders />
-                <span>Test Panels</span>
-              </Link>
-            )}
-
-            <button
-              type="button"
-              className="lab-pill-btn refresh"
-              disabled={loading}
-              onClick={() => void loadData()}
-              title="Refresh laboratory records"
-            >
-              <FiRefreshCw className={loading ? "spin" : ""} />
-              <span>Refresh</span>
+              <FiRefreshCw className={syncing ? "spin" : ""} />
+              {syncing ? "Syncing..." : "Sync Now"}
             </button>
           </div>
-        </header>
+        )}
 
-        {/* 2. INCOMING DOCTOR ORDER LIVE ALERT BANNER */}
+        {/* REUSABLE 4-CARD KPI STRIP */}
+        <WorkspaceKpiGrid
+          items={[
+            {
+              id: "pending",
+              label: "Awaiting Sample",
+              value: pendingCollectionCount,
+              badge: "Queue",
+              subtext: "New orders waiting for sample collection",
+              tone: "amber",
+              icon: <FiClock />,
+              onClick: () => {
+                setActiveTab("queue");
+                setQueueFilter("pending");
+              },
+            },
+            {
+              id: "testing",
+              label: "In Testing",
+              value: inProgressCount,
+              badge: "Processing",
+              subtext: "Samples collected & awaiting results",
+              tone: "blue",
+              icon: <FaFlask />,
+              onClick: () => {
+                setActiveTab("queue");
+                setQueueFilter("in_progress");
+              },
+            },
+            {
+              id: "completed",
+              label: "Results Completed",
+              value: completedCount,
+              badge: "Authorized",
+              subtext: "Verified diagnostic reports ready",
+              tone: "teal",
+              icon: <FiCheckCircle />,
+              onClick: () => setActiveTab("completed"),
+            },
+            {
+              id: "templates",
+              label: "Active Test Panels",
+              value: activeTemplates.length,
+              badge: "Catalog",
+              subtext: "Configured laboratory investigations",
+              tone: "purple",
+              icon: <FiLayers />,
+              onClick: () => setActiveTab("order"),
+            },
+          ]}
+        />
+
+        {/* 2. INCOMING DOCTOR ORDER ALERT BANNER */}
         {shouldRing && unhandledRequests.length > 0 && (
           <aside className="lab-call-alert-banner" role="alert">
             <div className="lab-alert-pulse-wrap">
@@ -699,7 +765,7 @@ export default function LaboratoryPage() {
             </div>
             <div className="lab-alert-details">
               <div className="lab-alert-tag">
-                <span className="lab-live-dot" /> DOCTOR ORDERED LAB TEST • IMMEDIATE ACTION
+                DOCTOR ORDERED LAB TEST • IMMEDIATE ACTION
               </div>
               <strong className="lab-alert-patient">
                 {patientName(unhandledRequests[0].patient)}
@@ -767,34 +833,18 @@ export default function LaboratoryPage() {
           <div className="lab-alert-banner success">
             <FiCheckCircle />
             <span>{success}</span>
-            <button type="button" onClick={() => setSuccess(null)} aria-label="Dismiss success message" title="Dismiss">
-              <FiX size={18} strokeWidth={2.5} />
-            </button>
+            <button type="button" onClick={() => setSuccess(null)}><FiX /></button>
           </div>
         )}
         {error && (
           <div className="lab-alert-banner error">
             <FiAlertTriangle />
             <span>{error}</span>
-            <button type="button" onClick={() => setError(null)} aria-label="Dismiss error message" title="Dismiss">
-              <FiX size={18} strokeWidth={2.5} />
-            </button>
+            <button type="button" onClick={() => setError(null)}><FiX /></button>
           </div>
         )}
 
-        {/* Offline Queue Sync Bar */}
-        {offlinePendingCount > 0 && (
-          <div className="lab-offline-sync-bar">
-            <span><FiWifiOff /> You have <strong>{offlinePendingCount}</strong> offline test records saved on this device.</span>
-            {isBrowserOnline && (
-              <button type="button" onClick={handleManualSync} disabled={syncing} className="lab-sync-btn">
-                <FiRefreshCw className={syncing ? "spin" : ""} /> {syncing ? "Syncing..." : "Sync Now to Cloud"}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* 4. FEW MENUS: 4 LARGE, CRYSTAL-CLEAR NAVIGATION TABS */}
+        {/* 4. ENTERPRISE WORKFLOW NAVIGATION TABS */}
         <nav className="lab-simple-tabs" aria-label="Laboratory Station Navigation">
           <button
             type="button"
@@ -806,9 +856,9 @@ export default function LaboratoryPage() {
               <strong>Active Tests Queue</strong>
               <small>
                 {pendingCollectionCount > 0 ? (
-                  <span className="lab-tab-badge urgent">{pendingCollectionCount} Needs Sample</span>
+                  <span className="lab-tab-badge urgent">{pendingCollectionCount} Awaiting Sample</span>
                 ) : (
-                  `${requests.filter((r) => r.status !== "completed").length} Active Tests`
+                  `${requests.filter((r) => r.status !== "completed" && r.status !== "cancelled").length} Active Orders`
                 )}
               </small>
             </div>
@@ -818,11 +868,10 @@ export default function LaboratoryPage() {
             type="button"
             className={`lab-tab-btn ${activeTab === "results" ? "active" : ""}`}
             onClick={() => {
-              setActiveTab("results");
               if (!activeResultRef.current && testsAwaitingResults.length > 0) {
-                const firstAwaiting = testsAwaitingResults[0];
-                setActiveResult(firstAwaiting);
-                setResultForm(requestToResultForm(firstAwaiting));
+                openResultForm(testsAwaitingResults[0]);
+              } else {
+                setActiveTab("results");
               }
             }}
           >
@@ -830,7 +879,7 @@ export default function LaboratoryPage() {
             <div className="lab-tab-text">
               <strong>Enter Test Results</strong>
               <small>
-                {activeResult ? `Active: ${requestDisplayName(activeResult)}` : `${testsAwaitingResults.length} Ready for Results`}
+                {activeResult ? requestDisplayName(activeResult) : `${testsAwaitingResults.length} Ready for Entry`}
               </small>
             </div>
           </button>
@@ -854,14 +903,14 @@ export default function LaboratoryPage() {
           >
             <div className="lab-tab-icon reports"><FiPrinter /></div>
             <div className="lab-tab-text">
-              <strong>Completed & Reports</strong>
-              <small>{completedCount} Reports Authorized</small>
+              <strong>Completed Reports</strong>
+              <small>{completedCount} Authorized Reports</small>
             </div>
           </button>
         </nav>
 
         {/* ====================================================================
-            TAB 1: ACTIVE TESTS QUEUE (CLEAN, SPACIOUS, 1-CLICK ACTIONS)
+            TAB 1: ACTIVE TESTS QUEUE (ENTERPRISE LIS CARDS, FULL TEXT FIT)
             ==================================================================== */}
         {activeTab === "queue" && (
           <section className="lab-workspace-card">
@@ -871,7 +920,7 @@ export default function LaboratoryPage() {
                 <FiSearch className="search-icon" />
                 <input
                   type="text"
-                  placeholder="Search test by patient name, MRN, or test panel..."
+                  placeholder="Search test by patient name, MRN, order number, or test panel..."
                   value={requestSearch}
                   onChange={(e) => setRequestSearch(e.target.value)}
                   className="lab-search-input"
@@ -889,28 +938,35 @@ export default function LaboratoryPage() {
                   className={`lab-filter-pill ${queueFilter === "all" ? "active" : ""}`}
                   onClick={() => setQueueFilter("all")}
                 >
-                  All ({requests.length})
+                  All Active ({requests.filter((r) => r.status !== "cancelled").length})
                 </button>
                 <button
                   type="button"
                   className={`lab-filter-pill ${queueFilter === "pending" ? "active" : ""}`}
                   onClick={() => setQueueFilter("pending")}
                 >
-                  ⚠️ Waiting for Sample ({pendingCollectionCount})
+                  Awaiting Sample ({pendingCollectionCount})
                 </button>
                 <button
                   type="button"
                   className={`lab-filter-pill ${queueFilter === "in_progress" ? "active" : ""}`}
                   onClick={() => setQueueFilter("in_progress")}
                 >
-                  🔬 In Testing ({inProgressCount})
+                  In Testing ({inProgressCount})
                 </button>
                 <button
                   type="button"
                   className={`lab-filter-pill ${queueFilter === "completed" ? "active" : ""}`}
                   onClick={() => setQueueFilter("completed")}
                 >
-                  ✓ Results Ready ({completedCount})
+                  Completed ({completedCount})
+                </button>
+                <button
+                  type="button"
+                  className={`lab-filter-pill skipped-pill ${queueFilter === "cancelled" ? "active" : ""}`}
+                  onClick={() => setQueueFilter("cancelled")}
+                >
+                  <FiSlash style={{ marginRight: "4px" }} /> Skipped ({cancelledCount})
                 </button>
               </div>
             </div>
@@ -923,146 +979,140 @@ export default function LaboratoryPage() {
                 <p>There are no test requests matching your search or filter.</p>
               </div>
             ) : (
-              <div className="lab-table-responsive-wrapper">
-                <table className="lab-requests-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: "13%" }}>Status</th>
-                      <th className="hide-mobile" style={{ width: "12%" }}>Track / QR</th>
-                      <th style={{ width: "32%" }}>Patient (Full Name & Card)</th>
-                      <th style={{ width: "24%" }}>Investigation & Specimen</th>
-                      <th className="hide-mobile" style={{ width: "13%" }}>Ordered</th>
-                      <th style={{ width: "18%", textAlign: "right" }}>1-Tap Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRequests.map((request) => {
-                      const isCompleted = request.status === "completed";
-                      const isPending = request.status === "pending";
-                      const mrn = request.patient?.mrn || request.patient?.physicalFileNumber || "Walk-in";
-                      const phone = request.patient?.phone;
-                      const gender = request.patient?.gender;
-                      const age =
-                        (request.patient as any)?.age ||
-                        (request.patient?.dateOfBirth
-                          ? `${Math.max(0, new Date().getFullYear() - new Date(request.patient.dateOfBirth).getFullYear())}`
-                          : null);
+              <div className="lab-cards-grid">
+                {visibleRequests.map((request) => {
+                  const isCompleted = request.status === "completed";
+                  const isPending = request.status === "pending";
 
-                      return (
-                        <tr key={request.id} className={`lab-table-row ${request.status}`}>
-                          {/* 1. Status Column */}
-                          <td className="lab-td-status">
-                            <span className={`lab-badge-status ${request.status}`}>
-                              {statusLabel(request.status)}
-                            </span>
-                          </td>
+                  return (
+                    <article key={request.id} className={`lab-request-card ${request.status}`}>
+                      {/* Tier 1: Status & Order Number */}
+                      <div className="lab-card-meta-bar">
+                        <span className={`lab-badge-status ${request.status}`}>
+                          {statusLabel(request.status)}
+                        </span>
+                        <span className="lab-card-order-no">{request.requestNumber}</span>
+                      </div>
 
-                          {/* 2. Track & QR Preview */}
-                          <td className="lab-td-track hide-mobile">
-                            <strong className="lab-track-number">{request.requestNumber}</strong>
-                            <div>
-                              <button
-                                type="button"
-                                className="lab-table-mini-qr-btn"
-                                onClick={() => setQuickQrRequest(request)}
-                                title="View verification QR code & tracking link"
-                              >
-                                <FiExternalLink /> Live QR
-                              </button>
-                            </div>
-                          </td>
+                      {/* Tier 2: Full-Width Investigation Title & Specimen */}
+                      <div className="lab-card-test-block">
+                        <h3 className="lab-test-title">{requestDisplayName(request)}</h3>
+                        <div className="lab-card-tags-row">
+                          <span className="lab-specimen-pill">
+                            Specimen: <strong>{request.template.specimen || "Standard Specimen"}</strong>
+                          </span>
+                          {request.template.category && (
+                            <span className="lab-category-pill-tag">{request.template.category}</span>
+                          )}
+                        </div>
+                      </div>
 
-                          {/* 3. Patient Demographics - Fully Horizontal */}
-                          <td className="lab-td-patient">
-                            <div className="lab-table-patient-horizontal">
-                              <div className="lab-table-patient-name">
-                                <FiUser className="lab-patient-icon" />
-                                <strong>{patientName(request.patient)}</strong>
-                              </div>
-                              <div className="lab-table-patient-chips">
-                                <span className="lab-chip mrn">MRN: <strong>{mrn}</strong></span>
-                                {gender && <span className="lab-chip gender">{gender.toUpperCase()}</span>}
-                                {age && <span className="lab-chip age">{age} yrs</span>}
-                                {phone && <span className="lab-chip phone">📞 {phone}</span>}
-                              </div>
-                            </div>
-                          </td>
+                      {/* Tier 3: Dedicated Patient Strip */}
+                      <div className="lab-card-patient-strip">
+                        <div className="lab-patient-avatar-sm">
+                          <FiUser />
+                        </div>
+                        <div className="lab-patient-strip-info">
+                          <strong className="lab-patient-name">{patientName(request.patient)}</strong>
+                          <span className="lab-patient-sub">
+                            MRN: <strong>{request.patient?.mrn || "Walk-in"}</strong> • {formatDate(request.createdAt)}
+                          </span>
+                        </div>
+                      </div>
 
-                          {/* 4. Investigation & Specimen */}
-                          <td className="lab-td-test">
-                            <strong className="lab-table-test-name">{requestDisplayName(request)}</strong>
-                            <div className="lab-table-test-meta">
-                              <span className="lab-specimen-pill">
-                                🩸 {request.template.specimen || "Standard"}
-                              </span>
-                              {request.template.category && (
-                                <span className="lab-category-pill">{request.template.category}</span>
-                              )}
-                            </div>
-                            {request.clinicalNotes && (
-                              <div className="lab-table-notes-snippet" title={request.clinicalNotes}>
-                                <strong>Note:</strong> {request.clinicalNotes}
-                              </div>
-                            )}
-                          </td>
+                      {request.clinicalNotes && (
+                        <div className="lab-notes-box">
+                          <strong>Clinical Note:</strong> "{request.clinicalNotes}"
+                        </div>
+                      )}
 
-                          {/* 5. Ordered Time */}
-                          <td className="lab-td-time hide-mobile">
-                            <span className="lab-date-primary">{formatDate(request.createdAt)}</span>
-                          </td>
+                      {/* Tier 4: Balanced 2-Column Enterprise Action Grid */}
+                      <div className="lab-card-actions-row">
+                        {/* Primary Workflow Actions */}
+                        {isPending && canUpdate && (
+                          <button
+                            type="button"
+                            className="lab-action-btn primary collect"
+                            disabled={saving}
+                            onClick={() => updateStatus(request, "sample_collected")}
+                          >
+                            <FiCheck /> Collect Sample
+                          </button>
+                        )}
 
-                          {/* 6. Actions */}
-                          <td className="lab-td-actions" style={{ textAlign: "right" }}>
-                            <div className="lab-table-action-group">
-                              <button
-                                type="button"
-                                className="lab-btn-sm secondary"
-                                onClick={() => handleOpenPrint(request, "request")}
-                                title="Print Test Requisition & QR Tracking Slip"
-                              >
-                                <FiFileText /> Slip
-                              </button>
+                        {!isCompleted && request.status !== "cancelled" && canComplete && (
+                          <button
+                            type="button"
+                            className="lab-action-btn primary results"
+                            onClick={() => openResultForm(request)}
+                          >
+                            <FiEdit3 /> Enter Results
+                          </button>
+                        )}
 
-                              {isPending && canUpdate && (
-                                <button
-                                  type="button"
-                                  className="lab-btn-sm primary collect"
-                                  disabled={saving}
-                                  onClick={() => updateStatus(request, "sample_collected")}
-                                  title="Confirm specimen sample collected"
-                                >
-                                  <FiCheck /> Collect
-                                </button>
-                              )}
+                        {isCompleted && (
+                          <>
+                            <button
+                              type="button"
+                              className="lab-action-btn primary report"
+                              onClick={() => handleOpenPrint(request, "result")}
+                            >
+                              <FiPrinter /> Official Report
+                            </button>
+                            <button
+                              type="button"
+                              className="lab-action-btn share"
+                              onClick={() => setShareModalRequest(request)}
+                              title="Share test result via WhatsApp, Email, SMS, or Link"
+                            >
+                              <FiShare2 /> Share Result
+                            </button>
+                          </>
+                        )}
 
-                              {!isCompleted && canComplete && (
-                                <button
-                                  type="button"
-                                  className="lab-btn-sm primary results"
-                                  onClick={() => openResultForm(request)}
-                                  title="Enter analyte test findings"
-                                >
-                                  <FiEdit3 /> Result
-                                </button>
-                              )}
+                        {/* Secondary Support Actions */}
+                        <button
+                          type="button"
+                          className="lab-action-btn secondary"
+                          onClick={() => handleOpenPrint(request, "request")}
+                          title="Print Test Requisition & QR Slip"
+                        >
+                          <FiFileText /> Tracking Slip
+                        </button>
 
-                              {isCompleted && (
-                                <button
-                                  type="button"
-                                  className="lab-btn-sm primary report highlight-print"
-                                  onClick={() => handleOpenPrint(request, "result")}
-                                  title="Print official validated laboratory report"
-                                >
-                                  <FiPrinter /> Print
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        {request.status === "cancelled" ? (
+                          canUpdate && (
+                            <button
+                              type="button"
+                              className="lab-action-btn secondary restore"
+                              disabled={saving}
+                              onClick={() => handleRestoreTest(request)}
+                              title="Restore test to pending queue"
+                            >
+                              <FiRotateCcw /> Restore Test
+                            </button>
+                          )
+                        ) : (
+                          !isCompleted && canUpdate && (
+                            <button
+                              type="button"
+                              className="lab-action-btn secondary skip"
+                              disabled={saving}
+                              onClick={() => {
+                                setSkipTargetRequest(request);
+                                setSkipReason("Patient declined investigation");
+                                setSkipCustomNote("");
+                              }}
+                              title="Skip or discontinue this investigation"
+                            >
+                              <FiSlash /> Skip Test
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -1084,10 +1134,7 @@ export default function LaboratoryPage() {
                       key={req.id}
                       type="button"
                       className={`lab-quick-pick-chip ${isSelected ? "selected" : ""}`}
-                      onClick={() => {
-                        setActiveResult(req);
-                        setResultForm(requestToResultForm(req));
-                      }}
+                      onClick={() => openResultForm(req)}
                     >
                       <strong>{requestDisplayName(req)}</strong>
                       <span>{patientName(req.patient)}</span>
@@ -1113,9 +1160,25 @@ export default function LaboratoryPage() {
                   <div className="banner-details">
                     <div className="banner-title-line">
                       <h2>{requestDisplayName(activeResult)}</h2>
-                      <span className={`lab-badge-status ${activeResult.status}`}>
-                        {statusLabel(activeResult.status)}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span className={`lab-badge-status ${activeResult.status === "pending" ? "sample_collected" : activeResult.status}`}>
+                          {statusLabel(activeResult.status === "pending" ? "sample_collected" : activeResult.status)}
+                        </span>
+                        {canUpdate && activeResult.status !== "completed" && activeResult.status !== "cancelled" && (
+                          <button
+                            type="button"
+                            className="lab-skip-banner-btn"
+                            onClick={() => {
+                              setSkipTargetRequest(activeResult);
+                              setSkipReason("Patient declined investigation");
+                              setSkipCustomNote("");
+                            }}
+                            title="Skip this test"
+                          >
+                            <FiSlash /> Skip Test
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="banner-sub-line">
                       <span><strong>Patient:</strong> {patientName(activeResult.patient)}</span>
@@ -1226,6 +1289,21 @@ export default function LaboratoryPage() {
 
                 {/* Big Action Submit Button */}
                 <div className="lab-submit-row">
+                  {canUpdate && activeResult.status !== "completed" && activeResult.status !== "cancelled" && (
+                    <button
+                      type="button"
+                      className="lab-secondary-action-btn skip"
+                      onClick={() => {
+                        setSkipTargetRequest(activeResult);
+                        setSkipReason("Patient declined investigation");
+                        setSkipCustomNote("");
+                      }}
+                      disabled={saving}
+                      title="Discontinue or skip this test"
+                    >
+                      <FiSlash /> Skip This Test
+                    </button>
+                  )}
                   <button
                     type="submit"
                     disabled={saving || !canComplete}
@@ -1343,8 +1421,7 @@ export default function LaboratoryPage() {
                         value={requestForm.manualPatientAge || ""}
                         onChange={(e) => setRequestForm({ ...requestForm, manualPatientAge: e.target.value })}
                         className="lab-text-input"
-                      >
-                      </input>
+                      />
                     </div>
 
                     <div className="lab-input-box">
@@ -1361,21 +1438,67 @@ export default function LaboratoryPage() {
                 </div>
               )}
 
-              {/* Diagnostic Test Chooser */}
-              <div className="lab-template-section" style={{ marginBottom: "1rem" }}>
+              {/* Template Picker */}
+              <div className="lab-template-section">
                 <TestSearchSelect
-                  label="Diagnostic Test Template"
-                  required
+                  label="Diagnostic Tests"
                   templates={activeTemplates}
-                  selectedTemplateId={requestForm.templateId}
-                  onSelectTemplate={(template) => {
-                    setRequestForm((current) => ({
-                      ...current,
-                      templateId: template?.id ?? "",
-                    }));
+                  multiSelect
+                  selectedTemplateIds={selectedTemplateIds}
+                  onToggleTemplate={handleTemplateSelect}
+                  onSelectTemplate={(t: LaboratoryTemplate | null) => {
+                    if (!t) {
+                      setRequestForm((cur) => ({ ...cur, templateId: "" }));
+                      setSelectedTemplateIds([]);
+                      setTemplatePicker("");
+                    }
                   }}
-                  placeholder="Search test panel by name, code (FBC, MP, PCV, LFT), or specimen..."
+                  placeholder="Search and add multiple tests for this patient..."
                 />
+
+                <p className="lab-batch-hint">Selected tests: {selectedTemplateIds.length}. Choose another test to add it; select a chosen test again to remove it.</p>
+                {selectedTemplateIds.length > 0 && (
+                  <div className="lab-selected-test-list">
+                    {selectedTemplateIds.map((templateId) => {
+                      const template = activeTemplates.find((item) => item.id === templateId);
+                      if (!template) return null;
+                      return (
+                        <button key={templateId} type="button" onClick={() => handleTemplateSelect(template)}>
+                          <span>{template.name}<small>{template.specimen || "Standard specimen"}</small></span>
+                          <FiX aria-label="Remove test" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Category Chips & Quick List */}
+                <div className="lab-category-chips-row">
+                  {templateCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`lab-category-chip ${templateCategory === cat ? "active" : ""}`}
+                      onClick={() => setTemplateCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="lab-templates-quick-grid">
+                  {visibleTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      className={`lab-template-btn ${selectedTemplateIds.includes(template.id) ? "active" : ""}`}
+                      onClick={() => handleTemplateSelect(template)}
+                    >
+                      <strong>{template.name}</strong>
+                      <small>{template.specimen || "Standard Specimen"}</small>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Clinical Indication / Notes */}
@@ -1398,7 +1521,7 @@ export default function LaboratoryPage() {
                   className="lab-primary-action-btn"
                 >
                   <FiPlus />
-                  <span>{saving ? "Creating Test Order..." : "✓ Create Test Order & Print Tracking Slip"}</span>
+                  <span>{saving ? "Creating Test Orders..." : `✓ Create ${selectedTemplateIds.length || "Test"} Order(s) & Print Tracking Slip`}</span>
                 </button>
               </div>
             </form>
@@ -1427,105 +1550,90 @@ export default function LaboratoryPage() {
                 <p>Completed investigations will appear here for 1-click printing.</p>
               </div>
             ) : (
-              <div className="lab-table-responsive-wrapper">
-                <table className="lab-requests-table completed-table">
-                  <thead>
-                    <tr>
-                      <th className="hide-mobile" style={{ width: "11%", textAlign: "center" }}>Verified QR</th>
-                      <th className="hide-mobile" style={{ width: "13%" }}>Track No. & Date</th>
-                      <th style={{ width: "36%" }}>Patient Name & Demographics</th>
-                      <th style={{ width: "32%" }}>Test Panel & Specimen</th>
-                      <th className="hide-mobile" style={{ width: "16%" }}>Clinical Impression</th>
-                      <th style={{ width: "21%", textAlign: "right" }}>1-Tap Print & Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRequests.map((request) => {
-                      const mrn = request.patient?.mrn || request.patient?.physicalFileNumber || "Walk-in";
-                      const phone = request.patient?.phone;
-                      const gender = request.patient?.gender;
-                      const age =
-                        (request.patient as any)?.age ||
-                        (request.patient?.dateOfBirth
-                          ? `${Math.max(0, new Date().getFullYear() - new Date(request.patient.dateOfBirth).getFullYear())}`
-                          : null);
+              <div className="lab-patient-record-groups">
+                {completedRequestGroups.map((group) => (
+                  <details className="lab-patient-record-group" key={group.patient.id} open>
+                    <summary>
+                      <span>
+                        <strong>{patientName(group.patient)}</strong>
+                        <small>MRN: {group.patient.mrn || "Walk-in"}</small>
+                      </span>
+                      <b>{group.requests.length} completed test{group.requests.length === 1 ? "" : "s"}</b>
+                    </summary>
+                    <div className="lab-cards-grid">
+                      {group.requests.map((request) => (
+                        <article key={request.id} className="lab-request-card completed">
+                          {/* Tier 1: Status & Order Number */}
+                          <div className="lab-card-meta-bar">
+                            <span className="lab-badge-status completed">
+                              ✓ COMPLETED & AUTHORIZED
+                            </span>
+                            <span className="lab-card-order-no">{request.requestNumber}</span>
+                          </div>
 
-                      return (
-                        <tr key={request.id} className="lab-table-row completed">
-                          {/* 1. Live Scannable QR Code */}
-                          <td className="lab-td-qr hide-mobile" style={{ textAlign: "center" }}>
-                            <LabQrThumbnail request={request} onOpenQuickQr={setQuickQrRequest} />
-                          </td>
-
-                          {/* 2. Track & Date */}
-                          <td className="lab-td-track hide-mobile">
-                            <strong className="lab-track-number">{request.requestNumber}</strong>
-                            <div className="lab-date-primary">{formatDate(request.completedAt || request.createdAt)}</div>
-                            <span className="lab-badge-status completed">✓ AUTHORIZED</span>
-                          </td>
-
-                          {/* 3. Patient Demographics (Fully Horizontal) */}
-                          <td className="lab-td-patient">
-                            <div className="lab-table-patient-horizontal">
-                              <div className="lab-table-patient-name">
-                                <FiUser className="lab-patient-icon" />
-                                <strong>{patientName(request.patient)}</strong>
-                              </div>
-                              <div className="lab-table-patient-chips">
-                                <span className="lab-chip mrn">MRN: <strong>{mrn}</strong></span>
-                                {gender && <span className="lab-chip gender">{gender.toUpperCase()}</span>}
-                                {age && <span className="lab-chip age">{age} yrs</span>}
-                                {phone && <span className="lab-chip phone">📞 {phone}</span>}
-                              </div>
+                          {/* Tier 2: Full-Width Investigation Title & Specimen */}
+                          <div className="lab-card-test-block">
+                            <h3 className="lab-test-title">{requestDisplayName(request)}</h3>
+                            <div className="lab-card-tags-row">
+                              <span className="lab-specimen-pill">
+                                Specimen: <strong>{request.template.specimen || "Standard"}</strong>
+                              </span>
+                              {request.template.category && (
+                                <span className="lab-category-pill-tag">{request.template.category}</span>
+                              )}
                             </div>
-                          </td>
+                          </div>
 
-                          {/* 4. Test Panel */}
-                          <td className="lab-td-test">
-                            <strong className="lab-table-test-name">{requestDisplayName(request)}</strong>
-                            <div className="lab-table-test-meta">
-                              <span className="lab-specimen-pill">🩸 {request.template.specimen || "Standard"}</span>
-                              {request.template.category && <span className="lab-category-pill">{request.template.category}</span>}
+                          {/* Tier 3: Dedicated Patient Strip */}
+                          <div className="lab-card-patient-strip">
+                            <div className="lab-patient-avatar-sm">
+                              <FiUser />
                             </div>
-                          </td>
-
-                          {/* 5. Impression */}
-                          <td className="lab-td-notes hide-mobile">
-                            {request.interpretation ? (
-                              <div className="lab-table-notes-snippet impression" title={request.interpretation}>
-                                <strong>Impression:</strong> {request.interpretation}
-                              </div>
-                            ) : (
-                              <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>Report completed & signed</span>
-                            )}
-                          </td>
-
-                          {/* 6. 1-Tap Actions */}
-                          <td className="lab-td-actions" style={{ textAlign: "right" }}>
-                            <div className="lab-table-action-group">
-                              <button
-                                type="button"
-                                className="lab-btn-sm primary report highlight-print"
-                                onClick={() => handleOpenPrint(request, "result")}
-                                title="Print Official Report with MDS logo, Kano location, signature, and stamp"
-                              >
-                                <FiPrinter /> Print Report
-                              </button>
-                              <button
-                                type="button"
-                                className="lab-btn-sm secondary"
-                                onClick={() => handleOpenPrint(request, "request")}
-                                title="Print Tracking Slip"
-                              >
-                                <FiFileText /> Slip
-                              </button>
+                            <div className="lab-patient-strip-info">
+                              <strong className="lab-patient-name">{patientName(request.patient)}</strong>
+                              <span className="lab-patient-sub">
+                                MRN: <strong>{request.patient?.mrn || "Walk-in"}</strong> • {formatDate(request.createdAt)}
+                              </span>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </div>
+
+                          {request.interpretation && (
+                            <div className="lab-notes-box">
+                              <strong>Impression:</strong> "{request.interpretation}"
+                            </div>
+                          )}
+
+                          <div className="lab-card-actions-row">
+                            <button
+                              type="button"
+                              className="lab-action-btn primary report"
+                              onClick={() => handleOpenPrint(request, "result")}
+                            >
+                              <FiPrinter /> Official Report
+                            </button>
+
+                            <button
+                              type="button"
+                              className="lab-action-btn share"
+                              onClick={() => setShareModalRequest(request)}
+                              title="Share test result via WhatsApp, Email, SMS, or Link"
+                            >
+                              <FiShare2 /> Share Result
+                            </button>
+
+                            <button
+                              type="button"
+                              className="lab-action-btn secondary"
+                              onClick={() => handleOpenPrint(request, "request")}
+                            >
+                              <FiFileText /> Tracking Slip
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </details>
+                ))}
               </div>
             )}
           </section>
@@ -1540,102 +1648,111 @@ export default function LaboratoryPage() {
           />
         )}
 
-        {/* 6. EXPANDED QUICK QR VERIFICATION MODAL */}
-        {quickQrRequest && (
-          <div className="lab-modal-overlay" onClick={() => setQuickQrRequest(null)}>
-            <div
-              className="lab-modal-container"
-              style={{ maxWidth: "480px", textAlign: "center" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="lab-modal-header" style={{ justifyContent: "space-between" }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", color: "var(--text-strong, #092a5e)" }}>
-                    Live Diagnostic QR Verification
-                  </h3>
-                  <small style={{ color: "var(--muted)" }}>{quickQrRequest.requestNumber}</small>
+        {/* 5B. SHARE LAB RESULT MODAL */}
+        {shareModalRequest && (
+          <ShareLabResultModal
+            request={shareModalRequest}
+            onClose={() => setShareModalRequest(null)}
+          />
+        )}
+
+        {/* 6. SKIP / CANCEL INVESTIGATION MODAL */}
+        {skipTargetRequest && (
+          <div className="lab-modal-overlay" onClick={() => setSkipTargetRequest(null)}>
+            <div className="lab-modal-content skip-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="lab-modal-header">
+                <div className="lab-modal-header-title">
+                  <div className="lab-modal-icon-badge danger">
+                    <FiSlash />
+                  </div>
+                  <div>
+                    <h3>Skip Laboratory Investigation</h3>
+                    <p>Discontinue or cancel this test from the laboratory work queue.</p>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  className="lab-icon-btn modal-close-btn"
-                  onClick={() => setQuickQrRequest(null)}
-                  aria-label="Close QR modal"
-                  title="Close"
+                  className="lab-modal-close-btn"
+                  onClick={() => setSkipTargetRequest(null)}
+                  title="Close modal"
                 >
-                  <FiX size={18} strokeWidth={2.5} />
+                  <FiX />
                 </button>
               </div>
 
-              <div style={{ padding: "1.5rem 1.25rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-                {/* Large QR Display */}
-                <div style={{ padding: "14px", background: "#ffffff", borderRadius: "14px", border: "2px solid #cbd5e1", boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}>
-                  <LabQrLargeView requestNumber={quickQrRequest.requestNumber || quickQrRequest.id} />
-                </div>
-
-                <div style={{ marginTop: "4px" }}>
-                  <h4 style={{ margin: "0 0 4px", fontSize: "1.05rem", color: "var(--text-strong, #092a5e)" }}>
-                    {patientName(quickQrRequest.patient)}
-                  </h4>
-                  <div style={{ fontSize: "0.86rem", color: "var(--muted)" }}>
-                    Test: <strong>{requestDisplayName(quickQrRequest)}</strong>
+              <div className="lab-skip-modal-body">
+                <div className="lab-skip-test-summary">
+                  <div>
+                    <label>Test Panel</label>
+                    <strong>{requestDisplayName(skipTargetRequest)}</strong>
                   </div>
-                  <div style={{ marginTop: "6px" }}>
-                    <span className={`lab-badge-status ${quickQrRequest.status}`}>
-                      {statusLabel(quickQrRequest.status)}
-                    </span>
+                  <div>
+                    <label>Patient</label>
+                    <strong>{patientName(skipTargetRequest.patient)}</strong>
+                  </div>
+                  <div>
+                    <label>Order #</label>
+                    <span>{skipTargetRequest.requestNumber}</span>
+                  </div>
+                  <div>
+                    <label>Specimen</label>
+                    <span>{skipTargetRequest.template.specimen || "Standard Specimen"}</span>
                   </div>
                 </div>
 
-                <p style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.5, margin: "4px 0 0", maxWidth: "380px" }}>
-                  Anyone can scan this QR code with their mobile phone camera to verify and view the authentic laboratory diagnostic result from anywhere.
-                </p>
+                <div className="lab-skip-reason-section">
+                  <label className="lab-field-label">
+                    Reason for Skipping <span style={{ color: "var(--danger)" }}>*</span>
+                  </label>
+                  <div className="lab-skip-presets-grid">
+                    {[
+                      "Patient declined investigation",
+                      "Sample insufficient / hemolyzed",
+                      "Contraindicated / duplicate order",
+                      "Reagent / analyzer unavailable",
+                      "Cancelled by requesting doctor",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`lab-skip-preset-chip ${skipReason === preset ? "active" : ""}`}
+                        onClick={() => setSkipReason(preset)}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* Link & Copy */}
-                <div style={{ display: "flex", width: "100%", gap: "8px", marginTop: "8px" }}>
-                  <input
-                    type="text"
-                    readOnly
-                    value={getAppUrl(`/verify/lab/${encodeURIComponent(quickQrRequest.requestNumber || quickQrRequest.id)}`)}
-                    style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.78rem", background: "var(--surface, #f8fafc)", color: "var(--text-strong, #334155)" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = getAppUrl(`/verify/lab/${encodeURIComponent(quickQrRequest.requestNumber || quickQrRequest.id)}`);
-                      navigator.clipboard.writeText(url).then(() => {
-                        setCopiedLink(true);
-                        setTimeout(() => setCopiedLink(false), 2000);
-                      });
-                    }}
-                    style={{ padding: "8px 14px", borderRadius: "8px", background: "#0284c7", color: "#ffffff", border: "none", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "5px" }}
-                  >
-                    {copiedLink ? "✓ Copied" : <><FiCopy /> Copy</>}
-                  </button>
+                  <div style={{ marginTop: "12px" }}>
+                    <label className="lab-field-label">Additional Technician Remarks (Optional)</label>
+                    <textarea
+                      rows={2}
+                      value={skipCustomNote}
+                      onChange={(e) => setSkipCustomNote(e.target.value)}
+                      placeholder="e.g. Patient refused venous puncture, doctor notified at 11:30 AM..."
+                      className="lab-skip-textarea"
+                    />
+                  </div>
                 </div>
+              </div>
 
-                {/* Bottom Action Buttons */}
-                <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "10px" }}>
-                  <a
-                    href={getAppUrl(`/verify/lab/${encodeURIComponent(quickQrRequest.requestNumber || quickQrRequest.id)}`)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ flex: 1, textDecoration: "none", textAlign: "center", padding: "10px", borderRadius: "10px", background: "#0f766e", color: "#ffffff", fontWeight: 700, fontSize: "0.86rem", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
-                  >
-                    <FiExternalLink /> Live Public Page
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const req = quickQrRequest;
-                      setQuickQrRequest(null);
-                      handleOpenPrint(req, req.status === "completed" ? "result" : "request");
-                    }}
-                    style={{ flex: 1, padding: "10px", borderRadius: "10px", background: "#092a5e", color: "#ffffff", border: "none", fontWeight: 700, fontSize: "0.86rem", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
-                  >
-                    <FiPrinter /> Print Document
-                  </button>
-                </div>
+              <div className="lab-modal-footer">
+                <button
+                  type="button"
+                  className="lab-modal-btn cancel"
+                  onClick={() => setSkipTargetRequest(null)}
+                  disabled={saving}
+                >
+                  Keep in Queue
+                </button>
+                <button
+                  type="button"
+                  className="lab-modal-btn confirm-skip"
+                  onClick={handleConfirmSkipTest}
+                  disabled={saving}
+                >
+                  <FiSlash /> {saving ? "Skipping..." : "Confirm Skip Test"}
+                </button>
               </div>
             </div>
           </div>

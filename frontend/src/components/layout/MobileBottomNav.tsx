@@ -59,6 +59,7 @@ const mobileItems: MobileNavItem[] = [
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
   { label: "Store", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
   { label: "Admin", path: "/admin/users", icon: <FiShield />, requiredPermissions: ["users.read"] },
+  { label: "Logs", path: "/admin/activity", icon: <FiClipboard />, requiredRoles: ["Super Admin", "Administrator"] },
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];
 
@@ -83,6 +84,12 @@ const nurseMobileItems: MobileNavItem[] = [
 
 const labMobileItems: MobileNavItem[] = [
   { label: "Lab", path: "/laboratory", icon: <FaFlask /> },
+  {
+    label: "Register",
+    path: "/register-patient",
+    icon: <FiUsers />,
+    anyPermissions: ["patients.create", "patients.investigation.create"],
+  },
   { label: "Panels", path: "/laboratory/templates", icon: <FiFileText /> },
   { label: "Me", path: "/settings", icon: <FiSettings /> },
 ];

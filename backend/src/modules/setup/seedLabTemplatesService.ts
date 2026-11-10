@@ -434,6 +434,36 @@ export const STANDARD_NIGERIAN_LAB_TEMPLATES: StandardNigerianLabTemplate[] = [
       { key: "gout_comment", label: "Gout Assessment", type: "text", referenceRange: "< 360 umol/L target for gout treatment", required: false },
     ],
   },
+  {
+    name: "Viral Screening Panel (HIV / HBsAg / HCV)",
+    code: "LAB-VIRAL",
+    category: "Serology",
+    specimen: "Serum / Whole Blood",
+    reportTitle: "VIRAL SCREENING PANEL REPORT",
+    notes: "Combined retroviral and viral hepatitis rapid screening panel.",
+    fields: [
+      { key: "hiv", label: "HIV 1 & 2 Screening", type: "select", options: ["Non-Reactive", "Reactive", "Indeterminate"], referenceRange: "Non-Reactive", required: true },
+      { key: "hbsag", label: "HBsAg (Hepatitis B)", type: "select", options: ["Non-Reactive", "Reactive"], referenceRange: "Non-Reactive", required: true },
+      { key: "hcv", label: "Anti-HCV (Hepatitis C)", type: "select", options: ["Non-Reactive", "Reactive"], referenceRange: "Non-Reactive", required: true },
+      { key: "vdrl", label: "VDRL (Syphilis)", type: "select", options: ["Non-Reactive", "Reactive", "Not Requested"], referenceRange: "Non-Reactive", required: false },
+    ],
+  },
+  {
+    name: "Custom Laboratory Investigation",
+    code: "LAB-CUSTOM",
+    category: "General Diagnostics",
+    specimen: "As Indicated",
+    reportTitle: "LABORATORY INVESTIGATION REPORT",
+    notes: "Use this when the requested test does not yet have its own dedicated template.",
+    fields: [
+      { key: "test_name", label: "Investigation Name", type: "text", required: true },
+      { key: "specimen", label: "Specimen Collected", type: "text", required: false },
+      { key: "result", label: "Result / Findings", type: "textarea", required: true },
+      { key: "unit", label: "Unit", type: "text", required: false },
+      { key: "reference_range", label: "Reference Range", type: "text", required: false },
+      { key: "method", label: "Methodology", type: "text", required: false },
+    ],
+  },
 ];
 
 export async function seedNigerianLaboratoryTemplates() {

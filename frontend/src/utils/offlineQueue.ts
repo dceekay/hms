@@ -8,6 +8,7 @@ const STORAGE_KEY = "hms_offline_sync_queue";
 
 export type OfflineOperationType =
   | "laboratory.create_request"
+  | "laboratory.create_requests"
   | "laboratory.update_status"
   | "laboratory.complete_result"
   | "inventory.create_item"

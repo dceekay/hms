@@ -1,4 +1,10 @@
-import { LaboratoryRequestStatus, Prisma } from "@prisma/client";
+import {
+  LaboratoryRequestStatus,
+  PatientCategory,
+  PatientGender,
+  PatientStatus,
+  Prisma,
+} from "@prisma/client";
 import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
 import { ApiError } from "../../shared/errors/ApiError";
@@ -6,6 +12,7 @@ import { NotificationService } from "../notifications/service";
 import {
   CompleteLaboratoryRequestDto,
   CreateLaboratoryRequestDto,
+  CreateLaboratoryRequestsDto,
   LaboratoryTemplateDto,
   ListLaboratoryRequestsQueryDto,
   ListLaboratoryTemplatesQueryDto,
@@ -36,6 +43,18 @@ function handleTemplatePrismaError(error: unknown): never {
     if (error.code === "P2025") {
       throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory template not found");
     }
+  }
+
+  throw error;
+}
+
+/** Translate Prisma's missing-row update error into the response staff need. */
+function handleLaboratoryRequestPrismaError(error: unknown): never {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    throw new ApiError(
+      HttpStatus.NOT_FOUND,
+      "This laboratory request is no longer available. Refresh the request list and try again."
+    );
   }
 
   throw error;
@@ -193,6 +212,17 @@ export class LaboratoryService {
     }
   }
 
+  async deleteTemplate(id: string) {
+    try {
+      return await prisma.laboratoryTemplate.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    } catch (error) {
+      handleTemplatePrismaError(error);
+    }
+  }
+
   async listRequests(params: ListLaboratoryRequestsQueryDto) {
     const page = params.page ?? 1;
     const limit = params.limit ?? 50;
@@ -276,9 +306,51 @@ export class LaboratoryService {
   async createRequest(payload: CreateLaboratoryRequestDto, recordedById?: string) {
     try {
       const request = await prisma.$transaction(async (tx) => {
+        let finalPatientId = payload.patientId ? payload.patientId.trim() : "";
+
+        // If no existing patient ID provided, create a walk-in investigation patient on the fly
+        if (!finalPatientId && payload.manualPatientName) {
+          const cleanName = payload.manualPatientName.trim();
+          const nameParts = cleanName.split(/\s+/);
+          const firstName = nameParts[0] || "Walk-in";
+          const lastName = nameParts.slice(1).join(" ") || "(Walk-in Patient)";
+
+          const year = new Date().getFullYear();
+          const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+          const autoMrn = `MDSLAB-${year}-${suffix}`;
+          const autoQr = `PAT-LAB-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+
+          const age = payload.manualPatientAge && payload.manualPatientAge > 0 ? payload.manualPatientAge : 30;
+          const dob = new Date();
+          dob.setFullYear(dob.getFullYear() - age);
+
+          const genderVal =
+            payload.manualPatientGender === "male"
+              ? PatientGender.male
+              : payload.manualPatientGender === "female"
+              ? PatientGender.female
+              : PatientGender.other;
+
+          const newWalkInPatient = await tx.patient.create({
+            data: {
+              firstName,
+              lastName,
+              mrn: autoMrn,
+              qrCode: autoQr,
+              gender: genderVal,
+              dateOfBirth: dob,
+              phone: cleanText(payload.manualPatientPhone),
+              patientCategory: PatientCategory.investigation_patient,
+              status: PatientStatus.active,
+            },
+          });
+
+          finalPatientId = newWalkInPatient.id;
+        }
+
         const [patient, template] = await Promise.all([
           tx.patient.findFirst({
-            where: { id: payload.patientId, deletedAt: null },
+            where: { id: finalPatientId, deletedAt: null },
           }),
           tx.laboratoryTemplate.findFirst({
             where: { id: payload.templateId, deletedAt: null, isActive: true },
@@ -286,7 +358,7 @@ export class LaboratoryService {
         ]);
 
         if (!patient) {
-          throw new ApiError(HttpStatus.NOT_FOUND, "Patient not found");
+          throw new ApiError(HttpStatus.NOT_FOUND, "Patient record could not be established");
         }
 
         if (!template) {
@@ -337,6 +409,84 @@ export class LaboratoryService {
     }
   }
 
+  async createRequests(payload: CreateLaboratoryRequestsDto, recordedById?: string) {
+    try {
+      const requests = await prisma.$transaction(async (tx) => {
+        let patientId = payload.patientId?.trim() ?? "";
+        if (!patientId && payload.manualPatientName) {
+          const nameParts = payload.manualPatientName.trim().split(/\s+/);
+          const dateOfBirth = new Date();
+          dateOfBirth.setFullYear(dateOfBirth.getFullYear() - (payload.manualPatientAge || 30));
+          const patient = await tx.patient.create({
+            data: {
+              firstName: nameParts[0] || "Walk-in",
+              lastName: nameParts.slice(1).join(" ") || "(Walk-in Patient)",
+              mrn: `MDSLAB-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+              qrCode: `PAT-LAB-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+              gender:
+                payload.manualPatientGender === "male"
+                  ? PatientGender.male
+                  : payload.manualPatientGender === "female"
+                  ? PatientGender.female
+                  : PatientGender.other,
+              dateOfBirth,
+              phone: cleanText(payload.manualPatientPhone),
+              patientCategory: PatientCategory.investigation_patient,
+              status: PatientStatus.active,
+            },
+          });
+          patientId = patient.id;
+        }
+
+        const [patient, templates] = await Promise.all([
+          tx.patient.findFirst({ where: { id: patientId, deletedAt: null } }),
+          tx.laboratoryTemplate.findMany({
+            where: { id: { in: payload.templateIds }, deletedAt: null, isActive: true },
+          }),
+        ]);
+        if (!patient) throw new ApiError(HttpStatus.NOT_FOUND, "Patient record could not be established");
+        if (templates.length !== payload.templateIds.length) {
+          throw new ApiError(HttpStatus.NOT_FOUND, "One or more selected laboratory tests are unavailable");
+        }
+        return Promise.all(
+          payload.templateIds.map((templateId) =>
+            tx.laboratoryRequest.create({
+              data: {
+                requestNumber: createLabRequestNumber(),
+                patientId: patient.id,
+                templateId,
+                clinicalNotes: cleanText(payload.clinicalNotes),
+                recordedById: recordedById ?? null,
+              },
+              include: {
+                patient: true,
+                template: true,
+                recordedBy: { select: { id: true, firstName: true, lastName: true, username: true } },
+                completedBy: { select: { id: true, firstName: true, lastName: true, username: true } },
+              },
+            })
+          )
+        );
+      });
+
+      await NotificationService.notifyRoles(["Laboratory", "Administrator", "Super Admin"], {
+        title: "New laboratory test batch",
+        message: `${requests.length} test(s) requested for ${requests[0].patient.firstName} ${requests[0].patient.lastName}.`,
+        eventKey: "laboratory.request.batch_created",
+        priority: "info",
+        linkUrl: "/laboratory",
+        metadata: { requestIds: requests.map((request) => request.id), patientId: requests[0].patientId },
+      });
+
+      return requests;
+    } catch (error) {
+      if (isDatabaseUnavailableError(error)) {
+        throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
+      }
+      throw error;
+    }
+  }
+
   async updateRequest(id: string, payload: UpdateLaboratoryRequestDto) {
     try {
       const data: Prisma.LaboratoryRequestUpdateInput = {};
@@ -372,7 +522,7 @@ export class LaboratoryService {
         throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
       }
 
-      throw error;
+      handleLaboratoryRequestPrismaError(error);
     }
   }
 
@@ -419,19 +569,16 @@ export class LaboratoryService {
         throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory service is temporarily unavailable.");
       }
 
-      throw error;
+      handleLaboratoryRequestPrismaError(error);
     }
   }
 
-  async verifyRequest(identifier: string) {
+  async verifyLaboratoryRequest(identifier: string) {
     try {
       const cleanId = identifier.trim();
       const request = await prisma.laboratoryRequest.findFirst({
         where: {
-          OR: [
-            { id: cleanId },
-            { requestNumber: cleanId },
-          ],
+          OR: [{ id: cleanId }, { requestNumber: cleanId }],
         },
         include: {
           patient: true,
@@ -446,7 +593,7 @@ export class LaboratoryService {
       });
 
       if (!request) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory request or test not found for this identifier.");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Laboratory test request not found.");
       }
 
       return {
@@ -492,20 +639,21 @@ export class LaboratoryService {
         completedBy: request.completedBy,
         hospital: {
           name: "MDS Specialist Hospital",
-          address: "Kano State, Nigeria",
-          phone: "+234 812 345 6789",
-          email: "info@mdshospital.com",
+          address: "174B Zaria Road, Opposite structural market Daurawa, Kano",
+          phone: "09123338990",
+          email: "mdsspecialisthospital@gmail.com",
           accreditation: "Authorized Medical Diagnostic Laboratory",
         },
       };
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-
       if (isDatabaseUnavailableError(error)) {
         throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Laboratory verification service is temporarily unavailable.");
       }
-
       throw error;
     }
+  }
+
+  async verifyRequest(identifier: string) {
+    return this.verifyLaboratoryRequest(identifier);
   }
 }

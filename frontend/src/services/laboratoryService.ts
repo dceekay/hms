@@ -1,4 +1,5 @@
 import api from "./api";
+import type { Patient } from "../types/patient";
 import type {
   LaboratoryRequest,
   LaboratoryRequestFormValues,
@@ -8,6 +9,16 @@ import type {
   LaboratoryTemplate,
   LaboratoryTemplateFormValues,
 } from "../types/laboratory";
+
+export type {
+  LaboratoryRequest,
+  LaboratoryRequestFormValues,
+  LaboratoryRequestStatus,
+  LaboratoryResultFormValues,
+  LaboratorySummary,
+  LaboratoryTemplate,
+  LaboratoryTemplateFormValues,
+};
 import {
   enqueueOfflineOperation,
   isLikelyNetworkError,
@@ -302,8 +313,8 @@ export async function createLaboratoryRequest(values: LaboratoryRequestFormValue
           id: values.patientId || `walkin-${Date.now()}`,
           firstName: values.manualPatientName?.split(" ")[0] || "Walk-in",
           lastName: values.manualPatientName?.split(" ").slice(1).join(" ") || "Patient",
-          gender: values.manualPatientGender as any || "other",
-          mrn: `CXLAB-OFF-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+          gender: (values.manualPatientGender as any) || "other",
+          mrn: `MDSLAB-OFF-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
         } as any,
         template: matchedTemplate as any,
       };
@@ -325,13 +336,76 @@ export async function createLaboratoryRequest(values: LaboratoryRequestFormValue
   }
 }
 
+export async function createLaboratoryRequests(values: LaboratoryRequestFormValues & { templateIds: string[] }) {
+  const payload = {
+    patientId: values.patientId ? values.patientId.trim() : undefined,
+    templateIds: values.templateIds,
+    clinicalNotes: values.clinicalNotes.trim() || undefined,
+    manualPatientName: values.manualPatientName?.trim() || undefined,
+    manualPatientGender: values.manualPatientGender || undefined,
+    manualPatientPhone: values.manualPatientPhone?.trim() || undefined,
+    manualPatientAge: values.manualPatientAge ? Number(values.manualPatientAge) : undefined,
+  };
+
+  try {
+    const response = await api.post<{ data: LaboratoryRequest[] }>("/laboratory/requests/batch", payload);
+    return { requests: response.data.data, error: undefined, queued: false };
+  } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      enqueueOfflineOperation({
+        type: "laboratory.create_requests",
+        label: `Lab test batch for ${values.manualPatientName || "Patient"}`,
+        method: "POST",
+        path: "/laboratory/requests/batch",
+        body: payload,
+      });
+
+      const now = new Date().toISOString();
+      const patientId = values.patientId || `walkin-${Date.now()}`;
+      const cachedTemplates = getCachedTemplates();
+      const requests = values.templateIds.map((templateId, index): LaboratoryRequest => {
+        const template = cachedTemplates.find((item) => item.id === templateId) ?? {
+          id: templateId,
+          name: "Diagnostic Investigation",
+          fields: [],
+          isActive: true,
+        };
+        const offlineRequest: LaboratoryRequest = {
+          id: `offline-req-${Date.now()}-${index}`,
+          requestNumber: `MDSL-${new Date().getFullYear()}-OFF${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+          patientId,
+          templateId,
+          status: "pending",
+          clinicalNotes: values.clinicalNotes,
+          createdAt: now,
+          updatedAt: now,
+          patient: {
+            id: patientId,
+            firstName: values.manualPatientName?.split(" ")[0] || "Patient",
+            lastName: values.manualPatientName?.split(" ").slice(1).join(" ") || "",
+            gender: values.manualPatientGender || "other",
+            mrn: values.patientId ? undefined : `MDSLAB-OFF-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+          } as Patient,
+          template: template as LaboratoryTemplate,
+        };
+        saveLocalOfflineRequest(offlineRequest);
+        return offlineRequest;
+      });
+      return { requests, error: undefined, queued: true };
+    }
+    return { requests: null, queued: false, error: getErrorMessage(error, "Unable to create laboratory test batch.") };
+  }
+}
+
 export async function updateLaboratoryRequestStatus(
   id: string,
-  status: LaboratoryRequestStatus
+  status: LaboratoryRequestStatus,
+  clinicalNotes?: string
 ) {
-  const payload = {
+  const payload: { status: LaboratoryRequestStatus; sampleCollectedAt?: string; clinicalNotes?: string } = {
     status,
     ...(status === "sample_collected" ? { sampleCollectedAt: new Date().toISOString() } : {}),
+    ...(clinicalNotes !== undefined ? { clinicalNotes } : {}),
   };
 
   try {
@@ -356,6 +430,7 @@ export async function updateLaboratoryRequestStatus(
           ...existing,
           status,
           ...(status === "sample_collected" ? { sampleCollectedAt: new Date().toISOString() } : {}),
+          ...(clinicalNotes !== undefined ? { clinicalNotes } : {}),
         };
         saveLocalOfflineRequest(updated);
         return { request: updated, error: undefined, queued: true };
@@ -400,6 +475,7 @@ export async function completeLaboratoryRequest(id: string, values: LaboratoryRe
 
       const offlineList = getLocalOfflineRequests();
       const existing = offlineList.find((r) => r.id === id);
+      const nowIso = new Date().toISOString();
       const updatedReq: LaboratoryRequest = existing
         ? {
             ...existing,
@@ -407,7 +483,8 @@ export async function completeLaboratoryRequest(id: string, values: LaboratoryRe
             resultValues: values.resultValues,
             interpretation: values.interpretation,
             technicianNote: values.technicianNote,
-            completedAt: new Date().toISOString(),
+            sampleCollectedAt: existing.sampleCollectedAt || nowIso,
+            completedAt: nowIso,
           }
         : ({
             id,
@@ -416,8 +493,9 @@ export async function completeLaboratoryRequest(id: string, values: LaboratoryRe
             resultValues: values.resultValues,
             interpretation: values.interpretation,
             technicianNote: values.technicianNote,
-            completedAt: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
+            sampleCollectedAt: nowIso,
+            completedAt: nowIso,
+            createdAt: nowIso,
             patient: { firstName: "Patient", lastName: "" } as any,
             template: { name: "Lab Test", fields: [] } as any,
           } as any);
@@ -522,4 +600,3 @@ export async function seedStandardNigerianTemplates() {
     };
   }
 }
-

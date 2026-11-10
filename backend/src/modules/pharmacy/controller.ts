@@ -10,6 +10,8 @@ import {
   updateMedicationSchema,
 } from "./dto";
 import { PharmacyService } from "./service";
+import { AuditAction } from "@prisma/client";
+import { recordAudit } from "../audit/service";
 
 export class PharmacyController extends BaseController {
   constructor(private readonly pharmacyService = new PharmacyService()) {
@@ -33,6 +35,14 @@ export class PharmacyController extends BaseController {
       const medication = await this.pharmacyService.createMedication(
         medicationSchema.parse(req.body)
       );
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Pharmacy medication",
+        entityId: medication.id,
+        userId: req.user?.sub,
+        summary: `Added pharmacy product ${medication.name}`,
+        reference: medication.batchNumber ?? medication.name,
+      });
 
       this.created(res, "Medication created successfully", medication);
     } catch (error) {
@@ -46,6 +56,18 @@ export class PharmacyController extends BaseController {
         String(req.params.id),
         updateMedicationSchema.parse(req.body)
       );
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "Pharmacy medication",
+        entityId: medication.id,
+        userId: req.user?.sub,
+        summary: `Updated pharmacy product ${medication.name}`,
+        reference: medication.batchNumber ?? medication.name,
+        changes:
+          req.body.sellingPrice !== undefined
+            ? [{ field: "selling price", after: Number(req.body.sellingPrice) }]
+            : [],
+      });
 
       this.ok(res, "Medication updated successfully", medication);
     } catch (error) {
@@ -60,6 +82,18 @@ export class PharmacyController extends BaseController {
         stockAdjustmentSchema.parse(req.body),
         req.user?.sub
       );
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "Pharmacy stock",
+        entityId: medication.id,
+        userId: req.user?.sub,
+        summary: `Adjusted ${medication.name} stock by ${req.body.quantityChange}`,
+        reference: medication.name,
+        changes: [
+          { field: "quantity change", after: req.body.quantityChange },
+          { field: "stock after", after: medication.currentStock },
+        ],
+      });
 
       this.ok(res, "Medication stock updated successfully", medication);
     } catch (error) {
@@ -73,6 +107,14 @@ export class PharmacyController extends BaseController {
         dispenseMedicationSchema.parse(req.body),
         req.user?.sub
       );
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Pharmacy dispense",
+        entityId: dispense.id,
+        userId: req.user?.sub,
+        summary: `Dispensed ${dispense.quantity} ${dispense.medication.name}`,
+        reference: dispense.invoiceNumber,
+      });
 
       this.created(res, "Medication dispensed successfully", dispense);
     } catch (error) {
@@ -100,6 +142,18 @@ export class PharmacyController extends BaseController {
         createPharmacySaleSchema.parse(req.body),
         req.user?.sub
       );
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Pharmacy sale",
+        entityId: sale.id,
+        userId: req.user?.sub,
+        summary: `Completed pharmacy sale ${sale.invoiceNumber}`,
+        reference: sale.invoiceNumber,
+        changes: [
+          { field: "total amount", after: Number(sale.totalAmount) },
+          { field: "payment status", after: sale.paymentStatus },
+        ],
+      });
 
       this.created(res, "Pharmacy sale completed successfully", sale);
     } catch (error) {

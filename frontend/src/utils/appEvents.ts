@@ -27,3 +27,21 @@ export function notifySyncFlushed() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(HMS_SYNC_FLUSHED_EVENT));
 }
+
+export const HMS_NETWORK_STATUS_CHANGED_EVENT = "hms:network-status-changed";
+
+export type NetworkStatusDetail = {
+  isOnline: boolean;
+  isServerError?: boolean;
+  latencyMs?: number | null;
+  source?: string;
+};
+
+export function notifyNetworkStatusChanged(detail: NetworkStatusDetail) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<NetworkStatusDetail>(HMS_NETWORK_STATUS_CHANGED_EVENT, {
+      detail,
+    })
+  );
+}

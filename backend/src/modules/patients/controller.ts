@@ -2,24 +2,42 @@ import { NextFunction, Request, Response } from "express";
 import { BaseController } from "../../core/BaseController";
 import { PatientService } from "./service";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
+import { AuditAction } from "@prisma/client";
+import { recordAudit } from "../audit/service";
 
 export class PatientController extends BaseController {
   constructor(private readonly patientService = new PatientService()) {
     super();
   }
 
-  create = async (req: Request, res: Response, next: NextFunction) => {
+  create = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const patient = await this.patientService.create(req.body);
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Patient",
+        entityId: patient.id,
+        userId: req.user?.sub,
+        summary: `Registered patient ${patient.firstName} ${patient.lastName}`,
+        reference: patient.mrn,
+      });
       return this.created(res, "Patient created successfully", patient);
     } catch (error) {
       next(error);
     }
   };
 
-  createInvestigation = async (req: Request, res: Response, next: NextFunction) => {
+  createInvestigation = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const patient = await this.patientService.createInvestigation(req.body);
+      await recordAudit({
+        action: AuditAction.CREATE,
+        entity: "Patient",
+        entityId: patient.id,
+        userId: req.user?.sub,
+        summary: `Registered investigation patient ${patient.firstName} ${patient.lastName}`,
+        reference: patient.mrn,
+      });
       return this.created(res, "Investigation patient created successfully", patient);
     } catch (error) {
       next(error);
@@ -28,8 +46,8 @@ export class PatientController extends BaseController {
 
   list = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const page = Number(req.query.page) || 1;
-      const take = Number(req.query.take) || 10;
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const take = Math.min(100, Math.max(1, Number(req.query.take || req.query.limit) || 20));
       const search = typeof req.query.search === "string" ? req.query.search : undefined;
       const status = typeof req.query.status === "string" ? req.query.status : undefined;
       const patientCategory =
@@ -59,10 +77,22 @@ export class PatientController extends BaseController {
     }
   };
 
-  update = async (req: Request, res: Response, next: NextFunction) => {
+  update = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const patient = await this.patientService.update(id, req.body);
+      await recordAudit({
+        action: AuditAction.UPDATE,
+        entity: "Patient",
+        entityId: patient.id,
+        userId: req.user?.sub,
+        summary: `Updated patient ${patient.firstName} ${patient.lastName}`,
+        reference: patient.mrn,
+        changes:
+          req.body.status !== undefined
+            ? [{ field: "status", after: patient.status }]
+            : [],
+      });
       return this.ok(res, "Patient updated successfully", patient);
     } catch (error) {
       next(error);
@@ -120,23 +150,22 @@ export class PatientController extends BaseController {
   };
 
   insuranceProviders = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const providers =
-      await this.patientService.listActiveInsuranceProviders();
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const providers = await this.patientService.listActiveInsuranceProviders();
 
-    return this.ok(
-      res,
-      "Insurance providers retrieved successfully",
-      providers
-    );
-  } catch (error) {
-    next(error);
-  }
-};
+      return this.ok(
+        res,
+        "Insurance providers retrieved successfully",
+        providers
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 
   reactivate = async (req: Request, res: Response, next: NextFunction) => {
     try {

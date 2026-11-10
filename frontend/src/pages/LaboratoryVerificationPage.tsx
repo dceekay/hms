@@ -1,347 +1,586 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
-  FiAlertCircle,
   FiCheckCircle,
   FiClock,
-  FiFileText,
-  FiHome,
   FiLoader,
-  FiPrinter,
-  FiShield,
   FiSlash,
-  FiUser,
+  FiPrinter,
+  FiArrowLeft,
+  FiActivity,
+  FiRefreshCw,
+  FiShield,
+  FiFileText,
+  FiCheck,
+  FiShare2,
 } from "react-icons/fi";
-import { FaFlask } from "react-icons/fa";
-import QRCode from "qrcode";
-import mdsLogo from "../assets/optimized/logo.png";
+import MdsLogo from "../components/common/MdsLogo";
 import {
-  type LaboratoryVerificationData,
   verifyLaboratoryRequestPublic,
+  type LaboratoryVerificationData,
 } from "../services/laboratoryService";
-import LaboratoryPrintDocument from "../components/laboratory/LaboratoryPrintDocument";
+import LaboratoryPrintModal from "../components/laboratory/LaboratoryPrintModal";
+import ShareLabResultModal from "../components/laboratory/ShareLabResultModal";
+import { HOSPITAL_OFFICIAL_DETAILS } from "../constants/hospitalInfo";
 import "../styles/verification.css";
+import "../styles/laboratory-studio.css";
 
-function formatDate(value?: string | null): string {
-  if (!value) return "Not recorded";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+/**
+ * Format scientific units to guarantee standard unicode superscripts and greek symbols
+ */
+function formatScientificUnit(unit?: string | null): string {
+  if (!unit) return "—";
+  return unit
+    .replace(/\^9/g, "⁹")
+    .replace(/\^12/g, "¹²")
+    .replace(/\^6/g, "⁶")
+    .replace(/\^3/g, "³")
+    .replace(/uL/g, "µL")
+    .replace(/umol/g, "µmol")
+    .replace(/ug/g, "µg");
 }
 
-function formatStatus(status: string): string {
-  return status.replace(/_/g, " ").toUpperCase();
+/**
+ * Safely format result display value so nulls, undefined, and empty objects show cleanly
+ */
+function formatDisplayValue(val: unknown): string {
+  if (val === undefined || val === null || val === "") return "—";
+  if (typeof val === "object") {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return "—";
+    }
+  }
+  return String(val).trim();
 }
 
 export default function LaboratoryVerificationPage() {
-  const { identifier } = useParams();
+  const { identifier, id } = useParams<{ identifier?: string; id?: string }>();
+  const lookupId = (identifier || id || "").trim();
   const [data, setData] = useState<LaboratoryVerificationData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  const fetchVerification = async (isInitial = false) => {
+    if (!lookupId) {
+      setLoading(false);
+      setError("No laboratory reference identifier provided.");
+      return;
+    }
+
+    if (isInitial) setLoading(true);
+
+    const result = await verifyLaboratoryRequestPublic(lookupId);
+
+    if (isInitial) setLoading(false);
+    setLastChecked(new Date());
+
+    if (result.data) {
+      setData(result.data);
+      setError(null);
+    } else {
+      setError(result.error ?? "Laboratory test record could not be verified.");
+    }
+  };
 
   useEffect(() => {
-    if (!identifier) return;
-    let active = true;
-    QRCode.toDataURL(window.location.href, {
-      margin: 1,
-      width: 140,
-      color: { dark: "#0f766e", light: "#ffffff" },
-    })
-      .then((url) => {
-        if (active) setQrCodeDataUrl(url);
-      })
-      .catch((err) => console.error("Lab verification QR error:", err));
+    void fetchVerification(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookupId]);
 
-    return () => {
-      active = false;
-    };
-  }, [identifier]);
-
+  // Live auto-polling if test is still in progress / pending
   useEffect(() => {
-    let active = true;
+    if (!data || data.status === "completed" || data.status === "cancelled") {
+      return;
+    }
 
-    async function load() {
-      if (!identifier?.trim()) {
-        setLoading(false);
-        setErrorMessage("No verification code provided.");
-        return;
-      }
+    const intervalId = setInterval(() => {
+      void fetchVerification(false);
+    }, 8000);
 
-      setLoading(true);
-      setErrorMessage(null);
+    return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.status, lookupId]);
 
-      const result = await verifyLaboratoryRequestPublic(identifier.trim());
+  const isCompleted = data?.status === "completed";
 
-      if (active) {
-        if (result.data) {
-          setData(result.data);
-        } else {
-          setErrorMessage(result.error ?? "This laboratory record could not be verified.");
-        }
-        setLoading(false);
+  // Evaluate abnormal/normal flag
+  const evaluateFlag = (referenceRange?: string | null, value?: unknown) => {
+    if (value === undefined || value === null || value === "") return null;
+    const strVal = String(value).trim();
+    if (!referenceRange) return null;
+
+    const num = parseFloat(strVal);
+    if (!isNaN(num) && referenceRange.includes("-")) {
+      const parts = referenceRange.split("-").map((p) => parseFloat(p.replace(/[^0-9.]/g, "")));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        if (num < parts[0]) return { status: "low", label: "LOW" };
+        if (num > parts[1]) return { status: "high", label: "HIGH" };
+        return { status: "normal", label: "NORMAL" };
       }
     }
 
-    void load();
+    const lowerRef = referenceRange.toLowerCase();
+    const lowerVal = strVal.toLowerCase();
+    if (lowerRef.includes("negative") || lowerRef.includes("non-reactive") || lowerRef.includes("normal")) {
+      if (lowerVal.includes("positive") || lowerVal.includes("reactive") || lowerVal.includes("3+") || lowerVal.includes("4+")) {
+        return { status: "abnormal", label: "ABNORMAL" };
+      }
+      if (lowerVal.includes("negative") || lowerVal.includes("non-reactive") || lowerVal.includes("normal")) {
+        return { status: "normal", label: "NORMAL" };
+      }
+    }
 
-    return () => {
-      active = false;
-    };
-  }, [identifier]);
+    return null;
+  };
 
-  const handlePrint = () => {
-    window.print();
+  const formatDate = (val?: string | null) => {
+    if (!val) return "—";
+    try {
+      const d = new Date(val);
+      return isNaN(d.getTime())
+        ? val
+        : d.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+    } catch {
+      return val;
+    }
   };
 
   return (
-    <main className="verification-page lab-verification-page print-canvas printable-area">
-      <section className="verification-card lab-verification-card print-canvas printable-area">
-        {/* Brand Header */}
-        <div className="verification-brand" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <img src={mdsLogo} alt="MDS Specialist Hospital Logo" style={{ width: 56, height: 56, objectFit: "contain" }} />
-            <div>
-              <strong style={{ fontSize: "1.15rem", color: "#0f172a" }}>MDS Specialist Hospital Kano</strong>
-              <span style={{ fontSize: "0.82rem", color: "#0f766e", fontWeight: 600 }}>Diagnostic Pathology &amp; Laboratory Services</span>
-            </div>
-          </div>
-
-          {qrCodeDataUrl && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
-              <img
-                src={qrCodeDataUrl}
-                alt="Scan to verify result"
-                style={{ width: 56, height: 56, borderRadius: 6, border: "1px solid #cbd5e1", padding: 2, background: "#fff" }}
-              />
-              <small style={{ fontSize: "0.58rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Scan to Verify</small>
-            </div>
-          )}
+    <main className="verification-page" style={{ minHeight: "100vh", padding: "2.5rem 1rem" }}>
+      <div className="lab-verify-wrapper">
+        {/* Top Return Link */}
+        <div style={{ marginBottom: "1.25rem" }}>
+          <Link
+            to="/"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              color: "var(--muted, #64748b)",
+              textDecoration: "none",
+              fontSize: "0.9rem",
+              fontWeight: 600,
+            }}
+          >
+            <FiArrowLeft /> Return to {HOSPITAL_OFFICIAL_DETAILS.name} Home
+          </Link>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="verification-state">
-            <FiLoader className="spin" style={{ fontSize: "2.4rem", color: "#0f766e" }} />
-            <h1>Verifying Diagnostic Record</h1>
-            <p>Please wait while we authenticate this laboratory test with our secure registry...</p>
-          </div>
-        )}
-
-        {/* Error / Not Found State */}
-        {!loading && (errorMessage || !data) && (
-          <div className="verification-state failed">
-            <FiSlash style={{ fontSize: "2.6rem", color: "#ef4444" }} />
-            <h1>Record Verification Failed</h1>
-            <p>{errorMessage || "The requested laboratory test or requisition slip could not be verified."}</p>
-            <p style={{ fontSize: "0.82rem", color: "#64748b", marginTop: "8px" }}>
-              Code checked: <code>{identifier}</code>
-            </p>
-            <div style={{ marginTop: "18px", display: "flex", gap: "10px" }}>
-              <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", padding: "8px 16px", borderRadius: "8px", background: "#0f766e", color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>
-                <FiHome /> Hospital Home
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Success / Verified State */}
-        {!loading && data && (
-          <>
-            {/* Authenticity Banner */}
-            <div className={`verification-status verified ${data.status === "completed" ? "completed" : "pending"}`}>
-              <FiShield style={{ fontSize: "1.25rem" }} />
-              <span>
-                <strong>Official Verified Record</strong> • {data.requestNumber}
-              </span>
-            </div>
-
-            {/* Profile / Test Header */}
-            <div className="verification-profile" style={{ alignItems: "flex-start" }}>
-              <div className="verification-photo" style={{ background: "linear-gradient(135deg, #0f766e, #0369a1)", color: "#ffffff" }}>
-                <FaFlask style={{ fontSize: "1.6rem" }} />
+        {/* Verification Card */}
+        <section className="lab-verify-card">
+          {/* Brand Header */}
+          <header className="lab-verify-header-brand">
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <MdsLogo size={48} />
+              <div className="lab-verify-brand-info">
+                <h1>{HOSPITAL_OFFICIAL_DETAILS.name}</h1>
+                <p>Diagnostic Pathology & Clinical Laboratory Verification</p>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
-                  <span className={`status-pill ${data.status}`}>
-                    {formatStatus(data.status)}
-                  </span>
-                  {data.template.category && (
-                    <span className="category-pill">{data.template.category}</span>
+            </div>
+
+            {data && (
+              <div className="lab-verify-security-badge">
+                <FiShield />
+                <span>OFFICIAL VERIFICATION PORTAL</span>
+              </div>
+            )}
+          </header>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="verification-state" style={{ padding: "4rem 1rem", textAlign: "center" }}>
+              <FiLoader className="spin" style={{ fontSize: "2.5rem", color: "#087ebd", marginBottom: "1rem" }} />
+              <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.4rem" }}>Verifying Laboratory Record</h2>
+              <p style={{ margin: 0, color: "#64748b" }}>
+                Authenticating specimen reference with {HOSPITAL_OFFICIAL_DETAILS.name} clinical pathology database...
+              </p>
+            </div>
+          )}
+
+          {/* Error / Not Found State */}
+          {!loading && error && (
+            <div className="verification-state failed" style={{ padding: "3rem 1rem", textAlign: "center" }}>
+              <FiSlash style={{ fontSize: "2.5rem", color: "#ef4444", marginBottom: "1rem" }} />
+              <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.4rem" }}>Test Record Not Found</h2>
+              <p style={{ color: "#64748b" }}>{error}</p>
+              <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "1.5rem" }}>
+                If you believe this is an error, please contact {HOSPITAL_OFFICIAL_DETAILS.name} Diagnostic Services at{" "}
+                <strong style={{ color: "#087ebd" }}>{HOSPITAL_OFFICIAL_DETAILS.primaryPhone}</strong> or email{" "}
+                <strong style={{ color: "#087ebd" }}>{HOSPITAL_OFFICIAL_DETAILS.email}</strong>.
+              </p>
+            </div>
+          )}
+
+          {/* Verified Content */}
+          {!loading && data && (
+            <>
+              {/* Status Header Strip */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.85rem",
+                  padding: "1rem 1.35rem",
+                  borderRadius: "14px",
+                  background: isCompleted ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                  border: `1.5px solid ${isCompleted ? "rgba(16, 185, 129, 0.35)" : "rgba(245, 158, 11, 0.35)"}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  {isCompleted ? (
+                    <FiCheckCircle style={{ color: "#10b981", fontSize: "1.6rem", flexShrink: 0 }} />
+                  ) : (
+                    <FiClock className="spin" style={{ color: "#f59e0b", fontSize: "1.6rem", flexShrink: 0 }} />
                   )}
+                  <div>
+                    <strong style={{ color: isCompleted ? "#047857" : "#b45309", fontSize: "1rem", display: "block" }}>
+                      {isCompleted ? "OFFICIAL AUTHENTICATED RESULT" : "SAMPLE COLLECTED / ANALYSIS IN PROGRESS"}
+                    </strong>
+                    <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                      Laboratory Accession:{" "}
+                      <strong style={{ fontFamily: "monospace", color: "#0284c7" }}>{data.requestNumber}</strong>
+                    </span>
+                  </div>
                 </div>
-                <h1 style={{ fontSize: "1.35rem", fontWeight: 800, margin: "2px 0 4px" }}>
-                  {data.template.reportTitle || data.template.name}
-                </h1>
-                <p style={{ margin: 0, color: "#64748b", fontSize: "0.88rem" }}>
-                  Patient: <strong>{data.patient.fullName}</strong> {data.patient.mrn ? `(${data.patient.mrn})` : ""}
-                </p>
-              </div>
-            </div>
 
-            {/* Verification Metadata Grid */}
-            <div className="verification-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", margin: "16px 0" }}>
-              <span>
-                <small>Patient Name</small>
-                <strong>{data.patient.fullName}</strong>
-              </span>
-              <span>
-                <small>Hospital MRN</small>
-                <strong>{data.patient.mrn || "N/A"}</strong>
-              </span>
-              <span>
-                <small>Gender</small>
-                <strong>{data.patient.gender || "Not specified"}</strong>
-              </span>
-              <span>
-                <small>Specimen</small>
-                <strong>{data.template.specimen || "Standard Specimen"}</strong>
-              </span>
-              <span>
-                <small>Requested On</small>
-                <strong>{formatDate(data.createdAt)}</strong>
-              </span>
-              <span>
-                <small>Sample Status</small>
-                <strong>
-                  {data.sampleCollectedAt
-                    ? `Collected: ${formatDate(data.sampleCollectedAt)}`
-                    : "Awaiting Collection"}
-                </strong>
-              </span>
-              {data.completedAt && (
-                <span>
-                  <small>Authorized Date</small>
-                  <strong>{formatDate(data.completedAt)}</strong>
-                </span>
-              )}
-              {data.technician && (
-                <span>
-                  <small>Authorized By</small>
-                  <strong>{data.technician.name}</strong>
-                </span>
-              )}
-            </div>
-
-            {/* Results Section (If Completed) */}
-            {data.status === "completed" && data.template.fields && (
-              <div className="verification-results-panel table-responsive" style={{ marginTop: "16px", border: "1px solid #e2e8f0", borderRadius: "12px", overflow: "hidden" }}>
-                <div style={{ background: "#f8fafc", padding: "10px 14px", borderBottom: "1px solid #e2e8f0", fontWeight: 800, fontSize: "0.88rem", color: "#0f172a" }}>
-                  Investigation Parameters & Observations
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                  {isCompleted && (
+                    <>
+                      <button
+                        type="button"
+                        className="lab-action-btn share"
+                        onClick={() => setIsShareModalOpen(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.45rem",
+                          padding: "0.55rem 1.15rem",
+                          fontSize: "0.86rem",
+                          fontWeight: 700,
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <FiShare2 /> Share Result
+                      </button>
+                      <button
+                        type="button"
+                        className="lab-btn-primary"
+                        onClick={() => setIsPrintModalOpen(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.45rem",
+                          padding: "0.55rem 1.15rem",
+                          fontSize: "0.86rem",
+                          fontWeight: 700,
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <FiPrinter /> Print Official Copy
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    className="lab-btn-secondary"
+                    onClick={() => fetchVerification(false)}
+                    title="Refresh status"
+                    style={{ padding: "0.55rem 0.85rem", borderRadius: "8px" }}
+                  >
+                    <FiRefreshCw />
+                  </button>
                 </div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem" }}>
-                  <thead>
-                    <tr style={{ background: "#f1f5f9", textAlign: "left" }}>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Parameter</th>
-                      <th style={{ padding: "8px 12px", color: "#475569" }}>Observed Value</th>
-                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Unit</th>
-                      <th className="hide-mobile" style={{ padding: "8px 12px", color: "#475569" }}>Reference Range</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.template.fields.map((field) => {
-                      const val = data.resultValues?.[field.key];
-                      const displayVal = val !== undefined && val !== null && val !== "" ? String(val) : "—";
-                      return (
-                        <tr key={field.key} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "8px 12px", fontWeight: 600 }}>{field.label}</td>
-                          <td style={{ padding: "8px 12px", fontWeight: 700, color: "#0f766e" }}>{displayVal}</td>
-                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.unit || "—"}</td>
-                          <td className="hide-mobile" style={{ padding: "8px 12px", color: "#64748b" }}>{field.referenceRange || "Standard"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
               </div>
-            )}
 
-            {/* Remarks / Notes */}
-            {(data.interpretation || data.clinicalNotes) && (
-              <div style={{ marginTop: "14px", padding: "12px 14px", borderRadius: "10px", background: "#f8fafc", border: "1px solid #e2e8f0", fontSize: "0.84rem" }}>
-                {data.interpretation && (
-                  <p style={{ margin: "0 0 6px" }}>
-                    <strong style={{ color: "#0f172a" }}>Clinical Interpretation: </strong>
-                    <span style={{ color: "#334155" }}>{data.interpretation}</span>
+              {/* Live Tracking Banner for in-progress tests */}
+              {!isCompleted && (
+                <div
+                  style={{
+                    padding: "1.2rem",
+                    background: "rgba(8, 126, 189, 0.08)",
+                    border: "1px dashed rgba(8, 126, 189, 0.4)",
+                    borderRadius: "12px",
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 0.35rem",
+                      fontSize: "1rem",
+                      color: "#0284c7",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <FiActivity /> Live Status Tracking Active
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "0.88rem", color: "#334155", lineHeight: 1.5 }}>
+                    Your specimen is undergoing active clinical analysis in the {HOSPITAL_OFFICIAL_DETAILS.name} laboratory. This page
+                    automatically syncs the moment results are verified and signed off by the pathologist.
                   </p>
-                )}
-                {data.clinicalNotes && (
-                  <p style={{ margin: 0 }}>
-                    <strong style={{ color: "#0f172a" }}>Clinical Notes: </strong>
-                    <span style={{ color: "#64748b" }}>{data.clinicalNotes}</span>
-                  </p>
-                )}
-              </div>
-            )}
+                  <small style={{ display: "block", marginTop: "0.5rem", color: "#64748b" }}>
+                    Last checked: {lastChecked.toLocaleTimeString()} (Polling every 8 seconds)
+                  </small>
+                </div>
+              )}
 
-            {/* Requisition Status Notice (If Pending / In Progress) */}
-            {data.status !== "completed" && (
-              <div style={{ marginTop: "14px", padding: "14px", borderRadius: "10px", background: "rgba(15, 118, 110, 0.08)", border: "1px solid rgba(15, 118, 110, 0.2)", display: "flex", gap: "10px", alignItems: "center" }}>
-                <FiClock style={{ fontSize: "1.4rem", color: "#0f766e", flexShrink: 0 }} />
-                <div style={{ fontSize: "0.85rem" }}>
-                  <strong style={{ color: "#0f766e", display: "block" }}>
-                    Investigation In Progress / Sample Collection
+              {/* Patient & Test Information Grid */}
+              <div className="lab-verify-meta-grid">
+                <div className="lab-verify-meta-cell">
+                  <span>Patient Full Name</span>
+                  <strong>{data.patient.fullName}</strong>
+                </div>
+
+                <div className="lab-verify-meta-cell">
+                  <span>Hospital MRN</span>
+                  <strong className="ref-id">{data.patient.mrn || "Pending"}</strong>
+                </div>
+
+                <div className="lab-verify-meta-cell">
+                  <span>Investigation / Panel</span>
+                  <strong style={{ color: "#0284c7" }}>{data.template.name}</strong>
+                </div>
+
+                <div className="lab-verify-meta-cell">
+                  <span>Specimen Matrix</span>
+                  <strong>{data.template.specimen || "Clinical Specimen"}</strong>
+                </div>
+
+                <div className="lab-verify-meta-cell">
+                  <span>Sample Collected</span>
+                  <strong>
+                    {formatDate(
+                      data.sampleCollectedAt ||
+                        (isCompleted || data.status === "sample_collected" || data.status === "in_progress"
+                          ? data.completedAt || data.createdAt
+                          : null)
+                    )}
                   </strong>
-                  <span style={{ color: "#334155" }}>
-                    This test requisition is registered in MDS Hospital records. Present this slip at the Phlebotomy or Laboratory Receiving Desk.
-                  </span>
                 </div>
+
+                {isCompleted && (
+                  <div className="lab-verify-meta-cell">
+                    <span>Authorized Date</span>
+                    <strong>{formatDate(data.completedAt)}</strong>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Print & Action Buttons */}
-            <div className="verification-actions" style={{ marginTop: "20px", display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
-              <button
-                type="button"
-                className="btn-print-slip"
-                onClick={handlePrint}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "#0f766e",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "10px 18px",
-                  borderRadius: "10px",
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                <FiPrinter /> {data.status === "completed" ? "Print Diagnostic Report" : "Print Requisition Slip"}
-              </button>
+              {/* High-Contrast Analyte Results Table */}
+              {isCompleted ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "1.1rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        color: "inherit",
+                      }}
+                    >
+                      <FiFileText style={{ color: "#087ebd" }} /> Observed Analyte Parameters
+                    </h3>
+                    <span style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>
+                      {data.template.fields?.length ?? 0} Parameters Tested
+                    </span>
+                  </div>
 
-              <Link
-                to="/"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  color: "#64748b",
-                  textDecoration: "none",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                }}
-              >
-                <FiHome /> Back to Hospital
-              </Link>
-            </div>
+                  <div className="lab-verify-table-container">
+                    <table className="lab-verify-table">
+                      <thead>
+                        <tr>
+                          <th>Parameter</th>
+                          <th>Observed Result</th>
+                          <th>Unit</th>
+                          <th>Standard Reference</th>
+                          <th>Clinical Flag</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.template.fields?.map((field, idx) => {
+                          const rawVal = data.resultValues?.[field.key];
+                          const displayVal = formatDisplayValue(rawVal);
+                          const flag = evaluateFlag(field.referenceRange, rawVal);
 
-            {/* Printable Document for physical printing */}
-            <div className="verification-print-container" style={{ display: "none" }}>
-              <LaboratoryPrintDocument request={data} />
-            </div>
-          </>
-        )}
-      </section>
+                          return (
+                            <tr key={idx}>
+                              <td className="cell-param">
+                                <strong className="lab-verify-param-name">{field.label}</strong>
+                              </td>
+                              <td className="cell-value">
+                                <strong>{displayVal}</strong>
+                              </td>
+                              <td className="cell-unit">{formatScientificUnit(field.unit)}</td>
+                              <td className="cell-range">{field.referenceRange || "Standard"}</td>
+                              <td>
+                                {flag ? (
+                                  <span className={`lab-verify-flag ${flag.status}`}>{flag.label}</span>
+                                ) : (
+                                  <span style={{ color: "#94a3b8", fontSize: "0.8rem", paddingLeft: "0.5rem" }}>
+                                    <FiCheck style={{ color: "#10b981", verticalAlign: "middle" }} />
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Clinical Interpretation & Notes */}
+                  {(data.interpretation || data.technicianNote) && (
+                    <div
+                      style={{
+                        padding: "1.15rem",
+                        background: "rgba(8, 126, 189, 0.06)",
+                        border: "1px solid rgba(8, 126, 189, 0.2)",
+                        borderRadius: "12px",
+                        fontSize: "0.88rem",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {data.interpretation && (
+                        <p style={{ margin: "0 0 0.5rem" }}>
+                          <strong style={{ color: "#0284c7" }}>Clinical Interpretation: </strong>
+                          {data.interpretation}
+                        </p>
+                      )}
+                      {data.technicianNote && (
+                        <p style={{ margin: 0 }}>
+                          <strong style={{ color: "#64748b" }}>Technician Notes: </strong>
+                          {data.technicianNote}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Authorized Pathologist / Laboratory Scientist Sign-off */}
+                  <div className="lab-verify-signoff">
+                    <div className="lab-verify-signoff-info">
+                      <small>Authorized Clinical Sign-off</small>
+                      <strong>{data.technician?.name || "Medical Laboratory Scientist"}</strong>
+                      <span>{HOSPITAL_OFFICIAL_DETAILS.name} Diagnostic Pathology Registry • Kano</span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#10b981" }}>
+                      <FiShield style={{ fontSize: "1.8rem" }} />
+                      <div>
+                        <strong style={{ display: "block", fontSize: "0.85rem", letterSpacing: "0.03em" }}>
+                          DIGITALLY AUTHENTICATED
+                        </strong>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                          Tamper-proof medical diagnostic record
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* In-Progress Pipeline */
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Diagnostic Workflow Milestones</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem" }}>
+                    <div
+                      style={{
+                        padding: "1rem",
+                        background: "rgba(16, 185, 129, 0.1)",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.74rem", color: "#059669", fontWeight: 800 }}>
+                        1. REQUEST RECORDED
+                      </span>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.84rem", fontWeight: 700 }}>
+                        {formatDate(data.createdAt)}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "1rem",
+                        background: data.sampleCollectedAt ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                        border: `1px solid ${data.sampleCollectedAt ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.74rem",
+                          color: data.sampleCollectedAt ? "#059669" : "#d97706",
+                          fontWeight: 800,
+                        }}
+                      >
+                        2. SAMPLE RECEIPT
+                      </span>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.84rem", fontWeight: 700 }}>
+                        {data.sampleCollectedAt ? formatDate(data.sampleCollectedAt) : "In Progress"}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        padding: "1rem",
+                        background: "rgba(100, 116, 139, 0.08)",
+                        border: "1px solid rgba(100, 116, 139, 0.2)",
+                        borderRadius: "10px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 800 }}>
+                        3. SCIENTIST VALIDATION
+                      </span>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.84rem", color: "#64748b" }}>
+                        Awaiting Analyte Release
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Standardized Hospital Contact Footer */}
+              <footer className="lab-verify-footer-address">
+                <strong>{HOSPITAL_OFFICIAL_DETAILS.name}</strong> • {HOSPITAL_OFFICIAL_DETAILS.fullAddress}
+                <br />
+                Emergency & Enquiries: {HOSPITAL_OFFICIAL_DETAILS.displayPhone} • Email: {HOSPITAL_OFFICIAL_DETAILS.email}
+                <br />
+                {HOSPITAL_OFFICIAL_DETAILS.accreditation}
+              </footer>
+            </>
+          )}
+        </section>
+      </div>
+
+      {/* Print Document Modal */}
+      {data && isPrintModalOpen && (
+        <LaboratoryPrintModal
+          request={data}
+          onClose={() => setIsPrintModalOpen(false)}
+        />
+      )}
+
+      {/* Share Result Modal */}
+      {data && isShareModalOpen && (
+        <ShareLabResultModal
+          request={data}
+          onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
     </main>
   );
 }

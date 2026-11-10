@@ -1304,3 +1304,31 @@ body.light-theme .settings-btn svg {
   box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
 }
 
+@media (max-width: 420px) {
+  .topbar {
+    min-height: 58px;
+    height: 58px;
+    padding-inline: 8px;
+  }
+
+  .topbar-logo-mark {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .icon-btn,
+  .avatar,
+  .user-menu-trigger {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .notification-panel,
+  .user-menu-dropdown {
+    top: 62px;
+  }
+}
+
+

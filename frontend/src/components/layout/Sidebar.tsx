@@ -307,6 +307,12 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             icon: <FiTool />,
             requiredPermissions: ["permissions.read"],
           },
+          {
+            title: "System Logs",
+            path: "/admin/activity",
+            icon: <FiClipboard />,
+            allowRoles: ["Super Admin", "Administrator"],
+          },
         ],
       },
       {

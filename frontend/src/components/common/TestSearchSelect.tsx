@@ -1,251 +1,214 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  FiCheck,
-  FiChevronDown,
-  FiPlus,
-  FiSearch,
-  FiTrash2,
-  FiX,
-  FiLayers,
-} from "react-icons/fi";
-import { FaFlask } from "react-icons/fa";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   useFloating,
-  autoUpdate,
   offset,
   flip,
   shift,
-  size,
-  useDismiss,
-  useRole,
-  useInteractions,
-  FloatingPortal,
+  autoUpdate,
 } from "@floating-ui/react";
+import {
+  FiCheck,
+  FiChevronDown,
+  FiSearch,
+  FiX,
+  FiPlus,
+  FiFilter,
+  FiTag,
+  FiLayers,
+} from "react-icons/fi";
+import { FaFlask, FaVial } from "react-icons/fa";
 import type { LaboratoryTemplate } from "../../types/laboratory";
-import "../../styles/app-pickers.css";
+import "../../styles/test-search-select.css";
 
 export interface TestSearchSelectProps {
   templates: LaboratoryTemplate[];
-  mode?: "single" | "multi";
-  // Single mode props
   selectedTemplateId?: string | null;
+  value?: string;
   onSelectTemplate?: (template: LaboratoryTemplate | null) => void;
-  // Multi mode props
+  onChange?: (templateId: string, template?: LaboratoryTemplate) => void;
+  // Optional multi-select mode (e.g. for doctor consultation lab ordering basket)
+  multiSelect?: boolean;
+  mode?: "single" | "multi";
   selectedTemplateIds?: string[];
+  selectedValues?: string[];
   onToggleTemplate?: (template: LaboratoryTemplate) => void;
   onClearMulti?: () => void;
-  // Common UI props
-  label?: string;
   placeholder?: string;
+  label?: string;
   error?: string;
   disabled?: boolean;
   required?: boolean;
   allowClear?: boolean;
   className?: string;
-  id?: string;
 }
 
-function getSpecimenColorClass(specimen?: string | null): string {
-  if (!specimen) return "general";
-  const s = specimen.toLowerCase();
-  if (s.includes("edta") || s.includes("whole blood")) return "edta";
-  if (s.includes("serum") || s.includes("plain") || s.includes("clot")) return "serum";
-  if (s.includes("urine")) return "urine";
-  if (s.includes("fluoride") || s.includes("plasma")) return "fluoride";
-  if (s.includes("swab")) return "swab";
-  if (s.includes("stool")) return "stool";
-  return "general";
-}
-
-function highlightSearchMatch(text?: string | null, query?: string) {
-  if (!text) return "";
-  const q = query?.trim();
-  if (!q) return text;
-
-  try {
-    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escaped})`, "gi");
-    const parts = text.split(regex);
-
-    return parts.map((part, index) =>
-      regex.test(part) ? (
-        <mark key={index} className="patient-search-highlight">
-          {part}
-        </mark>
-      ) : (
-        part
-      )
-    );
-  } catch {
-    return text;
-  }
-}
-
-const COMMON_QUICK_SEARCHES = [
-  { label: "FBC", query: "fbc" },
-  { label: "Malaria (MP)", query: "malaria" },
-  { label: "PCV", query: "pcv" },
-  { label: "Widal", query: "widal" },
-  { label: "Urinalysis", query: "urinalysis" },
-  { label: "Blood Sugar", query: "sugar" },
-  { label: "Genotype", query: "genotype" },
-  { label: "LFT", query: "lft" },
+// Quick common panels for fast 1-click staging
+const COMMON_PRESET_KEYWORDS = [
+  { label: "Malaria (MP)", kw: ["malaria", "mp"] },
+  { label: "Full Blood Count (FBC)", kw: ["full blood", "fbc", "cbc"] },
+  { label: "Urinalysis", kw: ["urinalysis", "urine"] },
+  { label: "Widal / Typhoid", kw: ["widal", "typhoid"] },
+  { label: "Fasting Sugar (FBS)", kw: ["fbs", "fasting blood sugar", "glucose"] },
+  { label: "Electrolytes (E/U/Cr)", kw: ["electrolyte", "e/u/cr", "kidney"] },
+  { label: "Liver Function (LFT)", kw: ["lft", "liver function"] },
+  { label: "Lipid Profile", kw: ["lipid", "cholesterol"] },
 ];
+
+function HighlightedMatch({ text, query }: { text: string; query: string }) {
+  if (!query.trim() || !text) return <span>{text}</span>;
+  const q = query.trim().toLowerCase();
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return <span>{text}</span>;
+
+  return (
+    <span>
+      {text.slice(0, idx)}
+      <mark className="test-match-highlight">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </span>
+  );
+}
 
 export default function TestSearchSelect({
   templates,
-  mode = "single",
   selectedTemplateId,
+  value,
   onSelectTemplate,
+  onChange,
+  multiSelect = false,
+  mode = "single",
   selectedTemplateIds = [],
+  selectedValues = [],
   onToggleTemplate,
   onClearMulti,
+  placeholder = "Search tests by name, code (e.g. FBC, MP), specimen, or analyte...",
   label,
-  placeholder,
   error,
   disabled = false,
   required = false,
   allowClear = true,
   className = "",
-  id,
 }: TestSearchSelectProps) {
+  const isMulti = multiSelect || mode === "multi";
+  const activeSelectedId = selectedTemplateId ?? value ?? null;
+  const activeSelectedIds = selectedTemplateIds.length > 0 ? selectedTemplateIds : selectedValues;
+
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Monitor viewport size for mobile sheet vs desktop popover
   useEffect(() => {
-    function handleResize() {
-      setIsMobile(window.innerWidth < 768);
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Floating UI Setup
-  const { refs, floatingStyles, context } = useFloating({
+  const { refs, floatingStyles } = useFloating({
     open: isOpen && !isMobile,
     onOpenChange: setIsOpen,
-    placement: "bottom-start",
+    middleware: [offset(6), flip(), shift({ padding: 12 })],
     whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(6),
-      flip({ padding: 12 }),
-      shift({ padding: 12 }),
-      size({
-        apply({ rects, elements }) {
-          Object.assign(elements.floating.style, {
-            width: `${Math.max(rects.reference.width, 440)}px`,
-            maxWidth: "96vw",
-          });
-        },
-      }),
-    ],
   });
 
-  const dismiss = useDismiss(context, { outsidePress: true });
-  const role = useRole(context, { role: "listbox" });
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, role]);
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => t.id === activeSelectedId) ?? null,
+    [templates, activeSelectedId]
+  );
 
-  // Extract unique categories
+  // Collect distinct categories
   const categories = useMemo(() => {
     const set = new Set<string>();
-    for (const t of templates) {
-      if (t.category?.trim()) {
+    templates.forEach((t) => {
+      if (t.category && t.category.trim()) {
         set.add(t.category.trim());
       }
-    }
-    return ["All", ...Array.from(set).sort()];
+    });
+    return ["all", ...Array.from(set)];
   }, [templates]);
-
-  // Active single selection
-  const selectedTemplate = useMemo(() => {
-    if (mode !== "single" || !selectedTemplateId) return null;
-    return templates.find((t) => t.id === selectedTemplateId) ?? null;
-  }, [mode, selectedTemplateId, templates]);
-
-  // Multi selected items
-  const selectedMultiTemplates = useMemo(() => {
-    if (mode !== "multi") return [];
-    return templates.filter((t) => selectedTemplateIds.includes(t.id));
-  }, [mode, selectedTemplateIds, templates]);
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
+
     return templates.filter((t) => {
-      // Category filter
-      if (activeCategory !== "All" && t.category !== activeCategory) {
+      if (selectedCategory !== "all" && t.category !== selectedCategory) {
         return false;
       }
-
-      // Search match
       if (!q) return true;
-      const name = t.name.toLowerCase();
-      const code = (t.code ?? "").toLowerCase();
-      const specimen = (t.specimen ?? "").toLowerCase();
-      const category = (t.category ?? "").toLowerCase();
-      const fieldsMatch = t.fields?.some((f) =>
-        f.label.toLowerCase().includes(q) || f.key.toLowerCase().includes(q)
+
+      const nameMatch = t.name.toLowerCase().includes(q);
+      const codeMatch = (t.code ?? "").toLowerCase().includes(q);
+      const catMatch = (t.category ?? "").toLowerCase().includes(q);
+      const specMatch = (t.specimen ?? "").toLowerCase().includes(q);
+      const analyteMatch = t.fields?.some(
+        (f) =>
+          f.label.toLowerCase().includes(q) ||
+          (f.key && f.key.toLowerCase().includes(q))
       );
 
-      return (
-        name.includes(q) ||
-        code.includes(q) ||
-        specimen.includes(q) ||
-        category.includes(q) ||
-        fieldsMatch
-      );
+      return nameMatch || codeMatch || catMatch || specMatch || analyteMatch;
     });
-  }, [templates, activeCategory, searchQuery]);
+  }, [templates, searchQuery, selectedCategory]);
 
   useEffect(() => {
     setHighlightedIndex(0);
-  }, [searchQuery, activeCategory]);
+  }, [searchQuery, selectedCategory]);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         searchInputRef.current?.focus();
-      }, 60);
+      }, 50);
     } else {
       setSearchQuery("");
-      setActiveCategory("All");
+      setSelectedCategory("all");
     }
   }, [isOpen]);
 
-  // Scroll active item into view
+  // Outside click listener for desktop popover
   useEffect(() => {
-    if (isOpen && listRef.current) {
-      const activeEl = listRef.current.querySelector(".test-picker-row.highlighted") as HTMLElement | null;
-      if (activeEl) {
-        activeEl.scrollIntoView({ block: "nearest" });
+    if (!isOpen || isMobile) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        refs.reference.current instanceof HTMLElement &&
+        refs.reference.current.contains(e.target as Node)
+      ) {
+        return;
       }
-    }
-  }, [highlightedIndex, isOpen]);
-
-  const handleSelectTemplate = (template: LaboratoryTemplate) => {
-    if (mode === "single") {
-      onSelectTemplate?.(template);
+      if (
+        refs.floating.current instanceof HTMLElement &&
+        refs.floating.current.contains(e.target as Node)
+      ) {
+        return;
+      }
       setIsOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, isMobile, refs]);
+
+  const handleSelect = (tpl: LaboratoryTemplate) => {
+    if (isMulti && onToggleTemplate) {
+      onToggleTemplate(tpl);
     } else {
-      onToggleTemplate?.(template);
+      onSelectTemplate?.(tpl);
+      onChange?.(tpl.id, tpl);
+      setIsOpen(false);
     }
   };
 
-  const handleClearSingle = (e: React.MouseEvent) => {
+  const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelectTemplate?.(null);
-  };
-
-  const handleClearAll = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    onChange?.("", undefined);
     onClearMulti?.();
+    setSearchQuery("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -262,351 +225,320 @@ export default function TestSearchSelect({
       setHighlightedIndex((prev) =>
         prev < filteredTemplates.length - 1 ? prev + 1 : prev
       );
+      scrollHighlighted(highlightedIndex + 1);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+      scrollHighlighted(highlightedIndex - 1);
     } else if (e.key === "Enter" && filteredTemplates[highlightedIndex]) {
       e.preventDefault();
-      handleSelectTemplate(filteredTemplates[highlightedIndex]);
+      handleSelect(filteredTemplates[highlightedIndex]);
     } else if (e.key === "Escape") {
       e.preventDefault();
       setIsOpen(false);
     }
   };
 
-  const defaultPlaceholder =
-    placeholder ||
-    (mode === "multi"
-      ? "Search & choose diagnostic tests for order basket..."
-      : "Search test by name, code (FBC, MP, LFT), or specimen...");
-
-  const isTestSelected = (id: string) => {
-    if (mode === "single") return selectedTemplateId === id;
-    return selectedTemplateIds.includes(id);
+  const scrollHighlighted = (index: number) => {
+    if (!listRef.current) return;
+    const items = listRef.current.querySelectorAll(".test-row-card");
+    const target = items[index] as HTMLElement | undefined;
+    if (target) {
+      target.scrollIntoView({ block: "nearest" });
+    }
   };
 
-  const popoverContent = (
-    <>
-      {isMobile && (
-        <div
-          className="app-picker-backdrop"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      <div
-        ref={isMobile ? undefined : refs.setFloating}
-        style={isMobile ? undefined : floatingStyles}
-        {...(!isMobile ? getFloatingProps() : {})}
-        className="app-picker-popover test-search-popover"
-        role="dialog"
-        aria-label="Diagnostic test catalog"
-      >
-        <div className="app-picker-mobile-handle" />
-
-        {/* Header */}
-        <div className="app-picker-header">
-          <div className="app-picker-title">
-            <FaFlask color="var(--picker-primary)" />
-            <span>
-              {mode === "multi" ? "Laboratory Order Basket" : "Diagnostic Test Catalog"}
-            </span>
-            <span className="picker-count-badge" style={{ fontSize: "0.72rem" }}>
-              {filteredTemplates.length} tests
-            </span>
-          </div>
-          <button
-            type="button"
-            className="app-picker-close-btn"
-            onClick={() => setIsOpen(false)}
-            aria-label="Close test chooser"
-          >
-            <FiX size={18} />
-          </button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="test-picker-search-bar">
-          <FiSearch className="search-icon" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="test-picker-search-input"
-            placeholder="Type test name, acronym (e.g. FBC, MP, PCV, LFT), specimen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="test-picker-clear-search"
-              onClick={() => setSearchQuery("")}
-              aria-label="Clear search"
-            >
-              <FiX size={16} />
-            </button>
-          )}
-        </div>
-
-        {/* Quick Common Investigation Chips */}
-        <div className="test-quick-chips-row">
-          {COMMON_QUICK_SEARCHES.map((chip) => (
-            <button
-              key={chip.label}
-              type="button"
-              className={`test-quick-add-chip ${searchQuery.toLowerCase() === chip.query ? "selected" : ""}`}
-              onClick={() => setSearchQuery(chip.query)}
-            >
-              <FiSearch size={10} />
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category Filter Tabs */}
-        {categories.length > 2 && (
-          <div className="test-picker-tabs">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                className={`test-tab-chip ${activeCategory === cat ? "active" : ""}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Selected Basket Counter Bar in Multi Mode */}
-        {mode === "multi" && selectedTemplateIds.length > 0 && (
-          <div className="test-basket-bar">
-            <span>
-              <FaFlask style={{ marginRight: 6 }} />
-              <strong>{selectedTemplateIds.length}</strong> test{selectedTemplateIds.length > 1 ? "s" : ""} selected in order
-            </span>
-            {onClearMulti && (
-              <button
-                type="button"
-                className="app-picker-clear-btn"
-                style={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700 }}
-                onClick={handleClearAll}
-              >
-                Clear All
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Test List */}
-        <div ref={listRef} className="test-picker-list">
-          {filteredTemplates.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "2rem 1rem", color: "var(--picker-muted)" }}>
-              <FaFlask style={{ fontSize: "2rem", marginBottom: "0.5rem", opacity: 0.4 }} />
-              <p style={{ fontWeight: 700, margin: "0 0 4px" }}>No diagnostic tests found</p>
-              <small>Try another keyword, shortcode, or select 'All' categories.</small>
-            </div>
-          ) : (
-            filteredTemplates.map((template, index) => {
-              const selected = isTestSelected(template.id);
-              const highlighted = index === highlightedIndex;
-              const specimenClass = getSpecimenColorClass(template.specimen);
-
-              return (
-                <div
-                  key={template.id}
-                  className={`test-picker-row ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""}`}
-                  onClick={() => handleSelectTemplate(template)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  role="option"
-                  aria-selected={selected}
-                >
-                  <div className="test-row-main">
-                    <div className="test-row-name-line">
-                      <strong className="test-row-title">
-                        {highlightSearchMatch(template.name, searchQuery)}
-                      </strong>
-                      {template.code && (
-                        <span className="test-row-code-badge">
-                          {highlightSearchMatch(template.code, searchQuery)}
-                        </span>
-                      )}
-                      {template.specimen && (
-                        <span className={`test-specimen-badge ${specimenClass}`}>
-                          🩸 {template.specimen}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="test-row-subtext">
-                      {template.category && (
-                        <span>Category: <strong>{template.category}</strong></span>
-                      )}
-                      {template.fields && template.fields.length > 0 && (
-                        <span>• {template.fields.length} analytes</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {mode === "multi" ? (
-                    <div className="test-row-checkbox">
-                      {selected && <FiCheck strokeWidth={3} />}
-                    </div>
-                  ) : (
-                    selected && (
-                      <div style={{ color: "var(--picker-primary)", fontSize: "1.2rem" }}>
-                        <FiCheck />
-                      </div>
-                    )
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="app-picker-footer">
-          {mode === "multi" ? (
-            <>
-              <span style={{ fontSize: "0.8rem", color: "var(--picker-muted)" }}>
-                {selectedTemplateIds.length} test{selectedTemplateIds.length === 1 ? "" : "s"} chosen
-              </span>
-              <button
-                type="button"
-                className="app-picker-btn primary"
-                onClick={() => setIsOpen(false)}
-              >
-                <FiCheck style={{ marginRight: 4 }} /> Confirm Selection
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="app-picker-btn secondary"
-                onClick={() => {
-                  onSelectTemplate?.(null);
-                  setIsOpen(false);
-                }}
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                className="app-picker-btn primary"
-                onClick={() => setIsOpen(false)}
-              >
-                Done
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </>
-  );
+  const isTemplateActive = (id: string) => {
+    if (isMulti) {
+      return activeSelectedIds.includes(id);
+    }
+    return activeSelectedId === id;
+  };
 
   return (
     <div
-      className={`app-picker-wrapper ${className}`}
+      className={`test-search-select-container ${className} ${disabled ? "disabled" : ""} ${error ? "has-error" : ""}`}
       onKeyDown={handleKeyDown}
+      ref={refs.setReference}
     >
       {label && (
-        <label className="app-picker-label" htmlFor={id}>
-          <span>
-            {label} {required && <span className="required-star">*</span>}
-          </span>
-          {mode === "multi" && selectedTemplateIds.length > 0 && (
-            <span className="helper-badge">
-              {selectedTemplateIds.length} selected
-            </span>
-          )}
+        <label className="test-select-label">
+          {label} {required && <span className="req-star">*</span>}
         </label>
       )}
 
       {/* Main Trigger Button */}
       <div
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        id={id}
-        className={`app-picker-trigger ${isOpen ? "open" : ""} ${
-          (selectedTemplate || selectedMultiTemplates.length > 0) ? "has-value" : ""
-        } ${error ? "has-error" : ""} ${disabled ? "disabled" : ""}`}
+        className={`test-select-trigger ${isOpen ? "open" : ""} ${selectedTemplate || (isMulti && activeSelectedIds.length > 0) ? "has-value" : ""}`}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         role="combobox"
         aria-expanded={isOpen}
-        aria-haspopup="dialog"
         tabIndex={disabled ? -1 : 0}
       >
-        <div className="app-picker-icon-box">
+        <div className="test-trigger-icon">
           <FaFlask />
         </div>
 
-        <div className="app-picker-content">
-          {mode === "single" && selectedTemplate ? (
-            <div className="app-picker-value">
-              <span>{selectedTemplate.name}</span>
-              {selectedTemplate.code && (
-                <span className="test-row-code-badge" style={{ fontSize: "0.68rem" }}>
-                  {selectedTemplate.code}
+        <div className="test-trigger-content">
+          {isMulti ? (
+            activeSelectedIds.length > 0 ? (
+              <div className="test-multi-preview">
+                <span className="test-multi-count">
+                  {activeSelectedIds.length} Test{activeSelectedIds.length > 1 ? "s" : ""} Selected
                 </span>
-              )}
-              {selectedTemplate.specimen && (
-                <span className="app-picker-subvalue">
-                  [Specimen: {selectedTemplate.specimen}]
+                <span className="test-multi-hint">Tap to add more or modify</span>
+              </div>
+            ) : (
+              <span className="test-placeholder">{placeholder}</span>
+            )
+          ) : selectedTemplate ? (
+            <div className="test-single-preview">
+              <div className="test-preview-title">
+                <strong className="test-name">{selectedTemplate.name}</strong>
+                {selectedTemplate.code && (
+                  <span className="test-code-pill">{selectedTemplate.code}</span>
+                )}
+              </div>
+              <div className="test-preview-meta">
+                {selectedTemplate.category && (
+                  <span className="test-cat-tag">{selectedTemplate.category}</span>
+                )}
+                {selectedTemplate.specimen && (
+                  <span className="test-specimen-tag">
+                    <FaVial /> {selectedTemplate.specimen}
+                  </span>
+                )}
+                <span className="test-analytes-count">
+                  {selectedTemplate.fields?.length || 0} analytes
                 </span>
-              )}
-            </div>
-          ) : mode === "multi" && selectedMultiTemplates.length > 0 ? (
-            <div className="app-picker-value">
-              <span>
-                {selectedMultiTemplates.length} diagnostic test{selectedMultiTemplates.length > 1 ? "s" : ""} selected
-              </span>
-              <span className="app-picker-subvalue">
-                ({selectedMultiTemplates.map((t) => t.code || t.name).slice(0, 3).join(", ")}
-                {selectedMultiTemplates.length > 3 ? "..." : ""})
-              </span>
+              </div>
             </div>
           ) : (
-            <span className="app-picker-placeholder">{defaultPlaceholder}</span>
+            <span className="test-placeholder">{placeholder}</span>
           )}
         </div>
 
-        <div className="app-picker-actions">
-          {allowClear && !disabled && (
-            (mode === "single" && selectedTemplate) ? (
-              <button
-                type="button"
-                className="app-picker-clear-btn"
-                onClick={handleClearSingle}
-                title="Clear test selection"
-                aria-label="Clear test selection"
-              >
-                <FiX size={15} />
-              </button>
-            ) : (mode === "multi" && selectedMultiTemplates.length > 0 && onClearMulti) ? (
-              <button
-                type="button"
-                className="app-picker-clear-btn"
-                onClick={handleClearAll}
-                title="Clear all selected tests"
-                aria-label="Clear all selected tests"
-              >
-                <FiX size={15} />
-              </button>
-            ) : null
+        <div className="test-trigger-actions">
+          {!isMulti && allowClear && selectedTemplate && !disabled && (
+            <button
+              type="button"
+              className="test-clear-btn"
+              onClick={handleClear}
+              title="Clear selected test"
+            >
+              <FiX />
+            </button>
           )}
-          <FiChevronDown className={`app-picker-chevron ${isOpen ? "open" : ""}`} />
+          <FiChevronDown className={`test-chevron ${isOpen ? "rotate" : ""}`} />
         </div>
       </div>
 
-      {error && <span className="app-picker-error-msg">{error}</span>}
+      {error && <span className="test-error-text">{error}</span>}
 
-      {/* Popover / Mobile Sheet */}
-      {isOpen && <FloatingPortal>{popoverContent}</FloatingPortal>}
+      {/* Mobile Backdrop */}
+      {isOpen && isMobile && (
+        <div
+          className="test-picker-backdrop"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Dropdown Popover / Mobile Sheet */}
+      {isOpen && (
+        <div
+          ref={refs.setFloating}
+          style={isMobile ? undefined : floatingStyles}
+          className={`test-picker-popover ${isMobile ? "mobile-sheet" : "desktop-floating"}`}
+          role="listbox"
+        >
+          {isMobile && <div className="test-sheet-handle" />}
+
+          {/* Header */}
+          <div className="test-picker-header">
+            <div className="test-header-title">
+              <FaFlask />
+              <span>Select Diagnostic Test / Panel</span>
+              <span className="test-count-badge">
+                {filteredTemplates.length} available
+              </span>
+            </div>
+            {isMobile && (
+              <button
+                type="button"
+                className="test-close-btn"
+                onClick={() => setIsOpen(false)}
+              >
+                <FiX />
+              </button>
+            )}
+          </div>
+
+          {/* Search Box */}
+          <div className="test-search-wrapper">
+            <FiSearch className="test-search-icon" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="test-search-input"
+              placeholder="Search by test name, code (e.g. FBC), specimen, or analyte..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoComplete="off"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="test-search-clear"
+                onClick={() => setSearchQuery("")}
+              >
+                <FiX />
+              </button>
+            )}
+          </div>
+
+          {/* Category Filter Pills */}
+          {categories.length > 2 && (
+            <div className="test-category-pills">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`test-cat-pill ${selectedCategory === cat ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(cat)}
+                >
+                  {cat === "all" ? "All Panels" : cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick Common Presets (When query is empty) */}
+          {!searchQuery && (
+            <div className="test-quick-presets-strip">
+              <span className="test-quick-title">Quick Picks:</span>
+              <div className="test-quick-chips">
+                {COMMON_PRESET_KEYWORDS.map((preset) => {
+                  const match = templates.find((t) =>
+                    preset.kw.some(
+                      (kw) =>
+                        t.name.toLowerCase().includes(kw) ||
+                        (t.code && t.code.toLowerCase().includes(kw))
+                    )
+                  );
+                  if (!match) return null;
+                  const active = isTemplateActive(match.id);
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      className={`test-preset-chip ${active ? "is-selected" : ""}`}
+                      onClick={() => handleSelect(match)}
+                    >
+                      {active ? <FiCheck /> : <FiPlus />}
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Test Cards List */}
+          <div ref={listRef} className="test-picker-list">
+            {filteredTemplates.length === 0 ? (
+              <div className="test-empty-state">
+                <FaFlask className="empty-flask" />
+                <strong>No diagnostic tests found</strong>
+                <p>Try searching by code (e.g. FBC, MP, LFT) or choose another category.</p>
+              </div>
+            ) : (
+              filteredTemplates.map((template, idx) => {
+                const isSelected = isTemplateActive(template.id);
+                const isHighlighted = idx === highlightedIndex;
+
+                return (
+                  <div
+                    key={template.id}
+                    className={`test-row-card ${isSelected ? "selected" : ""} ${isHighlighted ? "highlighted" : ""}`}
+                    onClick={() => handleSelect(template)}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                    role="option"
+                    aria-selected={isSelected}
+                  >
+                    <div className="test-icon-badge">
+                      <FaVial />
+                    </div>
+
+                    <div className="test-row-info">
+                      <div className="test-name-line">
+                        <strong className="test-card-name">
+                          <HighlightedMatch
+                            text={template.name}
+                            query={searchQuery}
+                          />
+                        </strong>
+                        {template.code && (
+                          <span className="test-card-code">
+                            <HighlightedMatch
+                              text={template.code}
+                              query={searchQuery}
+                            />
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="test-meta-line">
+                        {template.category && (
+                          <span className="meta-category">
+                            {template.category}
+                          </span>
+                        )}
+                        {template.specimen && (
+                          <span className="meta-specimen">
+                            Specimen:{" "}
+                            <HighlightedMatch
+                              text={template.specimen}
+                              query={searchQuery}
+                            />
+                          </span>
+                        )}
+                        <span className="meta-analytes">
+                          {template.fields?.length || 0} Analyte{template.fields?.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="test-select-indicator">
+                      {isSelected ? (
+                        <div className="test-check-circle">
+                          <FiCheck />
+                        </div>
+                      ) : isMulti ? (
+                        <div className="test-plus-circle">
+                          <FiPlus />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer */}
+          {isMulti && (
+            <div className="test-picker-footer">
+              <button
+                type="button"
+                className="test-done-btn"
+                onClick={() => setIsOpen(false)}
+              >
+                <FiCheck /> Done ({activeSelectedIds.length} Selected)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
