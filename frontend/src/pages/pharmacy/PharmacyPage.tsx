@@ -3,18 +3,22 @@ import {
   FiArchive,
   FiClipboard,
   FiEdit3,
+  FiMinus,
   FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiSave,
   FiSearch,
   FiShoppingCart,
+  FiTrash2,
+  FiUser,
 } from "react-icons/fi";
 import { FaCapsules } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import AdminLayout from "../../layouts/AdminLayout";
 import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
+import "../../styles/pharmacy-studio.css";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
   adjustMedicationStock,
@@ -359,6 +363,83 @@ export default function PharmacyPage() {
     }));
   };
 
+  const quickAddMedicationToCart = (medication: Medication) => {
+    if (medication.currentStock <= 0) {
+      setError(`Cannot add ${medication.name} because it is out of stock.`);
+      return;
+    }
+
+    setSaleForm((current) => {
+      const existingIndex = current.items.findIndex(
+        (item) => item.medicationId === medication.id
+      );
+
+      if (existingIndex >= 0) {
+        const existingItem = current.items[existingIndex];
+        const newQty = Number(existingItem.quantity || 1) + 1;
+        if (newQty > medication.currentStock) {
+          setError(`Cannot add more than available stock (${medication.currentStock} ${medication.unit}).`);
+          return current;
+        }
+        const updatedItems = [...current.items];
+        updatedItems[existingIndex] = {
+          ...existingItem,
+          quantity: String(newQty),
+        };
+        return { ...current, items: updatedItems };
+      }
+
+      return {
+        ...current,
+        items: [
+          ...current.items,
+          {
+            medicationId: medication.id,
+            quantity: "1",
+            unitPrice: String(medication.sellingPrice ?? 0),
+            instructions: "",
+          },
+        ],
+      };
+    });
+    setError(null);
+  };
+
+  const updateCartItemQty = (index: number, delta: number) => {
+    setSaleForm((current) => {
+      const item = current.items[index];
+      if (!item) return current;
+      const medication = medications.find((m) => m.id === item.medicationId);
+      const newQty = Number(item.quantity || 1) + delta;
+
+      if (newQty <= 0) {
+        return {
+          ...current,
+          items: current.items.filter((_, i) => i !== index),
+        };
+      }
+
+      if (medication && newQty > medication.currentStock) {
+        setError(`Cannot exceed available stock (${medication.currentStock} ${medication.unit}).`);
+        return current;
+      }
+
+      const updated = [...current.items];
+      updated[index] = { ...item, quantity: String(newQty) };
+      return { ...current, items: updated };
+    });
+  };
+
+  const updateCartItemInstructions = (index: number, instructions: string) => {
+    setSaleForm((current) => {
+      const updated = [...current.items];
+      if (updated[index]) {
+        updated[index] = { ...updated[index], instructions };
+      }
+      return { ...current, items: updated };
+    });
+  };
+
   const handleSaleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSaving(true);
@@ -472,45 +553,53 @@ export default function PharmacyPage() {
           {success && <p className="security-success">{success}</p>}
 
           {activeTab === "sell" && (
-            <section className="pharmacy-sale-layout">
-              <form className="setup-form pharmacy-sale-form" onSubmit={handleSaleSubmit}>
-                <div className="panel-title">
+            <section className="pharmacy-pos-grid">
+              {/* LEFT: CART BUILDER & CHECKOUT */}
+              <form className="pharmacy-panel" onSubmit={handleSaleSubmit}>
+                <div className="pharmacy-panel-title">
                   <div>
-                    <h2>Sell to Patient</h2>
-                    <p>Build a cart and generate one invoice.</p>
+                    <h2>Dispense & Sell to Patient</h2>
+                    <p>Select patient, add items to cart, and generate invoice.</p>
                   </div>
-                  <FiShoppingCart />
+                  <FiShoppingCart style={{ fontSize: "1.35rem", color: "var(--accent, #0f766e)" }} />
                 </div>
 
-                <PatientSearchSelect
-                  label="Patient"
-                  required
-                  patients={patients}
-                  selectedPatientId={saleForm.patientId}
-                  onSelectPatient={(patient) => {
-                    setSaleForm((current) => ({
-                      ...current,
-                      patientId: patient?.id ?? "",
-                    }));
-                  }}
-                  placeholder="Select or search patient..."
-                />
+                {/* Patient Selector */}
+                <div>
+                  <PatientSearchSelect
+                    label="Select Patient"
+                    required
+                    patients={patients}
+                    selectedPatientId={saleForm.patientId}
+                    onSelectPatient={(patient) => {
+                      setSaleForm((current) => ({
+                        ...current,
+                        patientId: patient?.id ?? "",
+                      }));
+                    }}
+                    placeholder="Search by patient name, P-File No., MRN, or phone..."
+                  />
+                  {selectedPatient && (
+                    <div className="service-price-note" style={{ marginTop: "6px" }}>
+                      <span>Card: <strong>{selectedPatient.physicalFileNumber || selectedPatient.mrn || "No Folder"}</strong></span>
+                      <span>Plan: <strong>{selectedPatient.insuranceProvider?.name || "Self Pay / Cash"}</strong></span>
+                      {selectedPatient.phone && <span>Tel: {selectedPatient.phone}</span>}
+                    </div>
+                  )}
+                </div>
 
-                {selectedPatient && (
-                  <div className="service-price-note">
-                    <span>{selectedPatient.mrn || "No MRN"}</span>
-                    <strong>{selectedPatient.insuranceProvider?.name || "Self pay"}</strong>
-                  </div>
-                )}
-
-                <div className="pharmacy-cart-builder">
-                  <label>
-                    Medicine
+                {/* Optional Manual Medicine Input */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "8px", alignItems: "end" }}>
+                  <div>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                      Manual Medicine Search
+                    </label>
                     <input
                       list="pharmacy-medicine-options"
+                      className="form-control"
                       value={medicinePicker}
                       onChange={(event) => handleMedicinePickerChange(event.target.value)}
-                      placeholder="Search medicine by name, strength or price"
+                      placeholder="Type medicine name, strength or price..."
                     />
                     <datalist id="pharmacy-medicine-options">
                       {medications
@@ -519,83 +608,149 @@ export default function PharmacyPage() {
                           <option key={medication.id} value={medicationOptionLabel(medication)} />
                         ))}
                     </datalist>
-                  </label>
-                  <label>
-                    Qty
+                  </div>
+                  <div style={{ width: "90px" }}>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                      Qty
+                    </label>
                     <input
                       type="number"
                       min="1"
+                      className="form-control"
                       value={cartDraft.quantity}
                       onChange={(event) => setCartDraft((current) => ({ ...current, quantity: event.target.value }))}
                     />
-                  </label>
-                  <label>
-                    Price
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={cartDraft.unitPrice}
-                      onChange={(event) => setCartDraft((current) => ({ ...current, unitPrice: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Instructions
-                    <input
-                      value={cartDraft.instructions}
-                      onChange={(event) => setCartDraft((current) => ({ ...current, instructions: event.target.value }))}
-                      placeholder="e.g. 1 tablet twice daily"
-                    />
-                  </label>
-                  <button type="button" className="icon-text-btn" onClick={addCartItem}>
-                    <FiPlus />
-                    Add
+                  </div>
+                  <button type="button" className="btn btn-primary" onClick={addCartItem} style={{ minHeight: "42px" }}>
+                    <FiPlus /> Add
                   </button>
                 </div>
 
-                <div className="pharmacy-cart-list">
-                  {saleForm.items.length === 0 && <p className="muted-text">No medicine added yet.</p>}
-                  {saleForm.items.map((item, index) => {
-                    const medication = medications.find((med) => med.id === item.medicationId);
+                {/* Active Cart Items */}
+                <div>
+                  <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-strong)", display: "block", marginBottom: "6px" }}>
+                    Bill Items ({saleForm.items.length})
+                  </label>
+                  {saleForm.items.length === 0 ? (
+                    <div style={{
+                      padding: "2rem 1rem",
+                      textAlign: "center",
+                      border: "1.5px dashed var(--border)",
+                      borderRadius: "12px",
+                      color: "var(--muted)",
+                      background: "var(--surface-strong)",
+                    }}>
+                      <FiShoppingCart style={{ fontSize: "2rem", opacity: 0.4, marginBottom: "0.4rem" }} />
+                      <p style={{ margin: 0, fontWeight: 600 }}>Cart is empty</p>
+                      <small>Click <strong>+ Add</strong> on any medicine from the catalog on the right.</small>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-container" style={{ maxHeight: "280px" }}>
+                      <table className="pos-cart-table">
+                        <thead>
+                          <tr>
+                            <th>Medicine</th>
+                            <th>Unit Price</th>
+                            <th style={{ textAlign: "center" }}>Qty</th>
+                            <th>Subtotal</th>
+                            <th>Instructions</th>
+                            <th style={{ textAlign: "right" }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {saleForm.items.map((item, index) => {
+                            const medication = medications.find((med) => med.id === item.medicationId);
+                            const lineTotal = Number(item.quantity) * Number(item.unitPrice);
 
-                    return (
-                      <article className="pharmacy-cart-item" key={`${item.medicationId}-${index}`}>
-                        <div>
-                          <strong>{medication ? medicationLabel(medication) : "Medicine"}</strong>
-                          <small>{item.instructions || "No instructions"}</small>
-                        </div>
-                        <span>{item.quantity} x {money(item.unitPrice)}</span>
-                        <b>{money(Number(item.quantity) * Number(item.unitPrice))}</b>
-                        <button type="button" onClick={() => removeCartItem(index)}>Remove</button>
-                      </article>
-                    );
-                  })}
+                            return (
+                              <tr key={`${item.medicationId}-${index}`}>
+                                <td>
+                                  <div className="cell-primary">
+                                    {medication ? medicationLabel(medication) : "Medicine"}
+                                  </div>
+                                  <small className="cell-muted">
+                                    Avail: {medication?.currentStock ?? "?"} {medication?.unit ?? "units"}
+                                  </small>
+                                </td>
+                                <td>
+                                  <span>{money(item.unitPrice)}</span>
+                                </td>
+                                <td>
+                                  <div className="pos-qty-stepper">
+                                    <button type="button" onClick={() => updateCartItemQty(index, -1)}>
+                                      <FiMinus />
+                                    </button>
+                                    <span>{item.quantity}</span>
+                                    <button type="button" onClick={() => updateCartItemQty(index, 1)}>
+                                      <FiPlus />
+                                    </button>
+                                  </div>
+                                </td>
+                                <td>
+                                  <strong>{money(lineTotal)}</strong>
+                                </td>
+                                <td>
+                                  <input
+                                    style={{ fontSize: "0.8rem", padding: "4px 8px", width: "130px" }}
+                                    value={item.instructions || ""}
+                                    onChange={(e) => updateCartItemInstructions(index, e.target.value)}
+                                    placeholder="e.g. 1 tab bd x 5d"
+                                  />
+                                </td>
+                                <td style={{ textAlign: "right" }}>
+                                  <button
+                                    type="button"
+                                    className="icon-btn"
+                                    style={{ color: "var(--danger, #dc2626)" }}
+                                    onClick={() => removeCartItem(index)}
+                                    title="Remove item"
+                                  >
+                                    <FiTrash2 />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
-                <div className="form-grid">
-                  <label>
-                    Discount
+                {/* Payment Fields */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                      Discount (₦)
+                    </label>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
+                      className="form-control"
                       value={saleForm.discountAmount}
                       onChange={(event) => updateSaleField("discountAmount", event.target.value)}
                     />
-                  </label>
-                  <label>
-                    Amount paid
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                      Amount Paid (₦)
+                    </label>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
+                      className="form-control"
                       value={saleForm.amountPaid}
                       onChange={(event) => updateSaleField("amountPaid", event.target.value)}
                     />
-                  </label>
-                  <label>
-                    Status
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                      Payment Status
+                    </label>
                     <select
+                      className="form-control"
                       value={saleForm.paymentStatus}
                       onChange={(event) => updateSaleField("paymentStatus", event.target.value)}
                     >
@@ -603,64 +758,135 @@ export default function PharmacyPage() {
                       <option value="paid">Paid</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
-                  </label>
+                  </div>
                 </div>
 
-                <label>
-                  Notes
-                  <textarea
-                    rows={3}
+                <div>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "4px" }}>
+                    Notes (Optional)
+                  </label>
+                  <input
+                    className="form-control"
                     value={saleForm.notes}
                     onChange={(event) => updateSaleField("notes", event.target.value)}
-                    placeholder="Optional invoice note"
+                    placeholder="e.g. Dispensed with counselling"
                   />
-                </label>
-
-                <div className="pharmacy-sale-total">
-                  <span>
-                    <small>Subtotal</small>
-                    <strong>{money(cartTotal)}</strong>
-                  </span>
-                  <span>
-                    <small>Total</small>
-                    <strong>{money(invoiceTotal)}</strong>
-                  </span>
-                  <span>
-                    <small>Balance</small>
-                    <strong>{money(invoiceBalance)}</strong>
-                  </span>
                 </div>
 
-                <button className="registration-submit" type="submit" disabled={saving || !canSell || saleForm.items.length === 0}>
-                  {saving ? "Saving..." : "Generate Invoice"}
+                {/* Totals Summary */}
+                <div className="pos-totals-card">
+                  <div className="pos-total-item">
+                    <small>Subtotal</small>
+                    <strong>{money(cartTotal)}</strong>
+                  </div>
+                  <div className="pos-total-item">
+                    <small>Discount</small>
+                    <strong style={{ color: "#d97706" }}>-{money(saleForm.discountAmount)}</strong>
+                  </div>
+                  <div className="pos-total-item highlight">
+                    <small>Invoice Total</small>
+                    <strong>{money(invoiceTotal)}</strong>
+                  </div>
+                  <div className="pos-total-item">
+                    <small>Amount Paid</small>
+                    <strong>{money(saleForm.amountPaid)}</strong>
+                  </div>
+                  <div className={`pos-total-item ${invoiceBalance > 0 ? "due" : ""}`}>
+                    <small>Balance Due</small>
+                    <strong>{money(invoiceBalance)}</strong>
+                  </div>
+                </div>
+
+                <button
+                  className="registration-submit"
+                  type="submit"
+                  disabled={saving || !canSell || saleForm.items.length === 0}
+                  style={{ width: "100%", justifyContent: "center", padding: "0.85rem", fontSize: "1rem" }}
+                >
                   <FiSave />
+                  {saving ? "Generating..." : `Generate Invoice (${money(invoiceTotal)})`}
                 </button>
               </form>
 
-              <section className="setup-list-panel pharmacy-quick-stock">
-                <div className="panel-title">
+              {/* RIGHT: QUICK CATALOG WITH 1-CLICK ADD */}
+              <section className="pharmacy-panel">
+                <div className="pharmacy-panel-title">
                   <div>
-                    <h2>Stock Watch</h2>
-                    <p>Fast view of low and available medicines.</p>
+                    <h2>Quick Catalog & Dispense</h2>
+                    <p>Click "+ Add" to add any drug directly to cart.</p>
                   </div>
-                  <FaCapsules />
+                  <FaCapsules style={{ fontSize: "1.35rem", color: "#2563eb" }} />
                 </div>
 
-                <div className="pharmacy-stock-stack">
-                  {medications.slice(0, 10).map((medication) => (
-                    <button
-                      type="button"
-                      key={medication.id}
-                      className={`pharmacy-stock-row ${stockState(medication)}`}
-                      onClick={() => setStockTarget(medication)}
-                    >
-                      <span>
-                        <strong>{medicationLabel(medication)}</strong>
-                        <small>{medication.category || "General"} | {money(medication.sellingPrice)}</small>
-                      </span>
-                      <b>{medication.currentStock}</b>
-                    </button>
-                  ))}
+                <div className="patient-search-control" style={{ width: "100%" }}>
+                  <FiSearch />
+                  <input
+                    value={medicineSearch}
+                    onChange={(event) => setMedicineSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") void loadData();
+                    }}
+                    placeholder="Filter catalog by medicine name, brand, or category..."
+                  />
+                </div>
+
+                <div className="table-scroll-container" style={{ maxHeight: "560px" }}>
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Medicine</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th style={{ textAlign: "right" }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medications
+                        .filter((m) => {
+                          if (!medicineSearch.trim()) return true;
+                          const q = medicineSearch.toLowerCase();
+                          return (
+                            m.name.toLowerCase().includes(q) ||
+                            (m.genericName && m.genericName.toLowerCase().includes(q)) ||
+                            (m.category && m.category.toLowerCase().includes(q))
+                          );
+                        })
+                        .map((medication) => (
+                          <tr key={medication.id}>
+                            <td>
+                              <div className="cell-primary">{medicationLabel(medication)}</div>
+                              <div className="cell-muted">
+                                {medication.category || "General"}
+                                {medication.batchNumber ? ` • B:${medication.batchNumber}` : ""}
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`pharmacy-stock-pill ${stockState(medication)}`}>
+                                {medication.currentStock} {medication.unit}
+                              </span>
+                            </td>
+                            <td>
+                              <strong>{money(medication.sellingPrice)}</strong>
+                            </td>
+                            <td className="cell-actions">
+                              <button
+                                type="button"
+                                className="icon-text-btn"
+                                onClick={() => quickAddMedicationToCart(medication)}
+                                disabled={medication.currentStock <= 0}
+                                style={{
+                                  background: medication.currentStock > 0 ? "rgba(15, 118, 110, 0.1)" : "var(--surface-strong)",
+                                  color: medication.currentStock > 0 ? "#0f766e" : "var(--muted)",
+                                  borderColor: medication.currentStock > 0 ? "#0f766e" : "var(--border)",
+                                }}
+                              >
+                                <FiPlus /> Add
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
                 </div>
               </section>
             </section>
@@ -786,43 +1012,74 @@ export default function PharmacyPage() {
                   </button>
                 </div>
 
-                {loading && <p className="muted-text">Loading pharmacy stock...</p>}
-                <div className="pharmacy-medicine-list">
-                  {medications.map((medication) => (
-                    <article className="pharmacy-medicine-card" key={medication.id}>
-                      <div>
-                        <div className="setup-provider-title">
-                          <strong>{medicationLabel(medication)}</strong>
-                          <span className={`pharmacy-stock-badge ${stockState(medication)}`}>
-                            {stockState(medication)}
-                          </span>
-                        </div>
-                        <p>{medication.genericName || medication.brandName || medication.category || "General medicine"}</p>
-                        <small>
-                          Batch {medication.batchNumber || "N/A"} | Exp {medication.expiryDate ? medication.expiryDate.slice(0, 10) : "N/A"}
-                        </small>
-                      </div>
-                      <div className="pharmacy-card-side">
-                        <strong>{medication.currentStock} {medication.unit}</strong>
-                        <small>{money(medication.sellingPrice)}</small>
-                      </div>
-                      <div className="patient-row-actions">
-                        {canUpdate && (
-                          <>
-                            <button type="button" className="icon-text-btn" onClick={() => startEditMedication(medication)}>
-                              <FiEdit3 />
-                              Edit
-                            </button>
-                            <button type="button" className="icon-text-btn" onClick={() => setStockTarget(medication)}>
-                              <FiArchive />
-                              Stock
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading pharmacy stock...</p>}
+                {!loading && medications.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No medicines found.</p>}
+
+                {!loading && medications.length > 0 && (
+                  <div className="table-scroll-container">
+                    <table className="hms-data-table">
+                      <thead>
+                        <tr>
+                          <th>Medicine</th>
+                          <th>Category</th>
+                          <th>Batch & Exp</th>
+                          <th>Selling Price</th>
+                          <th>Stock</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: "right" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {medications.map((medication) => (
+                          <tr key={medication.id}>
+                            <td>
+                              <div className="cell-primary">{medicationLabel(medication)}</div>
+                              {medication.genericName && (
+                                <div className="cell-muted">{medication.genericName}</div>
+                              )}
+                            </td>
+                            <td>
+                              <span>{medication.category || "General"}</span>
+                            </td>
+                            <td>
+                              <div>{medication.batchNumber || "—"}</div>
+                              <div className="cell-muted">
+                                {medication.expiryDate ? medication.expiryDate.slice(0, 10) : "No expiry"}
+                              </div>
+                            </td>
+                            <td>
+                              <strong>{money(medication.sellingPrice)}</strong>
+                              <div className="cell-muted">Cost: {money(medication.costPrice)}</div>
+                            </td>
+                            <td>
+                              <strong>{medication.currentStock}</strong> <small className="cell-muted">{medication.unit}</small>
+                              <div className="cell-muted" style={{ fontSize: "0.72rem" }}>Min: {medication.reorderLevel}</div>
+                            </td>
+                            <td>
+                              <span className={`pharmacy-stock-pill ${stockState(medication)}`}>
+                                {stockState(medication)}
+                              </span>
+                            </td>
+                            <td className="cell-actions">
+                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                                {canUpdate && (
+                                  <>
+                                    <button type="button" className="icon-text-btn" onClick={() => startEditMedication(medication)}>
+                                      <FiEdit3 /> Edit
+                                    </button>
+                                    <button type="button" className="icon-text-btn" onClick={() => setStockTarget(medication)}>
+                                      <FiArchive /> Stock
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </section>
             </section>
           )}
@@ -847,28 +1104,63 @@ export default function PharmacyPage() {
                 </button>
               </div>
 
-              <div className="pharmacy-invoice-list">
-                {sales.length === 0 && <p className="muted-text">No pharmacy invoices yet.</p>}
-                {sales.map((sale) => (
-                  <article className="pharmacy-invoice-card" key={sale.id}>
-                    <div>
-                      <div className="setup-provider-title">
-                        <strong>{sale.invoiceNumber}</strong>
-                        <span className={`patient-status-badge ${sale.paymentStatus === "paid" ? "active" : "inactive"}`}>
-                          {sale.paymentStatus}
-                        </span>
-                      </div>
-                      <p>{patientName(sale.patient)} | {sale.patient.mrn || "No MRN"}</p>
-                      <small>{sale.items.length} item(s) | {formatDate(sale.soldAt)}</small>
-                    </div>
-                    <strong>{money(sale.totalAmount)}</strong>
-                    <button type="button" className="icon-text-btn" onClick={() => handlePrintInvoice(sale)}>
-                      <FiPrinter />
-                      {sale.paymentStatus === "paid" ? "Receipt" : "Invoice"}
-                    </button>
-                  </article>
-                ))}
-              </div>
+              {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading invoices...</p>}
+              {!loading && sales.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No pharmacy invoices yet.</p>}
+
+              {!loading && sales.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Invoice #</th>
+                        <th>Date & Time</th>
+                        <th>Patient</th>
+                        <th>Items</th>
+                        <th>Total Amount</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sales.map((sale) => (
+                        <tr key={sale.id}>
+                          <td>
+                            <div className="cell-primary">{sale.invoiceNumber}</div>
+                          </td>
+                          <td>
+                            <div className="cell-muted" style={{ whiteSpace: "nowrap" }}>{formatDate(sale.soldAt)}</div>
+                          </td>
+                          <td>
+                            <div className="cell-primary">{patientName(sale.patient)}</div>
+                            <div className="cell-muted">MRN: {sale.patient.mrn || "No MRN"}</div>
+                          </td>
+                          <td>
+                            <span>{sale.items.length} item(s)</span>
+                          </td>
+                          <td>
+                            <strong>{money(sale.totalAmount)}</strong>
+                          </td>
+                          <td>
+                            <span>{money(sale.amountPaid)}</span>
+                          </td>
+                          <td>
+                            <span className={`patient-status-badge ${sale.paymentStatus === "paid" ? "active" : "inactive"}`}>
+                              {sale.paymentStatus}
+                            </span>
+                          </td>
+                          <td className="cell-actions">
+                            <button type="button" className="icon-text-btn" onClick={() => handlePrintInvoice(sale)}>
+                              <FiPrinter />
+                              {sale.paymentStatus === "paid" ? "Receipt" : "Invoice"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 
@@ -901,30 +1193,55 @@ export default function PharmacyPage() {
                 </span>
               </div>
 
-              <div className="pharmacy-ledger-list">
-                {movements.length === 0 && <p className="muted-text">No stock movements recorded yet.</p>}
-                {movements.map((movement) => (
-                  <article className="pharmacy-ledger-card" key={movement.id}>
-                    <div className={movement.quantity >= 0 ? "pharmacy-ledger-icon in" : "pharmacy-ledger-icon out"}>
-                      {movement.quantity >= 0 ? <FiPlus /> : <FiArchive />}
-                    </div>
-                    <div>
-                      <div className="setup-provider-title">
-                        <strong>{medicationLabel(movement.medication)}</strong>
-                        <span className="pharmacy-stock-badge">{movement.movementType.replace("_", " ")}</span>
-                      </div>
-                      <p>{movement.reason || movement.notes || "No reason added."}</p>
-                      <small>
-                        {formatDate(movement.createdAt)} | {movement.recordedBy ? `${movement.recordedBy.firstName} ${movement.recordedBy.lastName}` : "System"}
-                      </small>
-                    </div>
-                    <div className={movement.quantity >= 0 ? "inventory-quantity in" : "inventory-quantity out"}>
-                      <strong>{movement.quantity > 0 ? "+" : ""}{movement.quantity}</strong>
-                      <small>{movement.stockBefore} to {movement.stockAfter}</small>
-                    </div>
-                  </article>
-                ))}
-              </div>
+              {movements.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No stock movements recorded yet.</p>}
+              {movements.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>Medicine</th>
+                        <th>Movement Type</th>
+                        <th>Qty Change</th>
+                        <th>Balance</th>
+                        <th>Reason / Notes</th>
+                        <th>Logged By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movements.map((movement) => (
+                        <tr key={movement.id}>
+                          <td>
+                            <div className="cell-muted" style={{ whiteSpace: "nowrap" }}>{formatDate(movement.createdAt)}</div>
+                          </td>
+                          <td>
+                            <div className="cell-primary">{medicationLabel(movement.medication)}</div>
+                          </td>
+                          <td>
+                            <span className="pharmacy-stock-badge">{movement.movementType.replace("_", " ")}</span>
+                          </td>
+                          <td>
+                            <strong style={{ color: movement.quantity >= 0 ? "var(--success, #059669)" : "var(--danger, #dc2626)" }}>
+                              {movement.quantity > 0 ? "+" : ""}{movement.quantity}
+                            </strong>
+                          </td>
+                          <td>
+                            <span className="cell-muted">{movement.stockBefore} → {movement.stockAfter}</span>
+                          </td>
+                          <td>
+                            <div>{movement.reason || movement.notes || "—"}</div>
+                          </td>
+                          <td>
+                            <span className="cell-muted">
+                              {movement.recordedBy ? `${movement.recordedBy.firstName} ${movement.recordedBy.lastName}` : "System"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 

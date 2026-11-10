@@ -1,0 +1,283 @@
+/* =========================================================================
+   PHARMACY STUDIO & POS MODERN STYLES
+   ========================================================================= */
+
+.pharmacy-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.pharmacy-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(37, 99, 235, 0.06));
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+}
+
+.pharmacy-hero h1 {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 800;
+  color: var(--text-strong, #0f172a);
+  margin: 0.25rem 0 0.35rem;
+}
+
+.pharmacy-summary-grid {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pharmacy-summary-chip {
+  display: flex;
+  flex-direction: column;
+  padding: 0.65rem 1.1rem;
+  border-radius: 12px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  min-width: 90px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.pharmacy-summary-chip strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pharmacy-summary-chip small {
+  font-size: 0.74rem;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.pharmacy-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--surface, #ffffff);
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+}
+
+.pharmacy-tab-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pharmacy-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text, #334155);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pharmacy-tab-btn:hover {
+  background: var(--surface-strong, #f1f5f9);
+  color: var(--text-strong, #0f172a);
+}
+
+.pharmacy-tab-btn.active {
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+}
+
+/* POS SALE LAYOUT */
+.pharmacy-pos-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .pharmacy-pos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pharmacy-panel {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pharmacy-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+  padding-bottom: 0.85rem;
+}
+
+.pharmacy-panel-title h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-strong, #0f172a);
+}
+
+.pharmacy-panel-title p {
+  font-size: 0.82rem;
+  color: var(--muted, #64748b);
+  margin: 0.2rem 0 0;
+}
+
+/* CART TABLE */
+.pos-cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.pos-cart-table th {
+  background: var(--surface-strong, #f8fafc);
+  padding: 9px 12px;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--muted, #64748b);
+  border-bottom: 1.5px solid var(--border, rgba(148, 163, 184, 0.2));
+}
+
+.pos-cart-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.12));
+  vertical-align: middle;
+}
+
+.pos-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.3));
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface, #ffffff);
+}
+
+.pos-qty-stepper button {
+  border: none;
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text, #334155);
+}
+
+.pos-qty-stepper button:hover {
+  background: var(--surface-strong, #f1f5f9);
+}
+
+.pos-qty-stepper span {
+  padding: 0 8px;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+  font-size: 0.86rem;
+}
+
+/* TOTALS BOX */
+.pos-totals-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--surface-strong, #f8fafc);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+}
+
+:root[data-theme="dark"] .pos-totals-card,
+[data-theme="dark"] .pos-totals-card {
+  background: #0f1f38 !important;
+}
+
+.pos-total-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-total-item small {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  color: var(--muted, #64748b);
+  font-weight: 700;
+}
+
+.pos-total-item strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-strong, #0f172a);
+}
+
+.pos-total-item.highlight strong {
+  color: #0f766e;
+}
+
+.pos-total-item.due strong {
+  color: #dc2626;
+}
+
+/* STOCK BADGES */
+.pharmacy-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pharmacy-stock-pill.ok {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.pharmacy-stock-pill.low {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.pharmacy-stock-pill.out {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+

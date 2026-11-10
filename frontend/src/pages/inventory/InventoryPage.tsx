@@ -506,34 +506,48 @@ export default function InventoryPage() {
                   <FiArchive />
                 </div>
 
-                <div className="inventory-item-list compact">
-                  {loading && <p className="muted-text">Loading inventory...</p>}
-                  {!loading && items.length === 0 && <p className="muted-text">No inventory items found.</p>}
-                  {items.slice(0, 10).map((item) => (
-                    <article key={item.id} className={`inventory-item-card ${stockState(item)}`}>
-                      <div className="inventory-item-icon">
-                        {item.isConsumable ? <FiBox /> : <FiPackage />}
-                      </div>
-                      <div>
-                        <div className="setup-provider-title">
-                          <strong>{item.name}</strong>
-                          <span className={`inventory-stock-badge ${stockState(item)}`}>{stockLabel(item)}</span>
-                        </div>
-                        <p>{item.category || "General"} | {item.location || "No location"}</p>
-                        <small>{item.code || "No code"} | Reorder at {item.reorderLevel}</small>
-                      </div>
-                      <div className="inventory-card-side">
-                        <strong>{item.currentStock}</strong>
-                        <small>{item.unit}</small>
-                      </div>
-                      {canIssue && (
-                        <button type="button" className="icon-text-btn" onClick={() => startMovement(item)}>
-                          <FiTruck />
-                          Move
-                        </button>
-                      )}
-                    </article>
-                  ))}
+                <div className="table-scroll-container" style={{ maxHeight: "480px" }}>
+                  {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading inventory...</p>}
+                  {!loading && items.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No inventory items found.</p>}
+                  {!loading && items.length > 0 && (
+                    <table className="hms-data-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Stock</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: "right" }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.slice(0, 30).map((item) => (
+                          <tr key={item.id}>
+                            <td>
+                              <div className="cell-primary">{item.name}</div>
+                              <div className="cell-muted">
+                                {item.category || "General"} • {item.location || "No loc"}
+                              </div>
+                            </td>
+                            <td>
+                              <strong>{item.currentStock}</strong> <small className="cell-muted">{item.unit}</small>
+                            </td>
+                            <td>
+                              <span className={`inventory-stock-badge ${stockState(item)}`}>
+                                {stockLabel(item)}
+                              </span>
+                            </td>
+                            <td className="cell-actions">
+                              {canIssue && (
+                                <button type="button" className="icon-text-btn" onClick={() => startMovement(item)}>
+                                  <FiTruck /> Move
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </section>
             </section>
@@ -745,48 +759,86 @@ export default function InventoryPage() {
                   </button>
                 </div>
 
-                <div className="inventory-item-list">
-                  {loading && <p className="muted-text">Loading inventory...</p>}
-                  {!loading && items.length === 0 && <p className="muted-text">No inventory items found.</p>}
-                  {items.map((item) => (
-                    <article key={item.id} className={`inventory-item-card ${stockState(item)}`}>
-                      <div className="inventory-item-icon">
-                        {item.isConsumable ? <FiBox /> : <FiPackage />}
-                      </div>
-                      <div>
-                        <div className="setup-provider-title">
-                          <strong>{item.name}</strong>
-                          <span className={`inventory-stock-badge ${stockState(item)}`}>{stockLabel(item)}</span>
-                          {!item.isActive && <span className="patient-status-badge inactive">Inactive</span>}
-                        </div>
-                        <p>{item.description || item.category || "Hospital material"}</p>
-                        <div className="setup-provider-meta">
-                          <span>{item.code || "No code"}</span>
-                          <span>{item.category || "General"}</span>
-                          <span>{item.location || "No location"}</span>
-                          <span>{money(item.costPrice)}</span>
-                        </div>
-                      </div>
-                      <div className="inventory-card-side">
-                        <strong>{item.currentStock}</strong>
-                        <small>{item.unit}</small>
-                      </div>
-                      <div className="patient-row-actions">
-                        {canUpdate && (
-                          <button type="button" className="icon-text-btn" onClick={() => startEdit(item)}>
-                            <FiEdit3 />
-                            Edit
-                          </button>
-                        )}
-                        {canIssue && (
-                          <button type="button" className="icon-text-btn" onClick={() => startMovement(item)}>
-                            <FiTruck />
-                            Move
-                          </button>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                <div className="table-scroll-container">
+                  {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading inventory...</p>}
+                  {!loading && items.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No inventory items found.</p>}
+                  {!loading && items.length > 0 && (
+                    <table className="hms-data-table">
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Code / Cat</th>
+                          <th>Location</th>
+                          <th>Cost Price</th>
+                          <th>Current Stock</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: "right" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item) => (
+                          <tr key={item.id}>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{ fontSize: "1.1rem", color: "var(--muted)" }}>
+                                  {item.isConsumable ? <FiBox /> : <FiPackage />}
+                                </span>
+                                <div>
+                                  <div className="cell-primary">{item.name}</div>
+                                  {item.description && (
+                                    <div className="cell-muted" style={{ maxWidth: "240px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {item.description}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <div>{item.code || "—"}</div>
+                              <div className="cell-muted">{item.category || "General"}</div>
+                            </td>
+                            <td>
+                              <span>{item.location || "—"}</span>
+                            </td>
+                            <td>
+                              <span>{money(item.costPrice)}</span>
+                            </td>
+                            <td>
+                              <strong style={{ fontSize: "0.95rem" }}>{item.currentStock}</strong>{" "}
+                              <small className="cell-muted">{item.unit}</small>
+                              <div className="cell-muted" style={{ fontSize: "0.72rem" }}>
+                                Min: {item.reorderLevel}
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`inventory-stock-badge ${stockState(item)}`}>
+                                {stockLabel(item)}
+                              </span>
+                              {!item.isActive && (
+                                <span className="patient-status-badge inactive" style={{ marginLeft: "4px" }}>
+                                  Inactive
+                                </span>
+                              )}
+                            </td>
+                            <td className="cell-actions">
+                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                                {canUpdate && (
+                                  <button type="button" className="icon-text-btn" onClick={() => startEdit(item)}>
+                                    <FiEdit3 /> Edit
+                                  </button>
+                                )}
+                                {canIssue && (
+                                  <button type="button" className="icon-text-btn" onClick={() => startMovement(item)}>
+                                    <FiTruck /> Move
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </section>
             </section>
@@ -802,33 +854,69 @@ export default function InventoryPage() {
                 <FiClipboard />
               </div>
 
-              <div className="inventory-movement-list">
-                {movements.length === 0 && <p className="muted-text">No inventory movements yet.</p>}
-                {movements.map((movement) => (
-                  <article className="inventory-movement-card" key={movement.id}>
-                    <div className="inventory-item-icon">
-                      {movement.quantity >= 0 ? <FiPlus /> : <FiArchive />}
-                    </div>
-                    <div>
-                      <div className="setup-provider-title">
-                        <strong>{movement.item.name}</strong>
-                        <span className="inventory-stock-badge">{displayMovementType(movement.movementType)}</span>
-                      </div>
-                      <p>{movement.reason || movement.notes || "No reason added."}</p>
-                      <small>
-                        {formatDate(movement.createdAt)} | {movement.recordedBy ? `${movement.recordedBy.firstName} ${movement.recordedBy.lastName}` : "System"}
-                      </small>
-                    </div>
-                    <div className={movement.quantity >= 0 ? "inventory-quantity in" : "inventory-quantity out"}>
-                      <strong>{movement.quantity > 0 ? "+" : ""}{movement.quantity}</strong>
-                      <small>{movement.stockBefore} to {movement.stockAfter}</small>
-                    </div>
-                    <div className="inventory-movement-destination">
-                      <span>{movement.destination || "No destination"}</span>
-                      <small>{movement.issuedTo || "No recipient"}</small>
-                    </div>
-                  </article>
-                ))}
+              <div className="table-scroll-container">
+                {movements.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No inventory movements yet.</p>}
+                {movements.length > 0 && (
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Qty Change</th>
+                        <th>Balance</th>
+                        <th>Reason / Recipient</th>
+                        <th>Logged By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {movements.map((movement) => (
+                        <tr key={movement.id}>
+                          <td>
+                            <div className="cell-primary" style={{ whiteSpace: "nowrap" }}>
+                              {formatDate(movement.createdAt)}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="cell-primary">{movement.item.name}</div>
+                            {movement.item.code && (
+                              <div className="cell-muted">{movement.item.code}</div>
+                            )}
+                          </td>
+                          <td>
+                            <span className="inventory-stock-badge">
+                              {displayMovementType(movement.movementType)}
+                            </span>
+                          </td>
+                          <td>
+                            <strong style={{ color: movement.quantity >= 0 ? "var(--success, #059669)" : "var(--danger, #dc2626)" }}>
+                              {movement.quantity > 0 ? "+" : ""}{movement.quantity}
+                            </strong>
+                          </td>
+                          <td>
+                            <span className="cell-muted">{movement.stockBefore} → {movement.stockAfter}</span>
+                          </td>
+                          <td>
+                            <div>{movement.reason || movement.notes || "—"}</div>
+                            {movement.destination && (
+                              <div className="cell-muted">Dest: {movement.destination}</div>
+                            )}
+                            {movement.issuedTo && (
+                              <div className="cell-muted">To: {movement.issuedTo}</div>
+                            )}
+                          </td>
+                          <td>
+                            <span className="cell-muted">
+                              {movement.recordedBy
+                                ? `${movement.recordedBy.firstName} ${movement.recordedBy.lastName}`
+                                : "System"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </section>
           )}

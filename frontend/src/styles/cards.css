@@ -157,3 +157,112 @@
     font-size: 1.25rem;
   }
 }
+
+/* =========================================================================
+   SCROLLABLE DATA TABLE CONTAINERS (Prevents Endless Full-Page Scrolling)
+   ========================================================================= */
+.table-scroll-container {
+  width: 100%;
+  max-height: min(65vh, 580px);
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.22));
+  background: var(--surface, #ffffff);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  scrollbar-width: thin;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+.hms-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.hms-data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-strong, #f8fafc);
+  color: var(--text-strong, #0f172a);
+  font-weight: 700;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--border, rgba(148, 163, 184, 0.25));
+  white-space: nowrap;
+}
+
+:root[data-theme="dark"] .hms-data-table thead th,
+[data-theme="dark"] .hms-data-table thead th {
+  background: #0f1f38 !important;
+  color: #f8fafc !important;
+  border-bottom-color: rgba(125, 211, 252, 0.2) !important;
+}
+
+.hms-data-table tbody tr {
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+  transition: background-color 0.15s ease;
+}
+
+.hms-data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.hms-data-table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.04);
+}
+
+:root[data-theme="dark"] .hms-data-table tbody tr:hover,
+[data-theme="dark"] .hms-data-table tbody tr:hover {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.hms-data-table td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  color: var(--text, #334155);
+}
+
+:root[data-theme="dark"] .hms-data-table td,
+[data-theme="dark"] .hms-data-table td {
+  color: #cbd5e1;
+}
+
+.hms-data-table .cell-primary {
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+:root[data-theme="dark"] .hms-data-table .cell-primary,
+[data-theme="dark"] .hms-data-table .cell-primary {
+  color: #f1f5f9;
+}
+
+.hms-data-table .cell-muted {
+  font-size: 0.78rem;
+  color: var(--muted, #64748b);
+}
+
+.hms-data-table .cell-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+

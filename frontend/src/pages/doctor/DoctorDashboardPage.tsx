@@ -59,6 +59,7 @@ import {
   fetchLaboratoryRequests,
   fetchLaboratoryTemplates,
 } from "../../services/laboratoryService";
+import { fetchPatients } from "../../services/patients/patientService";
 import { updateAppointmentStatus } from "../../services/appointmentService";
 import { useAuthStore } from "../../store/authStore";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
@@ -440,6 +441,8 @@ export default function DoctorDashboardPage() {
   const patientWorkspaceRef = useRef<HTMLDivElement | null>(null);
 
   const [mutedQueueIds, setMutedQueueIds] = useState<Set<string>>(new Set());
+  const [allHospitalPatients, setAllHospitalPatients] = useState<Patient[]>([]);
+  const [showSwitchPatientModal, setShowSwitchPatientModal] = useState(false);
 
   // Reminders Local Storage
   useEffect(() => {
@@ -471,24 +474,31 @@ export default function DoctorDashboardPage() {
     }
     setError(null);
     try {
-      const [workspaceRes, templatesRes] = await Promise.all([
+      const [workspaceRes, templatesRes, allPatientsRes] = await Promise.all([
         fetchDoctorWorkspace(),
         fetchLaboratoryTemplates(),
+        fetchPatients({ status: "active", take: 500 }).catch(() => [] as Patient[]),
       ]);
+
+      if (Array.isArray(allPatientsRes) && allPatientsRes.length > 0) {
+        setAllHospitalPatients(allPatientsRes);
+      }
 
       if (workspaceRes.workspace) {
         const normalized = normalizeWorkspace(workspaceRes.workspace);
         setWorkspace(normalized);
         // Keep active patient reference updated or restore from session storage
         if (selectedPatient) {
-          const matched = normalized.patients.find((p) => p.id === selectedPatient.id);
+          const matched = normalized.patients.find((p) => p.id === selectedPatient.id) ||
+            allPatientsRes?.find((p) => p.id === selectedPatient.id);
           if (matched) setSelectedPatient(matched);
         } else if (typeof window !== "undefined") {
           const rawActive = window.sessionStorage.getItem("hms_doctor_active_patient");
           if (rawActive) {
             try {
               const parsed = JSON.parse(rawActive);
-              const matched = normalized.patients.find((p) => p.id === parsed.id);
+              const matched = normalized.patients.find((p) => p.id === parsed.id) ||
+                allPatientsRes?.find((p) => p.id === parsed.id);
               if (matched) {
                 setSelectedPatient(matched);
               }
@@ -1057,7 +1067,13 @@ export default function DoctorDashboardPage() {
   };
 
   // Data helpers
-  const patients = workspace?.patients ?? [];
+  const patients = useMemo(() => {
+    const wsPatients = workspace?.patients ?? [];
+    const map = new Map<string, Patient>();
+    for (const p of wsPatients) map.set(p.id, p);
+    for (const p of allHospitalPatients) map.set(p.id, p);
+    return Array.from(map.values());
+  }, [workspace?.patients, allHospitalPatients]);
   const assignedAppointments = workspace?.assignedAppointments ?? [];
   const readyLabRequests = workspace?.completedLabRequests ?? [];
   const availableBeds = (workspace?.availableBeds ?? []).filter((b: Bed) => b.status === "available");
@@ -2061,44 +2077,115 @@ export default function DoctorDashboardPage() {
           <div
             className="card empty-panel"
             style={{
-              padding: "3.5rem 1.5rem",
-              textAlign: "center",
+              padding: "2.5rem 1.75rem",
               margin: "1.5rem 0",
               background: "var(--surface)",
-              border: "1px dashed var(--border)",
+              border: "1.5px dashed var(--border)",
               borderRadius: "16px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "1.25rem",
             }}
           >
-            <div style={{ fontSize: "3rem", marginBottom: "0.75rem" }}>🩺</div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "var(--text-strong)" }}>No Patient Selected for Consultation</h3>
-            <p style={{ color: "var(--muted)", maxWidth: "480px", margin: "0 auto 1.5rem", fontSize: "0.92rem", lineHeight: 1.5 }}>
-              Please select a patient from the Waiting Room queue or All Medical Folders to open their clinical desk.
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                setDeskMode("queue");
-                setQueueTab("waiting");
-                navigate("/doctor/waiting");
-              }}
-              style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              <FiUsers /> Go to Waiting Room Queue
-            </button>
+            <div style={{ fontSize: "2.8rem" }}>🩺</div>
+            <div style={{ textAlign: "center", maxWidth: "560px" }}>
+              <h3 style={{ margin: "0 0 0.35rem", color: "var(--text-strong)", fontSize: "1.35rem" }}>
+                Select a Patient to Begin Consultation
+              </h3>
+              <p style={{ color: "var(--muted)", margin: 0, fontSize: "0.9rem" }}>
+                Search any hospital patient folder below or quickly pick a patient waiting in the queue.
+              </p>
+            </div>
+
+            {/* Direct Instant Search Box */}
+            <div style={{ width: "100%", maxWidth: "460px" }}>
+              <PatientSearchSelect
+                label=""
+                patients={patients}
+                selectedPatientId={null}
+                onSelectPatient={(p) => {
+                  if (p) void openPatientDesk(p);
+                }}
+                placeholder="🔍 Search patient by Name, P-File No., MRN, or Phone..."
+              />
+            </div>
+
+            {/* Quick Waiting Patients Carousel / Pills */}
+            {waitingAppointments.length > 0 && (
+              <div style={{ width: "100%", maxWidth: "600px", textAlign: "center" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "0.5rem" }}>
+                  Currently Waiting in Queue ({waitingAppointments.length})
+                </span>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}>
+                  {waitingAppointments.slice(0, 6).map((appt) => (
+                    <button
+                      key={appt.id}
+                      type="button"
+                      className="doctor-action-btn secondary"
+                      onClick={() => handleAcceptNextPatient(appt)}
+                      style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem" }}
+                    >
+                      ▶ {patientName(appt.patient)} ({appt.patient?.physicalFileNumber || "Folder"})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setDeskMode("queue");
+                  setQueueTab("waiting");
+                  navigate("/doctor/waiting");
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <FiUsers /> View Waiting Room Queue
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setDeskMode("queue");
+                  setQueueTab("all_patients");
+                  navigate("/doctor/patients");
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <FiFolder /> Browse Medical Folders ({patients.length})
+              </button>
+            </div>
           </div>
         )}
 
         {deskMode === "patient" && selectedPatient && (
           <div className="doctor-active-patient-desk" ref={patientWorkspaceRef}>
-            {/* Top Status Badge */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+            {/* Top Status Badge & Switcher */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
               <div className="doctor-desk-status-badge">
                 <span className="pulse-dot" />
                 <span>CONSULTATION IN PROGRESS</span>
               </div>
 
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                {/* Switch Patient Quick Search */}
+                <div style={{ minWidth: "220px", maxWidth: "280px" }}>
+                  <PatientSearchSelect
+                    label=""
+                    patients={patients}
+                    selectedPatientId={selectedPatient.id}
+                    onSelectPatient={(p) => {
+                      if (p && p.id !== selectedPatient.id) {
+                        void openPatientDesk(p);
+                      }
+                    }}
+                    placeholder="Switch patient..."
+                  />
+                </div>
                 <button
                   type="button"
                   className="doctor-action-btn secondary"
@@ -2111,7 +2198,7 @@ export default function DoctorDashboardPage() {
                   className="doctor-action-btn secondary"
                   onClick={closePatientDesk}
                 >
-                  <FiX /> Finish / Close Patient Desk
+                  <FiX /> Finish / Close Desk
                 </button>
               </div>
             </div>

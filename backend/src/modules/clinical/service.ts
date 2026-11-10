@@ -183,7 +183,7 @@ export class ClinicalService {
       ] = await prisma.$transaction([
         prisma.patient.findMany({
           where: { deletedAt: null, status: "active" },
-          take: 80,
+          take: 500,
           orderBy: { updatedAt: "desc" },
           select: patientSelect(),
         }),

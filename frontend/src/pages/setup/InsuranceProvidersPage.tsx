@@ -280,46 +280,71 @@ export default function InsuranceProvidersPage() {
               {loading && <p className="muted-text">Loading insurance providers...</p>}
               {!loading && providers.length === 0 && <p className="muted-text">No providers found.</p>}
 
-              <div className="setup-provider-list">
-                {providers.map((provider) => (
-                  <article key={provider.id} className="setup-provider-card">
-                    <div>
-                      <div className="setup-provider-title">
-                        <InsuranceProviderChip
-                          name={provider.name}
-                          code={provider.code}
-                          compact
-                        />
-                        <span className={`patient-status-badge ${provider.isActive ? "active" : "inactive"}`}>
-                          {provider.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                      <p>{provider.description || "No notes added."}</p>
-                      <div className="setup-provider-meta">
-                        <span>{provider.code || "No code"}</span>
-                        <span>{Number(provider.patientPayPercentage ?? 0)}% patient pays</span>
-                        <span>{provider.email || "No email"}</span>
-                        <span>{provider.phone || "No phone"}</span>
-                      </div>
-                    </div>
-
-                    <div className="patient-row-actions">
-                      {canUpdate && (
-                        <button type="button" className="icon-text-btn" onClick={() => startEdit(provider)}>
-                          <FiEdit3 />
-                          Edit
-                        </button>
-                      )}
-                      {canDelete && provider.isActive && (
-                        <button type="button" className="icon-text-btn danger" onClick={() => handleDeactivate(provider)}>
-                          <FiSlash />
-                          Deactivate
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
+              {!loading && providers.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Provider</th>
+                        <th>Code</th>
+                        <th>Patient Pays</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {providers.map((provider) => (
+                        <tr key={provider.id}>
+                          <td>
+                            <div className="cell-primary">{provider.name}</div>
+                            {provider.description && (
+                              <div className="cell-muted" style={{ maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {provider.description}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <InsuranceProviderChip
+                              name={provider.name}
+                              code={provider.code}
+                              compact
+                            />
+                          </td>
+                          <td>
+                            <strong>{Number(provider.patientPayPercentage ?? 0)}%</strong>
+                          </td>
+                          <td>
+                            <div>{provider.phone || "—"}</div>
+                            <div className="cell-muted">{provider.email || "No email"}</div>
+                          </td>
+                          <td>
+                            <span className={`patient-status-badge ${provider.isActive ? "active" : "inactive"}`}>
+                              {provider.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="cell-actions">
+                            <div style={{ display: "inline-flex", gap: "6px" }}>
+                              {canUpdate && (
+                                <button type="button" className="icon-text-btn" onClick={() => startEdit(provider)}>
+                                  <FiEdit3 />
+                                  Edit
+                                </button>
+                              )}
+                              {canDelete && provider.isActive && (
+                                <button type="button" className="icon-text-btn danger" onClick={() => handleDeactivate(provider)}>
+                                  <FiSlash />
+                                  Deactivate
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </section>
         </div>

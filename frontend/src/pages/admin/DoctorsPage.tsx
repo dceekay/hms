@@ -291,7 +291,12 @@ export default function DoctorsPage() {
               )}
 
               <div className="setup-list-header">
-                <h2>Current Doctors</h2>
+                <div>
+                  <h2>Current Doctors ({doctors.length})</h2>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
+                    Medical officers and consulting specialists.
+                  </p>
+                </div>
                 <button type="button" className="icon-text-btn" onClick={loadDoctors}>
                   <FiRefreshCw />
                   Refresh
@@ -299,23 +304,57 @@ export default function DoctorsPage() {
               </div>
 
               {loading && <p className="muted-text">Loading doctors...</p>}
-              <div className="doctor-list">
-                {doctors.map((doctor) => (
-                  <article className="doctor-list-card" key={doctor.id}>
-                    <div>
-                      <strong>Dr. {doctor.firstName} {doctor.lastName}</strong>
-                      <span>{doctor.email}</span>
-                    </div>
-                    <small>
-                      {doctor.doctorProfile?.doctorType
-                        ? doctorTypeLabels[doctor.doctorProfile.doctorType]
-                        : "Doctor"}
-                      {doctor.doctorProfile?.specialty ? ` | ${doctor.doctorProfile.specialty}` : ""}
-                      {doctor.serviceArea?.name ? ` | ${doctor.serviceArea.name}` : ""}
-                    </small>
-                  </article>
-                ))}
-              </div>
+              {!loading && doctors.length === 0 && <p className="muted-text">No doctors found.</p>}
+
+              {!loading && doctors.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Type / Specialty</th>
+                        <th>Service Area</th>
+                        <th>Contact</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {doctors.map((doctor) => (
+                        <tr key={doctor.id}>
+                          <td>
+                            <div className="cell-primary">
+                              🩺 Dr. {doctor.firstName} {doctor.lastName}
+                            </div>
+                            <div className="cell-muted">@{doctor.username}</div>
+                          </td>
+                          <td>
+                            <div>
+                              {doctor.doctorProfile?.doctorType
+                                ? doctorTypeLabels[doctor.doctorProfile.doctorType]
+                                : "Medical Doctor"}
+                            </div>
+                            {doctor.doctorProfile?.specialty && (
+                              <div className="cell-muted">{doctor.doctorProfile.specialty}</div>
+                            )}
+                          </td>
+                          <td>
+                            {doctor.serviceArea?.name ? (
+                              <span className="pill-badge" style={{ fontSize: "0.75rem" }}>
+                                {doctor.serviceArea.name}
+                              </span>
+                            ) : (
+                              <span className="cell-muted">All areas</span>
+                            )}
+                          </td>
+                          <td>
+                            <div>{doctor.phone || "—"}</div>
+                            <div className="cell-muted">{doctor.email}</div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </section>
         </div>

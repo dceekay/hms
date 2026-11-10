@@ -584,46 +584,80 @@ export default function UsersPage() {
               {loading && <p className="muted-text">Loading users...</p>}
               {!loading && users.length === 0 && <p className="muted-text">No users found.</p>}
 
-              <div className="rbac-list">
-                {users.map((user) => (
-                  <article className="rbac-row-card" key={user.id}>
-                    <div className="rbac-row-main">
-                      <span className="rbac-avatar">
-                        {staffPhotoSource(user) ? (
-                          <img src={staffPhotoSource(user)} alt="" />
-                        ) : (
-                          staffInitials(user)
-                        )}
-                      </span>
-                      <div>
-                        <strong>{staffFullName(user)}</strong>
-                        <p>{user.username} | {user.email}</p>
-                        <small>
-                          {roleNames(user)}
-                          {user.serviceArea?.name ? ` | ${user.serviceArea.name}` : ""}
-                        </small>
-                      </div>
-                    </div>
-                    <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
-                      {user.isActive ? "Active" : "Inactive"}
-                    </span>
-                    <div className="rbac-row-actions">
-                      <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)}>
-                        <FiShield />
-                        ID Card
-                      </button>
-                      {canUpdate && <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}><FiEdit3 />Edit</button>}
-                      {canUpdate && (
-                        <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
-                          {user.isActive ? <FiSlash /> : <FiCheckCircle />}
-                          {user.isActive ? "Deactivate" : "Activate"}
-                        </button>
-                      )}
-                      {canDelete && <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(user)}><FiTrash2 />Delete</button>}
-                    </div>
-                  </article>
-                ))}
-              </div>
+              {!loading && users.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th>Staff Member</th>
+                        <th>Roles & Dept</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr key={user.id}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <span className="rbac-avatar" style={{ width: "36px", height: "36px", minWidth: "36px", fontSize: "0.82rem" }}>
+                                {staffPhotoSource(user) ? (
+                                  <img src={staffPhotoSource(user)} alt="" />
+                                ) : (
+                                  staffInitials(user)
+                                )}
+                              </span>
+                              <div>
+                                <div className="cell-primary">{staffFullName(user)}</div>
+                                <div className="cell-muted">@{user.username}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div>{roleNames(user) || "Standard Staff"}</div>
+                            {user.serviceArea?.name && (
+                              <div className="cell-muted">{user.serviceArea.name}</div>
+                            )}
+                          </td>
+                          <td>
+                            <div>{user.phone || "—"}</div>
+                            <div className="cell-muted">{user.email}</div>
+                          </td>
+                          <td>
+                            <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
+                              {user.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="cell-actions">
+                            <div style={{ display: "inline-flex", gap: "6px" }}>
+                              <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)} title="Print Staff ID Card">
+                                <FiShield /> ID Card
+                              </button>
+                              {canUpdate && (
+                                <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}>
+                                  <FiEdit3 /> Edit
+                                </button>
+                              )}
+                              {canUpdate && (
+                                <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
+                                  {user.isActive ? <FiSlash /> : <FiCheckCircle />}
+                                  {user.isActive ? "Deactivate" : "Activate"}
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(user)}>
+                                  <FiTrash2 /> Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </section>
 
