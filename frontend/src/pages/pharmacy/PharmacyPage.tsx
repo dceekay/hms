@@ -12,6 +12,7 @@ import {
   FiShoppingCart,
   FiTrash2,
   FiUser,
+  FiX,
 } from "react-icons/fi";
 import { FaCapsules } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
@@ -161,6 +162,7 @@ export default function PharmacyPage() {
   const [activeTab, setActiveTab] = useState<"sell" | "inventory" | "invoices" | "stock">("sell");
   const [medicineForm, setMedicineForm] = useState<MedicationFormValues>(emptyMedicationForm);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
+  const [isMedicineModalOpen, setIsMedicineModalOpen] = useState(false);
   const [saleForm, setSaleForm] = useState<PharmacySaleFormValues>(emptySaleForm);
   const [cartDraft, setCartDraft] = useState<PharmacySaleCartItem>(emptyCartDraft);
   const [patientPicker, setPatientPicker] = useState("");
@@ -308,12 +310,14 @@ export default function PharmacyPage() {
     setSuccess(editingMedication ? "Medication updated." : "Medication added.");
     setMedicineForm(emptyMedicationForm);
     setEditingMedication(null);
+    setIsMedicineModalOpen(false);
     await loadData();
   };
 
   const startEditMedication = (medication: Medication) => {
     setEditingMedication(medication);
     setMedicineForm(formFromMedication(medication));
+    setIsMedicineModalOpen(true);
     setActiveTab("inventory");
   };
 
@@ -893,102 +897,9 @@ export default function PharmacyPage() {
           )}
 
           {activeTab === "inventory" && (
-            <section className="billing-layout pharmacy-inventory-layout">
-              <form className="setup-form" onSubmit={handleMedicationSubmit}>
-                <div className="panel-title">
-                  <div>
-                    <h2>{editingMedication ? "Edit Medicine" : "Add Medicine"}</h2>
-                    <p>Maintain catalog, pricing, batches, and reorder levels.</p>
-                  </div>
-                  <FaCapsules />
-                </div>
-
-                <div className="form-grid">
-                  <label>
-                    Name
-                    <input value={medicineForm.name} onChange={(event) => updateMedicineField("name", event.target.value)} required />
-                  </label>
-                  <label>
-                    Generic name
-                    <input value={medicineForm.genericName} onChange={(event) => updateMedicineField("genericName", event.target.value)} />
-                  </label>
-                  <label>
-                    Brand
-                    <input value={medicineForm.brandName} onChange={(event) => updateMedicineField("brandName", event.target.value)} />
-                  </label>
-                  <label>
-                    Category
-                    <input value={medicineForm.category} onChange={(event) => updateMedicineField("category", event.target.value)} placeholder="Antibiotic" />
-                  </label>
-                  <label>
-                    Strength
-                    <input value={medicineForm.strength} onChange={(event) => updateMedicineField("strength", event.target.value)} placeholder="500mg" />
-                  </label>
-                  <label>
-                    Dosage form
-                    <input value={medicineForm.dosageForm} onChange={(event) => updateMedicineField("dosageForm", event.target.value)} placeholder="Tablet" />
-                  </label>
-                  <label>
-                    Unit
-                    <input value={medicineForm.unit} onChange={(event) => updateMedicineField("unit", event.target.value)} required />
-                  </label>
-                  <label>
-                    Selling price
-                    <input type="number" min="0" step="0.01" value={medicineForm.sellingPrice} onChange={(event) => updateMedicineField("sellingPrice", event.target.value)} />
-                  </label>
-                  <label>
-                    Cost price
-                    <input type="number" min="0" step="0.01" value={medicineForm.costPrice} onChange={(event) => updateMedicineField("costPrice", event.target.value)} />
-                  </label>
-                  <label>
-                    Opening stock
-                    <input type="number" min="0" value={medicineForm.currentStock} onChange={(event) => updateMedicineField("currentStock", event.target.value)} />
-                  </label>
-                  <label>
-                    Reorder level
-                    <input type="number" min="0" value={medicineForm.reorderLevel} onChange={(event) => updateMedicineField("reorderLevel", event.target.value)} />
-                  </label>
-                  <label>
-                    Batch
-                    <input value={medicineForm.batchNumber} onChange={(event) => updateMedicineField("batchNumber", event.target.value)} />
-                  </label>
-                  <label>
-                    Expiry date
-                    <input type="date" value={medicineForm.expiryDate} onChange={(event) => updateMedicineField("expiryDate", event.target.value)} />
-                  </label>
-                </div>
-
-                <label className="setup-toggle">
-                  <input
-                    type="checkbox"
-                    checked={medicineForm.isActive}
-                    onChange={(event) => updateMedicineField("isActive", event.target.checked)}
-                  />
-                  Active medicine
-                </label>
-
-                <div className="setup-actions">
-                  {editingMedication && (
-                    <button
-                      type="button"
-                      className="icon-text-btn"
-                      onClick={() => {
-                        setEditingMedication(null);
-                        setMedicineForm(emptyMedicationForm);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button className="registration-submit" type="submit" disabled={saving || (!canCreate && !canUpdate)}>
-                    {saving ? "Saving..." : editingMedication ? "Update Medicine" : "Add Medicine"}
-                    <FiSave />
-                  </button>
-                </div>
-              </form>
-
-              <section className="setup-list-panel">
-                <div className="setup-list-header">
+            <section className="hms-table-view">
+              <div className="table-topbar">
+                <div className="table-topbar-left">
                   <div className="patient-search-control">
                     <FiSearch />
                     <input
@@ -997,90 +908,132 @@ export default function PharmacyPage() {
                       onKeyDown={(event) => {
                         if (event.key === "Enter") void loadData();
                       }}
-                      placeholder="Search medicine"
+                      placeholder="Search medicine by name, generic, brand..."
                     />
+                    {medicineSearch && (
+                      <button
+                        type="button"
+                        className="patient-search-clear"
+                        onClick={() => {
+                          setMedicineSearch("");
+                          void loadData();
+                        }}
+                      >
+                        <FiX />
+                      </button>
+                    )}
                   </div>
-                  <select value={stockFilter} onChange={(event) => setStockFilter(event.target.value as PharmacyStockStatus)}>
-                    <option value="all">All stock</option>
-                    <option value="low">Low stock</option>
-                    <option value="out">Out</option>
-                    <option value="expired">Expired</option>
-                  </select>
-                  <button type="button" className="icon-text-btn" onClick={loadData}>
-                    <FiRefreshCw />
-                    Search
-                  </button>
+                  <div className="table-filter-pills">
+                    {(
+                      [
+                        { id: "all", label: `All (${summary.active + summary.outOfStock})` },
+                        { id: "low", label: `Low (${summary.lowStock})` },
+                        { id: "out", label: `Out (${summary.outOfStock})` },
+                        { id: "expired", label: `Expired (${summary.expired})` },
+                      ] as const
+                    ).map((pill) => (
+                      <button
+                        key={pill.id}
+                        type="button"
+                        className={`table-filter-pill ${stockFilter === pill.id ? "active" : ""}`}
+                        onClick={() => {
+                          setStockFilter(pill.id);
+                        }}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                <div className="table-topbar-right">
+                  <button type="button" className="icon-text-btn" onClick={loadData}>
+                    <FiRefreshCw /> Refresh
+                  </button>
+                  {canCreate && (
+                    <button
+                      type="button"
+                      className="registration-submit"
+                      style={{ padding: "0.55rem 1rem", fontSize: "0.86rem" }}
+                      onClick={() => {
+                        setEditingMedication(null);
+                        setMedicineForm(emptyMedicationForm);
+                        setIsMedicineModalOpen(true);
+                      }}
+                    >
+                      <FaCapsules /> + Add Medicine
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading pharmacy stock...</p>}
-                {!loading && medications.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No medicines found.</p>}
+              {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading pharmacy stock...</p>}
+              {!loading && medications.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No medicines found.</p>}
 
-                {!loading && medications.length > 0 && (
-                  <div className="table-scroll-container">
-                    <table className="hms-data-table">
-                      <thead>
-                        <tr>
-                          <th>Medicine</th>
-                          <th>Category</th>
-                          <th>Batch & Exp</th>
-                          <th>Selling Price</th>
-                          <th>Stock</th>
-                          <th>Status</th>
-                          <th style={{ textAlign: "right" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {medications.map((medication) => (
-                          <tr key={medication.id}>
-                            <td>
-                              <div className="cell-primary">{medicationLabel(medication)}</div>
-                              {medication.genericName && (
-                                <div className="cell-muted">{medication.genericName}</div>
+              {!loading && medications.length > 0 && (
+                <div className="table-scroll-container">
+                  <table className="hms-data-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: "26%" }}>Medicine</th>
+                        <th style={{ width: "14%" }}>Category</th>
+                        <th style={{ width: "15%" }}>Batch & Exp</th>
+                        <th style={{ width: "15%" }}>Selling / Cost</th>
+                        <th style={{ width: "12%" }}>Stock</th>
+                        <th style={{ width: "8%" }}>Status</th>
+                        <th style={{ width: "10%", textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medications.map((medication) => (
+                        <tr key={medication.id}>
+                          <td>
+                            <div className="cell-primary">{medicationLabel(medication)}</div>
+                            {medication.genericName && (
+                              <div className="cell-muted">{medication.genericName}</div>
+                            )}
+                          </td>
+                          <td>
+                            <span>{medication.category || "General"}</span>
+                          </td>
+                          <td>
+                            <div>{medication.batchNumber || "—"}</div>
+                            <div className="cell-muted">
+                              {medication.expiryDate ? medication.expiryDate.slice(0, 10) : "No expiry"}
+                            </div>
+                          </td>
+                          <td>
+                            <strong>{money(medication.sellingPrice)}</strong>
+                            <div className="cell-muted">Cost: {money(medication.costPrice)}</div>
+                          </td>
+                          <td>
+                            <strong>{medication.currentStock}</strong> <small className="cell-muted">{medication.unit}</small>
+                            <div className="cell-muted" style={{ fontSize: "0.72rem" }}>Min: {medication.reorderLevel}</div>
+                          </td>
+                          <td>
+                            <span className={`pharmacy-stock-pill ${stockState(medication)}`}>
+                              {stockState(medication)}
+                            </span>
+                          </td>
+                          <td className="cell-actions">
+                            <div style={{ display: "inline-flex", gap: "6px" }}>
+                              {canUpdate && (
+                                <>
+                                  <button type="button" className="icon-text-btn" onClick={() => startEditMedication(medication)}>
+                                    <FiEdit3 /> Edit
+                                  </button>
+                                  <button type="button" className="icon-text-btn" onClick={() => setStockTarget(medication)}>
+                                    <FiArchive /> Stock
+                                  </button>
+                                </>
                               )}
-                            </td>
-                            <td>
-                              <span>{medication.category || "General"}</span>
-                            </td>
-                            <td>
-                              <div>{medication.batchNumber || "—"}</div>
-                              <div className="cell-muted">
-                                {medication.expiryDate ? medication.expiryDate.slice(0, 10) : "No expiry"}
-                              </div>
-                            </td>
-                            <td>
-                              <strong>{money(medication.sellingPrice)}</strong>
-                              <div className="cell-muted">Cost: {money(medication.costPrice)}</div>
-                            </td>
-                            <td>
-                              <strong>{medication.currentStock}</strong> <small className="cell-muted">{medication.unit}</small>
-                              <div className="cell-muted" style={{ fontSize: "0.72rem" }}>Min: {medication.reorderLevel}</div>
-                            </td>
-                            <td>
-                              <span className={`pharmacy-stock-pill ${stockState(medication)}`}>
-                                {stockState(medication)}
-                              </span>
-                            </td>
-                            <td className="cell-actions">
-                              <div style={{ display: "inline-flex", gap: "6px" }}>
-                                {canUpdate && (
-                                  <>
-                                    <button type="button" className="icon-text-btn" onClick={() => startEditMedication(medication)}>
-                                      <FiEdit3 /> Edit
-                                    </button>
-                                    <button type="button" className="icon-text-btn" onClick={() => setStockTarget(medication)}>
-                                      <FiArchive /> Stock
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
 
@@ -1396,6 +1349,173 @@ export default function PharmacyPage() {
                 Thank you. Please follow dosage instructions and return for review if symptoms persist.
               </p>
             </section>
+          )}
+
+          {isMedicineModalOpen && (
+            <div className="hms-modal-overlay" onClick={() => setIsMedicineModalOpen(false)}>
+              <div className="hms-modal-window wide" onClick={(e) => e.stopPropagation()}>
+                <div className="hms-modal-header">
+                  <div className="hms-modal-title">
+                    <FaCapsules />
+                    <span>{editingMedication ? "Edit Medicine" : "Add Medicine to Catalog"}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="hms-modal-close-btn"
+                    onClick={() => {
+                      setIsMedicineModalOpen(false);
+                      setEditingMedication(null);
+                      setMedicineForm(emptyMedicationForm);
+                    }}
+                  >
+                    <FiX />
+                  </button>
+                </div>
+                <form onSubmit={handleMedicationSubmit} style={{ padding: "1.25rem 1.5rem" }}>
+                  <div className="form-grid">
+                    <label>
+                      Name
+                      <input
+                        value={medicineForm.name}
+                        onChange={(event) => updateMedicineField("name", event.target.value)}
+                        required
+                        placeholder="e.g. Amoxicillin Trihydrate"
+                      />
+                    </label>
+                    <label>
+                      Generic name
+                      <input
+                        value={medicineForm.genericName}
+                        onChange={(event) => updateMedicineField("genericName", event.target.value)}
+                        placeholder="e.g. Amoxicillin"
+                      />
+                    </label>
+                    <label>
+                      Brand
+                      <input
+                        value={medicineForm.brandName}
+                        onChange={(event) => updateMedicineField("brandName", event.target.value)}
+                        placeholder="e.g. Amoxil"
+                      />
+                    </label>
+                    <label>
+                      Category
+                      <input
+                        value={medicineForm.category}
+                        onChange={(event) => updateMedicineField("category", event.target.value)}
+                        placeholder="Antibiotic, Analgesic, Antimalarial..."
+                      />
+                    </label>
+                    <label>
+                      Strength
+                      <input
+                        value={medicineForm.strength}
+                        onChange={(event) => updateMedicineField("strength", event.target.value)}
+                        placeholder="e.g. 500mg, 250mg/5ml"
+                      />
+                    </label>
+                    <label>
+                      Dosage form
+                      <input
+                        value={medicineForm.dosageForm}
+                        onChange={(event) => updateMedicineField("dosageForm", event.target.value)}
+                        placeholder="Tablet, Capsule, Syrup, Injection..."
+                      />
+                    </label>
+                    <label>
+                      Unit
+                      <input
+                        value={medicineForm.unit}
+                        onChange={(event) => updateMedicineField("unit", event.target.value)}
+                        required
+                        placeholder="packs, tabs, vials, bottles"
+                      />
+                    </label>
+                    <label>
+                      Selling price (₦)
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={medicineForm.sellingPrice}
+                        onChange={(event) => updateMedicineField("sellingPrice", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Cost price (₦)
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={medicineForm.costPrice}
+                        onChange={(event) => updateMedicineField("costPrice", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Opening stock
+                      <input
+                        type="number"
+                        min="0"
+                        value={medicineForm.currentStock}
+                        onChange={(event) => updateMedicineField("currentStock", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Reorder level
+                      <input
+                        type="number"
+                        min="0"
+                        value={medicineForm.reorderLevel}
+                        onChange={(event) => updateMedicineField("reorderLevel", event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Batch number
+                      <input
+                        value={medicineForm.batchNumber}
+                        onChange={(event) => updateMedicineField("batchNumber", event.target.value)}
+                        placeholder="e.g. B24089"
+                      />
+                    </label>
+                    <label>
+                      Expiry date
+                      <input
+                        type="date"
+                        value={medicineForm.expiryDate}
+                        onChange={(event) => updateMedicineField("expiryDate", event.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  <label className="setup-toggle" style={{ marginTop: "1rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={medicineForm.isActive}
+                      onChange={(event) => updateMedicineField("isActive", event.target.checked)}
+                    />
+                    Active medicine in catalog
+                  </label>
+
+                  <div className="setup-actions" style={{ marginTop: "1.25rem" }}>
+                    <button
+                      type="button"
+                      className="icon-text-btn"
+                      onClick={() => {
+                        setIsMedicineModalOpen(false);
+                        setEditingMedication(null);
+                        setMedicineForm(emptyMedicationForm);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button className="registration-submit" type="submit" disabled={saving || (!canCreate && !canUpdate)}>
+                      {saving ? "Saving..." : editingMedication ? "Update Medicine" : "Add Medicine"}
+                      <FiSave />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </div>
       </main>

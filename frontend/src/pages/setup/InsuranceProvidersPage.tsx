@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { FiEdit3, FiPlus, FiRefreshCw, FiSave, FiSearch, FiShield, FiSlash } from "react-icons/fi";
+import { FiEdit3, FiPlus, FiRefreshCw, FiSave, FiSearch, FiShield, FiSlash, FiX } from "react-icons/fi";
 import InsuranceProviderChip from "../../components/insurance/InsuranceProviderChip";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
@@ -57,6 +57,9 @@ export default function InsuranceProvidersPage() {
 
   const activeCount = useMemo(() => providers.filter((provider) => provider.isActive).length, [providers]);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+
   const loadProviders = async (searchTerm = search) => {
     setLoading(true);
     setError(null);
@@ -106,6 +109,7 @@ export default function InsuranceProvidersPage() {
     setSuccess(editingProvider ? "Insurance provider updated." : "Insurance provider added.");
     setForm(emptyForm);
     setEditingProvider(null);
+    setIsModalOpen(false);
     await loadProviders(search);
   };
 
@@ -114,6 +118,7 @@ export default function InsuranceProvidersPage() {
     setForm(providerToForm(provider));
     setSuccess(null);
     setError(null);
+    setIsModalOpen(true);
   };
 
   const handleDeactivate = async (provider: InsuranceProvider) => {
@@ -132,6 +137,14 @@ export default function InsuranceProvidersPage() {
     await loadProviders(search);
   };
 
+  const filteredProviders = useMemo(() => {
+    return providers.filter((p) => {
+      if (statusFilter === "active") return p.isActive;
+      if (statusFilter === "inactive") return !p.isActive;
+      return true;
+    });
+  }, [providers, statusFilter]);
+
   return (
     <AdminLayout>
       <main className="page-container">
@@ -149,204 +162,291 @@ export default function InsuranceProvidersPage() {
             </div>
           </section>
 
-          <section className="setup-layout">
-            <form className="setup-form" onSubmit={handleSubmit}>
-              <div className="panel-title">
-                <div>
-                  <h2>{editingProvider ? "Edit Provider" : "Add Provider"}</h2>
-                  <p>{editingProvider ? editingProvider.name : "Create insurance options for registration."}</p>
-                </div>
-                <FiPlus />
-              </div>
+          {error && <p className="registration-error" style={{ margin: "0.5rem 0" }}>{error}</p>}
+          {success && <p className="security-success" style={{ margin: "0.5rem 0" }}>{success}</p>}
 
-              <div className="form-grid">
-                <label>
-                  Provider name
-                  <input
-                    value={form.name}
-                    onChange={(event) => updateField("name", event.target.value)}
-                    placeholder="Hygeia HMO"
-                    required
-                  />
-                </label>
-                <label>
-                  Code
-                  <input
-                    value={form.code}
-                    onChange={(event) => updateField("code", event.target.value)}
-                    placeholder="HYG"
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) => updateField("email", event.target.value)}
-                    placeholder="claims@example.com"
-                  />
-                </label>
-                <label>
-                  Phone
-                  <input
-                    value={form.phone}
-                    onChange={(event) => updateField("phone", event.target.value)}
-                    placeholder="+234..."
-                  />
-                </label>
-                <label>
-                  Patient pays (%)
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={form.patientPayPercentage}
-                    onChange={(event) => updateField("patientPayPercentage", event.target.value)}
-                    placeholder="20"
-                  />
-                </label>
-              </div>
-
-              <label>
-                Address
-                <input
-                  value={form.address}
-                  onChange={(event) => updateField("address", event.target.value)}
-                  placeholder="Office address"
-                />
-              </label>
-
-              <label>
-                Notes
-                <textarea
-                  value={form.description}
-                  onChange={(event) => updateField("description", event.target.value)}
-                  rows={4}
-                  placeholder="Coverage notes, contact desk, or claim instructions"
-                />
-              </label>
-
-              <label className="setup-toggle">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(event) => updateField("isActive", event.target.checked)}
-                />
-                Active provider
-              </label>
-
-              {error && <p className="registration-error">{error}</p>}
-              {success && <p className="security-success">{success}</p>}
-
-              <div className="setup-actions">
-                {editingProvider && (
-                  <button type="button" className="icon-text-btn" onClick={resetForm}>
-                    Cancel
-                  </button>
-                )}
-                <button
-                  className="registration-submit"
-                  type="submit"
-                  disabled={saving || (editingProvider ? !canUpdate : !canCreate)}
-                >
-                  {saving ? "Saving..." : editingProvider ? "Save Provider" : "Add Provider"}
-                  <FiSave />
-                </button>
-              </div>
-            </form>
-
-            <section className="setup-list-panel">
-              <div className="setup-list-header">
-                <div className="patient-search-control">
+          {/* FULL WIDTH TABLE VIEW */}
+          <section className="hms-table-view">
+            <div className="table-topbar">
+              <div className="table-topbar-left">
+                <div className="patient-search-control" style={{ minWidth: "260px" }}>
                   <FiSearch />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        void loadProviders(search);
-                      }
+                      if (event.key === "Enter") void loadProviders(search);
                     }}
-                    placeholder="Search provider"
+                    placeholder="Search provider name or code..."
                   />
+                  {search && (
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => {
+                        setSearch("");
+                        void loadProviders("");
+                      }}
+                      title="Clear search"
+                    >
+                      <FiX />
+                    </button>
+                  )}
                 </div>
+
+                <div className="table-filter-pills">
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "all" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("all")}
+                  >
+                    All ({providers.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "active" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("active")}
+                  >
+                    Active ({activeCount})
+                  </button>
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "inactive" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("inactive")}
+                  >
+                    Inactive ({providers.length - activeCount})
+                  </button>
+                </div>
+              </div>
+
+              <div className="table-topbar-right">
                 <button type="button" className="icon-text-btn" onClick={() => loadProviders(search)}>
                   <FiRefreshCw />
                   Refresh
                 </button>
+                {canCreate && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      resetForm();
+                      setIsModalOpen(true);
+                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  >
+                    <FiPlus /> Add Insurance Provider
+                  </button>
+                )}
               </div>
+            </div>
 
-              {loading && <p className="muted-text">Loading insurance providers...</p>}
-              {!loading && providers.length === 0 && <p className="muted-text">No providers found.</p>}
+            {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading insurance providers...</p>}
+            {!loading && filteredProviders.length === 0 && (
+              <p className="muted-text" style={{ padding: "1.5rem" }}>No providers found.</p>
+            )}
 
-              {!loading && providers.length > 0 && (
-                <div className="table-scroll-container">
-                  <table className="hms-data-table">
-                    <thead>
-                      <tr>
-                        <th>Provider</th>
-                        <th>Code</th>
-                        <th>Patient Pays</th>
-                        <th>Contact</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: "right" }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {providers.map((provider) => (
-                        <tr key={provider.id}>
-                          <td>
-                            <div className="cell-primary">{provider.name}</div>
-                            {provider.description && (
-                              <div className="cell-muted" style={{ maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {provider.description}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <InsuranceProviderChip
-                              name={provider.name}
-                              code={provider.code}
-                              compact
-                            />
-                          </td>
-                          <td>
-                            <strong>{Number(provider.patientPayPercentage ?? 0)}%</strong>
-                          </td>
-                          <td>
-                            <div>{provider.phone || "—"}</div>
-                            <div className="cell-muted">{provider.email || "No email"}</div>
-                          </td>
-                          <td>
-                            <span className={`patient-status-badge ${provider.isActive ? "active" : "inactive"}`}>
-                              {provider.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td className="cell-actions">
-                            <div style={{ display: "inline-flex", gap: "6px" }}>
-                              {canUpdate && (
-                                <button type="button" className="icon-text-btn" onClick={() => startEdit(provider)}>
-                                  <FiEdit3 />
-                                  Edit
-                                </button>
-                              )}
-                              {canDelete && provider.isActive && (
-                                <button type="button" className="icon-text-btn danger" onClick={() => handleDeactivate(provider)}>
-                                  <FiSlash />
-                                  Deactivate
-                                </button>
-                              )}
+            {!loading && filteredProviders.length > 0 && (
+              <div className="table-scroll-container">
+                <table className="hms-data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "32%" }}>Provider Name & Details</th>
+                      <th style={{ width: "12%" }}>Code</th>
+                      <th style={{ width: "14%" }}>Patient Pays</th>
+                      <th style={{ width: "22%" }}>Contact Info</th>
+                      <th style={{ width: "10%" }}>Status</th>
+                      <th style={{ width: "10%", textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProviders.map((provider) => (
+                      <tr key={provider.id}>
+                        <td>
+                          <div className="cell-primary" style={{ fontSize: "0.95rem" }}>{provider.name}</div>
+                          {provider.description && (
+                            <div className="cell-muted" style={{ marginTop: "2px" }}>
+                              {provider.description}
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                          )}
+                          {provider.address && (
+                            <div className="cell-muted" style={{ fontSize: "0.75rem" }}>
+                              📍 {provider.address}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <InsuranceProviderChip
+                            name={provider.name}
+                            code={provider.code}
+                            compact
+                          />
+                        </td>
+                        <td>
+                          <strong style={{ fontSize: "0.95rem" }}>{Number(provider.patientPayPercentage ?? 0)}%</strong>
+                          <div className="cell-muted" style={{ fontSize: "0.72rem" }}>
+                            HMO covers {100 - Number(provider.patientPayPercentage ?? 0)}%
+                          </div>
+                        </td>
+                        <td>
+                          <div>{provider.phone || "—"}</div>
+                          <div className="cell-muted">{provider.email || "No email"}</div>
+                        </td>
+                        <td>
+                          <span className={`patient-status-badge ${provider.isActive ? "active" : "inactive"}`}>
+                            {provider.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="cell-actions">
+                          <div style={{ display: "inline-flex", gap: "6px" }}>
+                            {canUpdate && (
+                              <button type="button" className="icon-text-btn" onClick={() => startEdit(provider)}>
+                                <FiEdit3 />
+                                Edit
+                              </button>
+                            )}
+                            {canDelete && provider.isActive && (
+                              <button type="button" className="icon-text-btn danger" onClick={() => handleDeactivate(provider)}>
+                                <FiSlash />
+                                Deactivate
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
+
+          {/* ADD / EDIT INSURANCE PROVIDER MODAL */}
+          {isModalOpen && (
+            <div className="hms-modal-overlay" role="dialog" aria-modal="true">
+              <div className="hms-modal-window">
+                <div className="hms-modal-header">
+                  <div>
+                    <h2>{editingProvider ? "Edit Insurance Provider" : "Add Insurance Provider"}</h2>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
+                      {editingProvider ? editingProvider.name : "Create insurance options for patient registration."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="hms-modal-close-btn"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }}
+                    title="Close"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <div className="form-grid">
+                    <label>
+                      Provider name
+                      <input
+                        value={form.name}
+                        onChange={(event) => updateField("name", event.target.value)}
+                        placeholder="e.g. Hygeia HMO"
+                        required
+                        autoFocus
+                      />
+                    </label>
+                    <label>
+                      Code
+                      <input
+                        value={form.code}
+                        onChange={(event) => updateField("code", event.target.value)}
+                        placeholder="HYG"
+                      />
+                    </label>
+                    <label>
+                      Email
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(event) => updateField("email", event.target.value)}
+                        placeholder="claims@example.com"
+                      />
+                    </label>
+                    <label>
+                      Phone
+                      <input
+                        value={form.phone}
+                        onChange={(event) => updateField("phone", event.target.value)}
+                        placeholder="+234..."
+                      />
+                    </label>
+                    <label>
+                      Patient pays (%)
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={form.patientPayPercentage}
+                        onChange={(event) => updateField("patientPayPercentage", event.target.value)}
+                        placeholder="20"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    Address
+                    <input
+                      value={form.address}
+                      onChange={(event) => updateField("address", event.target.value)}
+                      placeholder="Office address"
+                    />
+                  </label>
+
+                  <label>
+                    Notes
+                    <textarea
+                      value={form.description}
+                      onChange={(event) => updateField("description", event.target.value)}
+                      rows={3}
+                      placeholder="Coverage notes, contact desk, or claim instructions"
+                    />
+                  </label>
+
+                  <label className="setup-toggle">
+                    <input
+                      type="checkbox"
+                      checked={form.isActive}
+                      onChange={(event) => updateField("isActive", event.target.checked)}
+                    />
+                    Active provider
+                  </label>
+
+                  <div className="setup-actions" style={{ justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                    <button
+                      type="button"
+                      className="icon-text-btn"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        resetForm();
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="registration-submit"
+                      type="submit"
+                      disabled={saving || (editingProvider ? !canUpdate : !canCreate)}
+                    >
+                      {saving ? "Saving..." : editingProvider ? "Save Provider" : "Add Provider"}
+                      <FiSave />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </AdminLayout>

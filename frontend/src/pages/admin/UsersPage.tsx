@@ -5,6 +5,7 @@ import {
   FiCheckCircle,
   FiCopy,
   FiEdit3,
+  FiPlus,
   FiPrinter,
   FiRefreshCw,
   FiSave,
@@ -14,6 +15,7 @@ import {
   FiTrash2,
   FiUserPlus,
   FiUsers,
+  FiX,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
@@ -156,6 +158,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const summary = useMemo(
     () => ({
@@ -283,6 +286,7 @@ export default function UsersPage() {
     });
     setError(null);
     setSuccess(null);
+    setIsModalOpen(true);
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -456,110 +460,14 @@ export default function UsersPage() {
             </div>
           </section>
 
-          <section className="rbac-layout">
-            <form className="setup-form rbac-form" onSubmit={handleSubmit}>
-              <div className="panel-title">
-                <div>
-                  <h2>{editingUser ? "Edit User" : "Add User"}</h2>
-                  <p>{editingUser ? editingUser.username : "Create staff login details."}</p>
-                </div>
-                <FiUserPlus />
-              </div>
+          {error && !isModalOpen && <p className="registration-error" style={{ margin: "0.5rem 0" }}>{error}</p>}
+          {success && !isModalOpen && <p className="security-success" style={{ margin: "0.5rem 0" }}>{success}</p>}
 
-              <div className="form-grid">
-                <label className="staff-photo-control">
-                  Staff photo
-                  <span className="staff-photo-row">
-                    <span className="staff-photo-preview">
-                      {form.photoDataUrl || form.photoUrl ? (
-                        <img src={form.photoDataUrl || form.photoUrl} alt="Staff preview" />
-                      ) : (
-                        <FiCamera />
-                      )}
-                    </span>
-                    <span className="staff-photo-actions">
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={(event) => void handlePhotoChange(event.target.files?.[0])}
-                      />
-                      {(form.photoDataUrl || form.photoUrl) && (
-                        <button className="icon-text-btn" type="button" onClick={clearPhoto}>
-                          Remove
-                        </button>
-                      )}
-                    </span>
-                  </span>
-                </label>
-                <label>First name<input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required /></label>
-                <label>Last name<input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required /></label>
-                <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required /></label>
-                <label>Phone<input value={form.phone} onChange={(event) => updatePhone(event.target.value)} /></label>
-                <label>
-                  Service area
-                  <select value={form.serviceAreaId} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
-                    <option value="">No service area</option>
-                    {services.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>Username<input value={form.username} onChange={(event) => updateField("username", event.target.value)} required /></label>
-                <label>
-                  {editingUser ? "New password" : "Password"}
-                  <span className="credential-input-row">
-                    <input
-                      value={form.password}
-                      onChange={(event) => updateField("password", event.target.value)}
-                      required={!editingUser}
-                      placeholder={editingUser ? "Leave blank to keep current password" : "Uses phone number by default"}
-                    />
-                    <button className="icon-text-btn" type="button" onClick={() => updateField("password", generatePassword(form.phone))}>Use phone</button>
-                  </span>
-                </label>
-              </div>
-
-              <div className="rbac-check-list">
-                {roles.map((role) => (
-                  <label key={role.id} className="rbac-check">
-                    <input
-                      type="checkbox"
-                      checked={form.roleIds.includes(role.id)}
-                      onChange={() => toggleRole(role.id)}
-                      disabled={editingUser?.id === currentUserId}
-                    />
-                    <span>{role.name}</span>
-                  </label>
-                ))}
-              </div>
-
-              {createdUser && (
-                <div className="rbac-copy-box">
-                  <code>{accountMessage(createdUser, createdPassword)}</code>
-                  <button type="button" className="icon-text-btn" onClick={copyLogin}>
-                    <FiCopy />
-                    Copy login
-                  </button>
-                </div>
-              )}
-
-              {error && <p className="registration-error">{error}</p>}
-              {success && <p className="security-success">{success}</p>}
-
-              <div className="setup-actions">
-                {editingUser && <button type="button" className="icon-text-btn" onClick={resetForm}>Cancel</button>}
-                <button className="registration-submit" type="submit" disabled={saving || (editingUser ? !canUpdate : !canCreate)}>
-                  {saving ? "Saving..." : editingUser ? "Save User" : "Create User"}
-                  <FiSave />
-                </button>
-              </div>
-            </form>
-
-            <section className="setup-list-panel">
-              <div className="setup-list-header">
-                <div className="patient-search-control">
+          {/* FULL WIDTH USERS TABLE */}
+          <section className="hms-table-view">
+            <div className="table-topbar">
+              <div className="table-topbar-left">
+                <div className="patient-search-control" style={{ minWidth: "260px" }}>
                   <FiSearch />
                   <input
                     value={search}
@@ -567,99 +475,293 @@ export default function UsersPage() {
                     onKeyDown={(event) => {
                       if (event.key === "Enter") void loadData();
                     }}
-                    placeholder="Search users"
+                    placeholder="Search users by name, username, or email..."
                   />
+                  {search && (
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => {
+                        setSearch("");
+                        void loadData();
+                      }}
+                      title="Clear search"
+                    >
+                      <FiX />
+                    </button>
+                  )}
                 </div>
-                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as any)}>
-                  <option value="all">All users</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+
+                <div className="table-filter-pills">
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "all" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("all")}
+                  >
+                    All ({summary.total})
+                  </button>
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "active" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("active")}
+                  >
+                    Active ({summary.active})
+                  </button>
+                  <button
+                    type="button"
+                    className={`table-filter-pill ${statusFilter === "inactive" ? "active" : ""}`}
+                    onClick={() => setStatusFilter("inactive")}
+                  >
+                    Inactive ({summary.inactive})
+                  </button>
+                </div>
+              </div>
+
+              <div className="table-topbar-right">
                 <button type="button" className="icon-text-btn" onClick={loadData}>
                   <FiRefreshCw />
                   Refresh
                 </button>
+                {canCreate && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      resetForm();
+                      setIsModalOpen(true);
+                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  >
+                    <FiPlus /> Add Staff User
+                  </button>
+                )}
               </div>
+            </div>
 
-              {loading && <p className="muted-text">Loading users...</p>}
-              {!loading && users.length === 0 && <p className="muted-text">No users found.</p>}
+            {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading users...</p>}
+            {!loading && users.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No users found.</p>}
 
-              {!loading && users.length > 0 && (
-                <div className="table-scroll-container">
-                  <table className="hms-data-table">
-                    <thead>
-                      <tr>
-                        <th>Staff Member</th>
-                        <th>Roles & Dept</th>
-                        <th>Contact</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: "right" }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user.id}>
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <span className="rbac-avatar" style={{ width: "36px", height: "36px", minWidth: "36px", fontSize: "0.82rem" }}>
-                                {staffPhotoSource(user) ? (
-                                  <img src={staffPhotoSource(user)} alt="" />
-                                ) : (
-                                  staffInitials(user)
-                                )}
-                              </span>
-                              <div>
-                                <div className="cell-primary">{staffFullName(user)}</div>
-                                <div className="cell-muted">@{user.username}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <div>{roleNames(user) || "Standard Staff"}</div>
-                            {user.serviceArea?.name && (
-                              <div className="cell-muted">{user.serviceArea.name}</div>
-                            )}
-                          </td>
-                          <td>
-                            <div>{user.phone || "—"}</div>
-                            <div className="cell-muted">{user.email}</div>
-                          </td>
-                          <td>
-                            <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
-                              {user.isActive ? "Active" : "Inactive"}
+            {!loading && users.length > 0 && (
+              <div className="table-scroll-container">
+                <table className="hms-data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "28%" }}>Staff Member</th>
+                      <th style={{ width: "22%" }}>Roles & Department</th>
+                      <th style={{ width: "20%" }}>Contact Info</th>
+                      <th style={{ width: "10%" }}>Status</th>
+                      <th style={{ width: "20%", textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user.id}>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span className="rbac-avatar" style={{ width: "38px", height: "38px", minWidth: "38px", fontSize: "0.85rem" }}>
+                              {staffPhotoSource(user) ? (
+                                <img src={staffPhotoSource(user)} alt="" />
+                              ) : (
+                                staffInitials(user)
+                              )}
                             </span>
-                          </td>
-                          <td className="cell-actions">
-                            <div style={{ display: "inline-flex", gap: "6px" }}>
-                              <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)} title="Print Staff ID Card">
-                                <FiShield /> ID Card
-                              </button>
-                              {canUpdate && (
-                                <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}>
-                                  <FiEdit3 /> Edit
-                                </button>
-                              )}
-                              {canUpdate && (
-                                <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
-                                  {user.isActive ? <FiSlash /> : <FiCheckCircle />}
-                                  {user.isActive ? "Deactivate" : "Activate"}
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(user)}>
-                                  <FiTrash2 /> Delete
-                                </button>
-                              )}
+                            <div>
+                              <div className="cell-primary" style={{ fontSize: "0.95rem" }}>{staffFullName(user)}</div>
+                              <div className="cell-muted">@{user.username}</div>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{roleNames(user) || "Standard Staff"}</div>
+                          {user.serviceArea?.name && (
+                            <div className="cell-muted">{user.serviceArea.name}</div>
+                          )}
+                        </td>
+                        <td>
+                          <div>{user.phone || "—"}</div>
+                          <div className="cell-muted">{user.email}</div>
+                        </td>
+                        <td>
+                          <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
+                            {user.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="cell-actions">
+                          <div style={{ display: "inline-flex", gap: "6px" }}>
+                            <button type="button" className="icon-text-btn" onClick={() => setIdCardUser(user)} title="Print Staff ID Card">
+                              <FiShield /> ID Card
+                            </button>
+                            {canUpdate && (
+                              <button type="button" className="icon-text-btn" onClick={() => startEdit(user)}>
+                                <FiEdit3 /> Edit
+                              </button>
+                            )}
+                            {canUpdate && (
+                              <button type="button" className="icon-text-btn" onClick={() => handleActiveToggle(user)}>
+                                {user.isActive ? <FiSlash /> : <FiCheckCircle />}
+                                {user.isActive ? "Deactivate" : "Activate"}
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button type="button" className="icon-text-btn danger" onClick={() => handleDelete(user)}>
+                                <FiTrash2 /> Delete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
+
+          {/* ADD / EDIT USER MODAL */}
+          {isModalOpen && (
+            <div className="hms-modal-overlay" role="dialog" aria-modal="true">
+              <div className="hms-modal-window wide">
+                <div className="hms-modal-header">
+                  <div>
+                    <h2>{editingUser ? "Edit User Account" : "Add Staff User"}</h2>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
+                      {editingUser ? `@${editingUser.username}` : "Create staff login credentials and assign roles."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="hms-modal-close-btn"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }}
+                    title="Close"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+
+                {error && <p className="registration-error">{error}</p>}
+                {success && <p className="security-success">{success}</p>}
+
+                {createdUser ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div className="rbac-copy-box">
+                      <code>{accountMessage(createdUser, createdPassword)}</code>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setCreatedUser(null);
+                          setIsModalOpen(false);
+                        }}
+                      >
+                        Done
+                      </button>
+                      <button type="button" className="btn btn-primary" onClick={copyLogin}>
+                        <FiCopy /> Copy Login Message
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    <div className="form-grid">
+                      <label className="staff-photo-control">
+                        Staff photo
+                        <span className="staff-photo-row">
+                          <span className="staff-photo-preview">
+                            {form.photoDataUrl || form.photoUrl ? (
+                              <img src={form.photoDataUrl || form.photoUrl} alt="Staff preview" />
+                            ) : (
+                              <FiCamera />
+                            )}
+                          </span>
+                          <span className="staff-photo-actions">
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              onChange={(event) => void handlePhotoChange(event.target.files?.[0])}
+                            />
+                            {(form.photoDataUrl || form.photoUrl) && (
+                              <button className="icon-text-btn" type="button" onClick={clearPhoto}>
+                                Remove
+                              </button>
+                            )}
+                          </span>
+                        </span>
+                      </label>
+                      <label>First name<input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required /></label>
+                      <label>Last name<input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required /></label>
+                      <label>Email<input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required /></label>
+                      <label>Phone<input value={form.phone} onChange={(event) => updatePhone(event.target.value)} /></label>
+                      <label>
+                        Service area
+                        <select value={form.serviceAreaId} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
+                          <option value="">No service area</option>
+                          {services.map((service) => (
+                            <option key={service.id} value={service.id}>
+                              {service.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>Username<input value={form.username} onChange={(event) => updateField("username", event.target.value)} required /></label>
+                      <label>
+                        {editingUser ? "New password" : "Password"}
+                        <span className="credential-input-row">
+                          <input
+                            value={form.password}
+                            onChange={(event) => updateField("password", event.target.value)}
+                            required={!editingUser}
+                            placeholder={editingUser ? "Leave blank to keep current password" : "Uses phone number by default"}
+                          />
+                          <button className="icon-text-btn" type="button" onClick={() => updateField("password", generatePassword(form.phone))}>Use phone</button>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.4rem" }}>
+                        Assign Permissions & Roles
+                      </label>
+                      <div className="rbac-check-list">
+                        {roles.map((role) => (
+                          <label key={role.id} className="rbac-check">
+                            <input
+                              type="checkbox"
+                              checked={form.roleIds.includes(role.id)}
+                              onChange={() => toggleRole(role.id)}
+                              disabled={editingUser?.id === currentUserId}
+                            />
+                            <span>{role.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="setup-actions" style={{ justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                      <button
+                        type="button"
+                        className="icon-text-btn"
+                        onClick={() => {
+                          setIsModalOpen(false);
+                          resetForm();
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button className="registration-submit" type="submit" disabled={saving || (editingUser ? !canUpdate : !canCreate)}>
+                        {saving ? "Saving..." : editingUser ? "Save User" : "Create User"}
+                        <FiSave />
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
 
           {idCardUser && (
             <section className="patient-id-modal" role="dialog" aria-modal="true">

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { FiCopy, FiRefreshCw, FiSave, FiSend, FiUserPlus } from "react-icons/fi";
+import { FiCopy, FiRefreshCw, FiSave, FiSearch, FiSend, FiUserPlus, FiX } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
   CreateDoctorAccountValues,
@@ -72,6 +72,9 @@ export default function DoctorsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const loginMessage = useMemo(
     () => (createdUser ? doctorAccountMessage(createdUser, createdPassword) : ""),
@@ -153,6 +156,22 @@ export default function DoctorsPage() {
     await loadDoctors();
   };
 
+  const filteredDoctors = useMemo(() => {
+    return doctors.filter((doc) => {
+      if (typeFilter !== "all" && doc.doctorProfile?.doctorType !== typeFilter) {
+        return false;
+      }
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const name = `${doc.firstName} ${doc.lastName}`.toLowerCase();
+        const username = (doc.username || "").toLowerCase();
+        const specialty = (doc.doctorProfile?.specialty || "").toLowerCase();
+        return name.includes(q) || username.includes(q) || specialty.includes(q);
+      }
+      return true;
+    });
+  }, [doctors, typeFilter, search]);
+
   return (
     <AdminLayout>
       <main className="page-container">
@@ -161,202 +180,291 @@ export default function DoctorsPage() {
             <div>
               <p className="eyebrow">Super Admin</p>
               <h1>Doctor Accounts</h1>
-              <p>Create doctor portal access, assign doctor category, and copy login details.</p>
+              <p>Create doctor portal access, assign doctor category, and manage specialist credentials.</p>
             </div>
             <div className="setup-summary">
               <FiUserPlus />
               <strong>{doctors.length}</strong>
-              <span>Doctors</span>
+              <span>Active Doctors</span>
             </div>
           </section>
 
-          <section className="doctor-admin-layout">
-            <form className="setup-form doctor-account-form" onSubmit={handleSubmit}>
-              <div className="panel-title">
-                <div>
-                  <h2>Add Doctor</h2>
-                  <p>Doctor role is assigned automatically.</p>
-                </div>
-                <FiUserPlus />
-              </div>
+          {message && !isModalOpen && (
+            <p className="security-success" style={{ margin: "0.5rem 0" }}>{message}</p>
+          )}
 
-              <div className="doctor-type-selector">
-                {(Object.keys(doctorTypeLabels) as DoctorType[]).map((type) => (
+          {/* FULL WIDTH DOCTORS TABLE */}
+          <section className="hms-table-view">
+            <div className="table-topbar">
+              <div className="table-topbar-left">
+                <div className="patient-search-control" style={{ minWidth: "260px" }}>
+                  <FiSearch />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search doctor by name, username, or specialty..."
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => setSearch("")}
+                      title="Clear search"
+                    >
+                      <FiX />
+                    </button>
+                  )}
+                </div>
+
+                <div className="table-filter-pills">
                   <button
-                    key={type}
                     type="button"
-                    className={`category-option ${form.doctorType === type ? "active" : ""}`}
-                    onClick={() => updateField("doctorType", type)}
+                    className={`table-filter-pill ${typeFilter === "all" ? "active" : ""}`}
+                    onClick={() => setTypeFilter("all")}
                   >
-                    <strong>{doctorTypeLabels[type]}</strong>
+                    All ({doctors.length})
                   </button>
-                ))}
-              </div>
-
-              <div className="form-grid">
-                <label>
-                  First name
-                  <input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required />
-                </label>
-                <label>
-                  Last name
-                  <input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required />
-                </label>
-                <label>
-                  Email
-                  <input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required />
-                </label>
-                <label>
-                  Phone
-                  <input value={form.phone} onChange={(event) => updatePhone(event.target.value)} />
-                </label>
-                <label>
-                  Service area
-                  <select value={form.serviceAreaId ?? ""} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
-                    <option value="">No service area</option>
-                    {services.map((service) => (
-                      <option key={service.id} value={service.id}>
-                        {service.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Specialty
-                  <input value={form.specialty} onChange={(event) => updateField("specialty", event.target.value)} />
-                </label>
-                <label>
-                  Username
-                  <span className="credential-input-row">
-                    <input value={form.username} onChange={(event) => updateField("username", event.target.value)} required />
-                    <button type="button" className="icon-text-btn" onClick={suggestUsername}>
-                      Generate
+                  {Object.keys(doctorTypeLabels).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`table-filter-pill ${typeFilter === t ? "active" : ""}`}
+                      onClick={() => setTypeFilter(t)}
+                    >
+                      {doctorTypeLabels[t as DoctorType]}
                     </button>
-                  </span>
-                </label>
-                <label>
-                  Password
-                  <span className="credential-input-row">
-                    <input
-                      value={form.password}
-                      onChange={(event) => updateField("password", event.target.value)}
-                      placeholder="Uses phone number by default"
-                      required
-                    />
-                    <button type="button" className="icon-text-btn" onClick={() => updateField("password", generatePassword(form.phone))}>
-                      Use phone
-                    </button>
-                  </span>
-                </label>
+                  ))}
+                </div>
               </div>
 
-              {error && <p className="registration-error">{error}</p>}
-              {message && <p className="security-success">{message}</p>}
-
-              <button className="registration-submit" type="submit" disabled={saving}>
-                {saving ? "Creating..." : "Create Doctor Account"}
-                <FiSave />
-              </button>
-            </form>
-
-            <section className="setup-list-panel doctor-account-panel">
-              <div className="panel-title">
-                <div>
-                  <h2>Login Details</h2>
-                  <p>Copy this after account creation and send to the doctor.</p>
-                </div>
-                <FiSend />
-              </div>
-
-              {createdUser ? (
-                <>
-                  <div className="credential-card">
-                    <span>
-                      <small>Username</small>
-                      <strong>{createdUser.username}</strong>
-                    </span>
-                    <span>
-                      <small>Password</small>
-                      <strong>{createdPassword}</strong>
-                    </span>
-                  </div>
-                  <textarea className="doctor-message-box" readOnly value={loginMessage} rows={10} />
-                  <button type="button" className="registration-submit" onClick={() => copyText(loginMessage)}>
-                    Copy Login Message
-                    <FiCopy />
-                  </button>
-                </>
-              ) : (
-                <p className="muted-text">Create a doctor account to prepare the login message.</p>
-              )}
-
-              <div className="setup-list-header">
-                <div>
-                  <h2>Current Doctors ({doctors.length})</h2>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
-                    Medical officers and consulting specialists.
-                  </p>
-                </div>
+              <div className="table-topbar-right">
                 <button type="button" className="icon-text-btn" onClick={loadDoctors}>
                   <FiRefreshCw />
                   Refresh
                 </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setCreatedUser(null);
+                    setCreatedPassword("");
+                    setError(null);
+                    setMessage("");
+                    setIsModalOpen(true);
+                  }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <FiUserPlus /> Add New Doctor
+                </button>
               </div>
+            </div>
 
-              {loading && <p className="muted-text">Loading doctors...</p>}
-              {!loading && doctors.length === 0 && <p className="muted-text">No doctors found.</p>}
+            {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading doctors...</p>}
+            {!loading && filteredDoctors.length === 0 && (
+              <p className="muted-text" style={{ padding: "1.5rem" }}>No doctors found.</p>
+            )}
 
-              {!loading && doctors.length > 0 && (
-                <div className="table-scroll-container">
-                  <table className="hms-data-table">
-                    <thead>
-                      <tr>
-                        <th>Doctor</th>
-                        <th>Type / Specialty</th>
-                        <th>Service Area</th>
-                        <th>Contact</th>
+            {!loading && filteredDoctors.length > 0 && (
+              <div className="table-scroll-container">
+                <table className="hms-data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: "28%" }}>Doctor</th>
+                      <th style={{ width: "24%" }}>Category & Specialty</th>
+                      <th style={{ width: "20%" }}>Service Area / Clinic</th>
+                      <th style={{ width: "16%" }}>Phone Number</th>
+                      <th style={{ width: "12%" }}>Email Address</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDoctors.map((doctor) => (
+                      <tr key={doctor.id}>
+                        <td>
+                          <div className="cell-primary" style={{ fontSize: "0.95rem" }}>
+                            🩺 Dr. {doctor.firstName} {doctor.lastName}
+                          </div>
+                          <div className="cell-muted">@{doctor.username}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>
+                            {doctor.doctorProfile?.doctorType
+                              ? doctorTypeLabels[doctor.doctorProfile.doctorType]
+                              : "Medical Doctor"}
+                          </div>
+                          {doctor.doctorProfile?.specialty && (
+                            <div className="cell-muted">{doctor.doctorProfile.specialty}</div>
+                          )}
+                        </td>
+                        <td>
+                          {doctor.serviceArea?.name ? (
+                            <span className="pill-badge" style={{ fontSize: "0.78rem" }}>
+                              {doctor.serviceArea.name}
+                            </span>
+                          ) : (
+                            <span className="cell-muted">All Departments</span>
+                          )}
+                        </td>
+                        <td>
+                          <span>{doctor.phone || "—"}</span>
+                        </td>
+                        <td>
+                          <span className="cell-muted">{doctor.email}</span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {doctors.map((doctor) => (
-                        <tr key={doctor.id}>
-                          <td>
-                            <div className="cell-primary">
-                              🩺 Dr. {doctor.firstName} {doctor.lastName}
-                            </div>
-                            <div className="cell-muted">@{doctor.username}</div>
-                          </td>
-                          <td>
-                            <div>
-                              {doctor.doctorProfile?.doctorType
-                                ? doctorTypeLabels[doctor.doctorProfile.doctorType]
-                                : "Medical Doctor"}
-                            </div>
-                            {doctor.doctorProfile?.specialty && (
-                              <div className="cell-muted">{doctor.doctorProfile.specialty}</div>
-                            )}
-                          </td>
-                          <td>
-                            {doctor.serviceArea?.name ? (
-                              <span className="pill-badge" style={{ fontSize: "0.75rem" }}>
-                                {doctor.serviceArea.name}
-                              </span>
-                            ) : (
-                              <span className="cell-muted">All areas</span>
-                            )}
-                          </td>
-                          <td>
-                            <div>{doctor.phone || "—"}</div>
-                            <div className="cell-muted">{doctor.email}</div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
+
+          {/* CREATE DOCTOR MODAL */}
+          {isModalOpen && (
+            <div className="hms-modal-overlay" role="dialog" aria-modal="true">
+              <div className="hms-modal-window wide">
+                <div className="hms-modal-header">
+                  <div>
+                    <h2>Create Doctor Account</h2>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
+                      Assign doctor category, specialty, and login credentials.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="hms-modal-close-btn"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setCreatedUser(null);
+                    }}
+                    title="Close"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+
+                {error && <p className="registration-error">{error}</p>}
+                {message && <p className="security-success">{message}</p>}
+
+                {createdUser ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div className="credential-card">
+                      <span>
+                        <small>Username</small>
+                        <strong>{createdUser.username}</strong>
+                      </span>
+                      <span>
+                        <small>Password</small>
+                        <strong>{createdPassword}</strong>
+                      </span>
+                    </div>
+                    <textarea className="doctor-message-box" readOnly value={loginMessage} rows={8} />
+                    <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setCreatedUser(null);
+                          setIsModalOpen(false);
+                        }}
+                      >
+                        Done
+                      </button>
+                      <button type="button" className="btn btn-primary" onClick={() => copyText(loginMessage)}>
+                        <FiCopy /> Copy Login Message
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.4rem" }}>
+                        Doctor Category
+                      </label>
+                      <div className="doctor-type-selector">
+                        {(Object.keys(doctorTypeLabels) as DoctorType[]).map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={`category-option ${form.doctorType === type ? "active" : ""}`}
+                            onClick={() => updateField("doctorType", type)}
+                          >
+                            <strong>{doctorTypeLabels[type]}</strong>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-grid">
+                      <label>
+                        First name
+                        <input value={form.firstName} onChange={(event) => updateField("firstName", event.target.value)} required />
+                      </label>
+                      <label>
+                        Last name
+                        <input value={form.lastName} onChange={(event) => updateField("lastName", event.target.value)} required />
+                      </label>
+                      <label>
+                        Email
+                        <input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} required />
+                      </label>
+                      <label>
+                        Phone
+                        <input value={form.phone} onChange={(event) => updatePhone(event.target.value)} />
+                      </label>
+                      <label>
+                        Service area
+                        <select value={form.serviceAreaId ?? ""} onChange={(event) => updateField("serviceAreaId", event.target.value)}>
+                          <option value="">No service area</option>
+                          {services.map((service) => (
+                            <option key={service.id} value={service.id}>
+                              {service.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Specialty
+                        <input value={form.specialty} onChange={(event) => updateField("specialty", event.target.value)} placeholder="e.g. Cardiology, Surgery" />
+                      </label>
+                      <label>
+                        Username
+                        <span className="credential-input-row">
+                          <input value={form.username} onChange={(event) => updateField("username", event.target.value)} required />
+                          <button type="button" className="icon-text-btn" onClick={suggestUsername}>
+                            Generate
+                          </button>
+                        </span>
+                      </label>
+                      <label>
+                        Password
+                        <span className="credential-input-row">
+                          <input
+                            value={form.password}
+                            onChange={(event) => updateField("password", event.target.value)}
+                            placeholder="Uses phone number by default"
+                            required
+                          />
+                          <button type="button" className="icon-text-btn" onClick={() => updateField("password", generatePassword(form.phone))}>
+                            Use phone
+                          </button>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="setup-actions" style={{ justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                      <button type="button" className="icon-text-btn" onClick={() => setIsModalOpen(false)}>
+                        Cancel
+                      </button>
+                      <button className="registration-submit" type="submit" disabled={saving}>
+                        {saving ? "Creating..." : "Create Doctor Account"}
+                        <FiSave />
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </AdminLayout>

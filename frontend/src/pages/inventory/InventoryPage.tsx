@@ -10,6 +10,7 @@ import {
   FiSave,
   FiSearch,
   FiTruck,
+  FiX,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import {
@@ -164,6 +165,7 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id === movementForm.itemId) ?? null,
@@ -231,6 +233,7 @@ export default function InventoryPage() {
     setActiveTab("catalog");
     setError(null);
     setSuccess(null);
+    setIsItemModalOpen(true);
   };
 
   const startMovement = (item: InventoryItem, type: InventoryMovementType = "stock_out") => {
@@ -264,6 +267,7 @@ export default function InventoryPage() {
 
     setSuccess(editingItem ? "Inventory item updated." : "Inventory item added.");
     resetItemForm();
+    setIsItemModalOpen(false);
     await loadData();
   };
 
@@ -554,15 +558,30 @@ export default function InventoryPage() {
           )}
 
           {activeTab === "catalog" && (
-            <section className="billing-layout inventory-catalog-layout">
-              <form className="setup-form" onSubmit={handleItemSubmit}>
-                <div className="panel-title">
-                  <div>
-                    <h2>{editingItem ? "Edit Item" : "Add Item"}</h2>
-                    <p>{editingItem ? editingItem.name : "Create a material or equipment record."}</p>
-                  </div>
-                  <FiPlus />
-                </div>
+            <section className="hms-table-view">
+              {isItemModalOpen && (
+                <div className="hms-modal-overlay" role="dialog" aria-modal="true">
+                  <div className="hms-modal-window wide">
+                    <div className="hms-modal-header">
+                      <div>
+                        <h2>{editingItem ? "Edit Inventory Item" : "Add Inventory Item"}</h2>
+                        <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--muted)" }}>
+                          {editingItem ? editingItem.name : "Create a material or equipment record."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="hms-modal-close-btn"
+                        onClick={() => {
+                          setIsItemModalOpen(false);
+                          resetItemForm();
+                        }}
+                        title="Close"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                    <form className="setup-form" onSubmit={handleItemSubmit} style={{ border: "none", padding: 0, background: "transparent" }}>
 
                 <div className="form-grid">
                   <label>
@@ -726,38 +745,96 @@ export default function InventoryPage() {
                     {saving ? "Saving..." : editingItem ? "Update Item" : "Add Item"}
                     <FiSave />
                   </button>
-                </div>
-              </form>
-
-              <section className="setup-list-panel">
-                <div className="setup-list-header inventory-filter-bar">
-                  <div className="patient-search-control">
-                    <FiSearch />
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void loadData();
-                      }}
-                      placeholder="Search item, code, location"
-                    />
                   </div>
-                  <select value={stockFilter} onChange={(event) => setStockFilter(event.target.value as InventoryStockStatus)}>
-                    <option value="all">All stock</option>
-                    <option value="low">Low stock</option>
-                    <option value="out">Out of stock</option>
-                  </select>
-                  <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-                    <option value="">All categories</option>
-                    {summary.categories.map((category) => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                  <button type="button" className="icon-text-btn" onClick={loadData}>
-                    <FiRefreshCw />
-                    Search
+                </form>
+              </div>
+            </div>
+          )}
+
+          <div className="table-topbar">
+            <div className="table-topbar-left">
+              <div className="patient-search-control" style={{ minWidth: "260px" }}>
+                <FiSearch />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void loadData();
+                  }}
+                  placeholder="Search item, code, location..."
+                />
+                {search && (
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => {
+                      setSearch("");
+                      void loadData();
+                    }}
+                    title="Clear search"
+                  >
+                    <FiX />
                   </button>
-                </div>
+                )}
+              </div>
+
+              <div className="table-filter-pills">
+                <button
+                  type="button"
+                  className={`table-filter-pill ${stockFilter === "all" ? "active" : ""}`}
+                  onClick={() => setStockFilter("all")}
+                >
+                  All ({items.length})
+                </button>
+                <button
+                  type="button"
+                  className={`table-filter-pill ${stockFilter === "low" ? "active" : ""}`}
+                  onClick={() => setStockFilter("low")}
+                >
+                  Low Stock ({summary.lowStock})
+                </button>
+                <button
+                  type="button"
+                  className={`table-filter-pill ${stockFilter === "out" ? "active" : ""}`}
+                  onClick={() => setStockFilter("out")}
+                >
+                  Out of Stock ({summary.outOfStock})
+                </button>
+              </div>
+
+              <select
+                className="form-control"
+                style={{ width: "auto", minWidth: "150px", height: "36px", fontSize: "0.82rem" }}
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+              >
+                <option value="">All categories</option>
+                {summary.categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="table-topbar-right">
+              <button type="button" className="icon-text-btn" onClick={loadData}>
+                <FiRefreshCw />
+                Refresh
+              </button>
+              {canCreate && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    resetItemForm();
+                    setIsItemModalOpen(true);
+                  }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <FiPlus /> Add Inventory Item
+                </button>
+              )}
+            </div>
+          </div>
 
                 <div className="table-scroll-container">
                   {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading inventory...</p>}
@@ -841,10 +918,9 @@ export default function InventoryPage() {
                   )}
                 </div>
               </section>
-            </section>
-          )}
+            )}
 
-          {activeTab === "history" && (
+            {activeTab === "history" && (
             <section className="setup-list-panel">
               <div className="panel-title">
                 <div>

@@ -266,3 +266,151 @@
   text-align: right;
 }
 
+/* =========================================================================
+   FULL-WIDTH TABLE VIEW & ACTION TOPBARS
+   ========================================================================= */
+.hms-table-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.table-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  border-radius: 14px;
+}
+
+.table-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
+.table-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.table-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.table-filter-pill {
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
+  background: transparent;
+  color: var(--muted, #64748b);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.table-filter-pill:hover {
+  background: var(--surface-strong, #f1f5f9);
+  color: var(--text-strong, #0f172a);
+}
+
+.table-filter-pill.active {
+  background: var(--text-strong, #0f172a);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+:root[data-theme="dark"] .table-filter-pill.active,
+[data-theme="dark"] .table-filter-pill.active {
+  background: #38bdf8 !important;
+  color: #0f172a !important;
+}
+
+/* =========================================================================
+   STANDARDIZED HMS MODALS (Drawers / Overlays for Form Editing)
+   ========================================================================= */
+.hms-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.hms-modal-window {
+  position: relative;
+  width: min(100%, 640px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 16px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+:root[data-theme="dark"] .hms-modal-window,
+[data-theme="dark"] .hms-modal-window {
+  background: #0f1f38 !important;
+  border-color: rgba(125, 211, 252, 0.2) !important;
+}
+
+.hms-modal-window.wide {
+  width: min(100%, 880px);
+}
+
+.hms-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.18));
+  padding-bottom: 0.85rem;
+}
+
+.hms-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-strong, #0f172a);
+}
+
+.hms-modal-close-btn {
+  background: transparent;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.25));
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted, #64748b);
+  transition: all 0.15s ease;
+}
+
+.hms-modal-close-btn:hover {
+  background: var(--surface-strong, #f1f5f9);
+  color: var(--danger, #dc2626);
+}
+
+
