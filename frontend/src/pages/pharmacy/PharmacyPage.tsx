@@ -241,7 +241,7 @@ export default function PharmacyPage() {
     setError(null);
 
     const [patientResult, medicationResult, salesResult, movementResult] = await Promise.all([
-      fetchPatients({ status: "active" }),
+      fetchPatients({ status: "active", take: 500 }),
       fetchMedications({ search: medicineSearch, stockStatus: stockFilter }),
       fetchPharmacySales(saleSearch),
       fetchPharmacyStockMovements(),

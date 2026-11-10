@@ -31,6 +31,7 @@ import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
 import { flushOfflineQueue } from "../../utils/offlineQueue";
 import LaboratoryPrintModal from "../../components/laboratory/LaboratoryPrintModal";
 import ShareLabResultModal from "../../components/laboratory/ShareLabResultModal";
+import "../../styles/workspace-primitives.css";
 import "../../styles/laboratory-studio.css";
 import { fetchPatients } from "../../services/patients/patientService";
 import {

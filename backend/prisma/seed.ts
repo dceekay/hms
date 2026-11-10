@@ -1,6 +1,7 @@
 import { AuditAction, Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { STANDARD_NIGERIAN_LAB_TEMPLATES } from "../src/modules/setup/seedLabTemplatesService";
+import { nigerianMedications } from "./seed_nigerian_drugs";
 
 const prisma = new PrismaClient();
 
@@ -2135,6 +2136,27 @@ async function seedDemoMedications() {
       },
       create: medication,
     });
+  }
+
+  for (const medication of nigerianMedications) {
+    const existing = await prisma.medication.findUnique({
+      where: {
+        name_strength_dosageForm: {
+          name: medication.name,
+          strength: medication.strength,
+          dosageForm: medication.dosageForm,
+        },
+      },
+      select: { id: true },
+    });
+    if (!existing) {
+      await prisma.medication.create({
+        data: {
+          ...medication,
+          currentStock: 0,
+        },
+      });
+    }
   }
 }
 

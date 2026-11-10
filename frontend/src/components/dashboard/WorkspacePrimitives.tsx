@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
+import "../../styles/workspace-primitives.css";
 
 export interface WorkspaceHeaderProps {
   eyebrow?: string;
@@ -145,7 +146,7 @@ export function WorkspaceKpiGrid({
           <Tag
             key={item.id ?? `${item.label}-${idx}`}
             type={item.onClick ? "button" : undefined}
-            className={`ws-kpi-card ${item.onClick ? "clickable" : ""} ${
+            className={`ws-kpi-card ${item.onClick ? "is-clickable clickable" : ""} ${
               item.active ? "active" : ""
             } ${activeTone ? `tone-${activeTone}` : ""}`}
             onClick={item.onClick}
@@ -154,7 +155,7 @@ export function WorkspaceKpiGrid({
               <span className="ws-kpi-label">{item.label}</span>
               {item.icon && (
                 <span
-                  className="ws-kpi-icon"
+                  className={`ws-kpi-icon ${activeTone ? `tone-${activeTone}` : ""}`}
                   style={item.color ? { background: item.color } : undefined}
                 >
                   {item.icon}
@@ -167,12 +168,12 @@ export function WorkspaceKpiGrid({
             {(kpiSubtitle || item.badge) && (
               <div className="ws-kpi-footer">
                 {item.badge && (
-                  <span className={`ws-kpi-badge ${activeTone ?? "neutral"}`}>
+                  <span className={`ws-kpi-badge ${activeTone ? `tone-${activeTone}` : "neutral"}`}>
                     {item.badge}
                   </span>
                 )}
                 {kpiSubtitle && (
-                  <span className="ws-kpi-subtitle">{kpiSubtitle}</span>
+                  <span className="ws-kpi-subtext ws-kpi-subtitle">{kpiSubtitle}</span>
                 )}
               </div>
             )}
