@@ -131,27 +131,21 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
   const menus: MenuItem[] = useMemo(
     () => [
       {
-        title: "Dashboard",
+        title: "Home",
         icon: <FiHome />,
         path: "/dashboard",
       },
       {
-        title: "Patients",
-        icon: <FaUserInjured />,
-        children: [
-          {
-            title: "Patient Directory",
-            path: "/patients",
-            icon: <FiUsers />,
-            requiredPermissions: ["patients.read"],
-          },
-          {
-            title: "Register Patient",
-            path: "/register-patient",
-            icon: <FiPlusCircle />,
-            anyPermissions: ["patients.create", "patients.investigation.create"],
-          },
-        ],
+        title: "All Patients",
+        icon: <FiUsers />,
+        path: "/patients",
+        requiredPermissions: ["patients.read"],
+      },
+      {
+        title: "New Patient",
+        icon: <FiPlusCircle />,
+        path: "/register-patient",
+        anyPermissions: ["patients.create", "patients.investigation.create"],
       },
       {
         title: "Appointments",
@@ -160,7 +154,7 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
         requiredPermissions: ["appointments.read"],
       },
       {
-        title: "Clinical",
+        title: "Clinics & Care",
         icon: <FaHospitalUser />,
         children: [
           {
@@ -188,34 +182,40 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             badgeClass: "labs",
           },
           {
-            title: "Lab Templates",
-            path: "/laboratory/templates",
-            icon: <FiFileText />,
-            requiredPermissions: ["laboratory.read"],
-          },
-          {
             title: "Pharmacy",
             path: "/pharmacy",
             icon: <FaCapsules />,
             requiredPermissions: ["pharmacy.read"],
           },
+          {
+            title: "Wards & Beds",
+            path: "/setup/wards",
+            icon: <FaBed />,
+            requiredRoles: ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"],
+          },
         ],
       },
       {
-        title: "Operations",
+        title: "Accounts & Store",
         icon: <FiLayers />,
         children: [
           {
-            title: "Security Entry",
-            path: "/security/entry",
-            icon: <FiUserCheck />,
-            requiredPermissions: ["security.entry.create"],
+            title: "Billing & Payments",
+            path: "/billing",
+            icon: <FiCreditCard />,
+            requiredPermissions: ["billing.read"],
           },
           {
-            title: "All Entries",
-            path: "/security/logs",
+            title: "Store & Stock",
+            path: "/inventory",
+            icon: <FiPackage />,
+            requiredPermissions: ["inventory.read"],
+          },
+          {
+            title: "NHIA / Desk Office",
+            path: "/desk-office",
             icon: <FiFileText />,
-            requiredPermissions: ["security.entry.read"],
+            requiredPermissions: ["claims.read"],
           },
           {
             title: "SEMSAS",
@@ -224,67 +224,25 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             requiredPermissions: ["semsas.read"],
           },
           {
-            title: "Inventory",
-            path: "/inventory",
-            icon: <FiPackage />,
-            requiredPermissions: ["inventory.read"],
+            title: "Gate Check-In",
+            path: "/security/entry",
+            icon: <FiUserCheck />,
+            requiredPermissions: ["security.entry.create"],
           },
           {
-            title: "Billing & Cashier",
-            path: "/billing",
-            icon: <FiCreditCard />,
-            requiredPermissions: ["billing.read"],
-          },
-          {
-            title: "Desk Office",
-            path: "/desk-office",
+            title: "Gate Logs",
+            path: "/security/logs",
             icon: <FiFileText />,
-            requiredPermissions: ["claims.read"],
-          },
-          {
-            title: "Reports",
-            path: "/reports",
-            icon: <FiPieChart />,
-            requiredPermissions: ["reports.read"],
+            requiredPermissions: ["security.entry.read"],
           },
         ],
       },
       {
-        title: "Setup",
+        title: "Hospital Setup",
         icon: <FiSettings />,
         children: [
           {
-            title: "Departments",
-            path: "/departments",
-            icon: <FiDatabase />,
-            requiredPermissions: ["departments.read"],
-          },
-          {
-            title: "Wards & Beds",
-            path: "/setup/wards",
-            icon: <FaBed />,
-            requiredRoles: ["Super Admin", "Administrator", "Doctor", "Receptionist", "Nurse"],
-          },
-          {
-            title: "Services",
-            path: "/setup/services",
-            icon: <FiTool />,
-            requiredRoles: ["Super Admin"],
-          },
-          {
-            title: "Insurance",
-            path: "/setup/insurance",
-            icon: <FiDroplet />,
-            requiredRoles: ["Super Admin"],
-          },
-        ],
-      },
-      {
-        title: "Administration",
-        icon: <FiShield />,
-        children: [
-          {
-            title: "Users",
+            title: "Staff & Users",
             path: "/admin/users",
             icon: <FiUsers />,
             requiredPermissions: ["users.read"],
@@ -296,35 +254,30 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             requiredRoles: ["Super Admin"],
           },
           {
-            title: "Roles",
+            title: "Hospital Services",
+            path: "/setup/services",
+            icon: <FiTool />,
+            requiredRoles: ["Super Admin"],
+          },
+          {
+            title: "HMO / Insurance",
+            path: "/setup/insurance",
+            icon: <FiDroplet />,
+            requiredRoles: ["Super Admin"],
+          },
+          {
+            title: "Staff Roles",
             path: "/admin/roles",
             icon: <FiShield />,
             requiredPermissions: ["roles.read"],
           },
           {
-            title: "Permissions",
-            path: "/admin/permissions",
-            icon: <FiTool />,
-            requiredPermissions: ["permissions.read"],
-          },
-          {
-            title: "System Logs",
+            title: "Activity Logs",
             path: "/admin/activity",
             icon: <FiClipboard />,
             allowRoles: ["Super Admin", "Administrator"],
           },
         ],
-      },
-      {
-        title: "API Tester",
-        icon: <FiDatabase />,
-        path: "/api-tester",
-        requiredRoles: ["Super Admin"],
-      },
-      {
-        title: "Account",
-        icon: <FiSettings />,
-        path: "/settings",
       },
     ],
     [waitingCount, readyLabsCount, nurseWaitingCount]
@@ -353,27 +306,16 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
     const sourceMenus: MenuItem[] = securityOnly
       ? [
           {
-            title: "Security",
-            icon: <FiShield />,
-            children: [
-              {
-                title: "Security Entry",
-                path: "/security/entry",
-                icon: <FiUserCheck />,
-                requiredPermissions: ["security.entry.create"],
-              },
-              {
-                title: "All Entries",
-                path: "/security/logs",
-                icon: <FiFileText />,
-                requiredPermissions: ["security.entry.read"],
-              },
-              {
-                title: "Account",
-                path: "/settings",
-                icon: <FiSettings />,
-              },
-            ],
+            title: "Gate Check-In",
+            path: "/security/entry",
+            icon: <FiUserCheck />,
+            requiredPermissions: ["security.entry.create"],
+          },
+          {
+            title: "Gate Logs",
+            path: "/security/logs",
+            icon: <FiFileText />,
+            requiredPermissions: ["security.entry.read"],
           },
         ]
       : doctorOnly
@@ -386,107 +328,78 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
               badgeClass: "waiting",
             },
             {
-              title: "Appointments",
-              icon: <FiCalendar />,
-              path: "/doctor/appointments",
-            },
-            {
-              title: "Patients",
+              title: "Medical Folders",
               icon: <FaUserInjured />,
               path: "/doctor/patients",
             },
             {
-              title: "Care Tools",
-              icon: <FiClipboard />,
-              children: [
-                { title: "Clinical Notes", path: "/doctor/notes", icon: <FaNotesMedical /> },
-                {
-                  title: "Lab Requests",
-                  path: "/doctor/lab",
-                  icon: <FaFlask />,
-                  badge: readyLabsCount > 0 ? readyLabsCount : null,
-                  badgeClass: "labs",
-                },
-                { title: "Prescriptions", path: "/doctor/prescription", icon: <FaCapsules /> },
-                { title: "Ward Requests", path: "/doctor/admission", icon: <FaBed /> },
-                { title: "Referrals", path: "/doctor/referral", icon: <FiShare2 /> },
-              ],
+              title: "Lab Results",
+              icon: <FaFlask />,
+              path: "/doctor/results",
+              badge: readyLabsCount > 0 ? readyLabsCount : null,
+              badgeClass: "labs",
             },
             {
-              title: "Reminders",
+              title: "Follow-ups",
               icon: <FiBell />,
               path: "/doctor/reminders",
             },
             {
-              title: "Account",
-              icon: <FiSettings />,
-              path: "/settings",
+              title: "Wards & Beds",
+              icon: <FaBed />,
+              path: "/setup/wards",
             },
           ]
         : nurseOnly
           ? [
               {
-                title: "Nurse Desk",
+                title: "Vitals & Queue",
                 icon: <FaUserNurse />,
                 path: "/nurse",
                 badge: nurseWaitingCount > 0 ? nurseWaitingCount : null,
                 badgeClass: "waiting",
               },
-              { title: "Patients", icon: <FaUserInjured />, path: "/nurse/patients" },
-              { title: "Ward Inpatients", icon: <FaBed />, path: "/nurse/ward" },
               {
-                title: "Medication Rounds",
+                title: "Patients & Wards",
+                icon: <FaBed />,
+                path: "/nurse/patients",
+              },
+              {
+                title: "Drug Rounds",
                 icon: <FaCapsules />,
                 path: "/nurse/medications",
                 badge: pendingMedsCount > 0 ? pendingMedsCount : null,
                 badgeClass: "urgent",
               },
-              { title: "Doctor Orders", icon: <FiFileText />, path: "/nurse/orders" },
-              { title: "Vitals & Triage", icon: <FiActivity />, path: "/nurse/vitals" },
-              { title: "Nursing Notes", icon: <FaNotesMedical />, path: "/nurse/notes" },
-              { title: "Reminders", icon: <FiBell />, path: "/nurse/reminders" },
-              { title: "Account", icon: <FiSettings />, path: "/settings" },
+              {
+                title: "Nurse Notes",
+                icon: <FaNotesMedical />,
+                path: "/nurse/notes",
+              },
             ]
           : laboratoryOnly
             ? [
                 {
-                  title: "Laboratory",
+                  title: "Lab Tests & Results",
+                  path: "/laboratory",
                   icon: <FaFlask />,
-                  children: [
-                    {
-                      title: "Tests & Results",
-                      path: "/laboratory",
-                      icon: <FaFlask />,
-                      badge: readyLabsCount > 0 ? readyLabsCount : null,
-                      badgeClass: "labs",
-                    },
-                    {
-                      title: "Lab Templates",
-                      path: "/laboratory/templates",
-                      icon: <FiFileText />,
-                    },
-                  ],
+                  badge: readyLabsCount > 0 ? readyLabsCount : null,
+                  badgeClass: "labs",
+                },
+                {
+                  title: "Test Templates",
+                  path: "/laboratory/templates",
+                  icon: <FiFileText />,
                 },
                 ...(permissions.includes("patients.investigation.create") || permissions.includes("patients.create")
                   ? [
                       {
-                        title: "Patients",
-                        icon: <FaUserInjured />,
-                        children: [
-                          {
-                            title: "Register Patient",
-                            path: "/register-patient",
-                            icon: <FiPlusCircle />,
-                          },
-                        ],
+                        title: "New Patient",
+                        path: "/register-patient",
+                        icon: <FiPlusCircle />,
                       },
                     ]
                   : []),
-                {
-                  title: "Account",
-                  icon: <FiSettings />,
-                  path: "/settings",
-                },
               ]
             : pharmacyOnly
               ? [
@@ -498,42 +411,35 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
                   ...(permissions.includes("inventory.read")
                     ? [
                         {
-                          title: "Inventory",
+                          title: "Store & Stock",
                           icon: <FiPackage />,
                           path: "/inventory",
                         },
                       ]
                     : []),
-                  {
-                    title: "Account",
-                    icon: <FiSettings />,
-                    path: "/settings",
-                  },
                 ]
               : receptionOnly || deskOfficeOnly
                 ? [
+                    ...(deskOfficeOnly
+                      ? [
+                          {
+                            title: "NHIA / Desk Office",
+                            path: "/desk-office",
+                            icon: <FiHome />,
+                          },
+                        ]
+                      : []),
                     {
-                      title: "Reception Desk",
-                      icon: <FiHome />,
-                      path: deskOfficeOnly ? "/desk-office" : "/patients",
+                      title: "All Patients",
+                      path: "/patients",
+                      icon: <FiUsers />,
+                      requiredPermissions: ["patients.read"],
                     },
                     {
-                      title: "Patients",
-                      icon: <FaUserInjured />,
-                      children: [
-                        {
-                          title: "Patient Directory",
-                          path: "/patients",
-                          icon: <FiUsers />,
-                          requiredPermissions: ["patients.read"],
-                        },
-                        {
-                          title: "Register Patient",
-                          path: "/register-patient",
-                          icon: <FiPlusCircle />,
-                          anyPermissions: ["patients.create", "patients.investigation.create"],
-                        },
-                      ],
+                      title: "New Patient",
+                      path: "/register-patient",
+                      icon: <FiPlusCircle />,
+                      anyPermissions: ["patients.create", "patients.investigation.create"],
                     },
                     {
                       title: "Appointments",
@@ -544,7 +450,7 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
                     ...(permissions.includes("billing.read")
                       ? [
                           {
-                            title: "Billing & Cashier",
+                            title: "Billing & Payments",
                             path: "/billing",
                             icon: <FiCreditCard />,
                           },
@@ -555,37 +461,18 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
                       path: "/setup/wards",
                       icon: <FaBed />,
                     },
-                    ...(deskOfficeOnly
-                      ? [
-                          {
-                            title: "Desk Office",
-                            path: "/desk-office",
-                            icon: <FiFileText />,
-                          },
-                        ]
-                      : []),
-                    {
-                      title: "Account",
-                      icon: <FiSettings />,
-                      path: "/settings",
-                    },
                   ]
                 : billingOnly
                   ? [
                       {
-                        title: "Billing & Cashier",
+                        title: "Billing & Payments",
                         path: "/billing",
                         icon: <FiCreditCard />,
                       },
                       {
-                        title: "Patient Directory",
+                        title: "All Patients",
                         path: "/patients",
                         icon: <FiUsers />,
-                      },
-                      {
-                        title: "Account",
-                        icon: <FiSettings />,
-                        path: "/settings",
                       },
                     ]
                   : menus;
@@ -838,17 +725,6 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
 
         {/* User Presence Footer */}
         <div className="sidebar-footer">
-          <button
-            type="button"
-            className="sidebar-pwa-btn"
-            onClick={() => window.dispatchEvent(new CustomEvent("open-pwa-install"))}
-            title="Install Web App / Add to iPhone Home Screen"
-            aria-label="Install App or Add to iPhone Home Screen"
-          >
-            <FiDownload className="icon" />
-            {!collapsed && <span>Install / Add to Home</span>}
-          </button>
-
           <Link
             to="/settings"
             className="sidebar-user-card"
@@ -863,7 +739,7 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             {!collapsed && (
               <div className="sidebar-user-details">
                 <strong className="sidebar-user-name">{displayName}</strong>
-                <span className="sidebar-user-role">{primaryRole}</span>
+                <span className="sidebar-user-role">{primaryRole} · Account</span>
               </div>
             )}
           </Link>

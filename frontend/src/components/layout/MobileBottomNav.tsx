@@ -48,7 +48,7 @@ const mobileItems: MobileNavItem[] = [
   { label: "Home", path: "/", icon: <FiHome /> },
   { label: "Patients", path: "/patients", icon: <FaUserInjured />, requiredPermissions: ["patients.read"] },
   {
-    label: "Register",
+    label: "New Patient",
     path: "/register-patient",
     icon: <FiUsers />,
     anyPermissions: ["patients.create", "patients.investigation.create"],
@@ -58,66 +58,62 @@ const mobileItems: MobileNavItem[] = [
   { label: "Lab", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
   { label: "Store", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
-  { label: "Admin", path: "/admin/users", icon: <FiShield />, requiredPermissions: ["users.read"] },
-  { label: "Logs", path: "/admin/activity", icon: <FiClipboard />, requiredRoles: ["Super Admin", "Administrator"] },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Staff", path: "/admin/users", icon: <FiShield />, requiredPermissions: ["users.read"] },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const doctorMobileItems: MobileNavItem[] = [
-  { label: "Today", path: "/doctor", icon: <FaUserMd /> },
-  { label: "Patients", path: "/doctor/patients", icon: <FaUserInjured /> },
+  { label: "Desk", path: "/doctor", icon: <FaUserMd /> },
+  { label: "Folders", path: "/doctor/patients", icon: <FaUserInjured /> },
   { label: "Results", path: "/doctor/results", icon: <FaFlask /> },
-  { label: "Reminders", path: "/doctor/reminders", icon: <FiBell /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Follow-ups", path: "/doctor/reminders", icon: <FiBell /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const nurseMobileItems: MobileNavItem[] = [
-  { label: "Desk", path: "/nurse", icon: <FaUserNurse /> },
-  { label: "Patients", path: "/nurse/patients", icon: <FaUserInjured /> },
-  { label: "Ward", path: "/nurse/ward", icon: <FaBed /> },
+  { label: "Vitals", path: "/nurse", icon: <FaUserNurse /> },
+  { label: "Wards", path: "/nurse/patients", icon: <FaBed /> },
   { label: "Meds", path: "/nurse/medications", icon: <FaCapsules /> },
-  { label: "Orders", path: "/nurse/orders", icon: <FiFileText /> },
-  { label: "Vitals", path: "/nurse/vitals", icon: <FiClipboard /> },
   { label: "Notes", path: "/nurse/notes", icon: <FaNotesMedical /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const labMobileItems: MobileNavItem[] = [
   { label: "Lab", path: "/laboratory", icon: <FaFlask /> },
   {
-    label: "Register",
+    label: "New Patient",
     path: "/register-patient",
     icon: <FiUsers />,
     anyPermissions: ["patients.create", "patients.investigation.create"],
   },
-  { label: "Panels", path: "/laboratory/templates", icon: <FiFileText /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Templates", path: "/laboratory/templates", icon: <FiFileText /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const pharmacyMobileItems: MobileNavItem[] = [
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules /> },
   { label: "Store", path: "/inventory", icon: <FiPackage /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const receptionMobileItems: MobileNavItem[] = [
   { label: "Patients", path: "/patients", icon: <FaUserInjured /> },
-  { label: "Register", path: "/register-patient", icon: <FiUsers /> },
+  { label: "New Patient", path: "/register-patient", icon: <FiUsers /> },
   { label: "Appts", path: "/appointments", icon: <FiCalendar /> },
   { label: "Wards", path: "/setup/wards", icon: <FaBed /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const securityMobileItems: MobileNavItem[] = [
-  { label: "Entry", path: "/security/entry", icon: <FiShield /> },
-  { label: "Logs", path: "/security/logs", icon: <FiFileText /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Gate Entry", path: "/security/entry", icon: <FiShield /> },
+  { label: "Gate Logs", path: "/security/logs", icon: <FiFileText /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const billingMobileItems: MobileNavItem[] = [
   { label: "Billing", path: "/billing", icon: <FiCreditCard /> },
   { label: "Patients", path: "/patients", icon: <FaUserInjured /> },
-  { label: "Me", path: "/settings", icon: <FiSettings /> },
+  { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 interface MobileBottomNavProps {

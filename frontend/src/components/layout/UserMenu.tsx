@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   FiCalendar,
   FiClock,
+  FiDownload,
   FiHelpCircle,
   FiLogOut,
   FiSettings,
@@ -112,9 +113,9 @@ export default function UserMenu({
                 {status === "online" ? <FiWifi /> : <FiWifiOff />}
               </span>
               <div>
-                <span className="sys-label">API Status</span>
+                <span className="sys-label">Server Connection</span>
                 <span className="sys-val">
-                  {status === "online" ? `Connected (${latencyMs || 0}ms)` : status}
+                  {status === "online" ? "Connected" : status}
                 </span>
               </div>
             </div>
@@ -137,9 +138,9 @@ export default function UserMenu({
                   <FiRefreshCw className="spin-slow" />
                 </span>
                 <div>
-                  <span className="sys-label">Offline Queue</span>
+                  <span className="sys-label">Saved Offline</span>
                   <span className="sys-val">
-                    {pendingCount} item{pendingCount === 1 ? "" : "s"} waiting to sync
+                    {pendingCount} item{pendingCount === 1 ? "" : "s"} waiting to send
                   </span>
                 </div>
               </div>
@@ -155,9 +156,21 @@ export default function UserMenu({
               <span>Account Settings</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new CustomEvent("open-pwa-install"));
+              }}
+              className="user-menu-item"
+            >
+              <FiDownload />
+              <span>Install App</span>
+            </button>
+
             <button type="button" onClick={handleTour} className="user-menu-item">
               <FiHelpCircle />
-              <span>System Tour</span>
+              <span>Help Guide</span>
             </button>
           </div>
 

@@ -13,12 +13,17 @@ export default function QuickActions() {
 
   const actions = [
     {
-      title: "Patient",
+      title: "New Patient",
       icon: <UserPlus size={20} />,
       path: "/register-patient",
     },
     {
-      title: "Appointment",
+      title: "All Patients",
+      icon: <FileText size={20} />,
+      path: "/patients",
+    },
+    {
+      title: "Appointments",
       icon: <CalendarPlus size={20} />,
       path: "/appointments",
     },
@@ -36,11 +41,6 @@ export default function QuickActions() {
       title: "Billing",
       icon: <Receipt size={20} />,
       path: "/billing",
-    },
-    {
-      title: "Reports",
-      icon: <FileText size={20} />,
-      path: "/reports",
     },
   ];
 

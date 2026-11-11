@@ -5,10 +5,9 @@ import {
   FiClock,
   FiLogOut,
   FiRefreshCw,
-  FiWifi,
   FiWifiOff,
 } from "react-icons/fi";
-import { FaSun, FaMoon, FaCircleQuestion, FaGear } from "react-icons/fa6";
+import { FaSun, FaMoon } from "react-icons/fa6";
 import { useAuthStore } from "../../store/authStore";
 import { useBackendHealth } from "../../hooks/useBackendHealth";
 import { useThemeMode } from "../../hooks/useThemeMode";
@@ -17,7 +16,6 @@ import UserMenu from "./UserMenu";
 import { endSession } from "../../services/sessionManager";
 import { getUserDisplayName } from "../../utils/userDisplay";
 import { useOfflineQueueCount } from "../../hooks/useOfflineSync";
-import { startRoleTour } from "../tour/RoleTour";
 
 interface TopbarProps {
   onOpenSidebar?: () => void;
@@ -86,14 +84,16 @@ export default function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps = 
             </strong>
           </div>
 
-          <div className={`backend-status ${status}`} title={`Backend is ${status}`}>
-            {status === "online" ? <FiWifi /> : <FiWifiOff />}
-            <span className="status-pulse" />
-            <div>
-              <strong>{status === "checking" ? "Checking" : status}</strong>
-              <small>{latencyMs ? `${latencyMs} ms` : "API status"}</small>
+          {status !== "online" && (
+            <div className={`backend-status ${status}`} title={`Server connection: ${status}`}>
+              <FiWifiOff />
+              <span className="status-pulse" />
+              <div>
+                <strong>{status === "checking" ? "Connecting" : "Offline"}</strong>
+                <small>Check network</small>
+              </div>
             </div>
-          </div>
+          )}
 
           {pendingCount > 0 && (
             <div
@@ -103,8 +103,8 @@ export default function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps = 
               <FiRefreshCw />
               <span className="status-pulse" />
               <div>
-                <strong>{pendingCount} queued</strong>
-                <small>{isBrowserOnline ? "Syncing soon" : "Offline"}</small>
+                <strong>{pendingCount} waiting</strong>
+                <small>{isBrowserOnline ? "Sending now" : "Saved offline"}</small>
               </div>
             </div>
           )}
@@ -124,28 +124,6 @@ export default function Topbar({ onOpenSidebar: _onOpenSidebar }: TopbarProps = 
           </button>
 
           <NotificationCenter />
-
-          <button
-            className="icon-btn tour-trigger-btn"
-            type="button"
-            onClick={startRoleTour}
-            aria-label="Start guided tour / help"
-            title="Need help? Start guided tour"
-            data-tour-target="tour-button"
-          >
-            <FaCircleQuestion size={28} />
-          </button>
-
-          <button
-            className="icon-btn settings-btn desktop-only"
-            type="button"
-            onClick={() => navigate("/settings")}
-            aria-label="Open account settings"
-            title="Account settings"
-            data-tour-target="settings-button"
-          >
-            <FaGear size={28} />
-          </button>
         </div>
 
         {/* User Menu / Account Group */}
