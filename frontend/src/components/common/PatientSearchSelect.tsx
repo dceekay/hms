@@ -85,7 +85,22 @@ export function calculateAge(dob?: string | null): string {
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  return age > 0 ? `${age}y` : "Infant";
+  return age > 0 ? `${age} yrs` : "Under 1 yr";
+}
+
+export function formatDob(dob?: string | null): string {
+  if (!dob) return "—";
+  const date = new Date(dob);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric" }).format(date);
+}
+
+export function genderLabel(gender?: string | null): string {
+  if (!gender) return "—";
+  const g = gender.toLowerCase();
+  if (g === "male" || g === "m") return "Male";
+  if (g === "female" || g === "f") return "Female";
+  return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
 }
 
 function getStoredRecentPatients(): Patient[] {
@@ -111,7 +126,7 @@ export default function PatientSearchSelect({
   patients,
   selectedPatientId,
   onSelectPatient,
-  placeholder = "Search by name, P-File No., MRN, or phone...",
+  placeholder = "Click here to find a patient (name, file no., MRN or phone)",
   label,
   error,
   disabled = false,
@@ -152,7 +167,7 @@ export default function PatientSearchSelect({
       size({
         apply({ rects, elements }) {
           Object.assign(elements.floating.style, {
-            width: `${Math.max(rects.reference.width, 360)}px`,
+            width: `${Math.max(rects.reference.width, 520)}px`,
             maxWidth: "96vw",
           });
         },
@@ -334,7 +349,7 @@ export default function PatientSearchSelect({
         <div className="picker-header">
           <div className="picker-header-title">
             <FiUser />
-            <span>Select Patient</span>
+            <span>Find a patient</span>
             <span className="picker-count-badge">
               {filteredPatients.length} found
             </span>
@@ -358,14 +373,14 @@ export default function PatientSearchSelect({
             ref={searchInputRef}
             type="text"
             className="picker-search-input"
-            placeholder="Type name, MRN, P-File No., or phone..."
+            placeholder="Type the patient's name, file no., MRN or phone"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoComplete="off"
             spellCheck={false}
           />
           {isSearchingRemote && (
-            <div className="picker-search-spinner" title="Searching database...">
+            <div className="picker-search-spinner" title="Searching...">
               <FiLoader className="spin" />
             </div>
           )}
@@ -387,7 +402,7 @@ export default function PatientSearchSelect({
           <div className="picker-recent-section">
             <div className="picker-recent-header">
               <span>
-                <FiClock style={{ marginRight: 4 }} /> Recent Patients
+                <FiClock style={{ marginRight: 4 }} /> Recently chosen
               </span>
               <button
                 type="button"
@@ -425,14 +440,14 @@ export default function PatientSearchSelect({
               <div className="empty-icon-wrap">
                 <FiUser />
               </div>
-              <strong>No patients matched your search</strong>
-              <p>Check spelling or register a new patient profile.</p>
+              <strong>No patient found</strong>
+              <p>Check the spelling, or register the patient as new.</p>
               <Link
                 to="/register-patient"
                 className="picker-new-patient-btn"
                 onClick={() => setIsOpen(false)}
               >
-                <FiPlus /> Register New Patient
+                <FiPlus /> Register new patient
               </Link>
             </div>
           ) : (
@@ -455,41 +470,45 @@ export default function PatientSearchSelect({
                   </div>
 
                   <div className="patient-row-info">
-                    <div className="patient-row-name-line">
-                      <strong className="patient-name">
-                        {highlightMatch(`${patient.firstName} ${patient.lastName}`.trim(), searchQuery)}
-                      </strong>
-                      {patient.physicalFileNumber && (
-                        <span className="patient-pfile-chip" title="Physical File / Folder Number">
-                          📁 {highlightMatch(patient.physicalFileNumber, searchQuery)}
-                        </span>
-                      )}
-                      {patient.mrn && (
-                        <span className="patient-mrn-chip">
-                          {highlightMatch(patient.mrn, searchQuery)}
-                        </span>
-                      )}
-                    </div>
+                    <strong className="patient-full-name">
+                      {highlightMatch(`${patient.firstName} ${patient.lastName}`.trim(), searchQuery)}
+                    </strong>
 
-                    <div className="patient-row-subtext">
-                      {patient.phone && (
-                        <span className="subtext-item phone-subtext">
-                          <FiPhone /> {highlightMatch(patient.phone, searchQuery)}
-                        </span>
-                      )}
-                      {patient.gender && (
-                        <span className="subtext-item">
-                          {patient.gender}
-                          {patient.dateOfBirth && ` • ${calculateAge(patient.dateOfBirth)}`}
-                        </span>
-                      )}
-                      {(patient.insuranceProvider || patient.insurancePolicyNumber) && (
-                        <span className="subtext-item insurance-tag">
-                          <FiCreditCard /> {patient.insuranceProvider?.name || "HMO"}
-                          {patient.insurancePolicyNumber ? ` (${patient.insurancePolicyNumber})` : ""}
-                        </span>
-                      )}
-                    </div>
+                    <dl className="patient-detail-grid">
+                      <div>
+                        <dt>File No.</dt>
+                        <dd>{patient.physicalFileNumber ? highlightMatch(patient.physicalFileNumber, searchQuery) : "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>MRN</dt>
+                        <dd>{patient.mrn ? highlightMatch(patient.mrn, searchQuery) : "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Age</dt>
+                        <dd>{calculateAge(patient.dateOfBirth) || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Gender</dt>
+                        <dd>{genderLabel(patient.gender)}</dd>
+                      </div>
+                      <div>
+                        <dt>Date of birth</dt>
+                        <dd>{formatDob(patient.dateOfBirth)}</dd>
+                      </div>
+                      <div>
+                        <dt>Phone</dt>
+                        <dd>{patient.phone ? highlightMatch(patient.phone, searchQuery) : "—"}</dd>
+                      </div>
+                    </dl>
+
+                    {(patient.insuranceProvider || patient.insurancePolicyNumber) && (
+                      <span className="subtext-item insurance-tag">
+                        <FiCreditCard /> {patient.insuranceProvider?.name || "HMO"}
+                        {patient.insurancePolicyNumber ? ` (${patient.insurancePolicyNumber})` : ""}
+                      </span>
+                    )}
+
+                    <span className="patient-pick-hint">{isSelected ? "Selected" : "Click to choose this patient"}</span>
                   </div>
 
                   {isSelected && (
@@ -510,7 +529,7 @@ export default function PatientSearchSelect({
             className="picker-footer-link"
             onClick={() => setIsOpen(false)}
           >
-            <FiPlus /> New Patient Registration
+            <FiPlus /> Register new patient
           </Link>
         </div>
       </div>

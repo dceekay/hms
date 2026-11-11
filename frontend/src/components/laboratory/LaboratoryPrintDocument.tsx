@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { MdsMark } from "../common/CavendishLogo";
+import OfficialReceiptStamp from "../common/OfficialReceiptStamp";
 import { getAppUrl } from "../../utils/appUrl";
 import type { LaboratoryFieldType, LaboratoryRequest, LaboratoryTemplateField } from "../../types/laboratory";
 import type { LaboratoryVerificationData } from "../../services/laboratoryService";
@@ -458,15 +459,13 @@ export default function LaboratoryPrintDocument({
           </p>
         </div>
 
-        <div className="lab-print-security-stamp">
-          <div className="lab-print-stamp-border">
-            <span>{HOSPITAL_OFFICIAL_DETAILS.name}</span>
-            <strong>OFFICIAL VALIDATED</strong>
-            <small>DIAGNOSTIC SERVICE • KANO</small>
-            <div style={{ marginTop: "6px", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", color: "#092a5e" }}>
-              [ OFFICIAL HOSPITAL STAMP ]
-            </div>
-          </div>
+        <div className="lab-print-security-stamp" style={{ display: "flex", justifyContent: "flex-end" }}>
+          <OfficialReceiptStamp
+            isSettled={true}
+            date={formatDate(request.completedAt || request.createdAt)}
+            department="LABORATORY & DIAGNOSTICS"
+            size="md"
+          />
         </div>
       </footer>
 

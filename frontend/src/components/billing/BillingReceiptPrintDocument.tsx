@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import type { PatientBill } from "../../types/billing";
 import { useAuthStore } from "../../store/authStore";
+import OfficialReceiptStamp from "../common/OfficialReceiptStamp";
 
 export interface BillingReceiptPrintDocumentProps {
   bill: PatientBill;
@@ -207,12 +208,14 @@ export default function BillingReceiptPrintDocument({
               <p>{bill.notes}</p>
             </div>
           )}
-          <div className="receipt-payment-stamp">
-            <div className={`stamp-seal ${isSettled ? "paid" : "pending"}`}>
-              <span>MDS HOSPITAL</span>
-              <strong>{isSettled ? "PAID" : "PENDING"}</strong>
-              <small>{formatDate(bill.billedAt).split(",")[0]}</small>
-            </div>
+          <div className="receipt-payment-stamp" style={{ marginTop: "10px" }}>
+            <OfficialReceiptStamp
+              isSettled={isSettled}
+              date={formatDate(bill.billedAt)}
+              department="ACCOUNTS & REVENUE"
+              receiptNumber={invoiceNum}
+              size="md"
+            />
           </div>
         </div>
 

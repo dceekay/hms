@@ -817,3 +817,87 @@
 .dark .mobile-sheet-handle {
   background: #475569;
 }
+
+
+/* =========================================================================
+   FULL PATIENT DETAILS IN SEARCH RESULTS (shown before choosing a patient)
+   ========================================================================= */
+.patient-row-card {
+  align-items: flex-start;
+}
+
+.patient-row-info {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.patient-full-name {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-strong, #0f172a);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.patient-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.patient-detail-grid > div {
+  min-width: 0;
+}
+
+.patient-detail-grid dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted, #64748b);
+}
+
+.patient-detail-grid dd {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text, #334155);
+  overflow-wrap: anywhere;
+}
+
+.patient-pick-hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--primary, #0ea5e9);
+}
+
+.patient-row-card.selected .patient-pick-hint {
+  color: #059669;
+}
+
+@media (max-width: 480px) {
+  .patient-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+[data-theme="dark"] .patient-full-name,
+.dark .patient-full-name {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .patient-detail-grid dd,
+.dark .patient-detail-grid dd {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .patient-detail-grid dt,
+.dark .patient-detail-grid dt {
+  color: #94a3b8;
+}

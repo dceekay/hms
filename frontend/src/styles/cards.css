@@ -791,3 +791,193 @@
 }
 
 
+
+
+/* =========================================================================
+   OFFICIAL HOSPITAL STAMP (FOR ALL RECEIPTS & MEDICAL RECORDS)
+   ========================================================================= */
+.official-hospital-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transform: rotate(-7deg);
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.official-hospital-stamp:hover {
+  transform: rotate(-4deg) scale(1.02);
+}
+
+.stamp-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Green Official Stamp for PAID */
+.official-hospital-stamp.stamp-paid .stamp-ring-outer {
+  stroke: #059669;
+  stroke-width: 3.5;
+  fill: none;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-ring-middle {
+  stroke: #059669;
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-ring-inner {
+  stroke: #059669;
+  stroke-width: 2.2;
+  fill: rgba(5, 150, 105, 0.05);
+}
+
+.official-hospital-stamp.stamp-paid .stamp-text-curved {
+  fill: #047857;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-text-curved-sub {
+  fill: #047857;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-dept-text {
+  fill: #065f46;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-status-bold {
+  fill: #047857;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-date-text {
+  fill: #065f46;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.official-hospital-stamp.stamp-paid .stamp-verified-text {
+  fill: #059669;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+/* Amber/Red Official Stamp for PENDING */
+.official-hospital-stamp.stamp-pending .stamp-ring-outer {
+  stroke: #d97706;
+  stroke-width: 3.5;
+  fill: none;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-ring-middle {
+  stroke: #d97706;
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-ring-inner {
+  stroke: #d97706;
+  stroke-width: 2.2;
+  fill: rgba(217, 119, 6, 0.05);
+}
+
+.official-hospital-stamp.stamp-pending .stamp-text-curved {
+  fill: #b45309;
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-text-curved-sub {
+  fill: #b45309;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-dept-text {
+  fill: #92400e;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-status-bold {
+  fill: #dc2626;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-date-text {
+  fill: #92400e;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.official-hospital-stamp.stamp-pending .stamp-verified-text {
+  fill: #b45309;
+  font-size: 7.5px;
+  font-weight: 800;
+}
+
+/* Uploaded Custom Stamp Container */
+.official-uploaded-stamp-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-6deg);
+  position: relative;
+}
+
+.official-uploaded-stamp-container.size-sm {
+  max-width: 110px;
+}
+
+.official-uploaded-stamp-container.size-md {
+  max-width: 140px;
+}
+
+.official-uploaded-stamp-container.size-lg {
+  max-width: 180px;
+}
+
+.official-uploaded-stamp-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.official-stamp-date-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #047857;
+  margin-top: -6px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+@media print {
+  .official-hospital-stamp {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

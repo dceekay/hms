@@ -1722,7 +1722,7 @@ export default function DoctorDashboardPage() {
                         className="doctor-directory-card"
                       >
                         <div className="doctor-directory-card-identity">
-                          <div className="doctor-patient-avatar">
+                          <div className="doctor-patient-avatar" style={{ width: "44px", height: "44px", minWidth: "44px" }}>
                             {p.photoDataUrl || p.photoUrl ? (
                               <img src={p.photoDataUrl ?? p.photoUrl ?? ""} alt={patientName(p)} />
                             ) : (
@@ -1730,19 +1730,38 @@ export default function DoctorDashboardPage() {
                             )}
                           </div>
                           <div className="doctor-directory-card-info">
-                            <strong className="doctor-directory-card-name">{patientName(p)}</strong>
-                            <small className="doctor-directory-card-meta">
-                              Card: {p.physicalFileNumber || p.mrn || "No Folder"} • {ageFromDob(p.dateOfBirth)}
+                            <strong className="doctor-directory-card-name" style={{ fontSize: "1.05rem", fontWeight: 750 }}>
+                              {patientName(p)}
+                            </strong>
+                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "4px" }}>
+                              {p.physicalFileNumber ? (
+                                <span style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem" }}>
+                                  📁 Folder: {p.physicalFileNumber}
+                                </span>
+                              ) : (
+                                <span style={{ background: "#fef3c7", color: "#b45309", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem" }}>
+                                  No Folder No.
+                                </span>
+                              )}
+                              {p.mrn && (
+                                <span style={{ background: "#f1f5f9", color: "#475569", fontWeight: 600, padding: "2px 8px", borderRadius: "6px", fontSize: "0.78rem" }}>
+                                  MRN: {p.mrn}
+                                </span>
+                              )}
+                            </div>
+                            <small className="doctor-directory-card-meta" style={{ marginTop: "4px" }}>
+                              {ageFromDob(p.dateOfBirth)} • {p.gender || "Gender N/A"} • {p.phone || "No phone"}
                             </small>
                           </div>
                         </div>
 
                         <button
                           type="button"
-                          className="doctor-action-btn secondary"
+                          className="doctor-action-btn primary"
+                          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
                           onClick={() => void openPatientDesk(p)}
                         >
-                          Open Desk
+                          Open Folder
                         </button>
                       </div>
                     ))}

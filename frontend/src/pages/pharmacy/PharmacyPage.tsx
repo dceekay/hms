@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { FaCapsules } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
+import OfficialReceiptStamp from "../../components/common/OfficialReceiptStamp";
 import AdminLayout from "../../layouts/AdminLayout";
 import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
@@ -1349,12 +1350,24 @@ export default function PharmacyPage() {
                 </table>
               </div>
 
-              <div className="pharmacy-print-totals">
-                <span><small>Subtotal</small><strong>{money(selectedInvoice.subtotalAmount)}</strong></span>
-                <span><small>Discount</small><strong>{money(selectedInvoice.discountAmount)}</strong></span>
-                <span><small>Total</small><strong>{money(selectedInvoice.totalAmount)}</strong></span>
-                <span><small>Paid</small><strong>{money(selectedInvoice.amountPaid)}</strong></span>
-                <span><small>Balance</small><strong>{money(Math.max(0, Number(selectedInvoice.totalAmount) - Number(selectedInvoice.amountPaid)))}</strong></span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", margin: "1rem 0", flexWrap: "wrap", gap: "1rem" }}>
+                <div style={{ paddingLeft: "0.5rem" }}>
+                  <OfficialReceiptStamp
+                    isSettled={selectedInvoice.paymentStatus === "paid"}
+                    date={formatDate(selectedInvoice.soldAt)}
+                    department="PHARMACY & DISPENSARY"
+                    receiptNumber={selectedInvoice.invoiceNumber}
+                    size="md"
+                  />
+                </div>
+
+                <div className="pharmacy-print-totals">
+                  <span><small>Subtotal</small><strong>{money(selectedInvoice.subtotalAmount)}</strong></span>
+                  <span><small>Discount</small><strong>{money(selectedInvoice.discountAmount)}</strong></span>
+                  <span><small>Total</small><strong>{money(selectedInvoice.totalAmount)}</strong></span>
+                  <span><small>Paid</small><strong>{money(selectedInvoice.amountPaid)}</strong></span>
+                  <span><small>Balance</small><strong>{money(Math.max(0, Number(selectedInvoice.totalAmount) - Number(selectedInvoice.amountPaid)))}</strong></span>
+                </div>
               </div>
 
               <p className="pharmacy-print-footer">

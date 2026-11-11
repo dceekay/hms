@@ -42,21 +42,21 @@ const emptyForm: AppointmentFormValues = {
 };
 
 const statusLabels: Record<AppointmentStatus, string> = {
-  scheduled: "Waiting",
-  checked_in: "Checked In",
-  in_consultation: "In Consultation",
-  completed: "Completed",
+  scheduled: "Waiting for Doctor",
+  checked_in: "Called In / Ready",
+  in_consultation: "With Doctor",
+  completed: "Finished",
   cancelled: "Cancelled",
-  no_show: "No Show",
+  no_show: "Did Not Show",
 };
 
 const REASON_PRESETS = [
-  "General OPD Consultation",
-  "Specialist Follow-up",
-  "Urgent / Priority Triage",
-  "Lab & Scan Review",
-  "Routine Prescription Refill",
-  "Post-Op Assessment",
+  "General Consultation",
+  "Follow-up Visit",
+  "Emergency / Urgent",
+  "Check Lab / Scan Results",
+  "Medication Refill",
+  "Ante-Natal / Maternity",
 ];
 
 function patientName(patient: Patient) {
@@ -224,17 +224,6 @@ export default function AppointmentsPage() {
       return;
     }
 
-    const confirmed = await confirmImportantAction({
-      title: "Book & Assign Appointment?",
-      text: `Are you sure you want to ${
-        timingMode === "immediate" ? "immediately send" : "schedule"
-      } ${selectedPatient ? patientName(selectedPatient) : "the selected patient"} to ${
-        selectedDoctor ? doctorName(selectedDoctor) : "the selected doctor"
-      }?`,
-      confirmButtonText: "Yes, Book Appointment",
-    });
-    if (!confirmed) return;
-
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -359,10 +348,10 @@ export default function AppointmentsPage() {
         <section className="queue-command-header">
           <div className="queue-command-copy">
             <span className="studio-header-badge">
-              <FiZap /> Live Clinic Queue
+              <FiZap /> OPD Clinic Line
             </span>
-            <h1>Doctor Assignment & Consultation Queue</h1>
-            <p>Fast-track patient triage, allocate on-duty doctors, and manage real-time clinic flow.</p>
+            <h1>Send Patient to Doctor & Appointments</h1>
+            <p>Send waiting patients to see on-duty doctors now, or book an appointment for later.</p>
           </div>
 
           <div className="queue-command-actions">
@@ -373,7 +362,7 @@ export default function AppointmentsPage() {
               disabled={loading}
             >
               <FiRefreshCw />
-              <span>{loading ? "Syncing..." : "Refresh Queue"}</span>
+              <span>{loading ? "Refreshing..." : "Refresh Queue"}</span>
             </button>
           </div>
         </section>
@@ -385,7 +374,7 @@ export default function AppointmentsPage() {
               <FiUsers />
             </div>
             <div className="queue-kpi-data">
-              <span>Total in Queue</span>
+              <span>Total in Line</span>
               <strong>{kpis.total}</strong>
             </div>
           </div>
@@ -395,7 +384,7 @@ export default function AppointmentsPage() {
               <FiClock />
             </div>
             <div className="queue-kpi-data">
-              <span>Awaiting Doctor</span>
+              <span>Waiting for Doctor</span>
               <strong>{kpis.waiting}</strong>
             </div>
           </div>
@@ -405,7 +394,7 @@ export default function AppointmentsPage() {
               <FaStethoscope />
             </div>
             <div className="queue-kpi-data">
-              <span>In Consultation</span>
+              <span>With Doctor</span>
               <strong>{kpis.consulting}</strong>
             </div>
           </div>
@@ -415,7 +404,7 @@ export default function AppointmentsPage() {
               <FiCheckCircle />
             </div>
             <div className="queue-kpi-data">
-              <span>Completed Today</span>
+              <span>Finished Today</span>
               <strong>{kpis.completed}</strong>
             </div>
           </div>
@@ -441,19 +430,19 @@ export default function AppointmentsPage() {
           <form className="assignment-studio-card" onSubmit={handleSubmit}>
             <div className="studio-header">
               <div>
-                <h2>Assign Patient</h2>
-                <p>Send patient to doctor room or OPD queue</p>
+                <h2>Send Patient to Doctor</h2>
+                <p>Pick a patient and send them to the doctor's room</p>
               </div>
               <span className="studio-header-badge">
-                <FiUserCheck /> Quick Assign
+                <FiUserCheck /> Quick Send
               </span>
             </div>
 
-            {/* Step 1: Patient Search & Live Snapshot Card */}
+            {/* Step 1: Patient Search & Full Details Snapshot Card */}
             <div>
               <label className="studio-section-label">
-                <span>1. Patient Selection</span>
-                <small>{selectedPatient ? "Selected" : "Required"}</small>
+                <span>1. Who is the Patient?</span>
+                <small>{selectedPatient ? "Patient Selected" : "Required"}</small>
               </label>
 
               {!selectedPatient ? (
@@ -468,42 +457,92 @@ export default function AppointmentsPage() {
                       patientId: patient ? patient.id : "",
                     }))
                   }
-                  placeholder="Search by name, MRN, or phone number..."
+                  placeholder="Type name, Folder/P-File No, MRN, or phone..."
                 />
               ) : (
-                <div className="patient-snapshot-card">
-                  <div className="snapshot-left">
-                    <div className="snapshot-avatar">
+                <div
+                  className="patient-snapshot-card"
+                  style={{
+                    padding: "1rem",
+                    borderRadius: "12px",
+                    border: "1.5px solid #38bdf8",
+                    background: "rgba(56, 189, 248, 0.06)",
+                  }}
+                >
+                  <div className="snapshot-left" style={{ width: "100%", alignItems: "flex-start" }}>
+                    <div
+                      className="snapshot-avatar"
+                      style={{ width: "48px", height: "48px", minWidth: "48px", fontSize: "1.2rem" }}
+                    >
                       {selectedPatient.firstName[0]}
                     </div>
-                    <div className="snapshot-details">
-                      <strong>{patientName(selectedPatient)}</strong>
-                      <div className="snapshot-tags">
-                        {selectedPatient.physicalFileNumber && (
-                          <span className="snapshot-pfile" title="Physical Folder Number">
-                            📁 P-File: {selectedPatient.physicalFileNumber}
+                    <div className="snapshot-details" style={{ width: "100%" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "6px" }}>
+                        <strong style={{ fontSize: "1.15rem", color: "var(--text-strong, #0f172a)" }}>
+                          {patientName(selectedPatient)}
+                        </strong>
+                        <button
+                          type="button"
+                          className="table-action-btn neutral"
+                          onClick={() => setForm((c) => ({ ...c, patientId: "" }))}
+                          title="Choose different patient"
+                          style={{ fontSize: "0.76rem", padding: "4px 8px" }}
+                        >
+                          <FiX /> Change Patient
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                          gap: "8px 12px",
+                          marginTop: "8px",
+                          fontSize: "0.82rem",
+                        }}
+                      >
+                        <div>
+                          <span style={{ color: "var(--muted)", display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" }}>
+                            Hospital Folder No.
                           </span>
-                        )}
-                        <span className="snapshot-mrn">{selectedPatient.mrn || "MRN Pending"}</span>
-                        <span className="snapshot-cat">{selectedPatient.patientCategory ? selectedPatient.patientCategory.replace("_", " ") : "Patient"}</span>
-                        {calculateAge(selectedPatient.dateOfBirth) && (
-                          <span className="snapshot-cat">{calculateAge(selectedPatient.dateOfBirth)} yrs</span>
-                        )}
-                        {selectedPatient.phone && (
-                          <span className="snapshot-cat">{selectedPatient.phone}</span>
+                          <strong style={{ color: "#0284c7" }}>
+                            📁 {selectedPatient.physicalFileNumber || "No Folder Assigned"}
+                          </strong>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--muted)", display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" }}>
+                            MRN
+                          </span>
+                          <strong>{selectedPatient.mrn || "Pending"}</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--muted)", display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" }}>
+                            Age & Gender
+                          </span>
+                          <strong>
+                            {calculateAge(selectedPatient.dateOfBirth) ? `${calculateAge(selectedPatient.dateOfBirth)} yrs` : "Age N/A"} • {selectedPatient.gender || "N/A"}
+                          </strong>
+                        </div>
+                        <div>
+                          <span style={{ color: "var(--muted)", display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" }}>
+                            Phone Number
+                          </span>
+                          <strong>{selectedPatient.phone || "No phone"}</strong>
+                        </div>
+                        {selectedPatient.insuranceProvider && (
+                          <div style={{ gridColumn: "1 / -1" }}>
+                            <span style={{ color: "var(--muted)", display: "block", fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase" }}>
+                              HMO / Insurance
+                            </span>
+                            <span style={{ color: "#059669", fontWeight: 700 }}>
+                              🛡️ {selectedPatient.insuranceProvider.name}{" "}
+                              {selectedPatient.insurancePolicyNumber ? `(Policy: ${selectedPatient.insurancePolicyNumber})` : ""}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="snapshot-clear-btn modal-close-btn"
-                    onClick={() => setForm((c) => ({ ...c, patientId: "" }))}
-                    title="Change patient"
-                    aria-label="Change patient"
-                  >
-                    <FiX size={18} strokeWidth={2.5} />
-                  </button>
                 </div>
               )}
             </div>
@@ -511,7 +550,7 @@ export default function AppointmentsPage() {
             {/* Step 2: Visual Doctor Selector */}
             <div>
               <label className="studio-section-label">
-                <span>2. Select On-Duty Doctor</span>
+                <span>2. Which Doctor Should See Them?</span>
                 <small>{selectedDoctor ? doctorName(selectedDoctor) : "Required"}</small>
               </label>
 
@@ -536,10 +575,10 @@ export default function AppointmentsPage() {
                         </div>
                         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                           <span className={`doc-status-pill ${isOnline ? "online" : "offline"}`}>
-                            {isOnline ? "Online" : "Offline"}
+                            {isOnline ? "On Duty" : "Offline"}
                           </span>
                           <span className={`doc-queue-pill ${queueCount > 0 ? "has-queue" : ""}`}>
-                            {queueCount} in queue
+                            {queueCount} waiting
                           </span>
                         </div>
                       </div>
@@ -555,7 +594,7 @@ export default function AppointmentsPage() {
             {/* Step 3: Consultation Reason Presets */}
             <div>
               <label className="studio-section-label">
-                <span>3. Reason / Chief Complaint</span>
+                <span>3. Reason for Visit / Complaint</span>
                 <small>Tap preset or type below</small>
               </label>
 
@@ -584,7 +623,7 @@ export default function AppointmentsPage() {
             {/* Step 4: Timing (Walk-in Immediate vs Specific Time) */}
             <div>
               <label className="studio-section-label">
-                <span>4. Timing</span>
+                <span>4. When Should the Doctor See Them?</span>
               </label>
 
               <div className="timing-segmented-bar">
@@ -593,14 +632,14 @@ export default function AppointmentsPage() {
                   className={`timing-btn ${timingMode === "immediate" ? "active" : ""}`}
                   onClick={() => setTimingMode("immediate")}
                 >
-                  <FiZap /> Immediate Walk-in
+                  <FiZap /> See Doctor Now (Walk-in)
                 </button>
                 <button
                   type="button"
                   className={`timing-btn ${timingMode === "scheduled" ? "active" : ""}`}
                   onClick={() => setTimingMode("scheduled")}
                 >
-                  <FiCalendar /> Scheduled Time
+                  <FiCalendar /> Book Future Date &amp; Time
                 </button>
               </div>
 
@@ -623,7 +662,7 @@ export default function AppointmentsPage() {
               disabled={saving || !canCreate || !form.patientId || !form.doctorId}
             >
               <FiSend />
-              <span>{saving ? "Assigning..." : "Assign to Doctor's Queue"}</span>
+              <span>{saving ? "Sending to Doctor..." : "Send Patient to Doctor"}</span>
             </button>
           </form>
 
@@ -631,8 +670,8 @@ export default function AppointmentsPage() {
           <section className="queue-workbench-panel">
             <div className="workbench-top-bar">
               <div className="workbench-title">
-                <h2>Live Consultation Queue</h2>
-                <p>{filteredAppointments.length} appointment(s) currently shown</p>
+                <h2>Patients in Line for Doctor</h2>
+                <p>{filteredAppointments.length} patient(s) shown</p>
               </div>
 
               <div className="queue-segmented-tabs">
@@ -655,14 +694,14 @@ export default function AppointmentsPage() {
                   className={`queue-segment-btn ${statusTab === "in_consultation" ? "active" : ""}`}
                   onClick={() => setStatusTab("in_consultation")}
                 >
-                  In Consultation ({kpis.consulting})
+                  With Doctor ({kpis.consulting})
                 </button>
                 <button
                   type="button"
                   className={`queue-segment-btn ${statusTab === "completed" ? "active" : ""}`}
                   onClick={() => setStatusTab("completed")}
                 >
-                  Completed ({kpis.completed})
+                  Finished Today ({kpis.completed})
                 </button>
               </div>
             </div>
@@ -674,7 +713,7 @@ export default function AppointmentsPage() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search patient, MRN, doctor, or complaint..."
+                  placeholder="Search patient, Folder No., doctor, or complaint..."
                 />
                 {search && (
                   <button
@@ -726,15 +765,21 @@ export default function AppointmentsPage() {
                             {pName[0] || <FaUserInjured />}
                           </div>
                           <div className="card-patient-text">
-                            <strong>{pName}</strong>
-                            <small>
-                              {appointment.patient?.physicalFileNumber && (
-                                <strong className="queue-pfile-pill" title="Physical File Number">
-                                  📁 {appointment.patient.physicalFileNumber} •{" "}
-                                </strong>
+                            <strong style={{ fontSize: "1.05rem" }}>{pName}</strong>
+                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                              {appointment.patient?.physicalFileNumber ? (
+                                <span className="queue-pfile-pill" title="Physical Folder Number">
+                                  📁 Folder: {appointment.patient.physicalFileNumber}
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: "0.74rem", color: "var(--muted)" }}>
+                                  No Folder No.
+                                </span>
                               )}
-                              {appointment.patient?.mrn || "MRN Pending"} | {appointment.patient?.phone || "No phone"}
-                            </small>
+                              <span style={{ fontSize: "0.76rem", color: "var(--muted)" }}>
+                                MRN: {appointment.patient?.mrn || "Pending"} • {appointment.patient?.phone || "No phone"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -755,7 +800,7 @@ export default function AppointmentsPage() {
 
                       {appointment.reason && (
                         <p className="card-reason-tag">
-                          <strong>Complaint / Reason:</strong> {appointment.reason}
+                          <strong>Complaint:</strong> {appointment.reason}
                         </p>
                       )}
 
@@ -770,7 +815,7 @@ export default function AppointmentsPage() {
                               disabled={saving}
                             >
                               <FiCheckCircle />
-                              Check In Patient
+                              Call Patient In
                             </button>
                           )}
 
@@ -782,7 +827,7 @@ export default function AppointmentsPage() {
                               disabled={saving}
                             >
                               <FaStethoscope />
-                              Send to Doctor Room
+                              Send Inside to Doctor
                             </button>
                           )}
 
@@ -794,7 +839,7 @@ export default function AppointmentsPage() {
                               disabled={saving}
                             >
                               <FiCheckCircle />
-                              Mark Completed
+                              Finished Consultation
                             </button>
                           )}
 
