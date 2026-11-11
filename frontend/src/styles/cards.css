@@ -437,11 +437,220 @@
 /* =========================================================================
    FULL-WIDTH TABLE VIEW & ACTION TOPBARS
    ========================================================================= */
+/* Grid/flex page wrappers default to min-width:auto, which lets wide content
+   stretch past the viewport and get clipped. Force them to respect the screen. */
+.rbac-page,
+.doctor-admin-page,
+.setup-page,
+.inventory-page,
+.pharmacy-page {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rbac-page > *,
+.doctor-admin-page > *,
+.setup-page > *,
+.inventory-page > *,
+.pharmacy-page > * {
+  min-width: 0;
+}
+
+/* =========================================================================
+   STAFF LIST (row layout – actions always visible, never clipped)
+   ========================================================================= */
+.staff-list {
+  --staff-cols: minmax(0, 2.2fr) minmax(0, 1.6fr) minmax(0, 1.6fr) 92px auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  max-height: min(68vh, 640px);
+  overflow-y: auto;
+  border: 1px solid var(--border, rgba(148, 163, 184, 0.22));
+  border-radius: 12px;
+  background: var(--surface, #ffffff);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.staff-list-head,
+.staff-row {
+  display: grid;
+  grid-template-columns: var(--staff-cols);
+  align-items: center;
+  column-gap: 14px;
+  padding: 10px 16px;
+}
+
+.staff-list-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface-strong, #f8fafc);
+  border-bottom: 2px solid var(--border, rgba(148, 163, 184, 0.25));
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-strong, #0f172a);
+}
+
+.staff-list-head-actions {
+  text-align: right;
+}
+
+.staff-row {
+  border-bottom: 1px solid var(--border, rgba(148, 163, 184, 0.15));
+  transition: background-color 0.15s ease;
+}
+
+.staff-row:last-child {
+  border-bottom: none;
+}
+
+.staff-row:hover {
+  background: rgba(14, 165, 233, 0.04);
+}
+
+.staff-row.is-inactive {
+  opacity: 0.72;
+}
+
+.staff-cell {
+  min-width: 0;
+}
+
+.staff-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+  font-size: 0.82rem;
+}
+
+.staff-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.staff-text strong,
+.staff-text span,
+.staff-text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-text strong {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--text-strong, #0f172a);
+}
+
+.staff-text span {
+  font-size: 0.86rem;
+  color: var(--text, #334155);
+}
+
+.staff-text small {
+  font-size: 0.76rem;
+  color: var(--muted, #64748b);
+}
+
+.staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Medium screens: actions move to their own full-width line under the row */
+@media (max-width: 1280px) {
+  .staff-list {
+    --staff-cols: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1.5fr) 92px;
+  }
+
+  .staff-list-head-actions {
+    display: none;
+  }
+
+  .staff-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border, rgba(148, 163, 184, 0.2));
+  }
+}
+
+/* Small screens: stacked card per user */
+@media (max-width: 720px) {
+  .staff-list-head {
+    display: none;
+  }
+
+  .staff-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .staff-row > .staff-cell:nth-child(2),
+  .staff-row > .staff-cell:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .staff-row > .staff-cell:nth-child(4) {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+
+:root[data-theme="dark"] .staff-list,
+[data-theme="dark"] .staff-list {
+  background: #0c182c;
+  border-color: rgba(125, 211, 252, 0.16);
+}
+
+:root[data-theme="dark"] .staff-list-head,
+[data-theme="dark"] .staff-list-head {
+  background: #0f1f38;
+  color: #f8fafc;
+  border-bottom-color: rgba(125, 211, 252, 0.2);
+}
+
+:root[data-theme="dark"] .staff-row:hover,
+[data-theme="dark"] .staff-row:hover {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+:root[data-theme="dark"] .staff-text strong,
+[data-theme="dark"] .staff-text strong {
+  color: #f1f5f9;
+}
+
+:root[data-theme="dark"] .staff-text span,
+[data-theme="dark"] .staff-text span {
+  color: #cbd5e1;
+}
+
 .hms-table-view {
   display: flex;
   flex-direction: column;
   gap: 14px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .table-topbar {

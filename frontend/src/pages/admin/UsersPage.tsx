@@ -542,99 +542,93 @@ export default function UsersPage() {
             {!loading && users.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No users found.</p>}
 
             {!loading && users.length > 0 && (
-              <div className="table-scroll-container">
-                <table className="hms-data-table">
-                  <thead>
-                    <tr>
-                      <th style={{ minWidth: "220px" }}>Staff Member</th>
-                      <th style={{ minWidth: "170px" }}>Roles & Department</th>
-                      <th style={{ minWidth: "160px" }}>Contact Info</th>
-                      <th style={{ width: "90px", minWidth: "90px" }}>Status</th>
-                      <th className="sticky-action" style={{ width: "260px", minWidth: "260px", textAlign: "right" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id}>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <span className="rbac-avatar" style={{ width: "38px", height: "38px", minWidth: "38px", fontSize: "0.85rem" }}>
-                              {staffPhotoSource(user) ? (
-                                <img src={staffPhotoSource(user)} alt="" />
-                              ) : (
-                                staffInitials(user)
-                              )}
-                            </span>
-                            <div>
-                              <div className="cell-primary" style={{ fontSize: "0.95rem" }}>{staffFullName(user)}</div>
-                              <div className="cell-muted">@{user.username}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{roleNames(user) || "Standard Staff"}</div>
-                          {user.serviceArea?.name && (
-                            <div className="cell-muted">{user.serviceArea.name}</div>
-                          )}
-                        </td>
-                        <td>
-                          <div>{user.phone || "—"}</div>
-                          <div className="cell-muted">{user.email}</div>
-                        </td>
-                        <td>
-                          <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
-                            {user.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="cell-actions sticky-action">
-                          <div className="table-actions-cluster">
-                            {canUpdate && (
-                              <button
-                                type="button"
-                                className="table-action-btn primary"
-                                onClick={() => startEdit(user)}
-                                title="Edit Staff User"
-                              >
-                                <FiEdit3 />
-                                <span>Edit</span>
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="table-action-btn"
-                              onClick={() => setIdCardUser(user)}
-                              title="Print Staff ID Card"
-                            >
-                              <FiShield />
-                              <span>ID Card</span>
-                            </button>
-                            {canUpdate && (
-                              <button
-                                type="button"
-                                className={`table-action-btn ${user.isActive ? "warning" : "success"}`}
-                                onClick={() => handleActiveToggle(user)}
-                                title={user.isActive ? "Deactivate User Account" : "Activate User Account"}
-                              >
-                                {user.isActive ? <FiSlash /> : <FiCheckCircle />}
-                                <span>{user.isActive ? "Disable" : "Enable"}</span>
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                type="button"
-                                className="table-action-btn danger"
-                                onClick={() => handleDelete(user)}
-                                title="Delete User"
-                              >
-                                <FiTrash2 />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="staff-list">
+                <div className="staff-list-head">
+                  <span>Staff Member</span>
+                  <span>Roles &amp; Department</span>
+                  <span>Contact</span>
+                  <span>Status</span>
+                  <span className="staff-list-head-actions">Actions</span>
+                </div>
+
+                {users.map((user) => (
+                  <article key={user.id} className={`staff-row ${user.isActive ? "" : "is-inactive"}`}>
+                    <div className="staff-cell staff-identity">
+                      <span className="rbac-avatar staff-avatar">
+                        {staffPhotoSource(user) ? (
+                          <img src={staffPhotoSource(user)} alt="" />
+                        ) : (
+                          staffInitials(user)
+                        )}
+                      </span>
+                      <div className="staff-text">
+                        <strong title={staffFullName(user)}>{staffFullName(user)}</strong>
+                        <small title={`@${user.username}`}>@{user.username}</small>
+                      </div>
+                    </div>
+
+                    <div className="staff-cell staff-text">
+                      <strong title={roleNames(user) || "Standard Staff"}>{roleNames(user) || "Standard Staff"}</strong>
+                      <small>{user.serviceArea?.name || "All departments"}</small>
+                    </div>
+
+                    <div className="staff-cell staff-text">
+                      <span title={user.phone || ""}>{user.phone || "—"}</span>
+                      <small title={user.email}>{user.email}</small>
+                    </div>
+
+                    <div className="staff-cell">
+                      <span className={`patient-status-badge ${user.isActive ? "active" : "inactive"}`}>
+                        {user.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+
+                    <div className="staff-actions">
+                      {canUpdate && (
+                        <button
+                          type="button"
+                          className="table-action-btn primary"
+                          onClick={() => startEdit(user)}
+                          title="Edit staff user"
+                        >
+                          <FiEdit3 />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="table-action-btn"
+                        onClick={() => setIdCardUser(user)}
+                        title="Print staff ID card"
+                      >
+                        <FiShield />
+                        <span>ID Card</span>
+                      </button>
+                      {canUpdate && (
+                        <button
+                          type="button"
+                          className={`table-action-btn ${user.isActive ? "warning" : "success"}`}
+                          onClick={() => handleActiveToggle(user)}
+                          title={user.isActive ? "Deactivate user account" : "Activate user account"}
+                        >
+                          {user.isActive ? <FiSlash /> : <FiCheckCircle />}
+                          <span>{user.isActive ? "Disable" : "Enable"}</span>
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="table-action-btn danger"
+                          onClick={() => handleDelete(user)}
+                          title="Delete user"
+                        >
+                          <FiTrash2 />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
           </section>
