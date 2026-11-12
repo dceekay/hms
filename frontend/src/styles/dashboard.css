@@ -8900,3 +8900,312 @@ body.light-theme .ws-active-session-bar {
     text-align: center;
   }
 }
+
+/* Gate Entry UX & Offline Sync Enhancements */
+.person-type {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.person-type:hover {
+  border-color: var(--accent);
+}
+
+.person-type svg {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.person-type span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.person-type span strong {
+  font-size: 0.9rem;
+  color: inherit;
+}
+
+.person-type span small {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.person-type.active span small {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.security-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.security-goto-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+}
+
+.security-sync-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-strong);
+}
+
+.security-sync-bar.online {
+  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
+  background: color-mix(in srgb, var(--success) 7%, var(--surface-strong));
+}
+
+.security-sync-bar.offline {
+  border-color: color-mix(in srgb, var(--warning) 45%, var(--border));
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface-strong));
+}
+
+.security-sync-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.security-sync-state svg {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.security-sync-bar.online .security-sync-state svg {
+  color: var(--success);
+}
+
+.security-sync-bar.offline .security-sync-state svg {
+  color: var(--warning);
+}
+
+.security-sync-state strong {
+  display: block;
+  color: var(--text-strong);
+  font-size: 0.92rem;
+}
+
+.security-sync-state small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.security-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  background: var(--accent);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.security-sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.security-sync-btn svg.spin {
+  animation: spin 1s linear infinite;
+}
+
+.security-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.security-section-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-strong);
+}
+
+.security-reset-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.security-reset-link:hover {
+  color: var(--text-strong);
+  border-color: var(--accent);
+}
+
+.security-quick-group {
+  display: grid;
+  gap: 8px;
+}
+
+.security-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.security-chip {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.security-chip.active,
+.security-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.security-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.security-filter-tabs button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.security-filter-tabs button.active {
+  border-color: transparent;
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.security-entry-card {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 12px;
+  border-radius: 10px;
+}
+
+.entry-avatar {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+.security-entry-card .security-checkout-btn {
+  width: auto;
+  min-height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border));
+  border-radius: 8px;
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface-strong));
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.security-entry-card .security-checkout-btn:hover {
+  background: var(--warning);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.security-entry-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.security-entry-route svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.security-state-badge.queued {
+  gap: 4px;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+
+@media (max-width: 960px) {
+  .security-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .person-type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .security-entry-card {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .security-entry-card .security-checkout-btn {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

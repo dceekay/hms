@@ -1,6 +1,20 @@
 import { Link } from "react-router-dom";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { FiCamera, FiCheckCircle, FiLogIn, FiRefreshCw, FiSearch, FiShield, FiTrash2 } from "react-icons/fi";
+import {
+  FiBriefcase,
+  FiCamera,
+  FiCheckCircle,
+  FiRefreshCw,
+  FiRotateCcw,
+  FiSearch,
+  FiShield,
+  FiTrash2,
+  FiTruck,
+  FiUser,
+  FiUsers,
+  FiWifi,
+  FiWifiOff,
+} from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import SecurityEntryLogList from "../../components/security/SecurityEntryLogList";
 import {
@@ -10,9 +24,11 @@ import {
 } from "../../services/security/securityService";
 import { lookupStaffByCardNumber } from "../../services/userService";
 import { SecurityEntryFormValues, SecurityEntryLog } from "../../types/security";
+import { useOfflineSync } from "../../hooks/useOfflineSync";
+import { HMS_SYNC_FLUSHED_EVENT } from "../../utils/appEvents";
 
 const initialForm: SecurityEntryFormValues = {
-  personType: "guest",
+  personType: "patient",
   name: "",
   phone: "",
   patientId: "",
@@ -22,12 +38,35 @@ const initialForm: SecurityEntryFormValues = {
   notes: "",
 };
 
-const personTypeLabels: Record<SecurityEntryFormValues["personType"], string> = {
-  patient: "Patient",
-  patient_relative: "Patient Relative",
-  staff: "Staff",
-  guest: "Guest",
+const personTypeOptions: Array<{
+  value: SecurityEntryFormValues["personType"];
+  label: string;
+  hint: string;
+  icon: typeof FiUser;
+}> = [
+  { value: "patient", label: "Patient", hint: "Coming for care", icon: FiUser },
+  { value: "patient_relative", label: "Relative", hint: "Family / visitor", icon: FiUsers },
+  { value: "staff", label: "Staff", hint: "Hospital worker", icon: FiBriefcase },
+  { value: "guest", label: "Guest", hint: "Delivery / visitor", icon: FiTruck },
+];
+
+const quickDestinations = [
+  "OPD / Reception",
+  "Emergency / A&E",
+  "Ward",
+  "Pharmacy",
+  "Lab",
+  "Admin Office",
+];
+
+const quickPurposes: Record<SecurityEntryFormValues["personType"], string[]> = {
+  patient: ["Clinic Visit", "Emergency Care", "Lab / Scan", "Drug Pickup"],
+  patient_relative: ["Visiting Patient", "Bringing Food / Items", "Discharge Pickup"],
+  staff: ["Duty / Shift", "Official Meeting", "On-Call"],
+  guest: ["Delivery / Supply", "Official Visit", "Maintenance / Repair"],
 };
+
+type QuickFilter = "inside" | "all" | "checked_out";
 
 function normalizeStaffId(value?: string) {
   return (value ?? "").trim().toUpperCase().replace(/[\s-]/g, "");
@@ -83,6 +122,7 @@ export default function SecurityEntryPage() {
   const [form, setForm] = useState<SecurityEntryFormValues>(initialForm);
   const [entries, setEntries] = useState<SecurityEntryLog[]>([]);
   const [search, setSearch] = useState("");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("inside");
   const [loading, setLoading] = useState(false);
   const [loadingEntries, setLoadingEntries] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -92,6 +132,8 @@ export default function SecurityEntryPage() {
   const [staffLookupMessage, setStaffLookupMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const { pendingCount, isBrowserOnline, syncing, syncNow } = useOfflineSync();
 
   const requiresIdentity = form.personType === "patient_relative" || form.personType === "staff";
   const requiresStaffId = form.personType === "staff";
@@ -103,26 +145,42 @@ export default function SecurityEntryPage() {
     [entries]
   );
 
-  const update = (
-  field: keyof SecurityEntryFormValues,
-  value: string
-    ) => {
-      const nextValue =
-        field === "staffIdCardNumber" ? normalizeStaffId(value) : value;
+  const visibleEntries = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return entries.filter((entry) => {
+      if (quickFilter === "inside" && entry.checkedOutAt) return false;
+      if (quickFilter === "checked_out" && !entry.checkedOutAt) return false;
+      if (!term) return true;
+      const haystack = [
+        entry.name,
+        entry.phone,
+        entry.staffIdCardNumber,
+        entry.patientId,
+        entry.destination,
+        entry.purpose,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [entries, quickFilter, search]);
 
-      setForm((current) => ({
-        ...current,
-        [field]: nextValue,
+  const update = (field: keyof SecurityEntryFormValues, value: string) => {
+    const nextValue =
+      field === "staffIdCardNumber" ? normalizeStaffId(value) : value;
 
-        ...(field === "personType" && value !== "staff"
-          ? { staffIdCardNumber: "" }
-          : {}),
-
-        ...(field === "personType" && value !== "patient"
-          ? { patientId: "" }
-          : {}),
-      }));
-    };
+    setForm((current) => ({
+      ...current,
+      [field]: nextValue,
+      ...(field === "personType" && value !== "staff"
+        ? { staffIdCardNumber: "" }
+        : {}),
+      ...(field === "personType" && value !== "patient"
+        ? { patientId: "" }
+        : {}),
+    }));
+  };
 
   useEffect(() => {
     if (form.personType !== "staff") {
@@ -135,13 +193,13 @@ export default function SecurityEntryPage() {
 
     if (!staffId) {
       setStaffLookupState("idle");
-      setStaffLookupMessage("Scan or type the staff ID card number.");
+      setStaffLookupMessage("Type or scan the staff ID card number.");
       return;
     }
 
     if (staffId.length < 15) {
       setStaffLookupState("idle");
-      setStaffLookupMessage("Keep typing the staff ID.");
+      setStaffLookupMessage("Keep typing the full staff ID...");
       return;
     }
 
@@ -155,7 +213,11 @@ export default function SecurityEntryPage() {
 
         if (!staff) {
           setStaffLookupState("not_found");
-          setStaffLookupMessage("Staff ID not found or inactive.");
+          setStaffLookupMessage(
+            isBrowserOnline
+              ? "Staff ID not found or inactive."
+              : "Offline: staff ID not cached yet. You can type their name manually."
+          );
           return;
         }
 
@@ -181,20 +243,20 @@ export default function SecurityEntryPage() {
 
         setStaffLookupState("found");
         setStaffLookupMessage(
-          `${staff.fullName} verified${staff.serviceArea?.name ? ` - ${staff.serviceArea.name}` : ""}.`
+          `${staff.fullName} verified${staff.serviceArea?.name ? ` • ${staff.serviceArea.name}` : ""}.`
         );
       });
-    }, 450);
+    }, 350);
 
     return () => {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [form.personType, form.staffIdCardNumber]);
+  }, [form.personType, form.staffIdCardNumber, isBrowserOnline]);
 
-  const loadEntries = async (searchTerm = search) => {
+  const loadEntries = async (searchTerm = "") => {
     setLoadingEntries(true);
-    const response = await fetchSecurityEntries(searchTerm);
+    const response = await fetchSecurityEntries(searchTerm, { take: 80 });
     setLoadingEntries(false);
 
     if (response) {
@@ -203,7 +265,15 @@ export default function SecurityEntryPage() {
   };
 
   useEffect(() => {
-    loadEntries("");
+    void loadEntries("");
+
+    const handleSynced = () => {
+      void loadEntries("");
+    };
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    return () => {
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    };
   }, []);
 
   const handlePhotoChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +294,7 @@ export default function SecurityEntryPage() {
         photoHeight: photo.height,
       }));
     } catch {
-      setError("Unable to prepare photo. Try a smaller image.");
+      setError("Could not load that photo. Please try a smaller picture.");
     } finally {
       setPhotoLoading(false);
     }
@@ -241,27 +311,33 @@ export default function SecurityEntryPage() {
     }));
   };
 
+  const resetForm = () => {
+    setForm({ ...initialForm, personType: form.personType });
+    setError(null);
+    setSuccess(null);
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
     setSuccess(null);
 
-    if (requiresIdentity && !form.name) {
+    if (requiresIdentity && !form.name?.trim()) {
       setError(
         form.personType === "staff"
-          ? "Enter a valid staff ID so the staff name can be filled."
-          : "Name is required for patient relatives."
+          ? "Please enter the staff name (or wait for Staff ID lookup)."
+          : "Please enter the visitor's full name."
       );
       return;
     }
 
-    if (form.personType === "patient_relative" && !form.phone) {
-      setError("Phone is required for patient relatives.");
+    if (form.personType === "patient_relative" && !form.phone?.trim()) {
+      setError("Please enter a phone number for the patient relative.");
       return;
     }
 
-    if (requiresStaffId && !form.staffIdCardNumber) {
-      setError("Staff ID card number is required for staff entry.");
+    if (requiresStaffId && !form.staffIdCardNumber?.trim()) {
+      setError("Please enter the Staff ID card number.");
       return;
     }
 
@@ -270,13 +346,17 @@ export default function SecurityEntryPage() {
     setLoading(false);
 
     if (!entry) {
-      setError("Unable to record entry. Check required fields and try again.");
+      setError("Could not save gate entry. Please check the fields and try again.");
       return;
     }
 
-    setSuccess("Entry recorded successfully.");
-    setForm(initialForm);
-    loadEntries("");
+    setSuccess(
+      entry.queued
+        ? "Saved offline on this device. It will sync automatically once network is back."
+        : "Gate check-in recorded!"
+    );
+    setForm({ ...initialForm, personType: form.personType });
+    setEntries((current) => [entry, ...current.filter((item) => item.id !== entry.id)]);
   };
 
   const handleCheckout = async (entry: SecurityEntryLog) => {
@@ -290,7 +370,7 @@ export default function SecurityEntryPage() {
 
   const handleSearch = (event: FormEvent) => {
     event.preventDefault();
-    loadEntries(search);
+    void loadEntries(search);
   };
 
   return (
@@ -298,69 +378,94 @@ export default function SecurityEntryPage() {
       <div className="security-entry-page">
         <section className="security-hero">
           <div>
-            <p className="eyebrow">Security desk</p>
-            <h1>Gate entry.</h1>
+            <p className="eyebrow">Security & Gate Desk</p>
+            <h1>Gate Check-In</h1>
             <p>
-              Fast entry logging for patients, relatives, staff, and guests.
+              Quickly log patients, relatives, staff, and visitors coming in or going out.
+              Works even when the network goes off.
             </p>
           </div>
-          <div className="security-live-count">
-            <FiShield />
-            <strong>{activeCount}</strong>
-            <span>inside</span>
+
+          <div className="security-hero-stats">
+            <div className="security-live-count">
+              <FiShield />
+              <strong>{activeCount}</strong>
+              <span>Inside Now</span>
+            </div>
           </div>
         </section>
 
+        <div className={`security-sync-bar ${isBrowserOnline ? "online" : "offline"}`}>
+          <div className="security-sync-state">
+            {isBrowserOnline ? <FiWifi /> : <FiWifiOff />}
+            <div>
+              <strong>
+                {isBrowserOnline
+                  ? "System Online"
+                  : "Offline Mode — Saving on this device"}
+              </strong>
+              <small>
+                {pendingCount > 0
+                  ? `${pendingCount} record${pendingCount === 1 ? "" : "s"} waiting to sync to server`
+                  : isBrowserOnline
+                  ? "All gate records are up to date"
+                  : "You can keep checking people in and out; everything will sync when network returns."}
+              </small>
+            </div>
+          </div>
+
+          {pendingCount > 0 && (
+            <button
+              type="button"
+              className="security-sync-btn"
+              onClick={() => void syncNow()}
+              disabled={!isBrowserOnline || syncing}
+            >
+              <FiRefreshCw className={syncing ? "spin" : ""} />
+              <span>{syncing ? "Syncing..." : isBrowserOnline ? "Sync Now" : "Waiting for Network"}</span>
+            </button>
+          )}
+        </div>
+
         <div className="security-layout">
           <form className="security-form" onSubmit={handleSubmit}>
+            <div className="security-section-head">
+              <h2>1. Who is at the gate?</h2>
+              <button type="button" className="security-reset-link" onClick={resetForm}>
+                <FiRotateCcw />
+                Clear form
+              </button>
+            </div>
+
             <div className="person-type-grid">
-              {Object.entries(personTypeLabels).map(([value, label]) => (
+              {personTypeOptions.map(({ value, label, hint, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
                   className={form.personType === value ? "person-type active" : "person-type"}
                   onClick={() => update("personType", value)}
                 >
-                  <FiLogIn />
-                  {label}
+                  <Icon />
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{hint}</small>
+                  </span>
                 </button>
               ))}
             </div>
 
+            <div className="security-section-head">
+              <h2>2. Person details</h2>
+            </div>
+
             <div className="form-grid">
-              <label>
-                Name {requiresIdentity && <span>*</span>}
-                {patientIdentityOptional && <small>Optional for emergency patients</small>}
-                <input
-                  value={form.name ?? ""}
-                  onChange={(event) => update("name", event.target.value)}
-                  placeholder={patientIdentityOptional ? "Can be added later" : ""}
-                />
-              </label>
-              <label>
-                Phone {form.personType === "patient_relative" && <span>*</span>}
-                {(patientIdentityOptional || form.personType === "staff") && (
-                  <small>{form.personType === "staff" ? "Filled from staff record when available" : "Optional for emergency patients"}</small>
-                )}
-                <input
-                  value={form.phone ?? ""}
-                  onChange={(event) => update("phone", event.target.value)}
-                  placeholder={patientIdentityOptional ? "Can be added later" : ""}
-                />
-              </label>
-              {form.personType === "patient" && (
-                <label>
-                  Patient ID or MRN
-                  <input value={form.patientId ?? ""} onChange={(event) => update("patientId", event.target.value)} />
-                </label>
-              )}
               {requiresStaffId && (
                 <label className="staff-lookup-field">
-                  Staff ID card number <span>*</span>
+                  Staff ID Card Number <span>*</span>
                   <input
                     value={form.staffIdCardNumber ?? ""}
                     onChange={(event) => update("staffIdCardNumber", event.target.value)}
-                    placeholder="MDS2026XXXXXXXX"
+                    placeholder="e.g. MDS202600000001"
                     autoCapitalize="characters"
                   />
                   {staffLookupMessage && (
@@ -370,25 +475,106 @@ export default function SecurityEntryPage() {
                   )}
                 </label>
               )}
+
               <label>
-                Purpose
-                <input value={form.purpose ?? ""} onChange={(event) => update("purpose", event.target.value)} />
+                Full Name {requiresIdentity && <span>*</span>}
+                {patientIdentityOptional && <small>Optional if emergency patient</small>}
+                <input
+                  value={form.name ?? ""}
+                  onChange={(event) => update("name", event.target.value)}
+                  placeholder={patientIdentityOptional ? "Enter name (or leave blank for emergency)" : "Enter full name"}
+                />
               </label>
+
               <label>
-                Destination
-                <input value={form.destination ?? ""} onChange={(event) => update("destination", event.target.value)} />
+                Phone Number {form.personType === "patient_relative" && <span>*</span>}
+                {(patientIdentityOptional || form.personType === "staff") && (
+                  <small>
+                    {form.personType === "staff"
+                      ? "Auto-filled from staff card when online"
+                      : "Optional for emergency"}
+                  </small>
+                )}
+                <input
+                  value={form.phone ?? ""}
+                  onChange={(event) => update("phone", event.target.value)}
+                  placeholder="e.g. 0803 123 4567"
+                  inputMode="tel"
+                />
               </label>
+
+              {form.personType === "patient" && (
+                <label>
+                  Patient Folder / MRN (optional)
+                  <input
+                    value={form.patientId ?? ""}
+                    onChange={(event) => update("patientId", event.target.value)}
+                    placeholder="If patient has a hospital card"
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="security-quick-group">
+              <label>
+                Where are they going? (Destination)
+                <input
+                  value={form.destination ?? ""}
+                  onChange={(event) => update("destination", event.target.value)}
+                  placeholder="Tap a quick option below or type..."
+                />
+              </label>
+              <div className="security-chip-row">
+                {quickDestinations.map((place) => (
+                  <button
+                    key={place}
+                    type="button"
+                    className={form.destination === place ? "security-chip active" : "security-chip"}
+                    onClick={() => update("destination", place)}
+                  >
+                    {place}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="security-quick-group">
+              <label>
+                Why are they here? (Purpose)
+                <input
+                  value={form.purpose ?? ""}
+                  onChange={(event) => update("purpose", event.target.value)}
+                  placeholder="Tap a quick option below or type..."
+                />
+              </label>
+              <div className="security-chip-row">
+                {quickPurposes[form.personType].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    className={form.purpose === reason ? "security-chip active" : "security-chip"}
+                    onClick={() => update("purpose", reason)}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <label>
-              Notes
-              <textarea value={form.notes ?? ""} onChange={(event) => update("notes", event.target.value)} rows={3} />
+              Extra Note (optional)
+              <textarea
+                value={form.notes ?? ""}
+                onChange={(event) => update("notes", event.target.value)}
+                rows={2}
+                placeholder="e.g. Vehicle plate number, items carried, or emergency note"
+              />
             </label>
 
             <div className="security-photo-row">
               <label className="photo-capture">
                 <FiCamera />
-                <span>{photoLoading ? "Preparing photo..." : "Capture / Upload Photo"}</span>
+                <span>{photoLoading ? "Preparing photo..." : "Take / Upload Photo (optional)"}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -401,10 +587,10 @@ export default function SecurityEntryPage() {
               {photoPreview && (
                 <div className="photo-preview">
                   <img src={photoPreview} alt="Entry preview" />
-                  <button type="button" onClick={clearPhoto}>
+                  <button type="button" onClick={clearPhoto} title="Remove photo">
                     <FiTrash2 />
                   </button>
-                  <small>{Math.ceil((form.photoSizeBytes ?? 0) / 1024)}KB WebP</small>
+                  <small>{Math.ceil((form.photoSizeBytes ?? 0) / 1024)}KB</small>
                 </div>
               )}
             </div>
@@ -413,7 +599,7 @@ export default function SecurityEntryPage() {
             {success && <p className="security-success">{success}</p>}
 
             <button className="registration-submit" type="submit" disabled={loading || photoLoading}>
-              {loading ? "Recording entry..." : "Record Entry"}
+              {loading ? "Saving..." : "Check In Now"}
               <FiCheckCircle />
             </button>
           </form>
@@ -421,12 +607,36 @@ export default function SecurityEntryPage() {
           <aside className="security-log-panel">
             <div className="panel-title">
               <div>
-                <h2>Recent Entries</h2>
-                <p>Recent movement with time in and time out.</p>
+                <h2>People at the Gate</h2>
+                <p>Tap "Check Out" when someone leaves the compound.</p>
               </div>
               <Link className="icon-text-btn" to="/security/logs">
-                All entries
+                All logs
               </Link>
+            </div>
+
+            <div className="security-filter-tabs" role="tablist" aria-label="Filter gate list">
+              <button
+                type="button"
+                className={quickFilter === "inside" ? "active" : ""}
+                onClick={() => setQuickFilter("inside")}
+              >
+                Still Inside ({activeCount})
+              </button>
+              <button
+                type="button"
+                className={quickFilter === "all" ? "active" : ""}
+                onClick={() => setQuickFilter("all")}
+              >
+                All ({entries.length})
+              </button>
+              <button
+                type="button"
+                className={quickFilter === "checked_out" ? "active" : ""}
+                onClick={() => setQuickFilter("checked_out")}
+              >
+                Checked Out
+              </button>
             </div>
 
             <form className="security-search" onSubmit={handleSearch}>
@@ -434,15 +644,21 @@ export default function SecurityEntryPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search name, phone, staff ID"
+                placeholder="Search name, phone, staff ID, place..."
               />
-              <button type="submit">Search</button>
+              <button type="submit" title="Refresh from server">
+                <FiRefreshCw />
+              </button>
             </form>
 
             <SecurityEntryLogList
-              entries={entries}
+              entries={visibleEntries}
               loading={loadingEntries}
-              emptyMessage="No recent security entries."
+              emptyMessage={
+                quickFilter === "inside"
+                  ? "No one is currently marked inside."
+                  : "No gate records match your search."
+              }
               onCheckout={handleCheckout}
             />
           </aside>

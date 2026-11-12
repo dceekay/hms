@@ -26,7 +26,9 @@ export type OfflineOperationType =
   | "patient.register_patient"
   | "patient.update_patient"
   | "appointments.book_appointment"
-  | "appointments.update_status";
+  | "appointments.update_status"
+  | "security.create_entry"
+  | "security.checkout_entry";
 
 export type OfflineOperation = {
   id: string;
@@ -35,6 +37,10 @@ export type OfflineOperation = {
   method: "POST" | "PATCH" | "PUT" | "DELETE";
   path: string;
   body?: unknown;
+  meta?: {
+    localEntryId?: string;
+    targetLocalEntryId?: string;
+  };
   createdAt: string;
   retryCount: number;
   lastError?: string;
@@ -143,10 +149,18 @@ export async function flushOfflineQueue(): Promise<OfflineFlushResult> {
   let queue = readQueue();
   let synced = 0;
   let blocked = false;
+  const resolvedEntryIds = new Map<string, string>();
 
-  for (const operation of queue) {
+  for (let index = 0; index < queue.length; index += 1) {
+    const operation = queue[index];
     try {
-      const response = await fetch(`${apiBaseUrl()}${operation.path}`, {
+      const targetLocalId = operation.meta?.targetLocalEntryId;
+      const resolvedPath =
+        targetLocalId && resolvedEntryIds.has(targetLocalId)
+          ? `/security/entry-logs/${resolvedEntryIds.get(targetLocalId)}/checkout`
+          : operation.path;
+
+      const response = await fetch(`${apiBaseUrl()}${resolvedPath}`, {
         method: operation.method,
         headers: {
           "Content-Type": "application/json",
@@ -161,16 +175,46 @@ export async function flushOfflineQueue(): Promise<OfflineFlushResult> {
           break;
         }
 
+        if (response.status === 409) {
+          // Already applied (e.g. duplicate checkout); drop so remaining queue items can proceed.
+          queue = queue.filter((item) => item.id !== operation.id);
+          writeQueue(queue);
+          index -= 1;
+          continue;
+        }
+
         const text = await response.text();
         throw new Error(text || `Sync failed with status ${response.status}`);
+      }
+
+      if (operation.type === "security.create_entry" && operation.meta?.localEntryId) {
+        try {
+          const payload = (await response.json()) as { data?: { id?: string } };
+          const realId = payload?.data?.id;
+          if (realId) {
+            resolvedEntryIds.set(operation.meta.localEntryId, realId);
+            queue = queue.map((item) =>
+              item.meta?.targetLocalEntryId === operation.meta?.localEntryId
+                ? {
+                    ...item,
+                    path: `/security/entry-logs/${realId}/checkout`,
+                    meta: { ...item.meta, targetLocalEntryId: undefined },
+                  }
+                : item
+            );
+          }
+        } catch {
+          // Ignore non-JSON bodies
+        }
       }
 
       synced += 1;
       queue = queue.filter((item) => item.id !== operation.id);
       writeQueue(queue);
+      index -= 1;
       notifyDataMutated({
         method: operation.method,
-        url: operation.path,
+        url: resolvedPath,
         source: "offline-sync",
       });
     } catch (error) {

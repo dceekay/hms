@@ -25,4 +25,5 @@ export type SecurityEntryLog = SecurityEntryFormValues & {
   checkedInAt: string;
   checkedOutAt?: string | null;
   recordedById?: string | null;
+  queued?: boolean;
 };

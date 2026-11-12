@@ -7,6 +7,11 @@ import {
   PatientQr,
 } from "../../types/patient";
 import { CANONICAL_INSURANCE_PROVIDERS } from "../../constants/insuranceProviders";
+import { notifyDataMutated } from "../../utils/appEvents";
+import {
+  enqueueOfflineOperation,
+  isLikelyNetworkError,
+} from "../../utils/offlineQueue";
 
 type ApiErrorBody = {
   message?: string;
@@ -26,16 +31,51 @@ function getApiErrorMessage(error: unknown) {
 
 export async function createPatient(
   values: PatientFormValues
-): Promise<{ patient: Patient | null; error?: string }> {
-  try {
-    const endpoint =
-      values.patientCategory === "investigation_patient"
-        ? "/patients/investigations"
-        : "/patients";
+): Promise<{ patient: Patient | null; error?: string; queued?: boolean }> {
+  const endpoint =
+    values.patientCategory === "investigation_patient"
+      ? "/patients/investigations"
+      : "/patients";
 
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "patient.register_patient",
+      label: `Register Patient: ${[values.firstName, values.lastName].filter(Boolean).join(" ") || "Walk-in"}`,
+      method: "POST",
+      path: endpoint,
+      body: values,
+    });
+    notifyDataMutated({ method: "POST", url: endpoint, source: "patient-offline" });
+
+    return {
+      patient: {
+        id: `offline-patient-${Date.now()}`,
+        patientNo: "OFFLINE-PENDING",
+        patientCategory: values.patientCategory ?? "registered",
+        firstName: values.firstName ?? "Walk-in",
+        lastName: values.lastName ?? "Patient",
+        gender: values.gender ?? "other",
+        phone: values.phone ?? null,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as unknown as Patient,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
+  try {
     const response = await api.post<{ data: Patient }>(endpoint, values);
+    notifyDataMutated({ method: "POST", url: endpoint, source: "patient" });
     return { patient: response.data.data };
   } catch (error) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return { patient: null, error: getApiErrorMessage(error) };
   }
@@ -44,15 +84,41 @@ export async function createPatient(
 export async function updatePatient(
   patientId: string,
   values: PatientUpdatePayload
-): Promise<{ patient: Patient | null; error?: string }> {
-  try {
-    const response = await api.patch<{ data: Patient }>(
-      `/patients/${patientId}`,
-      values
-    );
+): Promise<{ patient: Patient | null; error?: string; queued?: boolean }> {
+  const endpoint = `/patients/${patientId}`;
 
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "patient.update_patient",
+      label: `Update Patient Record`,
+      method: "PATCH",
+      path: endpoint,
+      body: values,
+    });
+    notifyDataMutated({ method: "PATCH", url: endpoint, source: "patient-offline" });
+
+    return {
+      patient: {
+        id: patientId,
+        ...values,
+        updatedAt: new Date().toISOString(),
+      } as unknown as Patient,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
+  try {
+    const response = await api.patch<{ data: Patient }>(endpoint, values);
+    notifyDataMutated({ method: "PATCH", url: endpoint, source: "patient" });
     return { patient: response.data.data };
   } catch (error) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return { patient: null, error: getApiErrorMessage(error) };
   }

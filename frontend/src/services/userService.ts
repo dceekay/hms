@@ -236,15 +236,47 @@ export type StaffCardLookup = {
   recordUpdatedAt: string;
 };
 
+const STAFF_CARD_CACHE_KEY = "hms_cached_staff_cards";
+
+function readCachedStaffCards(): Record<string, StaffCardLookup> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STAFF_CARD_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, StaffCardLookup>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function cacheStaffCard(staff: StaffCardLookup) {
+  if (typeof window === "undefined" || !staff.staffId) return;
+  try {
+    const current = readCachedStaffCards();
+    const key = staff.staffId.trim().toUpperCase().replace(/[\s-]/g, "");
+    current[key] = staff;
+    window.localStorage.setItem(STAFF_CARD_CACHE_KEY, JSON.stringify(current));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
 export async function lookupStaffByCardNumber(staffId: string): Promise<StaffCardLookup | null> {
+  const normalizedKey = staffId.trim().toUpperCase().replace(/[\s-]/g, "");
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return readCachedStaffCards()[normalizedKey] ?? null;
+  }
+
   try {
     const response = await api.get<{ data: StaffCardLookup }>(
       `/users/staff-lookup/${encodeURIComponent(staffId)}`
     );
+    if (response.data.data) {
+      cacheStaffCard(response.data.data);
+    }
     return response.data.data;
   } catch (error) {
     console.error(error);
-    return null;
+    return readCachedStaffCards()[normalizedKey] ?? null;
   }
 }
 

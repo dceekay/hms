@@ -1,9 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  FiFilter,
+  FiLogIn,
   FiRefreshCw,
   FiSearch,
   FiShield,
+  FiWifi,
+  FiWifiOff,
 } from "react-icons/fi";
 import AdminLayout from "../../layouts/AdminLayout";
 import SecurityEntryLogList from "../../components/security/SecurityEntryLogList";
@@ -12,26 +15,45 @@ import {
   fetchSecurityEntries,
 } from "../../services/security/securityService";
 import type { SecurityEntryLog } from "../../types/security";
+import { useOfflineSync } from "../../hooks/useOfflineSync";
+import { HMS_SYNC_FLUSHED_EVENT } from "../../utils/appEvents";
 
 type StatusFilter = "all" | "inside" | "checked_out";
+type PersonTypeFilter = "all" | SecurityEntryLog["personType"];
 
 export default function SecurityLogsPage() {
   const [entries, setEntries] = useState<SecurityEntryLog[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [personTypeFilter, setPersonTypeFilter] = useState<PersonTypeFilter>("all");
   const [loading, setLoading] = useState(false);
 
+  const { pendingCount, isBrowserOnline, syncing, syncNow } = useOfflineSync();
+
   const filteredEntries = useMemo(() => {
-    if (statusFilter === "inside") {
-      return entries.filter((entry) => !entry.checkedOutAt);
-    }
+    const term = search.trim().toLowerCase();
 
-    if (statusFilter === "checked_out") {
-      return entries.filter((entry) => Boolean(entry.checkedOutAt));
-    }
+    return entries.filter((entry) => {
+      if (statusFilter === "inside" && entry.checkedOutAt) return false;
+      if (statusFilter === "checked_out" && !entry.checkedOutAt) return false;
+      if (personTypeFilter !== "all" && entry.personType !== personTypeFilter) return false;
 
-    return entries;
-  }, [entries, statusFilter]);
+      if (!term) return true;
+      const haystack = [
+        entry.name,
+        entry.phone,
+        entry.staffIdCardNumber,
+        entry.patientId,
+        entry.destination,
+        entry.purpose,
+        entry.notes,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [entries, statusFilter, personTypeFilter, search]);
 
   const summary = useMemo(
     () => ({
@@ -42,9 +64,9 @@ export default function SecurityLogsPage() {
     [entries]
   );
 
-  const loadEntries = async (searchTerm = search) => {
+  const loadEntries = async (searchTerm = "") => {
     setLoading(true);
-    const response = await fetchSecurityEntries(searchTerm, { take: 100 });
+    const response = await fetchSecurityEntries(searchTerm, { take: 120 });
     setLoading(false);
 
     if (response) {
@@ -54,6 +76,14 @@ export default function SecurityLogsPage() {
 
   useEffect(() => {
     void loadEntries("");
+
+    const handleSynced = () => {
+      void loadEntries("");
+    };
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    return () => {
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    };
   }, []);
 
   const handleSearch = (event: FormEvent) => {
@@ -76,31 +106,91 @@ export default function SecurityLogsPage() {
       <div className="security-entry-page security-logs-page">
         <section className="security-hero compact">
           <div>
-            <p className="eyebrow">Security desk</p>
-            <h1>All entry logs.</h1>
-            <p>Review movement records, checkout times, and overnight visits.</p>
+            <p className="eyebrow">Security & Gate Desk</p>
+            <h1>All Gate Logs</h1>
+            <p>See everyone who entered or left the hospital, check people out, or search past visits.</p>
           </div>
-          <div className="security-live-count">
-            <FiShield />
-            <strong>{summary.inside}</strong>
-            <span>inside</span>
+          <div className="security-hero-stats">
+            <Link className="security-goto-entry" to="/security/entry">
+              <FiLogIn />
+              <span>New Check-In</span>
+            </Link>
+            <div className="security-live-count">
+              <FiShield />
+              <strong>{summary.inside}</strong>
+              <span>Inside Now</span>
+            </div>
           </div>
         </section>
+
+        <div className={`security-sync-bar ${isBrowserOnline ? "online" : "offline"}`}>
+          <div className="security-sync-state">
+            {isBrowserOnline ? <FiWifi /> : <FiWifiOff />}
+            <div>
+              <strong>
+                {isBrowserOnline
+                  ? "System Online"
+                  : "Offline Mode — Showing saved records on this device"}
+              </strong>
+              <small>
+                {pendingCount > 0
+                  ? `${pendingCount} gate record${pendingCount === 1 ? "" : "s"} waiting to sync`
+                  : "All records synced with server"}
+              </small>
+            </div>
+          </div>
+
+          {pendingCount > 0 && (
+            <button
+              type="button"
+              className="security-sync-btn"
+              onClick={() => void syncNow()}
+              disabled={!isBrowserOnline || syncing}
+            >
+              <FiRefreshCw className={syncing ? "spin" : ""} />
+              <span>{syncing ? "Syncing..." : isBrowserOnline ? "Sync Now" : "Waiting for Network"}</span>
+            </button>
+          )}
+        </div>
 
         <section className="security-log-panel full-width">
           <div className="security-log-summary">
             <span>
-              <small>Total</small>
+              <small>Total Shown</small>
               <strong>{summary.total}</strong>
             </span>
             <span>
-              <small>Inside</small>
+              <small>Still Inside</small>
               <strong>{summary.inside}</strong>
             </span>
             <span>
-              <small>Checked out</small>
+              <small>Checked Out</small>
               <strong>{summary.checkedOut}</strong>
             </span>
+          </div>
+
+          <div className="security-filter-tabs" role="tablist" aria-label="Filter by status">
+            <button
+              type="button"
+              className={statusFilter === "all" ? "active" : ""}
+              onClick={() => setStatusFilter("all")}
+            >
+              All ({summary.total})
+            </button>
+            <button
+              type="button"
+              className={statusFilter === "inside" ? "active" : ""}
+              onClick={() => setStatusFilter("inside")}
+            >
+              Still Inside ({summary.inside})
+            </button>
+            <button
+              type="button"
+              className={statusFilter === "checked_out" ? "active" : ""}
+              onClick={() => setStatusFilter("checked_out")}
+            >
+              Checked Out ({summary.checkedOut})
+            </button>
           </div>
 
           <form className="security-search security-log-search" onSubmit={handleSearch}>
@@ -108,22 +198,20 @@ export default function SecurityLogsPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search name, phone, staff ID"
+              placeholder="Search name, phone, staff ID, place..."
             />
             <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              aria-label="Filter security entries"
+              value={personTypeFilter}
+              onChange={(event) => setPersonTypeFilter(event.target.value as PersonTypeFilter)}
+              aria-label="Filter by person type"
             >
-              <option value="all">All</option>
-              <option value="inside">Inside</option>
-              <option value="checked_out">Checked out</option>
+              <option value="all">All People</option>
+              <option value="patient">Patients</option>
+              <option value="patient_relative">Relatives</option>
+              <option value="staff">Staff</option>
+              <option value="guest">Guests</option>
             </select>
-            <button type="submit">
-              <FiFilter />
-              Search
-            </button>
-            <button type="button" onClick={() => loadEntries(search)}>
+            <button type="button" onClick={() => void loadEntries(search)}>
               <FiRefreshCw />
               Refresh
             </button>
@@ -132,7 +220,7 @@ export default function SecurityLogsPage() {
           <SecurityEntryLogList
             entries={filteredEntries}
             loading={loading}
-            emptyMessage="No entries match this view."
+            emptyMessage="No gate records match this filter."
             onCheckout={handleCheckout}
           />
         </section>

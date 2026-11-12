@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  HMS_NETWORK_STATUS_CHANGED_EVENT,
   HMS_SYNC_QUEUE_CHANGED_EVENT,
+  NetworkStatusDetail,
   notifyDataMutated,
 } from "../utils/appEvents";
 import {
@@ -55,10 +57,23 @@ export function useOfflineSync() {
       }
     };
 
+    const handleNetworkStatusChanged = (event: Event) => {
+      const detail = (event as CustomEvent<NetworkStatusDetail>).detail;
+      if (detail?.isOnline) {
+        setIsBrowserOnline(true);
+        if (getOfflineQueueCount() > 0) {
+          void syncNow();
+        }
+      } else if (detail && detail.isOnline === false) {
+        setIsBrowserOnline(false);
+      }
+    };
+
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     window.addEventListener("focus", handleFocus);
     window.addEventListener(HMS_SYNC_QUEUE_CHANGED_EVENT, refreshCount);
+    window.addEventListener(HMS_NETWORK_STATUS_CHANGED_EVENT, handleNetworkStatusChanged);
 
     const timer = window.setInterval(() => {
       refreshCount();
@@ -74,6 +89,7 @@ export function useOfflineSync() {
       window.removeEventListener("offline", handleOffline);
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener(HMS_SYNC_QUEUE_CHANGED_EVENT, refreshCount);
+      window.removeEventListener(HMS_NETWORK_STATUS_CHANGED_EVENT, handleNetworkStatusChanged);
       window.clearInterval(timer);
     };
   }, [refreshCount, syncNow]);

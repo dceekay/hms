@@ -6,6 +6,11 @@ import type {
   AppointmentSummary,
 } from "../types/appointment";
 import type { AppUser } from "../types/rbac";
+import { notifyDataMutated } from "../utils/appEvents";
+import {
+  enqueueOfflineOperation,
+  isLikelyNetworkError,
+} from "../utils/offlineQueue";
 
 type AppointmentListResponse = {
   data: {
@@ -79,14 +84,49 @@ export async function fetchAppointments(params: {
 }
 
 export async function createAppointment(values: AppointmentFormValues) {
+  const payload = cleanAppointmentPayload(values);
+
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "appointments.book_appointment",
+      label: "Book Appointment",
+      method: "POST",
+      path: "/appointments",
+      body: payload,
+    });
+    notifyDataMutated({ method: "POST", url: "/appointments", source: "appointments-offline" });
+    return {
+      appointment: {
+        id: `offline-appt-${Date.now()}`,
+        patientId: values.patientId,
+        doctorId: values.doctorId,
+        scheduledFor: values.scheduledFor || new Date().toISOString(),
+        status: "scheduled",
+        reason: values.reason,
+        notes: values.notes,
+        createdAt: new Date().toISOString(),
+      } as unknown as Appointment,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: Appointment }>(
       "/appointments",
-      cleanAppointmentPayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "POST", url: "/appointments", source: "appointments" });
     return { appointment: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       appointment: null,
@@ -100,14 +140,55 @@ export async function updateAppointmentStatus(
   status: AppointmentStatus,
   notes = ""
 ) {
-  try {
-    const response = await api.patch<{ data: Appointment }>(`/appointments/${id}/status`, {
-      status,
-      notes: notes.trim() || undefined,
-    });
+  const payload = {
+    status,
+    notes: notes.trim() || undefined,
+  };
 
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "appointments.update_status",
+      label: `Appointment Status: ${status}`,
+      method: "PATCH",
+      path: `/appointments/${id}/status`,
+      body: payload,
+    });
+    notifyDataMutated({
+      method: "PATCH",
+      url: `/appointments/${id}/status`,
+      source: "appointments-offline",
+    });
+    return {
+      appointment: {
+        id,
+        status,
+        notes: payload.notes,
+      } as unknown as Appointment,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
+  try {
+    const response = await api.patch<{ data: Appointment }>(
+      `/appointments/${id}/status`,
+      payload
+    );
+
+    notifyDataMutated({
+      method: "PATCH",
+      url: `/appointments/${id}/status`,
+      source: "appointments",
+    });
     return { appointment: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       appointment: null,
