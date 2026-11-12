@@ -93,6 +93,7 @@ export type PharmacySaleCartItem = {
 
 export type PharmacySaleFormValues = {
   patientId: string;
+  prescriptionId?: string;
   discountAmount: string;
   amountPaid: string;
   paymentStatus: PharmacyPaymentStatus;

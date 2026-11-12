@@ -1,8 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FiArchive,
+  FiCheckCircle,
   FiClipboard,
   FiEdit3,
+  FiFileText,
   FiMinus,
   FiPlus,
   FiPrinter,
@@ -23,6 +26,10 @@ import mdsLogo from "../../assets/optimized/logo.png";
 import "../../styles/pharmacy-studio.css";
 import { fetchPatients } from "../../services/patients/patientService";
 import {
+  fetchPrescriptions,
+  updatePrescriptionStatus,
+} from "../../services/clinicalService";
+import {
   adjustMedicationStock,
   createMedication,
   createPharmacySale,
@@ -32,6 +39,11 @@ import {
   updateMedication,
 } from "../../services/pharmacyService";
 import { useAuthStore } from "../../store/authStore";
+import {
+  HMS_DATA_MUTATED_EVENT,
+  HMS_SYNC_FLUSHED_EVENT,
+} from "../../utils/appEvents";
+import type { Prescription, PrescriptionStatus } from "../../types/clinical";
 import type { Patient } from "../../types/patient";
 import type {
   Medication,
@@ -63,6 +75,7 @@ const emptyMedicationForm: MedicationFormValues = {
 
 const emptySaleForm: PharmacySaleFormValues = {
   patientId: "",
+  prescriptionId: "",
   discountAmount: "0",
   amountPaid: "0",
   paymentStatus: "pending",
@@ -143,6 +156,7 @@ function formFromMedication(medication: Medication): MedicationFormValues {
 }
 
 export default function PharmacyPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const permissions = useAuthStore((state) => state.user?.permissions ?? []);
   const canCreate = permissions.includes("pharmacy.create");
   const canUpdate = permissions.includes("pharmacy.update");
@@ -151,6 +165,9 @@ export default function PharmacyPage() {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [sales, setSales] = useState<PharmacySale[]>([]);
   const [movements, setMovements] = useState<PharmacyStockMovement[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [rxStatusFilter, setRxStatusFilter] = useState<"all" | PrescriptionStatus>("sent_to_pharmacy");
+  const [rxSearch, setRxSearch] = useState("");
   const [summary, setSummary] = useState<PharmacySummary>({
     active: 0,
     lowStock: 0,
@@ -160,7 +177,13 @@ export default function PharmacyPage() {
   const [medicineSearch, setMedicineSearch] = useState("");
   const [stockFilter, setStockFilter] = useState<PharmacyStockStatus>("all");
   const [saleSearch, setSaleSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"sell" | "inventory" | "invoices" | "stock">("sell");
+  const [activeTab, setActiveTab] = useState<"sell" | "prescriptions" | "inventory" | "invoices" | "stock">(() => {
+    const t = searchParams.get("tab");
+    if (t === "prescriptions" || t === "inventory" || t === "invoices" || t === "stock" || t === "sell") {
+      return t;
+    }
+    return "sell";
+  });
   const [medicineForm, setMedicineForm] = useState<MedicationFormValues>(emptyMedicationForm);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [isMedicineModalOpen, setIsMedicineModalOpen] = useState(false);
@@ -243,26 +266,52 @@ export default function PharmacyPage() {
     [movements]
   );
 
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam === "sell" ||
+      tabParam === "prescriptions" ||
+      tabParam === "inventory" ||
+      tabParam === "invoices" ||
+      tabParam === "stock"
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
-    const [patientResult, medicationResult, salesResult, movementResult] = await Promise.all([
+  const loadData = async (options?: { silent?: boolean } | unknown) => {
+    const silent =
+      typeof options === "object" &&
+      options !== null &&
+      "silent" in options &&
+      Boolean((options as { silent?: boolean }).silent);
+
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+
+    const [patientResult, medicationResult, salesResult, movementResult, rxResult] = await Promise.all([
       fetchPatients({ status: "active", take: 500 }),
       fetchMedications({ search: medicineSearch, stockStatus: stockFilter }),
       fetchPharmacySales(saleSearch),
       fetchPharmacyStockMovements(),
+      fetchPrescriptions(),
     ]);
 
-    setLoading(false);
+    if (!silent) {
+      setLoading(false);
+    }
 
     if (!patientResult || !medicationResult.result || !salesResult.result || !movementResult.result) {
-      setError(
-        medicationResult.error ??
-          salesResult.error ??
-          movementResult.error ??
-          "Unable to load pharmacy workspace."
-      );
+      if (!silent) {
+        setError(
+          medicationResult.error ??
+            salesResult.error ??
+            movementResult.error ??
+            "Unable to load pharmacy workspace."
+        );
+      }
       return;
     }
 
@@ -271,11 +320,138 @@ export default function PharmacyPage() {
     setSummary(medicationResult.result.summary);
     setSales(salesResult.result.items);
     setMovements(movementResult.result.items);
+    if (rxResult.result?.items) {
+      setPrescriptions(rxResult.result.items);
+    }
   };
 
   useEffect(() => {
-    void loadData();
+    void loadData({ silent: false });
+
+    const handleMutated = () => void loadData({ silent: true });
+    window.addEventListener(HMS_DATA_MUTATED_EVENT, handleMutated);
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, handleMutated);
+    const interval = window.setInterval(() => void loadData({ silent: true }), 15000);
+
+    return () => {
+      window.removeEventListener(HMS_DATA_MUTATED_EVENT, handleMutated);
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleMutated);
+      window.clearInterval(interval);
+    };
   }, []);
+
+  const pendingPrescriptionsCount = useMemo(
+    () => prescriptions.filter((rx) => rx.status === "sent_to_pharmacy").length,
+    [prescriptions]
+  );
+
+  const filteredPrescriptions = useMemo(() => {
+    const q = rxSearch.trim().toLowerCase();
+    return prescriptions.filter((rx) => {
+      if (rxStatusFilter !== "all" && rx.status !== rxStatusFilter) {
+        return false;
+      }
+      if (!q) return true;
+      const pName = `${rx.patient?.firstName || ""} ${rx.patient?.lastName || ""}`.toLowerCase();
+      const folder = (rx.patient?.physicalFileNumber || "").toLowerCase();
+      const mrn = (rx.patient?.mrn || "").toLowerCase();
+      const rxNum = (rx.prescriptionNumber || "").toLowerCase();
+      const docName = `${rx.doctor?.firstName || ""} ${rx.doctor?.lastName || ""}`.toLowerCase();
+      const meds = rx.items.map((i) => i.medicationName.toLowerCase()).join(" ");
+      return (
+        pName.includes(q) ||
+        folder.includes(q) ||
+        mrn.includes(q) ||
+        rxNum.includes(q) ||
+        docName.includes(q) ||
+        meds.includes(q)
+      );
+    });
+  }, [prescriptions, rxStatusFilter, rxSearch]);
+
+  const matchCatalogMedication = (item: Prescription["items"][number]) => {
+    if (item.medicationId) {
+      const byId = medications.find((m) => m.id === item.medicationId);
+      if (byId) return byId;
+    }
+    const lowerName = item.medicationName.trim().toLowerCase();
+    return (
+      medications.find(
+        (m) =>
+          m.name.trim().toLowerCase() === lowerName ||
+          (m.genericName && m.genericName.trim().toLowerCase() === lowerName)
+      ) ?? null
+    );
+  };
+
+  const handleLoadPrescriptionIntoCart = (rx: Prescription) => {
+    const matchedItems: PharmacySaleCartItem[] = [];
+    const missingOrOutOfStock: string[] = [];
+
+    rx.items.forEach((rxItem) => {
+      const med = matchCatalogMedication(rxItem);
+      if (!med || med.currentStock <= 0) {
+        missingOrOutOfStock.push(
+          `${rxItem.medicationName} (${!med ? "not in catalog" : "out of stock"})`
+        );
+        return;
+      }
+      const requestedQty = Number(rxItem.quantity || 1);
+      const qtyToAdd = Math.max(1, Math.min(requestedQty, med.currentStock));
+      const instr = [rxItem.dose, rxItem.frequency, rxItem.duration, rxItem.instructions]
+        .filter(Boolean)
+        .join(" • ");
+
+      matchedItems.push({
+        medicationId: med.id,
+        quantity: String(qtyToAdd),
+        unitPrice: String(med.sellingPrice ?? 0),
+        instructions: instr,
+      });
+    });
+
+    if (matchedItems.length === 0) {
+      setError(
+        `None of the prescribed medicines are currently in stock: ${missingOrOutOfStock.join(", ")}. Update stock or advise patient to buy outside, then mark prescription dispensed.`
+      );
+      return;
+    }
+
+    setSaleForm({
+      patientId: rx.patientId,
+      prescriptionId: rx.id,
+      discountAmount: "0",
+      amountPaid: "0",
+      paymentStatus: "pending",
+      notes: `Rx ${rx.prescriptionNumber}${rx.notes ? ` — ${rx.notes}` : ""}`,
+      items: matchedItems,
+    });
+    setActiveTab("sell");
+    setSearchParams({ tab: "sell" }, { replace: true });
+    setError(
+      missingOrOutOfStock.length > 0
+        ? `Loaded ${matchedItems.length} item(s). Unavailable in store: ${missingOrOutOfStock.join(", ")}.`
+        : null
+    );
+    setSuccess(`Loaded prescription ${rx.prescriptionNumber} into Dispense Cart.`);
+  };
+
+  const handleMarkPrescriptionStatus = async (rx: Prescription, status: PrescriptionStatus) => {
+    setSaving(true);
+    setError(null);
+    const res = await updatePrescriptionStatus(rx.id, status);
+    setSaving(false);
+    if (!res.prescription) {
+      setError(res.error ?? "Unable to update prescription status.");
+      return;
+    }
+    setSuccess(
+      status === "dispensed"
+        ? `Prescription ${rx.prescriptionNumber} marked as dispensed. Doctor notified.`
+        : `Prescription ${rx.prescriptionNumber} updated.`
+    );
+    await loadData({ silent: false });
+  };
 
   const updateMedicineField = (field: keyof MedicationFormValues, value: string | boolean) => {
     setMedicineForm((current) => ({ ...current, [field]: value }));
@@ -532,20 +708,46 @@ export default function PharmacyPage() {
           </section>
 
           <div className="pharmacy-tabs">
-            {[
-              { id: "sell", label: "Sell", icon: <FiShoppingCart /> },
-              { id: "inventory", label: "Inventory", icon: <FaCapsules /> },
-              { id: "invoices", label: "Invoices", icon: <FiArchive /> },
-              { id: "stock", label: "Stock Ledger", icon: <FiClipboard /> },
-            ].map((tab) => (
+            {(
+              [
+                { id: "sell", label: "Sell / Dispense", icon: <FiShoppingCart />, badge: null },
+                {
+                  id: "prescriptions",
+                  label: "Doctor Prescriptions",
+                  icon: <FiFileText />,
+                  badge: pendingPrescriptionsCount > 0 ? pendingPrescriptionsCount : null,
+                },
+                { id: "inventory", label: "Medicine Stock", icon: <FaCapsules />, badge: null },
+                { id: "invoices", label: "Receipts", icon: <FiArchive />, badge: null },
+                { id: "stock", label: "Stock History", icon: <FiClipboard />, badge: null },
+              ] as const
+            ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 className={activeTab === tab.id ? "active" : ""}
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setSearchParams({ tab: tab.id }, { replace: true });
+                }}
               >
                 {tab.icon}
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.badge != null && (
+                  <span
+                    style={{
+                      marginLeft: "4px",
+                      padding: "1px 7px",
+                      borderRadius: "999px",
+                      background: activeTab === tab.id ? "rgba(255,255,255,0.28)" : "#dc2626",
+                      color: "#ffffff",
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
             <button type="button" onClick={loadData}>
@@ -564,10 +766,41 @@ export default function PharmacyPage() {
                 <div className="pharmacy-panel-title">
                   <div>
                     <h2>Dispense & Sell to Patient</h2>
-                    <p>Select patient, add items to cart, and generate invoice.</p>
+                    <p>Select patient, add medicines to cart, and print stamped receipt.</p>
                   </div>
                   <FiShoppingCart style={{ fontSize: "1.35rem", color: "var(--accent, #0f766e)" }} />
                 </div>
+
+                {saleForm.prescriptionId && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      padding: "0.65rem 0.9rem",
+                      borderRadius: "10px",
+                      background: "rgba(5, 150, 105, 0.1)",
+                      border: "1px solid rgba(5, 150, 105, 0.35)",
+                      color: "#047857",
+                      fontSize: "0.84rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>
+                      Linked to Doctor Prescription — completing this sale will automatically mark it Dispensed.
+                    </span>
+                    <button
+                      type="button"
+                      className="table-action-btn"
+                      onClick={() =>
+                        setSaleForm((curr) => ({ ...curr, prescriptionId: "" }))
+                      }
+                    >
+                      <FiX /> Unlink
+                    </button>
+                  </div>
+                )}
 
                 {/* Patient Selector */}
                 <div>
@@ -894,6 +1127,232 @@ export default function PharmacyPage() {
                   </table>
                 </div>
               </section>
+            </section>
+          )}
+
+          {activeTab === "prescriptions" && (
+            <section className="hms-table-view">
+              <div className="table-topbar">
+                <div className="table-topbar-left">
+                  <div className="patient-search-control">
+                    <FiSearch />
+                    <input
+                      value={rxSearch}
+                      onChange={(event) => setRxSearch(event.target.value)}
+                      placeholder="Search patient name, folder no., Rx #, or drug..."
+                    />
+                    {rxSearch && (
+                      <button
+                        type="button"
+                        className="patient-search-clear"
+                        onClick={() => setRxSearch("")}
+                      >
+                        <FiX />
+                      </button>
+                    )}
+                  </div>
+                  <div className="table-filter-pills">
+                    {(
+                      [
+                        { id: "sent_to_pharmacy", label: `Waiting (${pendingPrescriptionsCount})` },
+                        {
+                          id: "dispensed",
+                          label: `Dispensed (${prescriptions.filter((r) => r.status === "dispensed").length})`,
+                        },
+                        { id: "all", label: `All (${prescriptions.length})` },
+                      ] as const
+                    ).map((pill) => (
+                      <button
+                        key={pill.id}
+                        type="button"
+                        className={`table-filter-pill ${rxStatusFilter === pill.id ? "active" : ""}`}
+                        onClick={() => setRxStatusFilter(pill.id)}
+                      >
+                        {pill.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="table-topbar-right">
+                  <button type="button" className="icon-text-btn" onClick={loadData}>
+                    <FiRefreshCw /> Refresh
+                  </button>
+                </div>
+              </div>
+
+              {filteredPrescriptions.length === 0 ? (
+                <div className="pharmacy-panel" style={{ textAlign: "center", padding: "2.5rem 1.5rem" }}>
+                  <p className="muted-text" style={{ margin: 0, fontWeight: 600 }}>
+                    {rxStatusFilter === "sent_to_pharmacy"
+                      ? "No doctor prescriptions waiting right now."
+                      : "No matching prescriptions found."}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {filteredPrescriptions.map((rx) => {
+                    const pFullName = rx.patient
+                      ? `${rx.patient.firstName || ""} ${rx.patient.lastName || ""}`.trim()
+                      : "Patient";
+                    const docName = rx.doctor
+                      ? `Dr. ${rx.doctor.firstName || ""} ${rx.doctor.lastName || ""}`.trim()
+                      : "Doctor";
+                    const isPending = rx.status === "sent_to_pharmacy";
+
+                    return (
+                      <article
+                        key={rx.id}
+                        className="pharmacy-panel"
+                        style={{
+                          borderLeft: `4px solid ${isPending ? "#d97706" : "#059669"}`,
+                          gap: "0.9rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            flexWrap: "wrap",
+                            gap: "0.75rem",
+                            borderBottom: "1px solid var(--border, rgba(148,163,184,0.18))",
+                            paddingBottom: "0.75rem",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <strong style={{ fontSize: "1.08rem", color: "var(--text-strong)" }}>
+                                {pFullName}
+                              </strong>
+                              {rx.patient?.physicalFileNumber && (
+                                <span
+                                  style={{
+                                    background: "#e0f2fe",
+                                    color: "#0369a1",
+                                    fontWeight: 700,
+                                    padding: "2px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.78rem",
+                                  }}
+                                >
+                                  Folder: {rx.patient.physicalFileNumber}
+                                </span>
+                              )}
+                              {rx.patient?.mrn && (
+                                <span className="cell-muted" style={{ fontWeight: 600 }}>
+                                  MRN: {rx.patient.mrn}
+                                </span>
+                              )}
+                            </div>
+                            <div className="cell-muted" style={{ marginTop: "4px" }}>
+                              Rx <strong>{rx.prescriptionNumber}</strong> · Ordered by{" "}
+                              <strong>{docName}</strong> · {formatDate(rx.createdAt)}
+                              {rx.patient?.insuranceProvider?.name && (
+                                <> · HMO: <strong>{rx.patient.insuranceProvider.name}</strong></>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <span
+                              className={`pharmacy-stock-pill ${isPending ? "low" : "ok"}`}
+                              style={{ textTransform: "uppercase" }}
+                            >
+                              {isPending ? "Waiting for Pharmacy" : rx.status}
+                            </span>
+                            {isPending && canSell && (
+                              <button
+                                type="button"
+                                className="registration-submit"
+                                style={{ padding: "0.45rem 0.9rem", fontSize: "0.84rem" }}
+                                onClick={() => handleLoadPrescriptionIntoCart(rx)}
+                              >
+                                <FiShoppingCart /> Load into Sell Cart
+                              </button>
+                            )}
+                            {isPending && (
+                              <button
+                                type="button"
+                                className="table-action-btn success"
+                                disabled={saving}
+                                onClick={() => void handleMarkPrescriptionStatus(rx, "dispensed")}
+                              >
+                                <FiCheckCircle /> Mark Dispensed
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="table-scroll-container">
+                          <table className="hms-data-table">
+                            <thead>
+                              <tr>
+                                <th>Medicine</th>
+                                <th>Dose &amp; Frequency</th>
+                                <th>Duration</th>
+                                <th>Qty</th>
+                                <th>Instructions</th>
+                                <th>Pharmacy Stock</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rx.items.map((item) => {
+                                const catalogMatch = matchCatalogMedication(item);
+                                return (
+                                  <tr key={item.id}>
+                                    <td>
+                                      <div className="cell-primary">
+                                        {item.medicationName}
+                                        {item.strength ? ` ${item.strength}` : ""}
+                                      </div>
+                                      {item.dosageForm && (
+                                        <div className="cell-muted">{item.dosageForm}</div>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <strong>{item.dose}</strong> · {item.frequency}
+                                    </td>
+                                    <td>{item.duration}</td>
+                                    <td>
+                                      <strong>{item.quantity ?? 1}</strong>
+                                    </td>
+                                    <td>{item.instructions || "—"}</td>
+                                    <td>
+                                      {!catalogMatch ? (
+                                        <span className="pharmacy-stock-pill out">Not in catalog</span>
+                                      ) : catalogMatch.currentStock <= 0 ? (
+                                        <span className="pharmacy-stock-pill out">Out of stock</span>
+                                      ) : (
+                                        <span className="pharmacy-stock-pill ok">
+                                          In stock: {catalogMatch.currentStock} {catalogMatch.unit} ({money(catalogMatch.sellingPrice)})
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {rx.notes && (
+                          <div
+                            style={{
+                              fontSize: "0.84rem",
+                              padding: "0.55rem 0.8rem",
+                              borderRadius: "8px",
+                              background: "var(--surface-strong, #f8fafc)",
+                              border: "1px solid var(--border, rgba(148,163,184,0.2))",
+                            }}
+                          >
+                            <strong>Doctor Note:</strong> {rx.notes}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           )}
 

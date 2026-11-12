@@ -511,6 +511,13 @@ export class PharmacyService {
         });
       }
 
+      if (payload.prescriptionId?.trim()) {
+        await tx.prescription.updateMany({
+          where: { id: payload.prescriptionId.trim(), status: "sent_to_pharmacy" },
+          data: { status: "dispensed" },
+        });
+      }
+
       return sale;
     });
 

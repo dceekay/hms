@@ -9,6 +9,7 @@ import {
   CreatePrescriptionDto,
   CreateReferralDto,
   ListClinicalQueryDto,
+  ListPrescriptionsQueryDto,
   UpdateAdmissionRequestStatusDto,
   UpdateEncounterDto,
   UpdatePrescriptionStatusDto,
@@ -47,6 +48,7 @@ function patientSelect() {
   return {
     id: true,
     mrn: true,
+    physicalFileNumber: true,
     firstName: true,
     lastName: true,
     phone: true,
@@ -229,7 +231,7 @@ export class ClinicalService {
         }),
         prisma.medication.findMany({
           where: { deletedAt: null, isActive: true },
-          take: 100,
+          take: 500,
           orderBy: [{ name: "asc" }],
         }),
         prisma.clinicalAdmissionRequest.findMany({
@@ -445,12 +447,13 @@ export class ClinicalService {
     });
   }
 
-  async listPrescriptions(params: ListClinicalQueryDto) {
+  async listPrescriptions(params: ListPrescriptionsQueryDto) {
     const page = params.page ?? 1;
     const limit = params.limit ?? 50;
 
     const where: Prisma.PrescriptionWhereInput = {
       ...(params.patientId ? { patientId: params.patientId } : {}),
+      ...(params.status ? { status: params.status as PrescriptionStatus } : {}),
       ...(params.search
         ? {
             OR: [
@@ -458,6 +461,7 @@ export class ClinicalService {
               { patient: { firstName: { contains: params.search } } },
               { patient: { lastName: { contains: params.search } } },
               { patient: { mrn: { contains: params.search } } },
+              { patient: { physicalFileNumber: { contains: params.search } } },
               { items: { some: { medicationName: { contains: params.search } } } },
             ],
           }
@@ -537,12 +541,24 @@ export class ClinicalService {
       });
     });
 
+    const drugSummary =
+      prescription.items
+        .slice(0, 3)
+        .map((item) => item.medicationName)
+        .join(", ") +
+      (prescription.items.length > 3 ? ` +${prescription.items.length - 3} more` : "");
+    const folderNo =
+      prescription.patient.physicalFileNumber || prescription.patient.mrn || "Walk-in";
+    const doctorDisplay = prescription.doctor
+      ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`.trim()
+      : "Doctor";
+
     await NotificationService.notifyRoles(["Pharmacist", "Administrator", "Super Admin"], {
-      title: "New prescription",
-      message: `${prescription.patient.firstName} ${prescription.patient.lastName} has a prescription ready for pharmacy.`,
+      title: `New prescription from ${doctorDisplay}`,
+      message: `${prescription.patient.firstName} ${prescription.patient.lastName} (${folderNo}): ${drugSummary}`,
       eventKey: "clinical.prescription.created",
-      priority: "info",
-      linkUrl: "/pharmacy",
+      priority: "warning",
+      linkUrl: "/pharmacy?tab=prescriptions",
       metadata: {
         prescriptionId: prescription.id,
         prescriptionNumber: prescription.prescriptionNumber,
@@ -568,11 +584,29 @@ export class ClinicalService {
   }
 
   async updatePrescriptionStatus(id: string, payload: UpdatePrescriptionStatusDto) {
-    return prisma.prescription.update({
+    const updated = await prisma.prescription.update({
       where: { id },
       data: { status: payload.status as PrescriptionStatus },
       include: prescriptionInclude,
     });
+
+    if (payload.status === "dispensed" && updated.doctorId) {
+      await NotificationService.create({
+        title: "Medicines dispensed at Pharmacy",
+        message: `${updated.patient.firstName} ${updated.patient.lastName} (${updated.prescriptionNumber}) has received their prescribed drugs.`,
+        eventKey: "clinical.prescription.dispensed",
+        priority: "success",
+        targetUserId: updated.doctorId,
+        linkUrl: "/doctor",
+        metadata: {
+          prescriptionId: updated.id,
+          prescriptionNumber: updated.prescriptionNumber,
+          patientId: updated.patientId,
+        },
+      });
+    }
+
+    return updated;
   }
 
   async createAdmissionRequest(payload: CreateAdmissionRequestDto, doctorId?: string) {

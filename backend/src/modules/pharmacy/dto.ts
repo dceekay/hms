@@ -55,6 +55,7 @@ export const pharmacySaleItemSchema = z.object({
 
 export const createPharmacySaleSchema = z.object({
   patientId: z.string().uuid(),
+  prescriptionId: z.string().uuid().optional().or(z.literal("")),
   items: z.array(pharmacySaleItemSchema).min(1, "Add at least one medication"),
   discountAmount: z.coerce.number().nonnegative().default(0),
   amountPaid: z.coerce.number().nonnegative().optional(),

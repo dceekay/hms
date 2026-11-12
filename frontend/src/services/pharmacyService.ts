@@ -1,4 +1,5 @@
 import api from "./api";
+import { notifyDataMutated } from "../utils/appEvents";
 import type {
   Medication,
   MedicationFormValues,
@@ -98,6 +99,7 @@ function cleanDispensePayload(values: PharmacyDispenseFormValues) {
 function cleanSalePayload(values: PharmacySaleFormValues) {
   return {
     patientId: values.patientId,
+    prescriptionId: values.prescriptionId?.trim() || undefined,
     items: values.items.map((item) => ({
       medicationId: item.medicationId,
       quantity: Number(item.quantity || 1),
@@ -253,6 +255,7 @@ export async function createPharmacySale(values: PharmacySaleFormValues) {
       cleanSalePayload(values)
     );
 
+    notifyDataMutated({ source: "pharmacy" });
     return { sale: response.data.data, error: undefined };
   } catch (error: any) {
     console.error(error);

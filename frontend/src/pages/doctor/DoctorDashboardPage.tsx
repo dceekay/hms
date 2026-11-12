@@ -42,6 +42,7 @@ import {
 } from "react-icons/fa";
 import PatientSearchSelect from "../../components/common/PatientSearchSelect";
 import TestSearchSelect from "../../components/common/TestSearchSelect";
+import OfficialReceiptStamp from "../../components/common/OfficialReceiptStamp";
 import AdminLayout from "../../layouts/AdminLayout";
 import mdsLogo from "../../assets/optimized/logo.png";
 import LaboratoryPrintModal from "../../components/laboratory/LaboratoryPrintModal";
@@ -53,6 +54,7 @@ import {
   createReferral,
   fetchClinicalEncounters,
   fetchDoctorWorkspace,
+  fetchPrescriptions,
 } from "../../services/clinicalService";
 import {
   createLaboratoryRequest,
@@ -76,6 +78,7 @@ import type {
   ClinicalRequestPriority,
   ClinicalReferral,
   ClinicalWorkspace,
+  Prescription,
   PrescriptionItemFormValues,
   ReferralFormValues,
   Ward,
@@ -140,11 +143,141 @@ const diagnosisPresets = [
 ];
 
 const dosagePresets = [
-  { label: "1 tab BD x 5 days", dose: "1 tablet", frequency: "Twice daily (BD)", duration: "5 days" },
-  { label: "2 caps TDS x 7 days", dose: "2 capsules", frequency: "Three times daily (TDS)", duration: "7 days" },
-  { label: "1 tab daily x 30 days", dose: "1 tablet", frequency: "Once daily (OD)", duration: "30 days" },
-  { label: "1 tab nocte x 30 days", dose: "1 tablet", frequency: "At night (Nocte)", duration: "30 days" },
-  { label: "1 sachet TDS x 3 days", dose: "1 sachet", frequency: "Three times daily (TDS)", duration: "3 days" },
+  { label: "1 tab BD × 5 days", dose: "1 tablet", frequency: "Twice daily (BD)", duration: "5 days" },
+  { label: "2 tabs TDS × 3 days", dose: "2 tablets", frequency: "Three times daily (TDS)", duration: "3 days" },
+  { label: "1 cap TDS × 5 days", dose: "1 capsule", frequency: "Three times daily (TDS)", duration: "5 days" },
+  { label: "1 tab OD × 30 days", dose: "1 tablet", frequency: "Once daily (OD)", duration: "30 days" },
+  { label: "1 tab at night × 30 days", dose: "1 tablet", frequency: "At night (Nocte)", duration: "30 days" },
+  { label: "10ml TDS × 5 days", dose: "10ml", frequency: "Three times daily (TDS)", duration: "5 days" },
+];
+
+const COMMON_RX_REGIMENS: Array<{
+  label: string;
+  items: Array<{
+    medicationName: string;
+    keywords: string[];
+    dose: string;
+    frequency: string;
+    duration: string;
+    quantity: string;
+    instructions: string;
+  }>;
+}> = [
+  {
+    label: "Malaria (ACT + PCM)",
+    items: [
+      {
+        medicationName: "Artemether / Lumefantrine 20/120mg",
+        keywords: ["artemether", "lumefantrine", "coartem", "lonart"],
+        dose: "4 tablets",
+        frequency: "Twice daily (BD)",
+        duration: "3 days",
+        quantity: "1",
+        instructions: "Take after food",
+      },
+      {
+        medicationName: "Paracetamol 500mg",
+        keywords: ["paracetamol", "acetaminophen"],
+        dose: "2 tablets",
+        frequency: "Three times daily (TDS)",
+        duration: "3 days",
+        quantity: "18",
+        instructions: "For fever or body pain",
+      },
+    ],
+  },
+  {
+    label: "Typhoid / Enteric",
+    items: [
+      {
+        medicationName: "Ciprofloxacin 500mg",
+        keywords: ["ciprofloxacin", "cipro"],
+        dose: "1 tablet",
+        frequency: "Twice daily (BD)",
+        duration: "7 days",
+        quantity: "14",
+        instructions: "Complete full course",
+      },
+      {
+        medicationName: "Metronidazole 400mg",
+        keywords: ["metronidazole", "flagyl"],
+        dose: "1 tablet",
+        frequency: "Three times daily (TDS)",
+        duration: "5 days",
+        quantity: "15",
+        instructions: "Take after food",
+      },
+    ],
+  },
+  {
+    label: "Chest / Throat Infection",
+    items: [
+      {
+        medicationName: "Amoxicillin / Clavulanate 625mg",
+        keywords: ["augmentin", "amoxicillin", "clavulanate"],
+        dose: "1 tablet",
+        frequency: "Twice daily (BD)",
+        duration: "7 days",
+        quantity: "14",
+        instructions: "Take after meals",
+      },
+      {
+        medicationName: "Vitamin C 100mg",
+        keywords: ["vitamin c", "ascorbic"],
+        dose: "1 tablet",
+        frequency: "Three times daily (TDS)",
+        duration: "7 days",
+        quantity: "21",
+        instructions: "Take after meals",
+      },
+    ],
+  },
+  {
+    label: "Stomach Ulcer",
+    items: [
+      {
+        medicationName: "Omeprazole 20mg",
+        keywords: ["omeprazole"],
+        dose: "1 capsule",
+        frequency: "Once daily (OD)",
+        duration: "14 days",
+        quantity: "14",
+        instructions: "Take 30 mins before breakfast",
+      },
+      {
+        medicationName: "Antacid Suspension",
+        keywords: ["antacid", "gestid", "gaviscon", "magnesium trisilicate"],
+        dose: "10ml",
+        frequency: "Three times daily (TDS)",
+        duration: "7 days",
+        quantity: "1",
+        instructions: "Shake well before use",
+      },
+    ],
+  },
+  {
+    label: "Hypertension (BP)",
+    items: [
+      {
+        medicationName: "Amlodipine 5mg",
+        keywords: ["amlodipine"],
+        dose: "1 tablet",
+        frequency: "Once daily (OD)",
+        duration: "30 days",
+        quantity: "30",
+        instructions: "Take every morning",
+      },
+      {
+        medicationName: "Lisinopril 10mg",
+        keywords: ["lisinopril"],
+        dose: "1 tablet",
+        frequency: "Once daily (OD)",
+        duration: "30 days",
+        quantity: "30",
+        instructions: "Monitor BP regularly",
+      },
+    ],
+  },
 ];
 
 const emptyEncounterForm: ClinicalEncounterFormValues = {
@@ -411,11 +544,14 @@ export default function DoctorDashboardPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [patientHistory, setPatientHistory] = useState<ClinicalEncounter[]>([]);
   const [patientLabHistory, setPatientLabHistory] = useState<LaboratoryRequest[]>([]);
+  const [patientPrescriptions, setPatientPrescriptions] = useState<Prescription[]>([]);
   const [encounterForm, setEncounterForm] = useState<ClinicalEncounterFormValues>(emptyEncounterForm);
   const [activeEncounter, setActiveEncounter] = useState<ClinicalEncounter | null>(null);
   const [prescriptionDraft, setPrescriptionDraft] = useState<PrescriptionItemFormValues>(emptyPrescriptionDraft);
   const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemFormValues[]>([]);
   const [prescriptionNotes, setPrescriptionNotes] = useState("");
+  const [showMedPicker, setShowMedPicker] = useState(false);
+  const [printingPrescription, setPrintingPrescription] = useState<Prescription | null>(null);
   const [selectedLabOrders, setSelectedLabOrders] = useState<SelectedLabOrder[]>([]);
   const [labTemplateId, setLabTemplateId] = useState("");
   const [labNotes, setLabNotes] = useState("");
@@ -597,11 +733,12 @@ export default function DoctorDashboardPage() {
     setAdmissionForm((current) => ({ ...current, patientId: patient.id }));
     setReferralForm((current) => ({ ...current, patientId: patient.id }));
 
-    // Fetch patient encounter history and lab tests
+    // Fetch patient encounter history, lab tests, and prescriptions
     try {
-      const [encountersRes, labRes] = await Promise.all([
+      const [encountersRes, labRes, rxRes] = await Promise.all([
         fetchClinicalEncounters({ patientId: patient.id }),
         fetchLaboratoryRequests({ patientId: patient.id }),
+        fetchPrescriptions({ patientId: patient.id }),
       ]);
 
       if (encountersRes.result?.items) {
@@ -618,6 +755,10 @@ export default function DoctorDashboardPage() {
       if (labRes.result?.items) {
         setPatientLabHistory(labRes.result.items);
       }
+
+      if (rxRes.result?.items) {
+        setPatientPrescriptions(rxRes.result.items);
+      }
     } catch (fetchErr) {
       console.error(fetchErr);
     }
@@ -629,9 +770,11 @@ export default function DoctorDashboardPage() {
     setSelectedPatient(null);
     setSelectedAppointment(null);
     setActiveEncounter(null);
+    setPatientPrescriptions([]);
     setEncounterForm(emptyEncounterForm);
     setPrescriptionItems([]);
     setPrescriptionDraft(emptyPrescriptionDraft);
+    setShowMedPicker(false);
     setSelectedLabOrders([]);
     setLabTemplateId("");
     setLabNotes("");
@@ -742,51 +885,110 @@ export default function DoctorDashboardPage() {
     closePatientDesk();
   };
 
-  const handleMedicationSelection = (value: string) => {
-    const medication = (workspace?.medications ?? []).find((item) => medicineLabel(item) === value);
-    if (!medication) {
-      setPrescriptionDraft((prev) => ({ ...prev, medicationName: value, medicationId: "" }));
-      return;
-    }
+  const filteredFormularyMeds = useMemo(() => {
+    const meds = workspace?.medications ?? [];
+    const q = prescriptionDraft.medicationName.trim().toLowerCase();
+    if (!q) return meds.slice(0, 30);
+    return meds
+      .filter((med) => {
+        return (
+          med.name.toLowerCase().includes(q) ||
+          (med.genericName && med.genericName.toLowerCase().includes(q)) ||
+          (med.brandName && med.brandName.toLowerCase().includes(q)) ||
+          (med.category && med.category.toLowerCase().includes(q)) ||
+          (med.strength && med.strength.toLowerCase().includes(q))
+        );
+      })
+      .slice(0, 30);
+  }, [workspace?.medications, prescriptionDraft.medicationName]);
 
+  const handlePickFormularyMed = (medication: Medication) => {
     setPrescriptionDraft((prev) => ({
       ...prev,
       medicationId: medication.id,
       medicationName: medication.name,
       strength: medication.strength ?? "",
       dosageForm: medication.dosageForm ?? "",
+      dose:
+        prev.dose ||
+        (medication.dosageForm?.toLowerCase().includes("syrup") ||
+        medication.dosageForm?.toLowerCase().includes("susp")
+          ? "10ml"
+          : medication.dosageForm?.toLowerCase().includes("cap")
+            ? "1 capsule"
+            : "1 tablet"),
     }));
+    setShowMedPicker(false);
+  };
+
+  const handleApplyRxRegimen = (regimen: (typeof COMMON_RX_REGIMENS)[number]) => {
+    const meds = workspace?.medications ?? [];
+    const nextItems: PrescriptionItemFormValues[] = regimen.items.map((item) => {
+      const matched = meds.find((med) => {
+        const hay = `${med.name} ${med.genericName || ""} ${med.brandName || ""}`.toLowerCase();
+        return item.keywords.some((kw) => hay.includes(kw));
+      });
+      return {
+        medicationId: matched?.id ?? "",
+        medicationName: matched ? matched.name : item.medicationName,
+        strength: matched?.strength ?? "",
+        dosageForm: matched?.dosageForm ?? "",
+        dose: item.dose,
+        frequency: item.frequency,
+        duration: item.duration,
+        quantity: item.quantity,
+        instructions: item.instructions,
+      };
+    });
+
+    setPrescriptionItems((prev) => [...prev, ...nextItems]);
+    setError(null);
   };
 
   const addPrescriptionItem = () => {
     if (!prescriptionDraft.medicationName.trim()) {
-      setError("Please select or enter a medication name.");
+      setError("Please choose or type a medicine name first.");
       return;
     }
 
-    setPrescriptionItems((prev) => [...prev, { ...prescriptionDraft }]);
+    setPrescriptionItems((prev) => [
+      ...prev,
+      {
+        ...prescriptionDraft,
+        dose: prescriptionDraft.dose.trim() || "1 tablet",
+        frequency: prescriptionDraft.frequency.trim() || "Twice daily (BD)",
+        duration: prescriptionDraft.duration.trim() || "5 days",
+      },
+    ]);
     setPrescriptionDraft(emptyPrescriptionDraft);
+    setShowMedPicker(false);
     setError(null);
   };
 
   const handleSendPrescription = async (event: FormEvent) => {
     event.preventDefault();
     if (!selectedPatient) {
-      setError("No patient is currently active on desk.");
+      setError("No patient is open on the desk right now.");
       return;
     }
 
-    if (prescriptionItems.length === 0) {
-      setError("Please add at least one medication to the prescription list.");
+    // If the doctor typed a drug directly into the box and clicked Send without clicking "+ Add", include it automatically!
+    const itemsToSend: PrescriptionItemFormValues[] = prescriptionDraft.medicationName.trim()
+      ? [
+          ...prescriptionItems,
+          {
+            ...prescriptionDraft,
+            dose: prescriptionDraft.dose.trim() || "1 tablet",
+            frequency: prescriptionDraft.frequency.trim() || "Twice daily (BD)",
+            duration: prescriptionDraft.duration.trim() || "5 days",
+          },
+        ]
+      : prescriptionItems;
+
+    if (itemsToSend.length === 0) {
+      setError("Please select or type at least one medicine to prescribe.");
       return;
     }
-
-    const confirmed = await confirmImportantAction({
-      title: "Send Prescription to Pharmacy?",
-      text: `Are you sure you want to dispatch this prescription with ${prescriptionItems.length} medication(s) for ${patientName(selectedPatient)}?`,
-      confirmButtonText: "Yes, Send Prescription",
-    });
-    if (!confirmed) return;
 
     setSaving(true);
     setError(null);
@@ -796,24 +998,31 @@ export default function DoctorDashboardPage() {
       patientId: selectedPatient.id,
       encounterId: activeEncounter?.id || "",
       notes: prescriptionNotes,
-      items: prescriptionItems,
+      items: itemsToSend,
     });
 
     setSaving(false);
 
     if (!prescription) {
-      setError(rxError ?? "Unable to dispatch prescription to pharmacy.");
+      setError(rxError ?? "Unable to send prescription to pharmacy.");
       return;
     }
 
     setPrescriptionItems([]);
+    setPrescriptionDraft(emptyPrescriptionDraft);
     setPrescriptionNotes("");
-    setMessage(queued ? "Prescription queued offline for pharmacy." : "Prescription sent directly to pharmacy dispensary.");
+    setShowMedPicker(false);
+    setPatientPrescriptions((prev) => [prescription, ...prev]);
+    setMessage(
+      queued
+        ? "Prescription saved offline — it will send to Pharmacy as soon as internet returns."
+        : `Prescription ${prescription.prescriptionNumber} sent to Pharmacy! Pharmacy has been notified.`
+    );
     void showSuccessWithSound({
-      title: "Prescription Dispatched",
-      text: `Prescription sent to pharmacy for ${patientName(selectedPatient)}.`,
+      title: "Sent to Pharmacy",
+      text: `${itemsToSend.length} medicine(s) sent to Pharmacy for ${patientName(selectedPatient)}.`,
     });
-    void loadWorkspace();
+    void loadWorkspace(false);
   };
 
   const handleToggleLabOrder = (tpl: LaboratoryTemplate) => {
@@ -2208,7 +2417,11 @@ export default function DoctorDashboardPage() {
                 <button
                   type="button"
                   className="doctor-action-btn secondary"
-                  onClick={() => setPrintingEncounter(activeEncounter || ({ patient: selectedPatient, startedAt: new Date().toISOString(), ...encounterForm } as unknown as ClinicalEncounter))}
+                  onClick={() => {
+                    setPrintingPrescription(null);
+                    setPrintingEncounter(activeEncounter || ({ patient: selectedPatient, startedAt: new Date().toISOString(), ...encounterForm } as unknown as ClinicalEncounter));
+                    window.setTimeout(() => window.print(), 100);
+                  }}
                 >
                   <FiPrinter /> Print Summary
                 </button>
@@ -2530,30 +2743,158 @@ export default function DoctorDashboardPage() {
               <section className="doctor-panel-card">
                 <div className="doctor-panel-header">
                   <div>
-                    <h2>Prescriptions & Pharmacy Dispatch</h2>
-                    <p>Select medicines, dosage instructions, and send directly to hospital pharmacy dispensary.</p>
+                    <h2>Prescribe Medicines &amp; Send to Pharmacy</h2>
+                    <p>Pick a common regimen or search medicines, set dose, and send straight to Pharmacy.</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleSendPrescription} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {/* 1-Click Common Clinic Regimens */}
+                  <div>
+                    <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.35rem" }}>
+                      Quick Common Prescriptions (1-Click Add):
+                    </label>
+                    <div className="doctor-presets-row">
+                      {COMMON_RX_REGIMENS.map((regimen) => (
+                        <button
+                          type="button"
+                          key={regimen.label}
+                          className="doctor-preset-chip"
+                          onClick={() => handleApplyRxRegimen(regimen)}
+                        >
+                          + {regimen.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Medicine Selector & Dosage */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem" }}>
-                    <div style={{ gridColumn: "1 / -1" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "0.75rem" }}>
+                    <div style={{ gridColumn: "1 / -1", position: "relative" }}>
                       <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                        Select Medication
+                        Search Hospital Medicine (or type any drug name)
                       </label>
-                      <input
-                        list="doctor-med-list"
-                        className="form-control"
-                        value={prescriptionDraft.medicationName}
-                        onChange={(e) => handleMedicationSelection(e.target.value)}
-                        placeholder="Type or choose drug from hospital formulary..."
-                      />
-                      <datalist id="doctor-med-list">
-                        {(workspace?.medications ?? []).map((med) => (
-                          <option key={med.id} value={medicineLabel(med)} />
-                        ))}
-                      </datalist>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          className="form-control"
+                          value={prescriptionDraft.medicationName}
+                          onFocus={() => setShowMedPicker(true)}
+                          onBlur={() => window.setTimeout(() => setShowMedPicker(false), 180)}
+                          onChange={(e) => {
+                            setPrescriptionDraft((prev) => ({
+                              ...prev,
+                              medicationName: e.target.value,
+                              medicationId: "",
+                            }));
+                            setShowMedPicker(true);
+                          }}
+                          placeholder="Type medicine name, generic, or category (e.g. Paracetamol, Artemether)..."
+                        />
+                        {prescriptionDraft.medicationName && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPrescriptionDraft((prev) => ({
+                                ...prev,
+                                medicationId: "",
+                                medicationName: "",
+                                strength: "",
+                                dosageForm: "",
+                              }))
+                            }
+                            style={{
+                              position: "absolute",
+                              right: "10px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              background: "transparent",
+                              border: "none",
+                              color: "var(--muted)",
+                              cursor: "pointer",
+                            }}
+                            title="Clear medicine"
+                          >
+                            <FiX />
+                          </button>
+                        )}
+                      </div>
+
+                      {showMedPicker && filteredFormularyMeds.length > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: 0,
+                            right: 0,
+                            zIndex: 25,
+                            marginTop: "4px",
+                            maxHeight: "260px",
+                            overflowY: "auto",
+                            background: "var(--surface, #ffffff)",
+                            border: "1px solid var(--border, #cbd5e1)",
+                            borderRadius: "10px",
+                            boxShadow: "0 12px 30px rgba(15, 23, 42, 0.16)",
+                          }}
+                        >
+                          {filteredFormularyMeds.map((med) => (
+                            <button
+                              key={med.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handlePickFormularyMed(med);
+                              }}
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: "10px",
+                                padding: "9px 12px",
+                                border: "none",
+                                borderBottom: "1px solid var(--border, rgba(148,163,184,0.16))",
+                                background: "transparent",
+                                textAlign: "left",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontWeight: 700, color: "var(--text-strong, #0f172a)", fontSize: "0.88rem" }}>
+                                  {med.name}
+                                  {med.strength ? ` (${med.strength})` : ""}
+                                  {med.dosageForm ? ` · ${med.dosageForm}` : ""}
+                                </div>
+                                {(med.genericName || med.category) && (
+                                  <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                                    {[med.genericName, med.category].filter(Boolean).join(" • ")}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                                <span
+                                  style={{
+                                    fontSize: "0.72rem",
+                                    fontWeight: 700,
+                                    padding: "2px 7px",
+                                    borderRadius: "999px",
+                                    background: med.currentStock > 0 ? "rgba(5, 150, 105, 0.12)" : "rgba(217, 119, 6, 0.14)",
+                                    color: med.currentStock > 0 ? "#047857" : "#b45309",
+                                  }}
+                                >
+                                  {med.currentStock > 0
+                                    ? `In Stock: ${med.currentStock} ${med.unit}`
+                                    : "Out of Stock"}
+                                </span>
+                                {Number(med.sellingPrice || 0) > 0 && (
+                                  <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--muted)" }}>
+                                    ₦{Number(med.sellingPrice).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -2564,19 +2905,19 @@ export default function DoctorDashboardPage() {
                         className="form-control"
                         value={prescriptionDraft.dose}
                         onChange={(e) => setPrescriptionDraft((prev) => ({ ...prev, dose: e.target.value }))}
-                        placeholder="e.g. 1 tablet, 500mg, 10ml"
+                        placeholder="e.g. 1 tablet, 2 caps, 10ml"
                       />
                     </div>
 
                     <div>
                       <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                        Frequency
+                        How Often (Frequency)
                       </label>
                       <input
                         className="form-control"
                         value={prescriptionDraft.frequency}
                         onChange={(e) => setPrescriptionDraft((prev) => ({ ...prev, frequency: e.target.value }))}
-                        placeholder="e.g. BD, TDS, OD, PRN"
+                        placeholder="e.g. Twice daily (BD), TDS, OD"
                       />
                     </div>
 
@@ -2588,13 +2929,13 @@ export default function DoctorDashboardPage() {
                         className="form-control"
                         value={prescriptionDraft.duration}
                         onChange={(e) => setPrescriptionDraft((prev) => ({ ...prev, duration: e.target.value }))}
-                        placeholder="e.g. 5 days, 1 week, 1 month"
+                        placeholder="e.g. 5 days, 7 days, 1 month"
                       />
                     </div>
 
                     <div>
                       <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                        Quantity
+                        Quantity to Dispense
                       </label>
                       <input
                         type="number"
@@ -2609,7 +2950,7 @@ export default function DoctorDashboardPage() {
                   {/* Dosage Presets Buttons */}
                   <div>
                     <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                      Quick Dosage Presets:
+                      Quick Dose Chips:
                     </label>
                     <div className="doctor-presets-row">
                       {dosagePresets.map((preset) => (
@@ -2617,12 +2958,14 @@ export default function DoctorDashboardPage() {
                           type="button"
                           key={preset.label}
                           className="doctor-preset-chip"
-                          onClick={() => setPrescriptionDraft((prev) => ({
-                            ...prev,
-                            dose: preset.dose,
-                            frequency: preset.frequency,
-                            duration: preset.duration,
-                          }))}
+                          onClick={() =>
+                            setPrescriptionDraft((prev) => ({
+                              ...prev,
+                              dose: preset.dose,
+                              frequency: preset.frequency,
+                              duration: preset.duration,
+                            }))
+                          }
                         >
                           {preset.label}
                         </button>
@@ -2630,40 +2973,49 @@ export default function DoctorDashboardPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                      Instructions for Patient
-                    </label>
-                    <input
-                      className="form-control"
-                      value={prescriptionDraft.instructions}
-                      onChange={(e) => setPrescriptionDraft((prev) => ({ ...prev, instructions: e.target.value }))}
-                      placeholder="e.g. Take after meals with plenty of water..."
-                    />
-                  </div>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
+                    <div style={{ flex: "1 1 260px" }}>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
+                        Patient Instructions
+                      </label>
+                      <input
+                        className="form-control"
+                        value={prescriptionDraft.instructions}
+                        onChange={(e) => setPrescriptionDraft((prev) => ({ ...prev, instructions: e.target.value }))}
+                        placeholder="e.g. Take after food with clean water"
+                      />
+                    </div>
 
-                  <button
-                    type="button"
-                    className="doctor-action-btn secondary"
-                    style={{ alignSelf: "flex-start" }}
-                    onClick={addPrescriptionItem}
-                  >
-                    <FiPlus /> + Add Medicine to Prescription List
-                  </button>
+                    <button
+                      type="button"
+                      className="doctor-action-btn secondary"
+                      style={{ height: "42px" }}
+                      onClick={addPrescriptionItem}
+                    >
+                      <FiPlus /> Add Another Drug to List
+                    </button>
+                  </div>
 
                   {/* List of Added Medicines */}
                   {prescriptionItems.length > 0 && (
                     <div className="doctor-rx-items-list">
                       <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)" }}>
-                        Prescription Items ({prescriptionItems.length})
+                        Medicines Ready to Send ({prescriptionItems.length})
                       </label>
                       {prescriptionItems.map((item, idx) => (
                         <div key={`${item.medicationName}-${idx}`} className="doctor-rx-item-card">
                           <div>
-                            <strong>{item.medicationName}</strong>
+                            <strong>
+                              {item.medicationName}
+                              {item.strength ? ` (${item.strength})` : ""}
+                            </strong>
                             <br />
-                            <small>{item.dose} • {item.frequency} • {item.duration} • Qty: {item.quantity}</small>
-                            {item.instructions && <div style={{ fontSize: "0.76rem", color: "var(--muted)" }}>{item.instructions}</div>}
+                            <small>
+                              {item.dose} • {item.frequency} • {item.duration} • Qty: {item.quantity || 1}
+                            </small>
+                            {item.instructions && (
+                              <div style={{ fontSize: "0.76rem", color: "var(--muted)" }}>{item.instructions}</div>
+                            )}
                           </div>
                           <button
                             type="button"
@@ -2679,25 +3031,99 @@ export default function DoctorDashboardPage() {
 
                   <div>
                     <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                      Pharmacist Remarks / Notes
+                      Note to Pharmacist (Optional)
                     </label>
                     <textarea
                       className="form-control"
                       rows={2}
                       value={prescriptionNotes}
                       onChange={(e) => setPrescriptionNotes(e.target.value)}
-                      placeholder="Special dispensing remarks..."
+                      placeholder="Any special instruction for Pharmacy..."
                     />
                   </div>
 
                   <button
                     type="submit"
                     className="doctor-action-btn primary"
-                    disabled={saving || prescriptionItems.length === 0}
+                    disabled={saving || (prescriptionItems.length === 0 && !prescriptionDraft.medicationName.trim())}
                   >
-                    <FiSend /> {saving ? "Sending..." : "Dispatch Prescription to Pharmacy"}
+                    <FiSend /> {saving ? "Sending to Pharmacy..." : "Send Prescription to Pharmacy"}
                   </button>
                 </form>
+
+                {/* SENT PRESCRIPTIONS HISTORY FOR THIS PATIENT */}
+                <div style={{ marginTop: "1.75rem", paddingTop: "1.25rem", borderTop: "1px solid var(--border-color, #e2e8f0)" }}>
+                  <h3 style={{ margin: "0 0 0.75rem", fontSize: "1rem", fontWeight: 750 }}>
+                    Sent Prescriptions for {patientName(selectedPatient)} ({patientPrescriptions.length})
+                  </h3>
+
+                  {patientPrescriptions.length === 0 ? (
+                    <p style={{ color: "var(--muted)", fontSize: "0.86rem", margin: 0 }}>
+                      No prescriptions sent yet for this patient.
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      {patientPrescriptions.map((rx) => (
+                        <div
+                          key={rx.id}
+                          style={{
+                            padding: "0.9rem 1rem",
+                            borderRadius: "10px",
+                            border: "1px solid var(--border-color, #e2e8f0)",
+                            background: "var(--bg-hover, #f8fafc)",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "0.5rem" }}>
+                            <div>
+                              <strong>{rx.prescriptionNumber}</strong>{" "}
+                              <small style={{ color: "var(--muted)" }}>• {formatDate(rx.createdAt)}</small>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span
+                                style={{
+                                  fontSize: "0.74rem",
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: "999px",
+                                  background: rx.status === "dispensed" ? "rgba(5, 150, 105, 0.14)" : "rgba(217, 119, 6, 0.14)",
+                                  color: rx.status === "dispensed" ? "#047857" : "#b45309",
+                                }}
+                              >
+                                {rx.status === "dispensed"
+                                  ? "Dispensed by Pharmacy"
+                                  : rx.status === "sent_to_pharmacy"
+                                    ? "Waiting at Pharmacy"
+                                    : rx.status}
+                              </span>
+                              <button
+                                type="button"
+                                className="doctor-action-btn secondary"
+                                style={{ padding: "0.3rem 0.65rem", fontSize: "0.78rem" }}
+                                onClick={() => {
+                                  setPrintingEncounter(null);
+                                  setPrintingPrescription(rx);
+                                  window.setTimeout(() => window.print(), 100);
+                                }}
+                              >
+                                <FiPrinter /> Print Slip
+                              </button>
+                            </div>
+                          </div>
+
+                          <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", display: "grid", gap: "4px" }}>
+                            {rx.items.map((item) => (
+                              <li key={item.id}>
+                                <strong>{item.medicationName}</strong>
+                                {item.strength ? ` (${item.strength})` : ""} — {item.dose}, {item.frequency} for {item.duration} (Qty: {item.quantity ?? 1})
+                                {item.instructions ? ` · ${item.instructions}` : ""}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 
@@ -3252,7 +3678,11 @@ export default function DoctorDashboardPage() {
                               type="button"
                               className="doctor-action-btn secondary"
                               style={{ padding: "0.3rem 0.6rem", fontSize: "0.78rem" }}
-                              onClick={() => setPrintingEncounter(enc)}
+                              onClick={() => {
+                                setPrintingPrescription(null);
+                                setPrintingEncounter(enc);
+                                window.setTimeout(() => window.print(), 100);
+                              }}
                             >
                               <FiPrinter /> Print Note
                             </button>
@@ -3306,7 +3736,11 @@ export default function DoctorDashboardPage() {
                 <button
                   type="button"
                   className="doctor-action-btn secondary"
-                  onClick={() => setPrintingEncounter(activeEncounter || ({ patient: selectedPatient, startedAt: new Date().toISOString(), ...encounterForm } as unknown as ClinicalEncounter))}
+                  onClick={() => {
+                    setPrintingPrescription(null);
+                    setPrintingEncounter(activeEncounter || ({ patient: selectedPatient, startedAt: new Date().toISOString(), ...encounterForm } as unknown as ClinicalEncounter));
+                    window.setTimeout(() => window.print(), 100);
+                  }}
                 >
                   <FiPrinter /> Print Summary
                 </button>
@@ -3376,6 +3810,105 @@ export default function DoctorDashboardPage() {
                 </strong>
               </div>
               <div className="doctor-signature">Doctor's Signature & Stamp</div>
+            </footer>
+          </section>
+        )}
+
+        {/* PRINTABLE PRESCRIPTION SLIP (Hidden until print triggered) */}
+        {printingPrescription && (
+          <section className="doctor-print-template">
+            <header>
+              <img src={mdsLogo} alt="MDS Hospital" style={{ width: 44, height: 44, objectFit: "contain" }} />
+              <div>
+                <h1>MDS SPECIALIST HOSPITAL</h1>
+                <p>Official Medical Prescription · Kano State</p>
+              </div>
+              <span>{printingPrescription.prescriptionNumber}</span>
+            </header>
+
+            <div className="doctor-print-meta">
+              <div>
+                <small>Patient Full Name</small>
+                <strong>{patientName(printingPrescription.patient ?? selectedPatient)}</strong>
+              </div>
+              <div>
+                <small>Folder No / MRN</small>
+                <strong>
+                  {(printingPrescription.patient ?? selectedPatient)?.physicalFileNumber ||
+                    (printingPrescription.patient ?? selectedPatient)?.mrn ||
+                    "Not assigned"}
+                </strong>
+              </div>
+              <div>
+                <small>Age / Gender</small>
+                <strong>
+                  {ageFromDob((printingPrescription.patient ?? selectedPatient)?.dateOfBirth)} /{" "}
+                  {(printingPrescription.patient ?? selectedPatient)?.gender}
+                </strong>
+              </div>
+              <div>
+                <small>Date Prescribed</small>
+                <strong>{formatDate(printingPrescription.createdAt)}</strong>
+              </div>
+            </div>
+
+            <div className="doctor-print-section">
+              <h2>Prescribed Medicines (Rx)</h2>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #cbd5e1", textAlign: "left" }}>
+                    <th style={{ padding: "6px 4px" }}>#</th>
+                    <th style={{ padding: "6px 4px" }}>Medicine</th>
+                    <th style={{ padding: "6px 4px" }}>Dose &amp; Frequency</th>
+                    <th style={{ padding: "6px 4px" }}>Duration</th>
+                    <th style={{ padding: "6px 4px" }}>Qty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {printingPrescription.items.map((item, idx) => (
+                    <tr key={item.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "6px 4px" }}>{idx + 1}</td>
+                      <td style={{ padding: "6px 4px" }}>
+                        <strong>
+                          {item.medicationName}
+                          {item.strength ? ` (${item.strength})` : ""}
+                        </strong>
+                        {item.instructions && (
+                          <div style={{ fontSize: "11px", color: "#475569" }}>{item.instructions}</div>
+                        )}
+                      </td>
+                      <td style={{ padding: "6px 4px" }}>
+                        {item.dose} · {item.frequency}
+                      </td>
+                      <td style={{ padding: "6px 4px" }}>{item.duration}</td>
+                      <td style={{ padding: "6px 4px" }}>{item.quantity ?? 1}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {printingPrescription.notes && (
+                <p style={{ marginTop: "10px" }}>
+                  <strong>Note to Pharmacist:</strong> {printingPrescription.notes}
+                </p>
+              )}
+            </div>
+
+            <footer>
+              <div>
+                <small>Prescribing Doctor</small>
+                <strong>
+                  Dr. {printingPrescription.doctor?.firstName ?? user?.firstName}{" "}
+                  {printingPrescription.doctor?.lastName ?? user?.lastName}
+                </strong>
+              </div>
+              <div style={{ justifySelf: "end" }}>
+                <OfficialReceiptStamp
+                  isSettled={printingPrescription.status === "dispensed"}
+                  date={formatDate(printingPrescription.createdAt)}
+                  department="CLINICAL PRESCRIPTION"
+                  size="sm"
+                />
+              </div>
             </footer>
           </section>
         )}

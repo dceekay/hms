@@ -311,3 +311,46 @@
     font-size: 0.78rem;
   }
 }
+
+
+/* ==========================================================================
+   Pharmacy Prescription Toast Accent & Stacking Support
+   ========================================================================== */
+.global-lab-order-toast.pharmacy-rx-toast {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(16, 185, 129, 0.18);
+}
+
+/* If a lab toast is also mounted simultaneously for admins, offset pharmacy toast above it */
+.global-lab-order-toast:not(.pharmacy-rx-toast) ~ .global-lab-order-toast.pharmacy-rx-toast {
+  bottom: 220px;
+}
+
+.lab-toast-pulse-icon.pharmacy {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border-color: rgba(110, 231, 183, 0.45);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+}
+
+.lab-toast-sub.pharmacy {
+  color: #34d399;
+}
+
+.lab-toast-test-chip.pharmacy {
+  color: #6ee7b7;
+}
+
+.lab-toast-btn-primary.pharmacy {
+  background: linear-gradient(135deg, #059669 0%, #0f766e 100%);
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+@media (max-width: 680px) {
+  .global-lab-order-toast:not(.pharmacy-rx-toast) ~ .global-lab-order-toast.pharmacy-rx-toast {
+    bottom: 255px;
+  }
+}

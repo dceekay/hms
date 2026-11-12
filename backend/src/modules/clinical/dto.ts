@@ -11,6 +11,12 @@ export const listClinicalQuerySchema = z.object({
   status: z.enum(["open", "completed", "cancelled"]).optional(),
 });
 
+export const listPrescriptionsQuerySchema = listClinicalQuerySchema
+  .omit({ status: true })
+  .extend({
+    status: z.enum(["sent_to_pharmacy", "dispensed", "cancelled"]).optional(),
+  });
+
 export const createEncounterSchema = z.object({
   patientId: z.string().uuid(),
   visitType: optionalText(100),
@@ -80,6 +86,7 @@ export const updateReferralStatusSchema = z.object({
 });
 
 export type ListClinicalQueryDto = z.infer<typeof listClinicalQuerySchema>;
+export type ListPrescriptionsQueryDto = z.infer<typeof listPrescriptionsQuerySchema>;
 export type CreateEncounterDto = z.infer<typeof createEncounterSchema>;
 export type UpdateEncounterDto = z.infer<typeof updateEncounterSchema>;
 export type CreatePrescriptionDto = z.infer<typeof createPrescriptionSchema>;

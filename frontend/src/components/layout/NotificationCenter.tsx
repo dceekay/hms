@@ -14,6 +14,7 @@ import type { AppNotification } from "../../types/notification";
 import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
+  notifyDataMutated,
 } from "../../utils/appEvents";
 import { playClinicalAlertSound } from "../../utils/alertSound";
 import type { ClinicalAlertLevel } from "../../utils/alertSound";
@@ -238,6 +239,7 @@ export default function NotificationCenter() {
 
     const handleNotification = () => {
       void loadNotifications();
+      notifyDataMutated({ source: "notification" });
     };
 
     stream.addEventListener("open", markConnected);

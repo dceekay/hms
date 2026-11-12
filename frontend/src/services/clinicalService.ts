@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 import { enqueueOfflineOperation, updateOfflineOperationBody } from "../utils/offlineQueue";
 import { notifyDataMutated } from "../utils/appEvents";
 import type {
@@ -10,6 +10,7 @@ import type {
   ClinicalWorkspace,
   Prescription,
   PrescriptionFormValues,
+  PrescriptionStatus,
   ReferralFormValues,
 } from "../types/clinical";
 
@@ -308,12 +309,14 @@ export async function completeClinicalEncounter(id: string) {
 export async function fetchPrescriptions(params: {
   patientId?: string;
   search?: string;
+  status?: PrescriptionStatus;
 } = {}) {
   try {
     const response = await api.get<PrescriptionListResponse>("/clinical/prescriptions", {
       params: {
         limit: 100,
         ...(params.patientId ? { patientId: params.patientId } : {}),
+        ...(params.status ? { status: params.status } : {}),
         ...(params.search?.trim() ? { search: params.search.trim() } : {}),
       },
     });
@@ -324,6 +327,26 @@ export async function fetchPrescriptions(params: {
     return {
       result: null,
       error: getErrorMessage(error, "Unable to load prescriptions."),
+    };
+  }
+}
+
+export async function updatePrescriptionStatus(
+  id: string,
+  status: PrescriptionStatus
+) {
+  try {
+    const response = await api.patch<{ data: Prescription }>(
+      `/clinical/prescriptions/${id}/status`,
+      { status }
+    );
+    notifyDataMutated({ source: "clinical" });
+    return { prescription: response.data.data, error: undefined };
+  } catch (error: any) {
+    console.error(error);
+    return {
+      prescription: null,
+      error: getErrorMessage(error, "Unable to update prescription status."),
     };
   }
 }

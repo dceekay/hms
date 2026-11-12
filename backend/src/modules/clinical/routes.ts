@@ -45,7 +45,7 @@ router.post(
 );
 router.patch(
   "/prescriptions/:id/status",
-  authorizePermissions(["prescriptions.update"]),
+  authorizePermissionsOrRoles(["prescriptions.update"], ["Pharmacist", "Administrator", "Super Admin"]),
   controller.updatePrescriptionStatus
 );
 

@@ -7,6 +7,7 @@ import {
   createPrescriptionSchema,
   createReferralSchema,
   listClinicalQuerySchema,
+  listPrescriptionsQuerySchema,
   updateAdmissionRequestStatusSchema,
   updateEncounterSchema,
   updatePrescriptionStatusSchema,
@@ -70,7 +71,7 @@ export class ClinicalController extends BaseController {
   listPrescriptions = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const result = await this.clinicalService.listPrescriptions(
-        listClinicalQuerySchema.parse(req.query)
+        listPrescriptionsQuerySchema.parse(req.query)
       );
 
       this.ok(res, "Prescriptions fetched successfully", result);
