@@ -1,13 +1,17 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   FiCheckCircle,
   FiClock,
   FiFilter,
   FiHome,
+  FiPlus,
   FiRefreshCw,
   FiSearch,
   FiSlash,
+  FiTool,
   FiUserPlus,
+  FiWifi,
+  FiWifiOff,
 } from "react-icons/fi";
 import { FaBed } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
@@ -28,6 +32,9 @@ import {
 } from "../../types/ward";
 import { Patient } from "../../types/patient";
 import { useAuthStore } from "../../store/authStore";
+import { useOfflineSync } from "../../hooks/useOfflineSync";
+import { HMS_SYNC_FLUSHED_EVENT } from "../../utils/appEvents";
+import { confirmImportantAction } from "../../utils/sweetAlert";
 
 const emptyForm: WardAssignmentFormValues = {
   patientId: "",
@@ -110,13 +117,17 @@ export default function WardsBedsPage() {
   const [form, setForm] = useState<WardAssignmentFormValues>(emptyForm);
   const [wardForm, setWardForm] = useState<WardFormValues>(emptyWardForm);
   const [search, setSearch] = useState("");
+  const [patientFilter, setPatientFilter] = useState("");
   const [wardFilter, setWardFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<BedStatus | "all">("all");
+  const [showAddWard, setShowAddWard] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingWard, setSavingWard] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const assignFormRef = useRef<HTMLFormElement | null>(null);
+  const { pendingCount, isBrowserOnline, syncing, syncNow } = useOfflineSync();
 
   async function loadData() {
     setLoading(true);
@@ -134,7 +145,26 @@ export default function WardsBedsPage() {
 
   useEffect(() => {
     void loadData();
+
+    const handleSynced = () => {
+      void loadData();
+    };
+    window.addEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    return () => {
+      window.removeEventListener(HMS_SYNC_FLUSHED_EVENT, handleSynced);
+    };
   }, []);
+
+  const filteredPatients = useMemo(() => {
+    const term = patientFilter.trim().toLowerCase();
+    const list = dashboard?.patients ?? [];
+    if (!term) return list;
+    return list.filter((p) =>
+      `${p.firstName} ${p.lastName} ${p.mrn ?? ""} ${p.phone ?? ""}`
+        .toLowerCase()
+        .includes(term)
+    );
+  }, [dashboard?.patients, patientFilter]);
 
   const availableBeds = useMemo(
     () =>
@@ -237,8 +267,16 @@ export default function WardsBedsPage() {
     await loadData();
   }
 
-  async function handleDischarge(assignmentId: string) {
-    if (!window.confirm("Discharge this patient and send the bed to cleaning?")) return;
+  async function handleDischarge(assignmentId: string, occupantName?: string) {
+    const confirmed = await confirmImportantAction({
+      title: "Discharge Patient?",
+      text: `Discharge ${occupantName || "this patient"} and send the bed to cleaning?`,
+      confirmButtonText: "Yes, Discharge",
+      cancelButtonText: "Cancel",
+      icon: "warning",
+    });
+    if (!confirmed) return;
+
     const result = await dischargeWardAssignment(assignmentId);
 
     if (!result.assignment) {
@@ -246,7 +284,11 @@ export default function WardsBedsPage() {
       return;
     }
 
-    setMessage("Patient discharged. Bed moved to cleaning.");
+    setMessage(
+      (result as { queued?: boolean }).queued
+        ? "Discharge saved offline. It will sync automatically when network returns."
+        : "Patient discharged. Bed moved to cleaning."
+    );
     await loadData();
   }
 
@@ -269,8 +311,8 @@ export default function WardsBedsPage() {
           <section className="ward-hero">
             <div>
               <p className="eyebrow">Ward Care</p>
-              <h1>Wards & Beds</h1>
-              <p>Assign patients, track bed readiness, and keep admissions moving.</p>
+              <h1>Wards &amp; Beds</h1>
+              <p>Admit patients to beds, track cleaning &amp; readiness, and manage discharges.</p>
             </div>
             <div className="ward-summary-grid">
               <span><strong>{dashboard?.summary.total ?? 0}</strong><small>Total Beds</small></span>
@@ -280,6 +322,45 @@ export default function WardsBedsPage() {
             </div>
           </section>
 
+          <div className={`security-sync-bar ${isBrowserOnline ? "online" : "offline"}`}>
+            <div className="security-sync-state">
+              {isBrowserOnline ? <FiWifi /> : <FiWifiOff />}
+              <div>
+                <strong>
+                  {isBrowserOnline ? "System Online" : "Offline Mode — Saving ward changes on this device"}
+                </strong>
+                <small>
+                  {pendingCount > 0
+                    ? `${pendingCount} change${pendingCount === 1 ? "" : "s"} waiting to sync`
+                    : "All ward & bed records are synced"}
+                </small>
+              </div>
+            </div>
+            <div className="ward-top-actions">
+              {canManageWards && showAddWard && (
+                <button
+                  type="button"
+                  className="icon-text-btn"
+                  onClick={() => setShowAddWard((prev) => !prev)}
+                >
+                  <FiPlus />
+                  {showAddWard ? "Hide Add Ward" : "Add New Ward"}
+                </button>
+              )}
+              {pendingCount > 0 && (
+                <button
+                  type="button"
+                  className="security-sync-btn"
+                  onClick={() => void syncNow()}
+                  disabled={!isBrowserOnline || syncing}
+                >
+                  <FiRefreshCw className={syncing ? "spin" : ""} />
+                  <span>{syncing ? "Syncing..." : "Sync Now"}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
           {(message || error) && (
             <div className={error ? "registration-error" : "security-success"}>
               {error || message}
@@ -287,21 +368,29 @@ export default function WardsBedsPage() {
           )}
 
           <section className="ward-layout">
-            <form className="setup-form ward-assignment-form" onSubmit={handleAssign}>
+            <form ref={assignFormRef} className="setup-form ward-assignment-form" onSubmit={handleAssign}>
               <div className="panel-title">
                 <div>
-                  <h2>Assign Patient</h2>
-                  <p>Select patient, bed, and reason.</p>
+                  <h2>Admit / Assign Patient</h2>
+                  <p>Pick a patient, available bed, and reason for admission.</p>
                 </div>
                 <FiUserPlus />
               </div>
 
               <div className="form-grid">
+                <label className="span-2">
+                  Find Patient (type name or MRN to filter)
+                  <input
+                    value={patientFilter}
+                    onChange={(event) => setPatientFilter(event.target.value)}
+                    placeholder="Type patient name, MRN, or phone..."
+                  />
+                </label>
                 <label>
                   Patient
                   <select value={form.patientId} onChange={(event) => updateField("patientId", event.target.value)} required>
-                    <option value="">Select patient</option>
-                    {(dashboard?.patients ?? []).map((patient) => (
+                    <option value="">Select patient ({filteredPatients.length})</option>
+                    {filteredPatients.map((patient) => (
                       <option key={patient.id} value={patient.id}>
                         {patientName(patient)} {patient.mrn ? `- ${patient.mrn}` : ""}
                       </option>
@@ -398,7 +487,7 @@ export default function WardsBedsPage() {
             </section>
           </section>
 
-          {canManageWards && (
+          {canManageWards && showAddWard && (
             <section className="setup-list-panel ward-admin-panel">
               <div className="panel-title">
                 <div>
@@ -461,6 +550,26 @@ export default function WardsBedsPage() {
           )}
 
           <section className="setup-list-panel ward-board-panel">
+            <div className="smart-filter-pills" role="group" aria-label="Quick bed status filter">
+              <button
+                type="button"
+                className={statusFilter === "all" ? "active" : ""}
+                onClick={() => setStatusFilter("all")}
+              >
+                All Beds
+              </button>
+              {Object.entries(statusLabels).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={statusFilter === value ? "active" : ""}
+                  onClick={() => setStatusFilter(value as BedStatus)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="setup-list-header">
               <div className="patient-search-control">
                 <FiSearch />
@@ -523,33 +632,57 @@ export default function WardsBedsPage() {
                               <small>{assignment.patient.mrn || "No MRN"} - {patientAge(assignment.patient)} - {assignment.patient.gender}</small>
                               <small><FiClock /> In: {formatDateTime(assignment.admittedAt)}</small>
                               <small>Dr. {userName(assignment.doctor)}</small>
-                              <button className="icon-text-btn danger" type="button" onClick={() => handleDischarge(assignment.id)}>
+                              <button
+                                className="icon-text-btn danger"
+                                type="button"
+                                onClick={() => void handleDischarge(assignment.id, patientName(assignment.patient))}
+                              >
                                 <FiSlash />
                                 Discharge
                               </button>
                             </div>
                           ) : (
                             <div className="bed-actions">
+                              {["available", "reserved"].includes(bed.status) && (
+                                <button
+                                  className="icon-text-btn primary"
+                                  type="button"
+                                  onClick={() => {
+                                    updateField("bedId", bed.id);
+                                    assignFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  }}
+                                >
+                                  <FaBed />
+                                  Admit Here
+                                </button>
+                              )}
                               {bed.status === "cleaning" && (
-                                <button className="icon-text-btn" type="button" onClick={() => handleBedStatus(bed, "available")}>
+                                <button className="icon-text-btn" type="button" onClick={() => void handleBedStatus(bed, "available")}>
                                   <FiCheckCircle />
-                                  Ready
+                                  Mark Ready
                                 </button>
                               )}
                               {bed.status === "available" && (
-                                <button className="icon-text-btn" type="button" onClick={() => handleBedStatus(bed, "reserved")}>
-                                  <FiFilter />
-                                  Reserve
-                                </button>
+                                <>
+                                  <button className="icon-text-btn" type="button" onClick={() => void handleBedStatus(bed, "reserved")}>
+                                    <FiFilter />
+                                    Reserve
+                                  </button>
+                                  <button className="icon-text-btn" type="button" onClick={() => void handleBedStatus(bed, "maintenance")}>
+                                    <FiTool />
+                                    Maintenance
+                                  </button>
+                                </>
                               )}
                               {bed.status === "reserved" && (
-                                <button className="icon-text-btn" type="button" onClick={() => handleBedStatus(bed, "available")}>
+                                <button className="icon-text-btn" type="button" onClick={() => void handleBedStatus(bed, "available")}>
                                   Release
                                 </button>
                               )}
-                              {["available", "reserved"].includes(bed.status) && (
-                                <button className="icon-text-btn" type="button" onClick={() => updateField("bedId", bed.id)}>
-                                  Select
+                              {(bed.status === "maintenance" || bed.status === "blocked") && (
+                                <button className="icon-text-btn" type="button" onClick={() => void handleBedStatus(bed, "available")}>
+                                  <FiCheckCircle />
+                                  Mark Ready
                                 </button>
                               )}
                             </div>

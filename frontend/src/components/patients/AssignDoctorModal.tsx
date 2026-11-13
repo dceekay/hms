@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiCalendar, FiClock, FiUser, FiX, FiCheck, FiAlertCircle } from "react-icons/fi";
+import { FiPrinter, FiX, FiCheck, FiAlertCircle } from "react-icons/fi";
 import { FaUserMd, FaHospitalUser } from "react-icons/fa";
 import Swal from "sweetalert2";
 import type { Patient } from "../../types/patient";
@@ -8,6 +8,7 @@ import { createAppointment, fetchAppointmentDoctors } from "../../services/appoi
 import { notifyDataMutated } from "../../utils/appEvents";
 import { confirmImportantAction } from "../../utils/sweetAlert";
 import { playSuccessChime } from "../../utils/soundAlerts";
+import { printManualDoctorVisitSlip } from "../../utils/manualVisitPrint";
 
 interface AssignDoctorModalProps {
   patient: Patient | null;
@@ -26,6 +27,8 @@ export default function AssignDoctorModal({
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [consultationType, setConsultationType] = useState("Routine Consultation");
+  const [visitTiming, setVisitTiming] = useState<"now" | "scheduled">("now");
+  const [scheduledAt, setScheduledAt] = useState("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +38,8 @@ export default function AssignDoctorModal({
     if (!isOpen) {
       setSelectedDoctorId("");
       setConsultationType("Routine Consultation");
+      setVisitTiming("now");
+      setScheduledAt("");
       setReason("");
       setNotes("");
       setError(null);
@@ -87,10 +92,15 @@ export default function AssignDoctorModal({
       ? `[${consultationType}] ${reason.trim()}`
       : `[${consultationType}] General Doctor Consultation`;
 
-    const { appointment, error: apiError } = await createAppointment({
+    const scheduledIso =
+      visitTiming === "scheduled" && scheduledAt
+        ? new Date(scheduledAt).toISOString()
+        : new Date().toISOString();
+
+    const { appointment, error: apiError, queued } = await createAppointment({
       patientId: patient.id,
       doctorId: selectedDoctorId,
-      scheduledFor: new Date().toISOString(),
+      scheduledFor: scheduledIso,
       reason: fullReason,
       notes: notes.trim(),
     });
@@ -98,19 +108,34 @@ export default function AssignDoctorModal({
     setSubmitting(false);
 
     if (!appointment || apiError) {
-      setError(apiError ?? "Unable to assign patient to doctor. Please try again.");
+      setError(apiError ?? "Unable to book consultation. Please try again.");
       return;
     }
 
     notifyDataMutated({ source: "assign-doctor" });
     playSuccessChime();
 
-    await Swal.fire({
+    const alertResult = await Swal.fire({
       icon: "success",
-      title: "Patient Queued for Consultation",
-      html: `<strong>${patient.firstName} ${patient.lastName}</strong> has been assigned to <strong>${doctorName}</strong> and placed in the active consultation queue.`,
+      title: queued ? "Saved Offline — Will Sync Soon" : "Consultation Booked",
+      html: `<strong>${patient.firstName} ${patient.lastName}</strong> has been booked with <strong>${doctorName}</strong>${queued ? " (saved offline and will sync when network returns)" : ""}.`,
+      confirmButtonText: "Done",
       confirmButtonColor: "#087ebd",
+      showDenyButton: true,
+      denyButtonText: "Print Manual Visit Slip",
+      denyButtonColor: "#0f766e",
     });
+
+    if (alertResult.isDenied) {
+      printManualDoctorVisitSlip({
+        patient,
+        doctorName,
+        consultationType,
+        reason: reason.trim() || "General Doctor Consultation",
+        notes: notes.trim(),
+        scheduledFor: scheduledIso,
+      });
+    }
 
     // Refresh form state
     setSelectedDoctorId("");
@@ -219,13 +244,28 @@ export default function AssignDoctorModal({
             </label>
 
             <label>
-              <span>Queue Timing</span>
-              <div className="assign-time-pill">
-                <FiClock aria-hidden="true" />
-                <span>Immediate (Now in waiting queue)</span>
-              </div>
+              <span>Visit Timing</span>
+              <select
+                value={visitTiming}
+                onChange={(e) => setVisitTiming(e.target.value as "now" | "scheduled")}
+              >
+                <option value="now">See Doctor Now (Immediate Queue)</option>
+                <option value="scheduled">Schedule Date &amp; Time</option>
+              </select>
             </label>
           </div>
+
+          {visitTiming === "scheduled" && (
+            <label>
+              <span>Appointment Date &amp; Time</span>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required
+              />
+            </label>
+          )}
 
           <label>
             <span>Chief Complaint / Reason for Visit</span>
@@ -254,16 +294,43 @@ export default function AssignDoctorModal({
             </button>
 
             <button
+              type="button"
+              className="icon-text-btn"
+              onClick={() => {
+                const selectedDoc = doctors.find((d) => d.id === selectedDoctorId);
+                const docName = selectedDoc
+                  ? `Dr. ${selectedDoc.firstName} ${selectedDoc.lastName}`
+                  : "On-Duty Doctor";
+                printManualDoctorVisitSlip({
+                  patient,
+                  doctorName: docName,
+                  consultationType,
+                  reason: reason.trim() || "General Doctor Consultation",
+                  notes: notes.trim(),
+                  scheduledFor:
+                    visitTiming === "scheduled" && scheduledAt
+                      ? new Date(scheduledAt).toISOString()
+                      : new Date().toISOString(),
+                });
+              }}
+              disabled={submitting}
+              title="Print a paper slip for manual doctor consultation"
+            >
+              <FiPrinter />
+              Print Manual Slip
+            </button>
+
+            <button
               type="submit"
               className="icon-text-btn primary"
               disabled={submitting || loadingDoctors || doctors.length === 0}
             >
               {submitting ? (
-                <>Queueing...</>
+                <>Booking...</>
               ) : (
                 <>
                   <FiCheck />
-                  Assign &amp; Send to Doctor
+                  Book Consultation
                 </>
               )}
             </button>

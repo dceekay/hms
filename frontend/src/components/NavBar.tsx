@@ -21,7 +21,6 @@ export function NavBar() {
         {hasPermission("users.read") && <Link to="/admin/users">Users</Link>}
         {hasPermission("roles.read") && <Link to="/admin/roles">Roles</Link>}
         {hasPermission("permissions.read") && <Link to="/admin/permissions">Permissions</Link>}
-        <Link to="/api-tester">API Tester</Link>
       </div>
       <button type="button" className="button button-secondary" onClick={handleLogout}>
         Logout

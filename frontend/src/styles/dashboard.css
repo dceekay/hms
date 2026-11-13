@@ -9209,3 +9209,141 @@ body.light-theme .ws-active-session-bar {
     justify-content: center;
   }
 }
+
+/* Smart Filter Pills & Ward Top Actions */
+.smart-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.smart-filter-pills button {
+  min-height: 34px;
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.smart-filter-pills button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.smart-filter-pills button.active {
+  border-color: transparent;
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.ward-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Global Mobile Responsiveness Across All Pages */
+@media (max-width: 768px) {
+  .admin-main,
+  .page-container {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .topbar {
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .form-grid,
+  .ward-layout,
+  .ward-summary-grid,
+  .ward-detail-strip,
+  .ward-mini-stats,
+  .bed-grid,
+  .security-log-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-grid .span-2 {
+    grid-column: span 1 !important;
+  }
+
+  .setup-list-header,
+  .panel-title,
+  .ward-hero,
+  .security-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .setup-list-header > *,
+  .security-log-search {
+    width: 100%;
+  }
+
+  .security-log-search {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .security-log-search select,
+  .security-log-search button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .patient-id-modal-panel,
+  .assign-doctor-panel {
+    width: calc(100vw - 20px);
+    max-width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .assign-doctor-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .assign-doctor-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .table-scroll-container,
+  .table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 540px) {
+  .person-type-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .patient-compact-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .patient-compact-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -57,6 +57,7 @@ import {
   patientSchema,
 } from "../../types/patient";
 import { compressImageToWebp } from "../../utils/imageCompression";
+import { printManualDoctorVisitSlip } from "../../utils/manualVisitPrint";
 
 const categoryLabels: Record<string, string> = {
   new_patient: "New patient",
@@ -1106,6 +1107,66 @@ export function PatientListPage() {
             )}
           </form>
 
+          <div className="smart-filter-pills" role="group" aria-label="Smart patient filters">
+            <button
+              type="button"
+              className={!categoryFilter && !statusFilter ? "active" : ""}
+              onClick={() => {
+                setCategoryFilter("");
+                setStatusFilter("");
+                setCurrentPage(1);
+                void loadPatients({ searchTerm: search, status: "", category: "", page: 1 });
+              }}
+            >
+              All Patients
+            </button>
+            <button
+              type="button"
+              className={categoryFilter === "new_patient" ? "active" : ""}
+              onClick={() => {
+                setCategoryFilter("new_patient");
+                setCurrentPage(1);
+                void loadPatients({ searchTerm: search, status: statusFilter, category: "new_patient", page: 1 });
+              }}
+            >
+              New Patients
+            </button>
+            <button
+              type="button"
+              className={categoryFilter === "old_patient" ? "active" : ""}
+              onClick={() => {
+                setCategoryFilter("old_patient");
+                setCurrentPage(1);
+                void loadPatients({ searchTerm: search, status: statusFilter, category: "old_patient", page: 1 });
+              }}
+            >
+              Returning / Old
+            </button>
+            <button
+              type="button"
+              className={categoryFilter === "investigation_patient" ? "active" : ""}
+              onClick={() => {
+                setCategoryFilter("investigation_patient");
+                setCurrentPage(1);
+                void loadPatients({ searchTerm: search, status: statusFilter, category: "investigation_patient", page: 1 });
+              }}
+            >
+              Lab / Investigation
+            </button>
+            <button
+              type="button"
+              className={statusFilter === "active" ? "active" : ""}
+              onClick={() => {
+                const nextStatus = statusFilter === "active" ? "" : "active";
+                setStatusFilter(nextStatus);
+                setCurrentPage(1);
+                void loadPatients({ searchTerm: search, status: nextStatus, category: categoryFilter, page: 1 });
+              }}
+            >
+              Active Only
+            </button>
+          </div>
+
           {loading && (
             <p>Loading patients...</p>
           )}
@@ -1321,12 +1382,28 @@ export function PatientListPage() {
                         <button
                           type="button"
                           className="icon-text-btn assign-btn"
-                          aria-label="Assign patient to doctor"
+                          aria-label="Book consultation & assign doctor"
                           onClick={() => setAssignDoctorPatient(patient)}
-                          title="Assign to doctor & queue for consultation"
+                          title="Book consultation & assign to doctor"
                         >
                           <FaUserMd />
-                          <span className="patient-action-label">Assign</span>
+                          <span className="patient-action-label">Book Visit</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icon-text-btn"
+                          aria-label="Print manual doctor visit slip"
+                          onClick={() =>
+                            printManualDoctorVisitSlip({
+                              patient,
+                              consultationType: "Manual Doctor Visit",
+                            })
+                          }
+                          title="Print paper slip for manual doctor visit"
+                        >
+                          <FiPrinter />
+                          <span className="patient-action-label">Manual Slip</span>
                         </button>
 
                         <button

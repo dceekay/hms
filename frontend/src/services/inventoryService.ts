@@ -8,6 +8,13 @@ import type {
   InventoryStockStatus,
   InventorySummary,
 } from "../types/inventory";
+import { notifyDataMutated } from "../utils/appEvents";
+import {
+  enqueueOfflineOperation,
+  isLikelyNetworkError,
+} from "../utils/offlineQueue";
+
+const INVENTORY_CACHE_KEY = "hms_cached_inventory_items";
 
 type InventoryListResponse = {
   data: {
@@ -77,6 +84,21 @@ export async function fetchInventoryItems(params: {
   category?: string;
   itemKind?: InventoryItemKind;
 } = {}) {
+  const readCached = (): InventoryListResponse["data"] | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(INVENTORY_CACHE_KEY);
+      return raw ? (JSON.parse(raw) as InventoryListResponse["data"]) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const cached = readCached();
+    if (cached) return { result: cached, error: undefined };
+  }
+
   try {
     const response = await api.get<InventoryListResponse>("/inventory/items", {
       params: {
@@ -88,8 +110,20 @@ export async function fetchInventoryItems(params: {
       },
     });
 
+    if (!params.search?.trim() && (!params.stockStatus || params.stockStatus === "all")) {
+      try {
+        window.localStorage.setItem(INVENTORY_CACHE_KEY, JSON.stringify(response.data.data));
+      } catch {
+        // Ignore storage quota errors
+      }
+    }
+
     return { result: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      const cached = readCached();
+      if (cached) return { result: cached, error: undefined };
+    }
     console.error(error);
     return {
       result: null,
@@ -99,14 +133,43 @@ export async function fetchInventoryItems(params: {
 }
 
 export async function createInventoryItem(values: InventoryItemFormValues) {
+  const payload = cleanItemPayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "inventory.create_item",
+      label: `Add Inventory Item: ${values.name}`,
+      method: "POST",
+      path: "/inventory/items",
+      body: payload,
+    });
+    notifyDataMutated({ method: "POST", url: "/inventory/items", source: "inventory-offline" });
+    return {
+      item: {
+        id: `offline-inv-${Date.now()}`,
+        ...payload,
+        createdAt: new Date().toISOString(),
+      } as unknown as InventoryItem,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: InventoryItem }>(
       "/inventory/items",
-      cleanItemPayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "POST", url: "/inventory/items", source: "inventory" });
     return { item: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       item: null,
@@ -116,14 +179,39 @@ export async function createInventoryItem(values: InventoryItemFormValues) {
 }
 
 export async function updateInventoryItem(id: string, values: InventoryItemFormValues) {
+  const payload = cleanItemPayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "inventory.update_item",
+      label: `Update Inventory Item: ${values.name}`,
+      method: "PATCH",
+      path: `/inventory/items/${id}`,
+      body: payload,
+    });
+    notifyDataMutated({ method: "PATCH", url: `/inventory/items/${id}`, source: "inventory-offline" });
+    return {
+      item: { id, ...payload } as unknown as InventoryItem,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.patch<{ data: InventoryItem }>(
       `/inventory/items/${id}`,
-      cleanItemPayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "PATCH", url: `/inventory/items/${id}`, source: "inventory" });
     return { item: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       item: null,
@@ -133,14 +221,47 @@ export async function updateInventoryItem(id: string, values: InventoryItemFormV
 }
 
 export async function recordInventoryMovement(values: InventoryMovementFormValues) {
+  const payload = cleanMovementPayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "inventory.adjust_stock",
+      label: `Inventory Movement (${values.movementType})`,
+      method: "POST",
+      path: `/inventory/items/${values.itemId}/movements`,
+      body: payload,
+    });
+    notifyDataMutated({
+      method: "POST",
+      url: `/inventory/items/${values.itemId}/movements`,
+      source: "inventory-offline",
+    });
+    return {
+      item: { id: values.itemId } as unknown as InventoryItem,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: InventoryItem }>(
       `/inventory/items/${values.itemId}/movements`,
-      cleanMovementPayload(values)
+      payload
     );
 
+    notifyDataMutated({
+      method: "POST",
+      url: `/inventory/items/${values.itemId}/movements`,
+      source: "inventory",
+    });
     return { item: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       item: null,

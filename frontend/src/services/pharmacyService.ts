@@ -1,5 +1,11 @@
 import api from "./api";
 import { notifyDataMutated } from "../utils/appEvents";
+import {
+  enqueueOfflineOperation,
+  isLikelyNetworkError,
+} from "../utils/offlineQueue";
+
+const PHARMACY_MEDS_CACHE_KEY = "hms_cached_pharmacy_meds";
 import type {
   Medication,
   MedicationFormValues,
@@ -117,6 +123,21 @@ export async function fetchMedications(params: {
   search?: string;
   stockStatus?: PharmacyStockStatus;
 } = {}) {
+  const readCached = (): MedicationListResponse["data"] | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem(PHARMACY_MEDS_CACHE_KEY);
+      return raw ? (JSON.parse(raw) as MedicationListResponse["data"]) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const cached = readCached();
+    if (cached) return { result: cached, error: undefined };
+  }
+
   try {
     const response = await api.get<MedicationListResponse>("/pharmacy/medications", {
       params: {
@@ -128,8 +149,20 @@ export async function fetchMedications(params: {
       },
     });
 
+    if (!params.search?.trim() && (!params.stockStatus || params.stockStatus === "all")) {
+      try {
+        window.localStorage.setItem(PHARMACY_MEDS_CACHE_KEY, JSON.stringify(response.data.data));
+      } catch {
+        // Ignore storage quota errors
+      }
+    }
+
     return { result: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      const cached = readCached();
+      if (cached) return { result: cached, error: undefined };
+    }
     console.error(error);
     return {
       result: null,
@@ -139,14 +172,43 @@ export async function fetchMedications(params: {
 }
 
 export async function createMedication(values: MedicationFormValues) {
+  const payload = cleanMedicationPayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "pharmacy.create_medication",
+      label: `Add Medication: ${values.name}`,
+      method: "POST",
+      path: "/pharmacy/medications",
+      body: payload,
+    });
+    notifyDataMutated({ method: "POST", url: "/pharmacy/medications", source: "pharmacy-offline" });
+    return {
+      medication: {
+        id: `offline-med-${Date.now()}`,
+        ...payload,
+        createdAt: new Date().toISOString(),
+      } as unknown as Medication,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: Medication }>(
       "/pharmacy/medications",
-      cleanMedicationPayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "POST", url: "/pharmacy/medications", source: "pharmacy" });
     return { medication: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       medication: null,
@@ -156,14 +218,39 @@ export async function createMedication(values: MedicationFormValues) {
 }
 
 export async function updateMedication(id: string, values: MedicationFormValues) {
+  const payload = cleanMedicationPayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "pharmacy.update_medication",
+      label: `Update Medication: ${values.name}`,
+      method: "PATCH",
+      path: `/pharmacy/medications/${id}`,
+      body: payload,
+    });
+    notifyDataMutated({ method: "PATCH", url: `/pharmacy/medications/${id}`, source: "pharmacy-offline" });
+    return {
+      medication: { id, ...payload } as unknown as Medication,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.patch<{ data: Medication }>(
       `/pharmacy/medications/${id}`,
-      cleanMedicationPayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "PATCH", url: `/pharmacy/medications/${id}`, source: "pharmacy" });
     return { medication: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       medication: null,
@@ -177,14 +264,38 @@ export async function adjustMedicationStock(id: string, values: {
   reason?: string;
   notes?: string;
 }) {
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "pharmacy.adjust_stock",
+      label: `Adjust Drug Stock (${values.quantityChange > 0 ? "+" : ""}${values.quantityChange})`,
+      method: "POST",
+      path: `/pharmacy/medications/${id}/stock`,
+      body: values,
+    });
+    notifyDataMutated({ method: "POST", url: `/pharmacy/medications/${id}/stock`, source: "pharmacy-offline" });
+    return {
+      medication: { id } as unknown as Medication,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: Medication }>(
       `/pharmacy/medications/${id}/stock`,
       values
     );
 
+    notifyDataMutated({ method: "POST", url: `/pharmacy/medications/${id}/stock`, source: "pharmacy" });
     return { medication: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       medication: null,
@@ -213,14 +324,43 @@ export async function fetchPharmacyDispenses(search = "") {
 }
 
 export async function dispenseMedication(values: PharmacyDispenseFormValues) {
+  const payload = cleanDispensePayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "pharmacy.dispense",
+      label: `Dispense Drug (Qty: ${payload.quantity})`,
+      method: "POST",
+      path: "/pharmacy/dispenses",
+      body: payload,
+    });
+    notifyDataMutated({ method: "POST", url: "/pharmacy/dispenses", source: "pharmacy-offline" });
+    return {
+      dispense: {
+        id: `offline-dispense-${Date.now()}`,
+        ...payload,
+        dispensedAt: new Date().toISOString(),
+      } as unknown as PharmacyDispense,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: PharmacyDispense }>(
       "/pharmacy/dispenses",
-      cleanDispensePayload(values)
+      payload
     );
 
+    notifyDataMutated({ method: "POST", url: "/pharmacy/dispenses", source: "pharmacy" });
     return { dispense: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       dispense: null,
@@ -249,15 +389,46 @@ export async function fetchPharmacySales(search = "") {
 }
 
 export async function createPharmacySale(values: PharmacySaleFormValues) {
+  const payload = cleanSalePayload(values);
+  const queueOffline = () => {
+    enqueueOfflineOperation({
+      type: "pharmacy.create_sale",
+      label: `Pharmacy Sale (${payload.items.length} item${payload.items.length === 1 ? "" : "s"})`,
+      method: "POST",
+      path: "/pharmacy/sales",
+      body: payload,
+    });
+    notifyDataMutated({ method: "POST", url: "/pharmacy/sales", source: "pharmacy-offline" });
+    return {
+      sale: {
+        id: `offline-sale-${Date.now()}`,
+        receiptNumber: `OFFLINE-${Date.now().toString().slice(-6)}`,
+        totalAmount: 0,
+        amountPaid: payload.amountPaid ?? 0,
+        paymentStatus: payload.paymentStatus,
+        createdAt: new Date().toISOString(),
+      } as unknown as PharmacySale,
+      error: undefined,
+      queued: true,
+    };
+  };
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return queueOffline();
+  }
+
   try {
     const response = await api.post<{ data: PharmacySale }>(
       "/pharmacy/sales",
-      cleanSalePayload(values)
+      payload
     );
 
     notifyDataMutated({ source: "pharmacy" });
     return { sale: response.data.data, error: undefined };
   } catch (error: any) {
+    if (isLikelyNetworkError(error)) {
+      return queueOffline();
+    }
     console.error(error);
     return {
       sale: null,

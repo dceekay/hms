@@ -122,7 +122,7 @@ export async function createAppointment(values: AppointmentFormValues) {
     );
 
     notifyDataMutated({ method: "POST", url: "/appointments", source: "appointments" });
-    return { appointment: response.data.data, error: undefined };
+    return { appointment: response.data.data, error: undefined, queued: false };
   } catch (error: any) {
     if (isLikelyNetworkError(error)) {
       return queueOffline();
@@ -131,6 +131,7 @@ export async function createAppointment(values: AppointmentFormValues) {
     return {
       appointment: null,
       error: getErrorMessage(error, "Unable to schedule appointment."),
+      queued: false,
     };
   }
 }
