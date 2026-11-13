@@ -19,6 +19,7 @@ import { fetchClinicalEncounters } from "../../services/clinicalService";
 import { fetchAppointments } from "../../services/appointmentService";
 import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
+import { printFullHospitalReport } from "../../utils/manualVisitPrint";
 
 interface PatientVisitsModalProps {
   patient: Patient | null;
@@ -138,6 +139,22 @@ export default function PatientVisitsModal({
           </div>
 
           <div className="modal-actions">
+            <button
+              type="button"
+              className="icon-text-btn"
+              onClick={() =>
+                void printFullHospitalReport({
+                  patient,
+                  encounters,
+                  appointments,
+                })
+              }
+              title="Print Full Hospital Report with Logo, Stamp & QR Code"
+            >
+              <FiFileText />
+              Full Hospital Report
+            </button>
+
             {encounters.length > 0 && (
               <button
                 type="button"
