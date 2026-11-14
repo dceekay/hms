@@ -132,11 +132,11 @@ function adminStats(overview: DashboardOverview | null) {
     ];
   }
 
-  const bedsTotal = overview.operations.beds.total;
-  const bedsOccupied = overview.operations.beds.occupied;
-  const bedsAvailable = overview.operations.beds.available;
+  const bedsTotal = overview.operations?.beds?.total ?? 0;
+  const bedsOccupied = overview.operations?.beds?.occupied ?? 0;
+  const bedsAvailable = overview.operations?.beds?.available ?? 0;
   const occupancyRate =
-    overview.operations.beds.occupancyRate ??
+    overview.operations?.beds?.occupancyRate ??
     (bedsTotal > 0 ? Math.round((bedsOccupied / bedsTotal) * 100) : 0);
 
   const patientsSeenToday =
@@ -195,9 +195,9 @@ function adminStats(overview: DashboardOverview | null) {
     {
       title: "Open Operations",
       value: formatNumber(
-        overview.billing.pendingBills +
-          overview.operations.semsas.unfiled +
-          overview.operations.security.currentlyInside
+        (overview.billing?.pendingBills ?? 0) +
+          (overview.operations?.semsas?.unfiled ?? 0) +
+          (overview.operations?.security?.currentlyInside ?? 0)
       ),
       change: "Pending bills, SEMSAS & logs",
       color: "#dc2626",
@@ -720,20 +720,20 @@ export default function DashboardPage() {
               <div className="operations-stack">
                 <span>
                   <small>SEMSAS unfiled</small>
-                  <strong>{formatNumber(overview?.operations.semsas.unfiled)}</strong>
+                  <strong>{formatNumber(overview?.operations?.semsas?.unfiled)}</strong>
                 </span>
                 <span>
                   <small>Unfiled amount</small>
-                  <strong>{money(Number(overview?.operations.semsas.unfiledAmount ?? 0))}</strong>
+                  <strong>{money(Number(overview?.operations?.semsas?.unfiledAmount ?? 0))}</strong>
                 </span>
                 <span>
                   <small>Inside facility</small>
-                  <strong>{formatNumber(overview?.operations.security.currentlyInside)}</strong>
+                  <strong>{formatNumber(overview?.operations?.security?.currentlyInside)}</strong>
                 </span>
                 <span>
                   <small>Beds available</small>
                   <strong>
-                    {formatNumber(overview?.operations.beds.available)} / {formatNumber(overview?.operations.beds.total)}
+                    {formatNumber(overview?.operations?.beds?.available)} / {formatNumber(overview?.operations?.beds?.total)}
                   </strong>
                 </span>
               </div>
