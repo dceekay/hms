@@ -1,4 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -53,6 +53,7 @@ type DashboardProfile = {
     change: string;
     color: string;
     icon: ReactNode;
+    to?: string;
   }>;
   actions: DashboardAction[];
   tasks: Array<{
@@ -122,13 +123,13 @@ function formatTransferType(value: string) {
 function adminStats(overview: DashboardOverview | null) {
   if (!overview) {
     return [
-      { title: "Total Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers /> },
-      { title: "Patients Seen Today", value: "...", change: "loading", color: "#0284c7", icon: <FaHospitalUser /> },
-      { title: "Lab Tests Requested", value: "...", change: "loading", color: "#8b5cf6", icon: <FaFlask /> },
-      { title: "Beds Occupancy", value: "...", change: "loading", color: "#f59e0b", icon: <FaBed /> },
-      { title: "Monthly Billing", value: "...", change: "loading", color: "#0f766e", icon: <FiCreditCard /> },
-      { title: "Active Staff", value: "...", change: "loading", color: "#7c3aed", icon: <FiShield /> },
-      { title: "Open Operations", value: "...", change: "loading", color: "#dc2626", icon: <FiActivity /> },
+      { title: "Total Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers />, to: "/patients" },
+      { title: "Patients Seen Today", value: "...", change: "loading", color: "#0284c7", icon: <FaHospitalUser />, to: "/appointments" },
+      { title: "Lab Tests Requested", value: "...", change: "loading", color: "#8b5cf6", icon: <FaFlask />, to: "/laboratory" },
+      { title: "Beds Occupancy", value: "...", change: "loading", color: "#f59e0b", icon: <FaBed />, to: "/setup/wards" },
+      { title: "Monthly Billing", value: "...", change: "loading", color: "#0f766e", icon: <FiCreditCard />, to: "/billing" },
+      { title: "Active Staff", value: "...", change: "loading", color: "#7c3aed", icon: <FiShield />, to: "/admin/users" },
+      { title: "Open Operations", value: "...", change: "loading", color: "#dc2626", icon: <FiActivity />, to: "/operations/semsas" },
     ];
   }
 
@@ -156,27 +157,31 @@ function adminStats(overview: DashboardOverview | null) {
       change: `${overview.patients.registeredToday} registered today`,
       color: "#2563eb",
       icon: <FiUsers />,
+      to: "/patients",
     },
     {
       title: "Patients Seen Today",
       value: formatNumber(patientsSeenToday),
-      change: `${patientsSeenToday} consultations today`,
+      change: `${patientsSeenToday} visits today`,
       color: "#0284c7",
       icon: <FaHospitalUser />,
+      to: "/appointments",
     },
     {
       title: "Lab Tests Requested",
       value: formatNumber(labTestsRequestedToday),
-      change: `${labTestsRequestedToday} orders placed today`,
+      change: `${labTestsRequestedToday} ordered today`,
       color: "#8b5cf6",
       icon: <FaFlask />,
+      to: "/laboratory",
     },
     {
       title: "Beds Occupancy",
       value: `${occupancyRate}%`,
-      change: `${bedsOccupied} of ${bedsTotal} occupied (${bedsAvailable} free)`,
+      change: `${bedsOccupied} of ${bedsTotal} used (${bedsAvailable} free)`,
       color: "#f59e0b",
       icon: <FaBed />,
+      to: "/setup/wards",
     },
     {
       title: "Monthly Billing",
@@ -184,6 +189,7 @@ function adminStats(overview: DashboardOverview | null) {
       change: `${overview.billing.monthBillCount} bills this month`,
       color: "#0f766e",
       icon: <FiCreditCard />,
+      to: "/billing",
     },
     {
       title: "Active Staff",
@@ -191,6 +197,7 @@ function adminStats(overview: DashboardOverview | null) {
       change: `${overview.users.inactive} inactive staff`,
       color: "#7c3aed",
       icon: <FiShield />,
+      to: "/admin/users",
     },
     {
       title: "Open Operations",
@@ -199,9 +206,10 @@ function adminStats(overview: DashboardOverview | null) {
           (overview.operations?.semsas?.unfiled ?? 0) +
           (overview.operations?.security?.currentlyInside ?? 0)
       ),
-      change: "Pending bills, SEMSAS & logs",
+      change: "Pending bills, SEMSAS & gate",
       color: "#dc2626",
       icon: <FiActivity />,
+      to: "/billing",
     },
   ];
 }
@@ -209,10 +217,10 @@ function adminStats(overview: DashboardOverview | null) {
 function frontDeskStats(overview: DashboardOverview | null) {
   if (!overview) {
     return [
-      { title: "Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers /> },
-      { title: "Doctors Available", value: "...", change: "loading", color: "#0f766e", icon: <FiActivity /> },
-      { title: "Appointments", value: "Ready", change: "open scheduler", color: "#7c3aed", icon: <FiCalendar /> },
-      { title: "Bills to Receive", value: "...", change: "loading", color: "#dc2626", icon: <FiCreditCard /> },
+      { title: "Patients", value: "...", change: "loading", color: "#2563eb", icon: <FiUsers />, to: "/patients" },
+      { title: "Doctors Available", value: "...", change: "loading", color: "#0f766e", icon: <FiActivity />, to: "/appointments" },
+      { title: "Appointments", value: "Ready", change: "open scheduler", color: "#7c3aed", icon: <FiCalendar />, to: "/appointments" },
+      { title: "Bills to Receive", value: "...", change: "loading", color: "#dc2626", icon: <FiCreditCard />, to: "/billing" },
     ];
   }
 
@@ -223,6 +231,7 @@ function frontDeskStats(overview: DashboardOverview | null) {
       change: `${overview.patients.registeredToday} new today`,
       color: "#2563eb",
       icon: <FiUsers />,
+      to: "/patients",
     },
     {
       title: "Doctors Available",
@@ -230,13 +239,15 @@ function frontDeskStats(overview: DashboardOverview | null) {
       change: "active doctors",
       color: "#0f766e",
       icon: <FiActivity />,
+      to: "/appointments",
     },
     {
       title: "Appointments",
       value: "Ready",
-      change: "schedule from desk",
+      change: "book from desk",
       color: "#7c3aed",
       icon: <FiCalendar />,
+      to: "/appointments",
     },
     {
       title: "Bills to Receive",
@@ -244,6 +255,7 @@ function frontDeskStats(overview: DashboardOverview | null) {
       change: "pending patient bills",
       color: "#dc2626",
       icon: <FiCreditCard />,
+      to: "/billing",
     },
   ];
 }
@@ -424,16 +436,16 @@ function buildDashboardProfile(roles: string[], permissions: string[]): Dashboar
   }
 
   return {
-    roleLabel: hasRole(roles, "Super Admin") ? "Super Admin" : "Administrator",
-    eyebrow: "Hospital Admin",
+    roleLabel: hasRole(roles, "Super Admin") ? "Super Admin Desk" : "Admin Desk",
+    eyebrow: "Hospital Overview",
     title: "Hospital Overview",
     description:
-      "Manage staff accounts, patient flow, payments, and daily hospital operations in one place.",
+      "Check today's patients, beds, bills, and staff in one view. Click any box below to open that desk.",
     stats: [
-      { title: "Total Patients", value: "3,428", change: "+12.4%", color: "#2563eb", icon: <FiUsers /> },
-      { title: "Appointments", value: "248", change: "+8.1%", color: "#7c3aed", icon: <FiCalendar /> },
-      { title: "Available Beds", value: "64", change: "+4 beds", color: "#0f766e", icon: <FaBed /> },
-      { title: "Pending Bills", value: "128", change: "-3.2%", color: "#dc2626", icon: <FiCreditCard /> },
+      { title: "Total Patients", value: "3,428", change: "+12.4%", color: "#2563eb", icon: <FiUsers />, to: "/patients" },
+      { title: "Appointments", value: "248", change: "+8.1%", color: "#7c3aed", icon: <FiCalendar />, to: "/appointments" },
+      { title: "Available Beds", value: "64", change: "+4 beds", color: "#0f766e", icon: <FaBed />, to: "/setup/wards" },
+      { title: "Pending Bills", value: "128", change: "-3.2%", color: "#dc2626", icon: <FiCreditCard />, to: "/billing" },
     ],
     actions: [
       ...(permissions.includes("users.read") ? [{ label: "Staff & Users", to: "/admin/users", icon: <FiUsers />, primary: true, detail: "Add staff, reset passwords", tone: "blue" as const }] : []),
@@ -476,10 +488,10 @@ function RoleActionGrid({ actions }: { actions: DashboardAction[] }) {
     <div className="role-action-section">
       <div className="role-action-section-header">
         <div className="role-action-section-title">
-          <h3>Quick Operations &amp; Portals</h3>
-          <p>Role-tailored shortcuts and high-frequency workflows</p>
+          <h3>What do you want to do?</h3>
+          <p>Click any desk below to jump straight there</p>
         </div>
-        <span className="role-action-count-pill">{actions.length} shortcuts</span>
+        <span className="role-action-count-pill">{actions.length} desks</span>
       </div>
 
       <section className="role-action-grid" aria-label="Role shortcuts">
@@ -504,6 +516,7 @@ function RoleActionGrid({ actions }: { actions: DashboardAction[] }) {
   );
 }
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const roles = user?.roles ?? [];
   const permissions = user?.permissions ?? [];
@@ -594,6 +607,43 @@ export default function DashboardPage() {
           </div>
         </motion.section>
 
+        {isAdminDashboard && (
+          <section className="dashboard-attention-strip" aria-label="Needs attention today">
+            <div className="dashboard-attention-pills">
+              <span className="dashboard-attention-label">Today&apos;s pulse:</span>
+              <Link to="/billing" className="dashboard-attention-pill danger">
+                <strong>{formatNumber(overview?.billing?.pendingBills ?? 0)}</strong> pending bills
+              </Link>
+              <Link to="/setup/wards" className="dashboard-attention-pill ok">
+                <strong>{formatNumber(overview?.operations?.beds?.available ?? 0)}</strong> free beds
+              </Link>
+              <Link to="/security/entry" className="dashboard-attention-pill info">
+                <strong>{formatNumber(overview?.operations?.security?.currentlyInside ?? 0)}</strong> inside gate
+              </Link>
+              <Link to="/operations/semsas" className="dashboard-attention-pill warn">
+                <strong>{formatNumber(overview?.operations?.semsas?.unfiled ?? 0)}</strong> unfiled SEMSAS
+              </Link>
+            </div>
+            <div className="dashboard-quick-cta-row">
+              {permissions.includes("patients.create") && (
+                <Link to="/register-patient" className="dashboard-quick-cta primary">
+                  + Register Patient
+                </Link>
+              )}
+              {permissions.includes("appointments.read") && (
+                <Link to="/appointments" className="dashboard-quick-cta">
+                  + Book Visit
+                </Link>
+              )}
+              {permissions.includes("billing.read") && (
+                <Link to="/billing" className="dashboard-quick-cta">
+                  + Create Bill
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
+
         <motion.div
           className="stats-grid"
           initial="hidden"
@@ -608,6 +658,7 @@ export default function DashboardPage() {
                 icon={stat.icon}
                 change={stat.change}
                 color={stat.color}
+                onClick={stat.to ? () => navigate(stat.to!) : undefined}
               />
             </motion.div>
           ))}

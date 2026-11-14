@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { KeyboardEvent, ReactNode } from "react";
 
 interface Props {
   title: string;
@@ -6,18 +6,39 @@ interface Props {
   icon: ReactNode;
   change?: string;
   color?: string;
+  onClick?: () => void;
+  actionLabel?: string;
 }
 
-export default function StatCard({ title, value, icon, change, color = "#2563eb" }: Props) {
-  const renderChangeText = () => {
-    if (!change) return null;
-    return change.trim();
+export default function StatCard({
+  title,
+  value,
+  icon,
+  change,
+  color = "#2563eb",
+  onClick,
+  actionLabel = "Open →",
+}: Props) {
+  const changeText = change ? change.trim() : null;
+  const isClickable = Boolean(onClick);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
   };
 
-  const changeText = renderChangeText();
-
   return (
-    <div className="stat-card" title={`${title}: ${value}`}>
+    <div
+      className={`stat-card${isClickable ? " clickable" : ""}`}
+      title={`${title}: ${value}`}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+    >
       <div className="stat-top">
         <div className="stat-info">
           <p title={title}>{title}</p>
@@ -29,9 +50,16 @@ export default function StatCard({ title, value, icon, change, color = "#2563eb"
         </div>
       </div>
 
-      {changeText && (
-        <div className="stat-change" title={changeText}>
-          {changeText}
+      {(changeText || isClickable) && (
+        <div className="stat-footer">
+          {changeText ? (
+            <div className="stat-change" title={changeText}>
+              {changeText}
+            </div>
+          ) : (
+            <span />
+          )}
+          {isClickable && <span className="stat-open-cue">{actionLabel}</span>}
         </div>
       )}
     </div>

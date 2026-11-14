@@ -52,6 +52,7 @@ export type OnboardingStep = {
   highlights: string[];
   path?: string;
   actionLabel?: string;
+  targetSelector?: string;
 };
 
 export type RoleOnboardingProfile = {
@@ -667,7 +668,13 @@ export default function RoleTour() {
   const [showWelcomePrompt, setShowWelcomePrompt] = useState(false);
   const [viewMode, setViewMode] = useState<"step" | "overview">("step");
   const [stepIndex, setStepIndex] = useState(0);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(true);
+  const [spotlightRect, setSpotlightRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const userId = user?.id ?? "guest";
   const activeStep = profile.steps[stepIndex] || profile.steps[0];
@@ -740,42 +747,101 @@ export default function RoleTour() {
   useEffect(() => {
     const handleStartTour = () => {
       setShowWelcomePrompt(false);
-      setDontShowAgain(false);
+      setDontShowAgain(true);
       setStepIndex(0);
       setViewMode("step");
       setIsOpen(true);
+      markTourDismissed(userId, profile.id);
       sendEvent("started", { stepIndex: 0 });
     };
 
     window.addEventListener(TOUR_EVENT, handleStartTour);
     return () => window.removeEventListener(TOUR_EVENT, handleStartTour);
-  }, [sendEvent]);
+  }, [profile.id, sendEvent, userId]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSpotlightRect(null);
+      return;
+    }
+    sendEvent("step_viewed");
+
+    const selector =
+      activeStep?.targetSelector ||
+      (stepIndex === 0 ? '[data-tour-region="desktop-sidebar"]' : undefined) ||
+      (stepIndex === profile.steps.length - 1 ? '[data-tour-target="theme-toggle"]' : undefined);
+
+    if (!selector || typeof document === "undefined") {
+      setSpotlightRect(null);
+      return;
+    }
+
+    const updateRect = () => {
+      const el = document.querySelector(selector);
+      if (!el) {
+        setSpotlightRect(null);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        setSpotlightRect(null);
+        return;
+      }
+      setSpotlightRect({
+        top: Math.max(4, rect.top - 4),
+        left: Math.max(4, rect.left - 4),
+        width: rect.width + 8,
+        height: rect.height + 8,
+      });
+    };
+
+    updateRect();
+    window.addEventListener("resize", updateRect);
+    return () => window.removeEventListener("resize", updateRect);
+  }, [activeStep?.targetSelector, isOpen, profile.steps.length, sendEvent, stepIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
-    sendEvent("step_viewed");
-  }, [isOpen, sendEvent, stepIndex]);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose("completed");
+      } else if (e.key === "ArrowRight" && viewMode === "step") {
+        if (isLastStep) {
+          handleClose("completed");
+        } else {
+          setStepIndex((prev) => Math.min(profile.steps.length - 1, prev + 1));
+        }
+      } else if (e.key === "ArrowLeft" && viewMode === "step") {
+        setStepIndex((prev) => Math.max(0, prev - 1));
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 
   const handleClose = (action: "skipped" | "completed" | "dont_show_again") => {
-    const isDismiss = action === "dont_show_again" || dontShowAgain;
+    // Once an employee views or dismisses the tour once, do not auto-show it again
     if (typeof window !== "undefined") {
       sessionStorage.setItem(sessionKey(userId, profile.id), "true");
-
-      if (isDismiss) {
-        markTourDismissed(userId, profile.id);
-      }
+      markTourDismissed(userId, profile.id);
     }
 
-    sendEvent(isDismiss ? "dont_show_again" : action);
+    sendEvent(action === "skipped" ? "dont_show_again" : action);
     setIsOpen(false);
     setShowWelcomePrompt(false);
   };
 
-  const handleNavigateToStep = (path?: string) => {
+  const handleNavigateToStep = (path?: string, keepOpen = false) => {
     if (!path) return;
     sendEvent("page_opened", { path });
-    handleClose("completed");
     navigate(path);
+    if (keepOpen) {
+      if (!isLastStep) {
+        setStepIndex((prev) => Math.min(profile.steps.length - 1, prev + 1));
+      }
+    } else {
+      handleClose("completed");
+    }
   };
 
   if (!user) return null;
@@ -802,18 +868,15 @@ export default function RoleTour() {
               <button
                 type="button"
                 className="toast-close-btn modal-close-btn"
-                onClick={() => {
-                  setShowWelcomePrompt(false);
-                  sessionStorage.setItem(sessionKey(userId, profile.id), "true");
-                }}
+                onClick={() => handleClose("dont_show_again")}
                 aria-label="Dismiss guide invitation"
                 title="Dismiss"
               >
                 <FiX size={18} strokeWidth={2.5} />
               </button>
             </div>
-            <strong>New here? Take a 1-min walkthrough</strong>
-            <p>Learn key workflows and shortcuts tailored for your role.</p>
+            <strong>Quick 1-min guide for your desk</strong>
+            <p>See where your daily tools are. This won&apos;t pop up again once you view or close it.</p>
 
             <div className="toast-actions">
               <button
@@ -821,22 +884,20 @@ export default function RoleTour() {
                 className="toast-start-btn"
                 onClick={() => {
                   setShowWelcomePrompt(false);
+                  markTourDismissed(userId, profile.id);
                   setIsOpen(true);
                   sendEvent("started", { stepIndex: 0 });
                 }}
               >
                 <FiZap />
-                Start Walkthrough
+                Start Interactive Guide
               </button>
               <button
                 type="button"
                 className="toast-skip-btn"
-                onClick={() => {
-                  setShowWelcomePrompt(false);
-                  sessionStorage.setItem(sessionKey(userId, profile.id), "true");
-                }}
+                onClick={() => handleClose("dont_show_again")}
               >
-                Explore on my own
+                Got it, explore now
               </button>
               <button
                 type="button"
@@ -853,7 +914,7 @@ export default function RoleTour() {
         </aside>
       )}
 
-      {/* 2. MODERN FULL ONBOARDING HUB MODAL */}
+      {/* 2. INTERACTIVE ONBOARDING GUIDE + LIVE SPOTLIGHT */}
       {isOpen && (
         <div
           className="onboarding-modal-overlay"
@@ -862,9 +923,21 @@ export default function RoleTour() {
           aria-labelledby="onboarding-modal-title"
           style={customStyle}
         >
+          {spotlightRect && viewMode === "step" && (
+            <div
+              className="tour-spotlight-ring"
+              aria-hidden="true"
+              style={{
+                top: spotlightRect.top,
+                left: spotlightRect.left,
+                width: spotlightRect.width,
+                height: spotlightRect.height,
+              }}
+            />
+          )}
           <div
             className="onboarding-backdrop"
-            onClick={() => handleClose(dontShowAgain ? "dont_show_again" : "skipped")}
+            onClick={() => handleClose("completed")}
           />
 
           <article className="onboarding-sheet">
@@ -973,16 +1046,26 @@ export default function RoleTour() {
                       <div className="quick-action-bar">
                         <div className="path-indicator">
                           <FiMapPin />
-                          <span>Direct workspace: {activeStep.path}</span>
+                          <span>Screen: {activeStep.path}</span>
                         </div>
-                        <button
-                          type="button"
-                          className="open-workspace-btn"
-                          onClick={() => handleNavigateToStep(activeStep.path)}
-                        >
-                          {activeStep.actionLabel || "Open this screen"}
-                          <FiArrowRight />
-                        </button>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="toast-skip-btn"
+                            onClick={() => handleNavigateToStep(activeStep.path, true)}
+                            title="Open this screen and continue the guide"
+                          >
+                            Preview &amp; Next
+                          </button>
+                          <button
+                            type="button"
+                            className="open-workspace-btn"
+                            onClick={() => handleNavigateToStep(activeStep.path, false)}
+                          >
+                            {activeStep.actionLabel || "Open this screen"}
+                            <FiArrowRight />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
