@@ -3160,13 +3160,13 @@ export default function DoctorDashboardPage() {
                 </form>
 
                 {/* SENT PRESCRIPTIONS HISTORY FOR THIS PATIENT */}
-                <div style={{ marginTop: "1.75rem", paddingTop: "1.25rem", borderTop: "1px solid var(--border-color, #e2e8f0)" }}>
-                  <h3 style={{ margin: "0 0 0.75rem", fontSize: "1rem", fontWeight: 750 }}>
+                <div style={{ marginTop: "1.75rem", paddingTop: "1.25rem", borderTop: "1px solid var(--readable-border, #e2e8f0)" }}>
+                  <h3 style={{ margin: "0 0 0.75rem", fontSize: "1rem", fontWeight: 750, color: "var(--readable-strong)" }}>
                     Sent Prescriptions for {patientName(selectedPatient)} ({patientPrescriptions.length})
                   </h3>
 
                   {patientPrescriptions.length === 0 ? (
-                    <p style={{ color: "var(--muted)", fontSize: "0.86rem", margin: 0 }}>
+                    <p style={{ color: "var(--readable-muted)", fontSize: "0.86rem", margin: 0 }}>
                       No prescriptions sent yet for this patient.
                     </p>
                   ) : (
@@ -3175,26 +3175,27 @@ export default function DoctorDashboardPage() {
                         <div
                           key={rx.id}
                           style={{
-                            padding: "0.9rem 1rem",
-                            borderRadius: "10px",
-                            border: "1px solid var(--border-color, #e2e8f0)",
-                            background: "var(--bg-hover, #f8fafc)",
+                            padding: "0.95rem 1.05rem",
+                            borderRadius: "12px",
+                            border: "1px solid var(--readable-border, #e2e8f0)",
+                            background: "var(--readable-surface-soft)",
+                            color: "var(--readable-text)",
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "0.5rem" }}>
                             <div>
-                              <strong>{rx.prescriptionNumber}</strong>{" "}
-                              <small style={{ color: "var(--muted)" }}>• {formatDate(rx.createdAt)}</small>
+                              <strong style={{ color: "var(--readable-strong)" }}>{rx.prescriptionNumber}</strong>{" "}
+                              <small style={{ color: "var(--readable-muted)" }}>• {formatDate(rx.createdAt)}</small>
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                               <span
                                 style={{
                                   fontSize: "0.74rem",
                                   fontWeight: 700,
-                                  padding: "2px 8px",
+                                  padding: "3px 10px",
                                   borderRadius: "999px",
-                                  background: rx.status === "dispensed" ? "rgba(5, 150, 105, 0.14)" : "rgba(217, 119, 6, 0.14)",
-                                  color: rx.status === "dispensed" ? "#047857" : "#b45309",
+                                  background: rx.status === "dispensed" ? "rgba(16, 185, 129, 0.16)" : "rgba(245, 158, 11, 0.18)",
+                                  color: rx.status === "dispensed" ? "#10b981" : "#f59e0b",
                                 }}
                               >
                                 {rx.status === "dispensed"
@@ -3218,10 +3219,10 @@ export default function DoctorDashboardPage() {
                             </div>
                           </div>
 
-                          <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", display: "grid", gap: "4px" }}>
+                          <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.86rem", display: "grid", gap: "5px", color: "var(--readable-text)" }}>
                             {rx.items.map((item) => (
-                              <li key={item.id}>
-                                <strong>{item.medicationName}</strong>
+                              <li key={item.id} style={{ color: "var(--readable-text)" }}>
+                                <strong style={{ color: "var(--readable-strong)" }}>{item.medicationName}</strong>
                                 {item.strength ? ` (${item.strength})` : ""} — {item.dose}, {item.frequency} for {item.duration} (Qty: {item.quantity ?? 1})
                                 {item.instructions ? ` · ${item.instructions}` : ""}
                               </li>
@@ -3916,8 +3917,16 @@ export default function DoctorDashboardPage() {
                   Dr. {printingEncounter.doctor?.firstName ?? user?.firstName}{" "}
                   {printingEncounter.doctor?.lastName ?? user?.lastName}
                 </strong>
+                <div className="doctor-signature" style={{ marginTop: "20px" }}>Doctor&apos;s Signature</div>
               </div>
-              <div className="doctor-signature">Doctor's Signature & Stamp</div>
+              <div style={{ justifySelf: "end" }}>
+                <OfficialReceiptStamp
+                  isSettled
+                  date={formatDate(printingEncounter.startedAt)}
+                  department="CLINICAL CONSULTATION"
+                  size="sm"
+                />
+              </div>
             </footer>
           </section>
         )}

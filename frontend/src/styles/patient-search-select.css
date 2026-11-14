@@ -901,3 +901,52 @@
 .dark .patient-detail-grid dt {
   color: #94a3b8;
 }
+
+/* Prevent overlapping patient rows & keep crisp card separation in light/dark mode */
+.patient-picker-popover {
+  z-index: 2500;
+}
+
+.picker-list {
+  max-height: 340px;
+  padding: 10px;
+  gap: 8px;
+}
+
+.patient-row-card {
+  flex: 0 0 auto;
+  width: 100%;
+  height: auto;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  align-items: flex-start;
+  background: var(--readable-surface-soft, rgba(248, 250, 252, 0.78));
+  border: 1px solid var(--readable-border, #e2e8f0);
+  border-left: 3px solid transparent;
+}
+
+[data-theme="dark"] .patient-row-card,
+.dark .patient-row-card {
+  background: rgba(15, 39, 68, 0.72);
+  border: 1px solid rgba(94, 191, 219, 0.22);
+  border-left: 3px solid transparent;
+}
+
+.patient-row-card:hover,
+.patient-row-card.highlighted {
+  transform: none;
+  border-color: rgba(8, 126, 189, 0.45);
+  border-left-color: #087ebd;
+  box-shadow: 0 4px 12px rgba(8, 126, 189, 0.12);
+}
+
+[data-theme="dark"] .patient-row-card:hover,
+[data-theme="dark"] .patient-row-card.highlighted,
+.dark .patient-row-card:hover,
+.dark .patient-row-card.highlighted {
+  transform: none;
+  background: rgba(16, 169, 214, 0.18);
+  border-color: rgba(16, 169, 214, 0.45);
+  border-left-color: #10a9d6;
+}

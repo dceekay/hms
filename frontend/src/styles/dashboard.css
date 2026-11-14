@@ -9814,3 +9814,58 @@ body.light-theme .ws-active-session-bar {
     align-items: flex-start;
   }
 }
+
+/* Print layout polish for doctor consultation & prescription slips */
+@media print {
+  .doctor-print-template {
+    padding: 16mm 18mm;
+    color: #0f172a;
+    font-family: "Segoe UI", Arial, sans-serif;
+    box-sizing: border-box;
+  }
+
+  .doctor-print-template header {
+    padding-bottom: 14px;
+    border-bottom: 2.5px solid #0f4c81;
+  }
+
+  .doctor-print-template header span {
+    background: #eef6ff;
+    color: #0f4c81;
+    border: 1px solid #bfdbfe;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  .doctor-print-meta > div {
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .doctor-print-section {
+    padding: 14px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    min-height: 110mm;
+    align-content: start;
+  }
+
+  .doctor-print-section h2 {
+    font-size: 15px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .doctor-print-template footer {
+    grid-template-columns: 1fr auto;
+    margin-top: 22px;
+    border-top: 1.5px solid #cbd5e1;
+    padding-top: 16px;
+  }
+}
