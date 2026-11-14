@@ -30,6 +30,9 @@ import {
   FiEye,
 } from "react-icons/fi";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import DoctorSmartNoteCapture, {
+  FieldMicButton,
+} from "../../components/doctor/DoctorSmartNoteCapture";
 import {
   FaFlask,
   FaNotesMedical,
@@ -860,6 +863,54 @@ export default function DoctorDashboardPage() {
     void showSuccessWithSound({
       title: "Encounter Note Saved",
       text: queued ? "Encounter saved offline and queued for cloud sync." : `Consultation note recorded for ${patientName(selectedPatient)}.`,
+    });
+  };
+
+  const handleQuickSaveCapturedNote = async (captured: {
+    chiefComplaint?: string;
+    history?: string;
+    examination?: string;
+    diagnosis?: string;
+    plan?: string;
+    remarks?: string;
+  }) => {
+    if (!selectedPatient) return;
+
+    const payload = {
+      ...encounterForm,
+      chiefComplaint: captured.chiefComplaint?.trim() || encounterForm.chiefComplaint || "Captured Doctor Note",
+      history: captured.history?.trim() || encounterForm.history,
+      examination: captured.examination?.trim() || encounterForm.examination,
+      diagnosis: captured.diagnosis?.trim() || encounterForm.diagnosis || "Clinical Review",
+      plan: captured.plan?.trim() || encounterForm.plan,
+      remarks: captured.remarks?.trim() || encounterForm.remarks,
+    };
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+
+    const { encounter, error: saveError, queued } = await createClinicalEncounter({
+      ...payload,
+      patientId: selectedPatient.id,
+    });
+
+    setSaving(false);
+
+    if (!encounter) {
+      setError(saveError ?? "Unable to save captured consultation note.");
+      return;
+    }
+
+    setActiveEncounter(encounter);
+    setEncounterForm(encounterToForm(encounter));
+    setAdmissionForm((current) => ({ ...current, encounterId: current.encounterId || encounter.id }));
+    setReferralForm((current) => ({ ...current, encounterId: current.encounterId || encounter.id }));
+    setMessage(queued ? "Captured note saved offline (will sync to cloud)." : "Captured note saved successfully.");
+    setPatientHistory((current) => [encounter, ...current.filter((item) => item.id !== encounter.id)]);
+    void showSuccessWithSound({
+      title: "Captured Note Saved",
+      text: queued ? "Saved offline and queued for sync." : `Clinical note recorded for ${patientName(selectedPatient)}.`,
     });
   };
 
@@ -2590,6 +2641,23 @@ export default function DoctorDashboardPage() {
             {/* STEP 1: CLINICAL NOTE & DIAGNOSIS */}
             {patientTab === "note" && (
               <section className="doctor-panel-card">
+                <DoctorSmartNoteCapture
+                  patientName={patientName(selectedPatient)}
+                  saving={saving}
+                  onApplyStructured={(fields) =>
+                    setEncounterForm((prev) => ({
+                      ...prev,
+                      chiefComplaint: fields.chiefComplaint || prev.chiefComplaint,
+                      history: fields.history || prev.history,
+                      examination: fields.examination || prev.examination,
+                      diagnosis: fields.diagnosis || prev.diagnosis,
+                      plan: fields.plan || prev.plan,
+                      remarks: fields.remarks || prev.remarks,
+                    }))
+                  }
+                  onQuickSaveStructured={handleQuickSaveCapturedNote}
+                />
+
                 <form onSubmit={handleSaveEncounter} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {/* Visit Type Presets */}
                   <div>
@@ -2613,9 +2681,19 @@ export default function DoctorDashboardPage() {
                   {/* Chief Complaint & History */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
                     <div>
-                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                        Chief Complaint (Patient's main concern)
-                      </label>
+                      <div className="doctor-field-label-row">
+                        <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
+                          Chief Complaint (Patient's main concern)
+                        </label>
+                        <FieldMicButton
+                          onTranscript={(text) =>
+                            setEncounterForm((prev) => ({
+                              ...prev,
+                              chiefComplaint: prev.chiefComplaint ? `${prev.chiefComplaint} ${text}` : text,
+                            }))
+                          }
+                        />
+                      </div>
                       <textarea
                         className="form-control"
                         rows={3}
@@ -2627,9 +2705,19 @@ export default function DoctorDashboardPage() {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                        History of Presenting Illness (HPI)
-                      </label>
+                      <div className="doctor-field-label-row">
+                        <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
+                          History of Presenting Illness (HPI)
+                        </label>
+                        <FieldMicButton
+                          onTranscript={(text) =>
+                            setEncounterForm((prev) => ({
+                              ...prev,
+                              history: prev.history ? `${prev.history} ${text}` : text,
+                            }))
+                          }
+                        />
+                      </div>
                       <textarea
                         className="form-control"
                         rows={3}
@@ -2642,9 +2730,19 @@ export default function DoctorDashboardPage() {
 
                   {/* Physical Examination */}
                   <div>
-                    <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                      Physical Examination Findings
-                    </label>
+                    <div className="doctor-field-label-row">
+                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
+                        Physical Examination Findings
+                      </label>
+                      <FieldMicButton
+                        onTranscript={(text) =>
+                          setEncounterForm((prev) => ({
+                            ...prev,
+                            examination: prev.examination ? `${prev.examination} ${text}` : text,
+                          }))
+                        }
+                      />
+                    </div>
                     <textarea
                       className="form-control"
                       rows={2}
@@ -2656,9 +2754,19 @@ export default function DoctorDashboardPage() {
 
                   {/* Diagnosis & Presets */}
                   <div>
-                    <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
-                      Clinical Diagnosis / Working Impression
-                    </label>
+                    <div className="doctor-field-label-row">
+                      <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: "0.3rem" }}>
+                        Clinical Diagnosis / Working Impression
+                      </label>
+                      <FieldMicButton
+                        onTranscript={(text) =>
+                          setEncounterForm((prev) => ({
+                            ...prev,
+                            diagnosis: prev.diagnosis ? `${prev.diagnosis}, ${text}` : text,
+                          }))
+                        }
+                      />
+                    </div>
                     <input
                       className="form-control"
                       value={encounterForm.diagnosis}

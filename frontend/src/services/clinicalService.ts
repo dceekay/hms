@@ -504,3 +504,54 @@ export async function createReferral(values: ReferralFormValues) {
     };
   }
 }
+
+export type ClinicalAiCaptureResponse = {
+  provider: "gemini" | "none";
+  rawText: string;
+  structured: {
+    chiefComplaint?: string;
+    history?: string;
+    examination?: string;
+    diagnosis?: string;
+    plan?: string;
+    remarks?: string;
+  } | null;
+};
+
+export async function runClinicalNoteOcr(
+  imageDataUrl: string,
+  mimeType = "image/webp"
+): Promise<ClinicalAiCaptureResponse> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return { provider: "none", rawText: "", structured: null };
+  }
+
+  try {
+    const response = await api.post<{ data: ClinicalAiCaptureResponse }>(
+      "/clinical/ocr-note",
+      { imageDataUrl, mimeType }
+    );
+    return response.data.data;
+  } catch {
+    return { provider: "none", rawText: "", structured: null };
+  }
+}
+
+export async function transcribeClinicalVoiceNote(
+  audioDataUrl: string,
+  mimeType = "audio/webm"
+): Promise<ClinicalAiCaptureResponse> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return { provider: "none", rawText: "", structured: null };
+  }
+
+  try {
+    const response = await api.post<{ data: ClinicalAiCaptureResponse }>(
+      "/clinical/transcribe-note",
+      { audioDataUrl, mimeType }
+    );
+    return response.data.data;
+  } catch {
+    return { provider: "none", rawText: "", structured: null };
+  }
+}

@@ -27,6 +27,16 @@ router.post(
   authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
   controller.createEncounter
 );
+router.post(
+  "/ocr-note",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.ocrNote
+);
+router.post(
+  "/transcribe-note",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.transcribeNote
+);
 router.patch(
   "/encounters/:id",
   authorizePermissionsOrRoles(["clinical.update"], ["Doctor", "Administrator", "Super Admin"]),

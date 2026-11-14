@@ -14,6 +14,18 @@ import {
   updateReferralStatusSchema,
 } from "./dto";
 import { ClinicalService } from "./service";
+import { extractOcrFromNoteImage, transcribeClinicalAudio } from "./aiCapture";
+import { z } from "zod";
+
+const ocrNoteSchema = z.object({
+  imageDataUrl: z.string().min(20),
+  mimeType: z.string().optional(),
+});
+
+const transcribeNoteSchema = z.object({
+  audioDataUrl: z.string().min(20),
+  mimeType: z.string().optional(),
+});
 
 export class ClinicalController extends BaseController {
   constructor(private readonly clinicalService = new ClinicalService()) {
@@ -153,6 +165,26 @@ export class ClinicalController extends BaseController {
       );
 
       this.ok(res, "Referral updated successfully", referral);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  ocrNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { imageDataUrl, mimeType } = ocrNoteSchema.parse(req.body);
+      const result = await extractOcrFromNoteImage(imageDataUrl, mimeType);
+      this.ok(res, "OCR extraction completed", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  transcribeNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { audioDataUrl, mimeType } = transcribeNoteSchema.parse(req.body);
+      const result = await transcribeClinicalAudio(audioDataUrl, mimeType);
+      this.ok(res, "Audio transcription completed", result);
     } catch (error) {
       next(error);
     }

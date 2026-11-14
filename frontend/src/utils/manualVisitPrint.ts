@@ -121,12 +121,12 @@ export async function printManualDoctorVisitSlip(options: {
   const formattedDate = Number.isNaN(visitDate.getTime())
     ? new Date().toLocaleString("en-NG")
     : visitDate.toLocaleString("en-NG", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   const shortDate = Number.isNaN(visitDate.getTime())
     ? new Date().toLocaleDateString("en-NG")
     : visitDate.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
@@ -384,14 +384,13 @@ export async function printManualDoctorVisitSlip(options: {
     </div>
 
     <div class="verification-row">
-      ${
-        qrDataUrl
-          ? `<div class="qr-verify">
+      ${qrDataUrl
+      ? `<div class="qr-verify">
               <img src="${qrDataUrl}" alt="Verify Doctor Visit QR" />
               <small><strong>Scan to Verify Dr Visit</strong><br />Patient: ${escapeHtml(fullName)}<br />MRN: ${escapeHtml(patient.mrn || "Pending")}</small>
             </div>`
-          : `<div></div>`
-      }
+      : `<div></div>`
+    }
       ${stampHtml}
       <div class="sig">Doctor's Signature &amp; Date</div>
     </div>
@@ -461,8 +460,8 @@ export async function printFullHospitalReport(options: {
   const encountersHtml =
     encounters.length > 0
       ? encounters
-          .map(
-            (enc) => `
+        .map(
+          (enc) => `
         <div class="visit-card">
           <div class="visit-card-head">
             <strong>${escapeHtml(formatDateTime(enc.createdAt))}</strong>
@@ -478,8 +477,8 @@ export async function printFullHospitalReport(options: {
           </div>
         </div>
       `
-          )
-          .join("")
+        )
+        .join("")
       : `<p class="empty-note">No electronic clinical encounters recorded yet. Use the clinical notes section below for manual entry.</p>`;
 
   const appointmentsHtml =
@@ -497,9 +496,9 @@ export async function printFullHospitalReport(options: {
             </thead>
             <tbody>
               ${appointments
-                .slice(0, 10)
-                .map(
-                  (appt) => `
+        .slice(0, 10)
+        .map(
+          (appt) => `
                 <tr>
                   <td>${escapeHtml(formatDateTime(appt.scheduledFor))}</td>
                   <td>${escapeHtml(appt.doctor ? `Dr. ${appt.doctor.firstName} ${appt.doctor.lastName}` : "On-Duty Doctor")}</td>
@@ -507,8 +506,8 @@ export async function printFullHospitalReport(options: {
                   <td>${escapeHtml(appt.status)}</td>
                 </tr>
               `
-                )
-                .join("")}
+        )
+        .join("")}
             </tbody>
           </table>
         </div>`
@@ -777,9 +776,8 @@ export async function printFullHospitalReport(options: {
     ${appointmentsHtml}
 
     <div class="verification-footer">
-      ${
-        qrDataUrl
-          ? `<div class="qr-verify">
+      ${qrDataUrl
+      ? `<div class="qr-verify">
               <img src="${qrDataUrl}" alt="QR Code to Verify Doctor Visit" />
               <small>
                 <strong>Verify Doctor Visit (QR)</strong><br />
@@ -788,8 +786,8 @@ export async function printFullHospitalReport(options: {
                 MRN: ${escapeHtml(patient.mrn || "Pending")}
               </small>
             </div>`
-          : `<div></div>`
-      }
+      : `<div></div>`
+    }
       ${stampHtml}
       <div class="sig-box">
         <div class="sig-line">${escapeHtml(latestDoctor)}</div>
