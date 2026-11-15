@@ -33,6 +33,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import DoctorSmartNoteCapture, {
   FieldMicButton,
 } from "../../components/doctor/DoctorSmartNoteCapture";
+import { CARE_BUNDLES, type CareBundle } from "../../utils/careBundles";
 import {
   FaFlask,
   FaNotesMedical,
@@ -970,6 +971,69 @@ export default function DoctorDashboardPage() {
             : "1 tablet"),
     }));
     setShowMedPicker(false);
+  };
+
+  const handleApplyCareBundle = (bundle: CareBundle) => {
+    setEncounterForm((prev) => ({
+      ...prev,
+      diagnosis: prev.diagnosis.trim() ? prev.diagnosis : bundle.diagnosis,
+      plan: prev.plan.trim() ? `${prev.plan}\n${bundle.plan}` : bundle.plan,
+    }));
+
+    const matchedLabs: SelectedLabOrder[] = [];
+    for (const kw of bundle.labKeywords) {
+      const tpl = templates.find(
+        (t) =>
+          t.name.toLowerCase().includes(kw) ||
+          (t.code && t.code.toLowerCase().includes(kw))
+      );
+      if (tpl && !matchedLabs.some((m) => m.templateId === tpl.id)) {
+        matchedLabs.push({
+          templateId: tpl.id,
+          templateName: tpl.name,
+          category: tpl.category ?? undefined,
+          specimen: tpl.specimen ?? undefined,
+        });
+      }
+    }
+
+    if (matchedLabs.length > 0) {
+      setSelectedLabOrders((prev) => {
+        const next = [...prev];
+        for (const lab of matchedLabs) {
+          if (!next.some((item) => item.templateId === lab.templateId)) {
+            next.push(lab);
+          }
+        }
+        return next;
+      });
+    }
+
+    const meds = workspace?.medications ?? [];
+    const stagedRx: PrescriptionItemFormValues[] = bundle.rxItems.map((item) => {
+      const kw = item.medicationName.toLowerCase().split(" ")[0];
+      const matched = meds.find((med) => {
+        const hay = `${med.name} ${med.genericName || ""} ${med.brandName || ""}`.toLowerCase();
+        return hay.includes(kw);
+      });
+      return {
+        medicationId: matched?.id ?? "",
+        medicationName: matched ? matched.name : item.medicationName,
+        strength: matched?.strength ?? item.strength ?? "",
+        dosageForm: matched?.dosageForm ?? "",
+        dose: item.dose,
+        frequency: item.frequency,
+        duration: item.duration,
+        quantity: String(item.quantity),
+        instructions: item.instructions ?? "",
+      };
+    });
+
+    setPrescriptionItems((prev) => [...prev, ...stagedRx]);
+    setError(null);
+    setMessage(
+      `Applied "${bundle.label}" bundle: staged ${matchedLabs.length} lab test(s) and ${stagedRx.length} prescription item(s). Review Rx & Lab tabs before sending.`
+    );
   };
 
   const handleApplyRxRegimen = (regimen: (typeof COMMON_RX_REGIMENS)[number]) => {
@@ -2657,6 +2721,40 @@ export default function DoctorDashboardPage() {
                   }
                   onQuickSaveStructured={handleQuickSaveCapturedNote}
                 />
+
+                {/* 1-Click Care Bundles (Order Sets) */}
+                <div
+                  style={{
+                    marginBottom: "1rem",
+                    padding: "0.85rem 1rem",
+                    borderRadius: "12px",
+                    border: "1px solid var(--readable-border, #e2e8f0)",
+                    background: "var(--readable-surface-soft)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px", marginBottom: "0.55rem" }}>
+                    <strong style={{ fontSize: "0.86rem", color: "var(--readable-strong)" }}>
+                      ⚡ 1-Click Care Bundles (Auto-Stage Diagnosis, Lab &amp; Rx)
+                    </strong>
+                    <small style={{ color: "var(--readable-muted)", fontSize: "0.76rem" }}>
+                      Stages labs &amp; medicines into your Rx/Lab tabs for review
+                    </small>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {CARE_BUNDLES.map((bundle) => (
+                      <button
+                        key={bundle.id}
+                        type="button"
+                        className="doctor-action-btn secondary"
+                        style={{ padding: "0.42rem 0.78rem", fontSize: "0.8rem" }}
+                        title={bundle.summary}
+                        onClick={() => handleApplyCareBundle(bundle)}
+                      >
+                        + {bundle.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <form onSubmit={handleSaveEncounter} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   {/* Visit Type Presets */}

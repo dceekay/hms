@@ -9,6 +9,7 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
 import { ApiError } from "../../shared/errors/ApiError";
 import { NotificationService } from "../notifications/service";
+import { autoCaptureServiceBill } from "../billing/autoCharge";
 import {
   CompleteLaboratoryRequestDto,
   CreateLaboratoryRequestDto,
@@ -399,6 +400,15 @@ export class LaboratoryService {
         },
       });
 
+      await autoCaptureServiceBill({
+        patientId: request.patientId,
+        serviceName: request.template.name,
+        fallbackKeywords: [request.template.category ?? "", "Laboratory"],
+        notes: `Auto-charge for lab request: ${request.template.name}`,
+        recordedById,
+        dedupeKey: request.requestNumber,
+      });
+
       return request;
     } catch (error) {
       if (isDatabaseUnavailableError(error)) {
@@ -477,6 +487,19 @@ export class LaboratoryService {
         linkUrl: "/laboratory",
         metadata: { requestIds: requests.map((request) => request.id), patientId: requests[0].patientId },
       });
+
+      await Promise.all(
+        requests.map((req) =>
+          autoCaptureServiceBill({
+            patientId: req.patientId,
+            serviceName: req.template.name,
+            fallbackKeywords: [req.template.category ?? "", "Laboratory"],
+            notes: `Auto-charge for lab request: ${req.template.name}`,
+            recordedById,
+            dedupeKey: req.requestNumber,
+          })
+        )
+      );
 
       return requests;
     } catch (error) {

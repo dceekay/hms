@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FiCalendar,
   FiClock,
@@ -13,10 +13,12 @@ import {
 } from "react-icons/fi";
 import { FaNotesMedical, FaUserMd, FaHospitalUser, FaPrescriptionBottleAlt } from "react-icons/fa";
 import type { Patient } from "../../types/patient";
-import type { ClinicalEncounter } from "../../types/clinical";
+import type { ClinicalEncounter, Prescription } from "../../types/clinical";
 import type { Appointment } from "../../types/appointment";
-import { fetchClinicalEncounters } from "../../services/clinicalService";
+import type { LaboratoryRequest } from "../../types/laboratory";
+import { fetchClinicalEncounters, fetchPrescriptions } from "../../services/clinicalService";
 import { fetchAppointments } from "../../services/appointmentService";
+import { fetchLaboratoryRequests } from "../../services/laboratoryService";
 import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { printFullHospitalReport } from "../../utils/manualVisitPrint";
@@ -36,6 +38,9 @@ export default function PatientVisitsModal({
 }: PatientVisitsModalProps) {
   const [encounters, setEncounters] = useState<ClinicalEncounter[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [labRequests, setLabRequests] = useState<LaboratoryRequest[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [viewMode, setViewMode] = useState<"timeline" | "visits">("timeline");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visitsQrDataUrl, setVisitsQrDataUrl] = useState<string>("");
@@ -79,14 +84,22 @@ export default function PatientVisitsModal({
     Promise.all([
       fetchClinicalEncounters({ patientId: patient.id }),
       fetchAppointments({ patientId: patient.id }),
+      fetchLaboratoryRequests({ patientId: patient.id }),
+      fetchPrescriptions({ patientId: patient.id }),
     ])
-      .then(([encResult, apptResult]) => {
+      .then(([encResult, apptResult, labResult, rxResult]) => {
         setLoading(false);
         if (encResult.result?.items) {
           setEncounters(encResult.result.items);
         }
         if (apptResult.result?.items) {
           setAppointments(apptResult.result.items);
+        }
+        if (labResult.result?.items) {
+          setLabRequests(labResult.result.items);
+        }
+        if (rxResult.result?.items) {
+          setPrescriptions(rxResult.result.items);
         }
         if (encResult.error && apptResult.error) {
           setError(encResult.error);
@@ -98,6 +111,76 @@ export default function PatientVisitsModal({
         console.error(err);
       });
   }, [isOpen, patient]);
+
+  const timelineEvents = useMemo(() => {
+    const events: Array<{
+      id: string;
+      date: string;
+      kind: "Consultation" | "Appointment" | "Lab Test" | "Prescription";
+      color: string;
+      title: string;
+      subtitle: string;
+      detail: string;
+      status?: string;
+    }> = [];
+
+    for (const enc of encounters) {
+      const docName = enc.doctor ? `Dr. ${enc.doctor.firstName} ${enc.doctor.lastName}` : "Doctor";
+      events.push({
+        id: `enc-${enc.id}`,
+        date: enc.startedAt || enc.createdAt,
+        kind: "Consultation",
+        color: "#2563eb",
+        title: enc.diagnosis ? `Diagnosis: ${enc.diagnosis}` : `Clinical Visit (${enc.visitType || "OPD"})`,
+        subtitle: `${docName} · ${enc.encounterNumber || "Encounter"}`,
+        detail: [enc.chiefComplaint, enc.plan].filter(Boolean).join(" — ") || "Consultation recorded",
+        status: enc.status,
+      });
+    }
+
+    for (const appt of appointments) {
+      const docName = appt.doctor ? `Dr. ${appt.doctor.firstName} ${appt.doctor.lastName}` : "Doctor";
+      events.push({
+        id: `appt-${appt.id}`,
+        date: appt.startedAt || appt.createdAt,
+        kind: "Appointment",
+        color: "#0f766e",
+        title: `Visit Booked (${docName})`,
+        subtitle: appt.appointmentNumber || "Appointment",
+        detail: appt.reason || "Scheduled consultation",
+        status: appt.status,
+      });
+    }
+
+    for (const lab of labRequests) {
+      events.push({
+        id: `lab-${lab.id}`,
+        date: lab.createdAt,
+        kind: "Lab Test",
+        color: "#7c3aed",
+        title: lab.template?.name || "Laboratory Test",
+        subtitle: lab.requestNumber,
+        detail: lab.clinicalNotes || (lab.status === "completed" ? "Result verified" : "Pending laboratory processing"),
+        status: lab.status,
+      });
+    }
+
+    for (const rx of prescriptions) {
+      const medsSummary = rx.items.map((i) => `${i.medicationName} (${i.dose})`).join(", ");
+      events.push({
+        id: `rx-${rx.id}`,
+        date: rx.createdAt,
+        kind: "Prescription",
+        color: "#d97706",
+        title: `Prescription (${rx.items.length} item${rx.items.length === 1 ? "" : "s"})`,
+        subtitle: rx.prescriptionNumber,
+        detail: medsSummary || "Medication order",
+        status: rx.status,
+      });
+    }
+
+    return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [encounters, appointments, labRequests, prescriptions]);
 
   if (!isOpen || !patient) return null;
 
@@ -241,6 +324,27 @@ export default function PatientVisitsModal({
             <span className="vps-label">Appointments</span>
             <strong>{appointments.length}</strong>
           </div>
+          <div className="vps-item">
+            <span className="vps-label">Lab / Rx</span>
+            <strong>{labRequests.length} / {prescriptions.length}</strong>
+          </div>
+        </div>
+
+        <div className="no-print" style={{ display: "flex", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className={`icon-text-btn ${viewMode === "timeline" ? "primary" : ""}`}
+            onClick={() => setViewMode("timeline")}
+          >
+            <FiClock /> 360° Timeline ({timelineEvents.length})
+          </button>
+          <button
+            type="button"
+            className={`icon-text-btn ${viewMode === "visits" ? "primary" : ""}`}
+            onClick={() => setViewMode("visits")}
+          >
+            <FaNotesMedical /> Detailed Doctor Notes ({encounters.length})
+          </button>
         </div>
 
         {loading && (
@@ -256,7 +360,52 @@ export default function PatientVisitsModal({
           </div>
         )}
 
-        {!loading && encounters.length === 0 && (
+        {!loading && viewMode === "timeline" && timelineEvents.length > 0 && (
+          <div className="visits-timeline no-print">
+            {timelineEvents.map((ev) => (
+              <article
+                key={ev.id}
+                className="visit-card"
+                style={{ borderLeft: `4px solid ${ev.color}` }}
+              >
+                <div className="visit-card-header">
+                  <div>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                        color: ev.color,
+                        marginBottom: "4px",
+                      }}
+                    >
+                      {ev.kind} · {ev.subtitle}
+                    </span>
+                    <h4 style={{ margin: 0 }}>{ev.title}</h4>
+                  </div>
+                  <div className="visit-card-meta">
+                    <div className="visit-time-pill">
+                      <FiClock />
+                      <span>{formatDate(ev.date)}</span>
+                    </div>
+                    {ev.status && (
+                      <span className={`visit-status-badge ${ev.status}`}>
+                        {ev.status.replace(/_/g, " ")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p style={{ margin: "8px 0 0", fontSize: "0.88rem", color: "var(--readable-text)" }}>
+                  {ev.detail}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {!loading && (viewMode === "visits" || timelineEvents.length === 0) && encounters.length === 0 && (
           <div className="visits-empty-state">
             <FaNotesMedical className="visits-empty-icon" />
             <h3>No Previous Doctor Visits Recorded</h3>
@@ -279,7 +428,7 @@ export default function PatientVisitsModal({
           </div>
         )}
 
-        {!loading && encounters.length > 0 && (
+        {!loading && viewMode === "visits" && encounters.length > 0 && (
           <div className="visits-timeline">
             {encounters.map((enc, idx) => {
               const docName = enc.doctor

@@ -3,6 +3,7 @@ import { HttpStatus } from "../../core/HttpStatus";
 import { prisma } from "../../database/prisma";
 import { ApiError } from "../../shared/errors/ApiError";
 import { NotificationService } from "../notifications/service";
+import { autoCaptureServiceBill } from "../billing/autoCharge";
 import {
   CreateAdmissionRequestDto,
   CreateEncounterDto,
@@ -411,6 +412,15 @@ export class ClinicalService {
         encounterId: encounter.id,
         patientId: patient.id,
       },
+    });
+
+    await autoCaptureServiceBill({
+      patientId: patient.id,
+      serviceName: "Consultation",
+      fallbackKeywords: ["Doctor Consultation", "OPD"],
+      notes: `Auto-charge for consultation (${encounter.encounterNumber})`,
+      recordedById: doctorId,
+      dedupeKey: encounter.encounterNumber,
     });
 
     return encounter;

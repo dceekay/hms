@@ -34,6 +34,7 @@ import {
 } from "react-icons/fa";
 import AdminLayout from "../../layouts/AdminLayout";
 import { startRoleTour } from "../../components/tour/RoleTour";
+import { calculateNews2 } from "../../utils/news2Score";
 import { PatientIdCard } from "../../components/patients/PatientIdCard";
 import { fetchPatientQr } from "../../services/patients/patientService";
 import {
@@ -344,6 +345,19 @@ export default function NurseDashboardPage() {
 
     return { bpText, bpColor, tempText, tempColor, spo2Text, spo2Color, pulseText, pulseColor };
   }, [vitalsForm]);
+
+  const liveNews2 = useMemo(
+    () =>
+      calculateNews2({
+        systolicBp: vitalsForm.systolicBp,
+        diastolicBp: vitalsForm.diastolicBp,
+        temperatureCelsius: vitalsForm.temperatureCelsius,
+        spo2: vitalsForm.spo2,
+        pulse: vitalsForm.pulse,
+        respiratoryRate: vitalsForm.respiration,
+      }),
+    [vitalsForm]
+  );
 
   async function loadWorkspace() {
     setLoading(true);
@@ -910,6 +924,36 @@ export default function NurseDashboardPage() {
             </div>
 
             <form onSubmit={handleVitalsSubmit} className="nurse-vitals-form">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  borderRadius: "12px",
+                  marginBottom: "14px",
+                  background: liveNews2.background,
+                  border: `1px solid ${liveNews2.color}`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FiActivity style={{ color: liveNews2.color, fontSize: "1.1rem" }} />
+                  <strong style={{ color: liveNews2.color, fontSize: "0.92rem" }}>
+                    {liveNews2.label}
+                  </strong>
+                  {liveNews2.reasons.length > 0 && (
+                    <span style={{ fontSize: "0.8rem", color: "var(--readable-text)" }}>
+                      · {liveNews2.reasons.join(" · ")}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--readable-text)" }}>
+                  {liveNews2.guidance}
+                </span>
+              </div>
+
               <div className="nurse-vitals-grid">
                 {/* 1. Body Temperature */}
                 <div className="nurse-input-box">
