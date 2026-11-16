@@ -9869,3 +9869,156 @@ body.light-theme .ws-active-session-bar {
     padding-top: 16px;
   }
 }
+
+/* ==========================================================================
+   All-Staff Phone & Tablet Responsive Refinement
+   ========================================================================== */
+@media (max-width: 900px) {
+  .admin-overview-grid,
+  .frontdesk-split-grid,
+  .doctor-two-col,
+  .doctor-form-grid,
+  .nurse-vitals-grid,
+  .nurse-meds-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .table-wrap,
+  .table-container,
+  .data-table-wrap,
+  .billing-table-wrap,
+  .lab-table-wrap,
+  .pharmacy-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-page,
+  .doctor-page,
+  .nurse-page,
+  .reception-dashboard-page {
+    gap: 14px;
+  }
+
+  .role-home-header {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .role-home-header h1 {
+    font-size: 1.35rem !important;
+  }
+
+  /* Compact 2-column stat cards on phones */
+  .stats-grid,
+  .frontdesk-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .stat-card {
+    padding: 12px 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .stat-info h2 {
+    font-size: 1.3rem !important;
+  }
+
+  .stat-info p {
+    font-size: 0.78rem !important;
+  }
+
+  .stat-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Tap-friendly quick actions */
+  .role-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .role-action-card {
+    padding: 12px !important;
+    min-height: 60px;
+  }
+
+  .dashboard-attention-strip {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .dashboard-quick-cta-row {
+    width: 100%;
+  }
+
+  .dashboard-quick-cta {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  /* Doctor & Nurse mobile ergonomics */
+  .doctor-segmented-nav,
+  .nurse-tabs-bar,
+  .frontdesk-queue-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .doctor-segmented-nav::-webkit-scrollbar,
+  .nurse-tabs-bar::-webkit-scrollbar,
+  .frontdesk-queue-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doctor-nav-tab,
+  .nurse-tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 42px;
+  }
+
+  .doctor-patient-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .doctor-desk-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .doctor-desk-header-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .doctor-action-btn,
+  .nurse-submit-btn,
+  .nurse-quick-preset-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-grid,
+  .frontdesk-kpi-grid,
+  .role-action-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

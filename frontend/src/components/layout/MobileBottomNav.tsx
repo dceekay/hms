@@ -92,14 +92,17 @@ const labMobileItems: MobileNavItem[] = [
 
 const pharmacyMobileItems: MobileNavItem[] = [
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules /> },
+  { label: "Patients", path: "/patients", icon: <FaUserInjured />, requiredPermissions: ["patients.read"] },
   { label: "Store", path: "/inventory", icon: <FiPackage /> },
   { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
 
 const receptionMobileItems: MobileNavItem[] = [
+  { label: "Home", path: "/", icon: <FiHome /> },
   { label: "Patients", path: "/patients", icon: <FaUserInjured /> },
   { label: "New Patient", path: "/register-patient", icon: <FiUsers /> },
   { label: "Appts", path: "/appointments", icon: <FiCalendar /> },
+  { label: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
   { label: "Wards", path: "/setup/wards", icon: <FaBed /> },
   { label: "Account", path: "/settings", icon: <FiSettings /> },
 ];
@@ -338,7 +341,7 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        {hasOverflow && (
+        {hasOverflow ? (
           <button
             type="button"
             className={overflowIsActive ? "mobile-nav-item mobile-nav-more active" : "mobile-nav-item mobile-nav-more"}
@@ -349,6 +352,18 @@ export default function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps = {
             <FiGrid />
             <span>More</span>
           </button>
+        ) : (
+          onOpenMenu && (
+            <button
+              type="button"
+              className="mobile-nav-item mobile-nav-more"
+              onClick={onOpenMenu}
+              aria-label="Open full navigation menu"
+            >
+              <FiMenuIcon />
+              <span>Menu</span>
+            </button>
+          )
         )}
       </nav>
     </>
