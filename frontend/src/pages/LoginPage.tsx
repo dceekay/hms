@@ -1,9 +1,9 @@
 import { FormEvent, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowRight, FiLock, FiShield, FiUser, FiAlertTriangle } from "react-icons/fi";
+import { FiArrowRight, FiChevronDown, FiChevronUp, FiLock, FiShield, FiUser, FiAlertTriangle } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import mdsLogo from "../assets/optimized/logo-sm.webp";
-import mdsHospital from "../assets/optimized/22mds.webp";
+import happyPatientHero from "../assets/optimized/happy-patient-hero.jpg";
 import { login } from "../services/authService";
 import { useAuthStore } from "../store/authStore";
 import PoweredByCeekayX from "../components/common/PoweredByCeekayX";
@@ -48,6 +48,7 @@ export default function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [showStatutoryNotice, setShowStatutoryNotice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,8 +100,8 @@ export default function LoginPage() {
       <section className="login-visual" aria-label="MDS staff portal overview">
         <img
           className="login-hospital-image"
-          src={mdsHospital}
-          alt="MDS Hospital Kano Facility"
+          src={happyPatientHero}
+          alt="Happy patient receiving care at MDS Specialist Hospital"
           loading="eager"
           decoding="async"
           fetchPriority="high"
@@ -112,41 +113,36 @@ export default function LoginPage() {
             alt="MDS Hospital Logo"
             decoding="async"
             fetchPriority="high"
-            width="48"
-            height="48"
+            width="52"
+            height="52"
           />
           <div>
             <strong>MDS Specialist Hospital</strong>
-            <small>Staff & Clinical Portal</small>
+            <small>Staff &amp; Clinical Portal</small>
           </div>
         </div>
 
         <div className="login-copy">
           <div className="login-statutory-pill">
             <span className="live-status-dot" aria-hidden="true" />
-            <span>24/7 Monitored Clinical Network</span>
+            <span>Patient-First Care • 24/7 Clinical Network</span>
           </div>
-          <p className="eyebrow">MDS Specialist Hospital</p>
-          <h1>Welcome to MDS staff portal.</h1>
+          <p className="eyebrow">MDS Specialist Hospital, Kano</p>
+          <h1>Compassionate care, powered by smart records.</h1>
           <p>
-            Secure clinical and administrative portal for authorized hospital personnel. All Hospital Medical Records (HMR) and electronic health transactions are actively monitored 24/7 for patient safety, data integrity, and statutory compliance.
+            Fast, reliable clinical and administrative workspace for MDS doctors, nurses, lab scientists, pharmacists, and front desk staff.
           </p>
-          <div className="login-law-badges">
-            <span>NDPA 2023 Compliant</span>
-            <span>Cybercrimes Act 2015</span>
-            <span>National Health Act 2014</span>
-          </div>
         </div>
       </section>
 
       <section className="login-panel-wrap">
         <form onSubmit={handleSubmit} className="login-panel">
           <div className="login-panel-header">
-            <div className="login-mini-logo" aria-hidden="true">
-              <FiLock />
+            <div className="login-mini-logo">
+              <img src={mdsLogo} alt="MDS Logo" width="32" height="32" />
             </div>
             <div>
-              <p className="eyebrow">Authorized staff</p>
+              <p className="eyebrow">MDS Staff Portal</p>
               <h2>Sign in</h2>
             </div>
           </div>
@@ -201,44 +197,56 @@ export default function LoginPage() {
             <p className="login-error">Your session expired. Please sign in again.</p>
           )}
 
-          <div className="login-compliance-card" role="region" aria-label="HMR Access and Compliance Notice">
-            <div className="login-compliance-header">
+          <div className={`login-compliance-card ${showStatutoryNotice ? "expanded" : "collapsed"}`} role="region" aria-label="HMR Access and Compliance Notice">
+            <button
+              type="button"
+              className="login-compliance-toggle"
+              onClick={() => setShowStatutoryNotice((prev) => !prev)}
+              aria-expanded={showStatutoryNotice}
+            >
               <div className="login-live-pulse">
                 <span className="live-pulse-dot" aria-hidden="true" />
                 <span>Restricted HMR Access • 24/7 Monitored</span>
               </div>
-              <span className="login-security-tag">Statutory Notice</span>
-            </div>
-
-            <p className="login-compliance-text">
-              Notice: Access to this Hospital Medical Records (HMR) system is strictly restricted to <strong>authorized clinical and administrative personnel only</strong>. Unauthorized access, alteration, extraction, or disclosure of patient health records is strictly prohibited and subject to immediate administrative sanctions, civil liabilities, and criminal prosecution.
-            </p>
-
-            <div className="login-applicable-laws">
-              <span className="login-laws-title">Applicable Healthcare & Cybersecurity Laws:</span>
-              <ul className="login-laws-list">
-                <li>
-                  <strong>Nigeria Data Protection Act (NDPA) 2023:</strong> Strict protection of sensitive personal health and biometric data.
-                </li>
-                <li>
-                  <strong>Cybercrimes (Prohibition, Prevention, etc.) Act 2015:</strong> Criminal penalties for unauthorized system penetration, data alteration, and breaches.
-                </li>
-                <li>
-                  <strong>National Health Act 2014 (Sections 26–29):</strong> Statutory confidentiality and mandatory protection of health records.
-                </li>
-                <li>
-                  <strong>MDCN Code of Medical Ethics:</strong> Strict professional confidentiality and duty of care regarding medical privacy.
-                </li>
-              </ul>
-            </div>
-
-            <div className="login-audit-warning">
-              <FiAlertTriangle className="audit-icon" aria-hidden="true" />
-              <div>
-                <strong>Notice: Active 24/7 Audit Logging</strong>
-                <div>All user sessions, patient record lookups, modifications, and IP addresses are continuously logged, cryptographically fingerprinted, and monitored 24/7.</div>
+              <div className="login-compliance-toggle-right">
+                <span className="login-security-tag">Statutory Notice</span>
+                {showStatutoryNotice ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
               </div>
-            </div>
+            </button>
+
+            {showStatutoryNotice && (
+              <div className="login-compliance-body">
+                <p className="login-compliance-text">
+                  Notice: Access to this Hospital Medical Records (HMR) system is strictly restricted to <strong>authorized clinical and administrative personnel only</strong>. Unauthorized access, alteration, extraction, or disclosure of patient health records is strictly prohibited and subject to immediate administrative sanctions, civil liabilities, and criminal prosecution.
+                </p>
+
+                <div className="login-applicable-laws">
+                  <span className="login-laws-title">Applicable Healthcare &amp; Cybersecurity Laws:</span>
+                  <ul className="login-laws-list">
+                    <li>
+                      <strong>Nigeria Data Protection Act (NDPA) 2023:</strong> Strict protection of sensitive personal health and biometric data.
+                    </li>
+                    <li>
+                      <strong>Cybercrimes (Prohibition, Prevention, etc.) Act 2015:</strong> Criminal penalties for unauthorized system penetration, data alteration, and breaches.
+                    </li>
+                    <li>
+                      <strong>National Health Act 2014 (Sections 26–29):</strong> Statutory confidentiality and mandatory protection of health records.
+                    </li>
+                    <li>
+                      <strong>MDCN Code of Medical Ethics:</strong> Strict professional confidentiality and duty of care regarding medical privacy.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="login-audit-warning">
+                  <FiAlertTriangle className="audit-icon" aria-hidden="true" />
+                  <div>
+                    <strong>Notice: Active 24/7 Audit Logging</strong>
+                    <div>All user sessions, patient record lookups, modifications, and IP addresses are continuously logged, cryptographically fingerprinted, and monitored 24/7.</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="login-note">

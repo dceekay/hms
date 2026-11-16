@@ -871,3 +871,54 @@
 
 
 
+
+/* Collapsible Statutory Notice & Happy Patient Hero Polish */
+.login-mini-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.login-hospital-image {
+  object-position: center 22%;
+}
+
+.login-compliance-card.collapsed {
+  padding: 10px 14px;
+  gap: 0;
+}
+
+.login-compliance-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.login-compliance-toggle-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+}
+
+.login-compliance-card.expanded .login-compliance-toggle {
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-compliance-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+}
