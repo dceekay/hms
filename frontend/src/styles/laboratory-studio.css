@@ -5600,3 +5600,202 @@ body.dark-theme .lab-table-patient-name {
 
 
 
+
+/* ==========================================================================
+   Compact & Executive 1-Page Laboratory Report Print + Preview Styling
+   ========================================================================== */
+.lab-print-document-container {
+  position: relative;
+  border-top: 5px solid #092a5e;
+  background: #ffffff;
+}
+
+.lab-print-header-banner {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f1f5f9 100%);
+  border: 1px solid #dbeafe;
+  margin-bottom: 10px !important;
+}
+
+.lab-print-doc-title-bar {
+  background: linear-gradient(90deg, #092a5e 0%, #087ebd 100%);
+  color: #ffffff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  margin-bottom: 10px !important;
+}
+
+.lab-print-doc-title-bar h2 {
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 0.04em;
+}
+
+.lab-print-demographics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #087ebd;
+  border-radius: 8px;
+  margin-bottom: 10px !important;
+}
+
+.lab-print-demo-item {
+  padding: 2px 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.lab-demo-label {
+  font-size: 0.64rem !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b !important;
+}
+
+.lab-demo-value {
+  font-size: 0.78rem !important;
+  color: #092a5e !important;
+}
+
+.lab-print-results-table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lab-print-results-table th {
+  background: #0f2948 !important;
+  color: #ffffff !important;
+  padding: 6px 8px !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lab-print-results-table td {
+  padding: 5px 8px !important;
+  font-size: 0.76rem !important;
+  line-height: 1.25 !important;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.lab-print-results-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.lab-print-footer-block {
+  margin-top: 10px !important;
+  padding-top: 8px !important;
+  border-top: 1.5px solid #cbd5e1 !important;
+  align-items: center !important;
+}
+
+.lab-print-disclaimer {
+  margin-top: 6px !important;
+  padding-top: 6px !important;
+  font-size: 0.62rem !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm 8mm;
+  }
+
+  .lab-print-document-container,
+  .lab-print-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .lab-print-document-container > * {
+    margin-bottom: 6px !important;
+  }
+
+  .lab-print-header-banner {
+    padding: 8px 10px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .lab-print-hospital-name {
+    font-size: 1rem !important;
+  }
+
+  .lab-print-hospital-sub,
+  .lab-print-hospital-address,
+  .lab-print-hospital-contact {
+    font-size: 0.68rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .lab-print-qr-img {
+    width: 62px !important;
+    height: 62px !important;
+  }
+
+  .lab-print-qr-label {
+    font-size: 0.58rem !important;
+  }
+
+  .lab-print-qr-id {
+    font-size: 0.65rem !important;
+  }
+
+  .lab-print-doc-title-bar {
+    padding: 5px 10px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .lab-print-demographics-grid {
+    padding: 6px 10px !important;
+    gap: 4px 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .lab-print-results-table th {
+    padding: 4px 6px !important;
+    font-size: 0.66rem !important;
+  }
+
+  .lab-print-results-table td {
+    padding: 3.5px 6px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .lab-print-remarks-box {
+    margin-top: 6px !important;
+    padding: 6px 8px !important;
+    font-size: 0.72rem !important;
+    gap: 2px !important;
+  }
+
+  .lab-print-footer-block {
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .lab-print-sign-line {
+    width: 170px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .lab-print-disclaimer {
+    margin-top: 4px !important;
+    padding-top: 4px !important;
+    font-size: 0.58rem !important;
+    line-height: 1.2 !important;
+  }
+}

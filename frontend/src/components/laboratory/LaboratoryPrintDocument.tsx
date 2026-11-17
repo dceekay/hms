@@ -464,7 +464,7 @@ export default function LaboratoryPrintDocument({
             isSettled={true}
             date={formatDate(request.completedAt || request.createdAt)}
             department="LABORATORY & DIAGNOSTICS"
-            size="md"
+            size="sm"
           />
         </div>
       </footer>
