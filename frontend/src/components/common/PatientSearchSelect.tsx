@@ -140,7 +140,7 @@ export default function PatientSearchSelect({
   const [remotePatients, setRemotePatients] = useState<Patient[]>([]);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
   const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -148,7 +148,7 @@ export default function PatientSearchSelect({
   // Monitor viewport size for mobile sheet vs desktop popover
   useEffect(() => {
     function handleResize() {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth <= 768);
     }
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -258,13 +258,24 @@ export default function PatientSearchSelect({
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 60);
+      if (!isMobile) {
+        setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 60);
+      }
     } else {
       setSearchQuery("");
     }
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen, isMobile]);
 
   // Scroll active item into view when navigating with keys
   useEffect(() => {

@@ -950,3 +950,55 @@
   border-color: rgba(16, 169, 214, 0.45);
   border-left-color: #10a9d6;
 }
+
+/* Mobile Bottom-Sheet Patient List Fix (<= 768px) */
+@media (max-width: 768px) {
+  .patient-picker-popover.mobile-sheet {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 88dvh;
+    max-height: 88dvh;
+    z-index: 9999 !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 22px 22px 0 0;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  }
+
+  .patient-picker-popover.mobile-sheet .picker-header,
+  .patient-picker-popover.mobile-sheet .picker-search-wrapper,
+  .patient-picker-popover.mobile-sheet .picker-recent-section,
+  .patient-picker-popover.mobile-sheet .picker-footer {
+    flex-shrink: 0;
+  }
+
+  .patient-picker-popover.mobile-sheet .picker-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .patient-picker-popover.mobile-sheet .patient-row-card {
+    padding: 10px 12px;
+    min-height: 56px;
+  }
+
+  .patient-picker-popover.mobile-sheet .patient-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 10px;
+  }
+
+  /* Keep the mobile list scannable so 4-6 patients are immediately visible */
+  .patient-picker-popover.mobile-sheet .patient-detail-grid > div:nth-child(5),
+  .patient-picker-popover.mobile-sheet .patient-pick-hint {
+    display: none;
+  }
+}
