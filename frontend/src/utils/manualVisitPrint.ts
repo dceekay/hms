@@ -71,7 +71,7 @@ function buildOfficialStampHtml(dateLabel: string, departmentLabel = "MEDICAL DI
         <circle cx="90" cy="90" r="74" fill="none" stroke="#0b4f8c" stroke-width="1.5" stroke-dasharray="4 3" />
         <circle cx="90" cy="90" r="50" fill="none" stroke="#0b4f8c" stroke-width="1.5" />
         <text x="90" y="32" text-anchor="middle" fill="#0b4f8c" font-size="9.5" font-weight="800" letter-spacing="1.2">MDS SPECIALIST HOSPITAL</text>
-        <text x="90" y="156" text-anchor="middle" fill="#0b4f8c" font-size="9" font-weight="800" letter-spacing="1">GIGINYU • KANO STATE</text>
+        <text x="90" y="156" text-anchor="middle" fill="#0b4f8c" font-size="9" font-weight="800" letter-spacing="1">TINSHAMA • KANO STATE</text>
         <text x="90" y="80" text-anchor="middle" fill="#0b4f8c" font-size="11" font-weight="900">VERIFIED</text>
         <text x="90" y="95" text-anchor="middle" fill="#0b4f8c" font-size="10.5" font-weight="900">DR VISIT</text>
         <text x="90" y="110" text-anchor="middle" fill="#0b4f8c" font-size="7.5" font-weight="700">${escapeHtml(departmentLabel)}</text>

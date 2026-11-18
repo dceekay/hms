@@ -10,14 +10,14 @@ export const HOSPITAL_OFFICIAL_DETAILS = {
   shortSubtitle: "Specialist Medical & Diagnostic Centre",
 
   // Physical Location
-  streetAddress: "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu",
+  streetAddress: "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Tinshama",
   city: "Kano",
   state: "Kano State",
   postalCode: "700213",
   country: "Nigeria",
-  fullAddress: "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Giginyu, Kano 700213, Kano State, Nigeria",
-  shortAddress: "Eastern Bypass, Giginyu, Kano, Nigeria",
-  district: "Giginyu, Kano",
+  fullAddress: "Eastern Bypass, adjacent to Majiya and MYCA7 Filling Station, Tinshama, Kano 700213, Kano State, Nigeria",
+  shortAddress: "Eastern Bypass, Tinshama, Kano, Nigeria",
+  district: "Tinshama, Kano",
 
   // Geo Coordinates
   latitude: 11.9927,
@@ -26,11 +26,11 @@ export const HOSPITAL_OFFICIAL_DETAILS = {
   // Contact Channels
   primaryPhone: "+234 913 752 6952",
   emergencyPhone: "+234 913 752 6952",
-  tollFreeHelpline: "+234 812 345 6789",
-  displayPhone: "+234 913 752 6952 / +234 812 345 6789",
+  tollFreeHelpline: "+2348029180665",
+  displayPhone: "+234 913 752 6952 / +2348029180665",
   whatsappNumber: "+2349137526952",
   whatsappUrl: "https://wa.me/2349137526952?text=Hello%20MDS%20Hospital%2C%20I%20would%20like%20to%20make%20an%20enquiry.",
-  email: "info@mdshospital.com",
+  email: "mdshospitalkn@gmail.com",
   web: "mds01.vercel.app",
   websiteUrl: "https://mds01.vercel.app",
 
