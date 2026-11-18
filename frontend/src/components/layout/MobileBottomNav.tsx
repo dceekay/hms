@@ -56,6 +56,7 @@ const mobileItems: MobileNavItem[] = [
   { label: "Billing", path: "/billing", icon: <FiCreditCard />, requiredPermissions: ["billing.read"] },
   { label: "Doctor", path: "/doctor", icon: <FaUserMd />, requiredRoles: ["Doctor"] },
   { label: "Lab", path: "/laboratory", icon: <FaFlask />, requiredPermissions: ["laboratory.read"] },
+  { label: "Lab Templates", path: "/laboratory/templates", icon: <FiFileText />, requiredPermissions: ["laboratory.read"] },
   { label: "Pharmacy", path: "/pharmacy", icon: <FaCapsules />, requiredPermissions: ["pharmacy.read"] },
   { label: "Store", path: "/inventory", icon: <FiPackage />, requiredPermissions: ["inventory.read"] },
   { label: "Staff", path: "/admin/users", icon: <FiShield />, requiredPermissions: ["users.read"] },

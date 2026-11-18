@@ -182,6 +182,13 @@ export function Sidebar({ collapsed, toggle, mobileOpen = false, onCloseMobile }
             badgeClass: "labs",
           },
           {
+            title: "Lab Templates",
+            path: "/laboratory/templates",
+            icon: <FiFileText />,
+            requiredPermissions: ["laboratory.read"],
+            allowRoles: ["Laboratory", "Super Admin", "Administrator", "Admin"],
+          },
+          {
             title: "Pharmacy",
             path: "/pharmacy",
             icon: <FaCapsules />,
