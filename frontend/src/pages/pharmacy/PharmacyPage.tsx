@@ -43,6 +43,7 @@ import {
   HMS_DATA_MUTATED_EVENT,
   HMS_SYNC_FLUSHED_EVENT,
 } from "../../utils/appEvents";
+import { showSuccessWithSound } from "../../utils/sweetAlert";
 import type { Prescription, PrescriptionStatus } from "../../types/clinical";
 import type { Patient } from "../../types/patient";
 import type {
@@ -293,7 +294,7 @@ export default function PharmacyPage() {
 
     const [patientResult, medicationResult, salesResult, movementResult, rxResult] = await Promise.all([
       fetchPatients({ status: "active", take: 500 }),
-      fetchMedications({ search: medicineSearch, stockStatus: stockFilter }),
+      fetchMedications({}),
       fetchPharmacySales(saleSearch),
       fetchPharmacyStockMovements(),
       fetchPrescriptions(),
@@ -344,6 +345,33 @@ export default function PharmacyPage() {
     () => prescriptions.filter((rx) => rx.status === "sent_to_pharmacy").length,
     [prescriptions]
   );
+
+  const filteredMedications = useMemo(() => {
+    const q = medicineSearch.trim().toLowerCase();
+    return medications.filter((m) => {
+      const state = stockState(m);
+      if (stockFilter === "low" && state !== "low") return false;
+      if (stockFilter === "out" && state !== "out") return false;
+      if (
+        stockFilter === "expired" &&
+        (!m.expiryDate || new Date(m.expiryDate).getTime() >= Date.now())
+      ) {
+        return false;
+      }
+
+      if (!q) return true;
+      return (
+        m.name.toLowerCase().includes(q) ||
+        (m.genericName && m.genericName.toLowerCase().includes(q)) ||
+        (m.brandName && m.brandName.toLowerCase().includes(q)) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.batchNumber && m.batchNumber.toLowerCase().includes(q)) ||
+        (m.strength && m.strength.toLowerCase().includes(q))
+      );
+    });
+  }, [medications, medicineSearch, stockFilter]);
+
+  const [printingStockReport, setPrintingStockReport] = useState(false);
 
   const filteredPrescriptions = useMemo(() => {
     const q = rxSearch.trim().toLowerCase();
@@ -484,11 +512,18 @@ export default function PharmacyPage() {
       return;
     }
 
-    setSuccess(editingMedication ? "Medication updated." : "Medication added.");
+    const successMsg = editingMedication
+      ? `${result.medication.name} updated.`
+      : `${result.medication.name} added to pharmacy stock (${result.medication.currentStock} ${result.medication.unit}).`;
+    setSuccess(successMsg);
+    void showSuccessWithSound({
+      title: editingMedication ? "Medicine Updated" : "Stock Added Successfully",
+      text: successMsg,
+    });
     setMedicineForm(emptyMedicationForm);
     setEditingMedication(null);
     setIsMedicineModalOpen(false);
-    await loadData();
+    await loadData({ silent: true });
   };
 
   const startEditMedication = (medication: Medication) => {
@@ -664,17 +699,33 @@ export default function PharmacyPage() {
       return;
     }
 
-    setSuccess("Stock updated.");
+    const delta = Number(stockChange);
+    const stockMsg =
+      delta > 0
+        ? `Added +${delta} ${stockTarget.unit} to ${stockTarget.name}. New stock: ${result.medication.currentStock} ${result.medication.unit}.`
+        : `Adjusted ${stockTarget.name} by ${delta} ${stockTarget.unit}. New stock: ${result.medication.currentStock} ${result.medication.unit}.`;
+    setSuccess(stockMsg);
+    void showSuccessWithSound({
+      title: delta > 0 ? "Stock Restocked" : "Stock Adjusted",
+      text: stockMsg,
+    });
     setStockTarget(null);
     setStockChange("0");
     setStockReason("");
     setStockNotes("");
-    await loadData();
+    await loadData({ silent: true });
   };
 
   const handlePrintInvoice = (sale: PharmacySale) => {
+    setPrintingStockReport(false);
     setSelectedInvoice(sale);
     window.setTimeout(() => window.print(), 80);
+  };
+
+  const handlePrintStockReport = () => {
+    setSelectedInvoice(null);
+    setPrintingStockReport(true);
+    window.setTimeout(() => window.print(), 100);
   };
 
   return (
@@ -1174,7 +1225,7 @@ export default function PharmacyPage() {
                   </div>
                 </div>
                 <div className="table-topbar-right">
-                  <button type="button" className="icon-text-btn" onClick={loadData}>
+                  <button type="button" className="icon-text-btn" onClick={() => void loadData()}>
                     <FiRefreshCw /> Refresh
                   </button>
                 </div>
@@ -1365,19 +1416,13 @@ export default function PharmacyPage() {
                     <input
                       value={medicineSearch}
                       onChange={(event) => setMedicineSearch(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") void loadData();
-                      }}
-                      placeholder="Search medicine by name, generic, brand..."
+                      placeholder="Live search medicine by name, generic, brand, batch..."
                     />
                     {medicineSearch && (
                       <button
                         type="button"
                         className="patient-search-clear"
-                        onClick={() => {
-                          setMedicineSearch("");
-                          void loadData();
-                        }}
+                        onClick={() => setMedicineSearch("")}
                       >
                         <FiX />
                       </button>
@@ -1406,7 +1451,10 @@ export default function PharmacyPage() {
                   </div>
                 </div>
                 <div className="table-topbar-right">
-                  <button type="button" className="icon-text-btn" onClick={loadData}>
+                  <button type="button" className="icon-text-btn" onClick={handlePrintStockReport}>
+                    <FiPrinter /> Print Stock ({filteredMedications.length})
+                  </button>
+                  <button type="button" className="icon-text-btn" onClick={() => void loadData()}>
                     <FiRefreshCw /> Refresh
                   </button>
                   {canCreate && (
@@ -1427,9 +1475,13 @@ export default function PharmacyPage() {
               </div>
 
               {loading && <p className="muted-text" style={{ padding: "1.5rem" }}>Loading pharmacy stock...</p>}
-              {!loading && medications.length === 0 && <p className="muted-text" style={{ padding: "1.5rem" }}>No medicines found.</p>}
+              {!loading && filteredMedications.length === 0 && (
+                <p className="muted-text" style={{ padding: "1.5rem" }}>
+                  No medicines match &ldquo;{medicineSearch || stockFilter}&rdquo;.
+                </p>
+              )}
 
-              {!loading && medications.length > 0 && (
+              {!loading && filteredMedications.length > 0 && (
                 <div className="table-scroll-container">
                   <table className="hms-data-table">
                     <thead>
@@ -1444,7 +1496,7 @@ export default function PharmacyPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {medications.map((medication) => (
+                      {filteredMedications.map((medication) => (
                         <tr key={medication.id}>
                           <td>
                             <div className="cell-primary">{medicationLabel(medication)}</div>
@@ -1726,6 +1778,73 @@ export default function PharmacyPage() {
                     Update Stock
                   </button>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {printingStockReport && (
+            <section className="pharmacy-print-template" aria-label="Printable pharmacy stock report">
+              <div className="pharmacy-print-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <img src={mdsLogo} alt="MDS Specialist Hospital Logo" style={{ width: 48, height: 48, objectFit: "contain" }} />
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#0f766e" }}>MDS SPECIALIST HOSPITAL</h2>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#64748b" }}>
+                      Pharmacy Medicine &amp; Stock Inventory Report · Kano State
+                    </p>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", fontSize: "0.78rem", color: "#475569" }}>
+                  <strong>Filter: {stockFilter.toUpperCase()}</strong>
+                  {medicineSearch.trim() && <div>Search: &ldquo;{medicineSearch.trim()}&rdquo;</div>}
+                  <div>Items: {filteredMedications.length}</div>
+                </div>
+              </div>
+
+              <table className="pharmacy-print-table" style={{ marginTop: "12px" }}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Medicine</th>
+                    <th>Category</th>
+                    <th>Batch / Exp</th>
+                    <th>Stock</th>
+                    <th>Selling Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMedications.map((med, idx) => (
+                    <tr key={med.id}>
+                      <td>{idx + 1}</td>
+                      <td>
+                        <strong>{medicationLabel(med)}</strong>
+                        {med.genericName && <small>{med.genericName}</small>}
+                      </td>
+                      <td>{med.category || "General"}</td>
+                      <td>
+                        {med.batchNumber || "—"}
+                        {med.expiryDate ? ` · Exp: ${new Date(med.expiryDate).toLocaleDateString()}` : ""}
+                      </td>
+                      <td>
+                        {med.currentStock} {med.unit}
+                      </td>
+                      <td>{money(med.sellingPrice)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "16px", paddingTop: "10px", borderTop: "1px solid #cbd5e1" }}>
+                <div style={{ fontSize: "0.78rem", color: "#475569" }}>
+                  <div>Printed: {new Date().toLocaleString("en-NG")}</div>
+                  <div>Prepared by Pharmacy &amp; Store Desk</div>
+                </div>
+                <OfficialReceiptStamp
+                  isSettled
+                  date={new Date().toLocaleDateString("en-NG")}
+                  department="PHARMACY & STORE"
+                  size="sm"
+                />
               </div>
             </section>
           )}
