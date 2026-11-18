@@ -2036,3 +2036,18 @@ body.dark-theme button[aria-label*="dismiss" i]:hover {
 }
 
 
+
+@media print {
+  .print-canvas,
+  .printable-area,
+  .lab-print-document-container,
+  .lab-report-sheet,
+  .lab-print-page,
+  .doctor-print-template {
+    border: none !important;
+    border-top: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}

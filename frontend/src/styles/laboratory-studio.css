@@ -5799,3 +5799,23 @@ body.dark-theme .lab-table-patient-name {
     line-height: 1.2 !important;
   }
 }
+
+@media print {
+  .lab-modal-overlay,
+  .lab-print-modal-overlay,
+  .lab-modal-container,
+  .lab-print-modal-container,
+  .lab-modal-body,
+  .lab-print-modal-body,
+  .lab-print-document-container,
+  .lab-report-sheet,
+  .lab-print-page,
+  .print-canvas,
+  .printable-area {
+    border: none !important;
+    border-top: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
