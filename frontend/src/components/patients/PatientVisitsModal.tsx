@@ -22,6 +22,8 @@ import { fetchLaboratoryRequests } from "../../services/laboratoryService";
 import QRCode from "qrcode";
 import mdsLogo from "../../assets/optimized/logo.png";
 import { printFullHospitalReport } from "../../utils/manualVisitPrint";
+import NotePhotoGallery from "../clinical/NotePhotoGallery";
+import { extractNotePhotos } from "../../utils/clinicalNoteParser";
 
 interface PatientVisitsModalProps {
   patient: Patient | null;
@@ -492,8 +494,11 @@ export default function PatientVisitsModal({
 
                     {enc.remarks && (
                       <div className="visit-field notes-field">
-                        <span className="visit-field-label">Doctor's Clinical Notes &amp; Observations</span>
-                        <p className="visit-field-value">{enc.remarks}</p>
+                        <span className="visit-field-label">Doctor&apos;s Clinical Notes &amp; Observations</span>
+                        {extractNotePhotos(enc.remarks).cleanText && (
+                          <p className="visit-field-value">{extractNotePhotos(enc.remarks).cleanText}</p>
+                        )}
+                        <NotePhotoGallery text={enc.remarks} />
                       </div>
                     )}
 

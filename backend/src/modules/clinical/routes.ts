@@ -37,6 +37,11 @@ router.post(
   authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
   controller.transcribeNote
 );
+router.post(
+  "/note-photo",
+  authorizePermissionsOrRoles(["clinical.create"], ["Doctor", "Administrator", "Super Admin"]),
+  controller.uploadNotePhoto
+);
 router.patch(
   "/encounters/:id",
   authorizePermissionsOrRoles(["clinical.update"], ["Doctor", "Administrator", "Super Admin"]),

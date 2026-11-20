@@ -11,18 +11,18 @@ import {
   FiTrash2,
   FiUpload,
 } from "react-icons/fi";
-import { createWorker } from "tesseract.js";
 import {
-  runClinicalNoteOcr,
   transcribeClinicalVoiceNote,
+  uploadClinicalNotePhoto,
 } from "../../services/clinicalService";
 import {
+  appendNotePhotoTag,
+  compressNotePhoto,
   parseClinicalNoteText,
-  prepareNoteImageForOcr,
   type StructuredClinicalFields,
 } from "../../utils/clinicalNoteParser";
 
-type CaptureMode = "form" | "ocr" | "voice";
+type CaptureMode = "form" | "photo" | "voice";
 
 type BrowserSpeechRecognition = {
   lang: string;
@@ -120,13 +120,12 @@ export default function DoctorSmartNoteCapture({
 }: Props) {
   const [mode, setMode] = useState<CaptureMode>("form");
 
-  // OCR State
+  // Snapped Note Photo State (no OCR)
   const [notePreview, setNotePreview] = useState<string | null>(null);
-  const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState<number>(0);
-  const [ocrEngine, setOcrEngine] = useState<string>("");
-  const [ocrText, setOcrText] = useState("");
-  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   // Voice State
   const [speechLang, setSpeechLang] = useState<"en-NG" | "en-GB" | "en-US">("en-NG");
@@ -156,57 +155,63 @@ export default function DoctorSmartNoteCapture({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setOcrError(null);
+    setPhotoError(null);
     setStatusNote(null);
-    setOcrLoading(true);
-    setOcrProgress(10);
-    aiStructuredRef.current = null;
+    setPhotoLoading(true);
 
     try {
-      const { ocrDataUrl, previewDataUrl } = await prepareNoteImageForOcr(file);
-      setNotePreview(previewDataUrl);
-      setOcrProgress(25);
-
-      // 1. Try Gemini Vision if configured & online
-      const aiResult = await runClinicalNoteOcr(ocrDataUrl, "image/webp");
-      if (aiResult.provider === "gemini" && aiResult.rawText) {
-        setOcrText(aiResult.rawText);
-        setOcrEngine("Gemini Vision AI");
-        aiStructuredRef.current = aiResult.structured;
-        setOcrProgress(100);
-        setStatusNote("Handwriting & clinical text extracted! Review below and apply or save.");
-        setOcrLoading(false);
-        return;
-      }
-
-      // 2. Built-in free offline OCR via Tesseract.js
-      setOcrEngine("Offline OCR (Tesseract)");
-      const worker = await createWorker("eng", 1, {
-        logger: (m) => {
-          if (m.status === "recognizing text" && typeof m.progress === "number") {
-            setOcrProgress(Math.max(30, Math.round(30 + m.progress * 68)));
-          }
-        },
-      });
-      const {
-        data: { text },
-      } = await worker.recognize(ocrDataUrl);
-      await worker.terminate();
-
-      const cleaned = text.trim();
-      setOcrText(cleaned);
-      setOcrProgress(100);
-      setStatusNote(
-        cleaned
-          ? "Text extracted from snapped note! You can edit it or save directly."
-          : "Image saved, but very little text was detected. You can type a quick summary or snap closer."
-      );
+      const dataUrl = await compressNotePhoto(file);
+      setNotePreview(dataUrl);
+      setStatusNote("Doctor's note photo ready! Click 'Save Photo as Doctor's Note' to store it.");
     } catch (err) {
       console.error(err);
-      setOcrError("Could not read that image. Try taking a clearer photo with good lighting.");
+      setPhotoError("Could not process that photo. Please try taking another picture.");
     } finally {
-      setOcrLoading(false);
+      setPhotoLoading(false);
       event.target.value = "";
+    }
+  };
+
+  const handleAttachPhotoToForm = async () => {
+    if (!notePreview) return;
+    setPhotoUploading(true);
+    setPhotoError(null);
+    try {
+      const photoRef = await uploadClinicalNotePhoto(notePreview);
+      const captionText = photoCaption.trim();
+      onApplyStructured({
+        chiefComplaint: captionText || undefined,
+        remarks: appendNotePhotoTag(captionText, photoRef),
+      });
+      setNotePreview(null);
+      setPhotoCaption("");
+      setStatusNote("Note photo attached to consultation form!");
+      setMode("form");
+    } catch {
+      setPhotoError("Unable to attach photo right now.");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleSavePhotoDirectly = async () => {
+    if (!notePreview) return;
+    setPhotoUploading(true);
+    setPhotoError(null);
+    try {
+      const photoRef = await uploadClinicalNotePhoto(notePreview);
+      const captionText = photoCaption.trim();
+      await onQuickSaveStructured({
+        chiefComplaint: captionText || "Handwritten Doctor's Note (Photo)",
+        remarks: appendNotePhotoTag(captionText, photoRef),
+      });
+      setNotePreview(null);
+      setPhotoCaption("");
+      setStatusNote("Doctor's note photo saved to consultation history!");
+    } catch {
+      setPhotoError("Unable to save photo right now.");
+    } finally {
+      setPhotoUploading(false);
     }
   };
 
@@ -344,12 +349,7 @@ export default function DoctorSmartNoteCapture({
       parsed.remarks = raw.slice(0, 980);
     }
     await onQuickSaveStructured(parsed);
-    if (mode === "ocr") {
-      setOcrText("");
-      setNotePreview(null);
-    } else {
-      setVoiceText("");
-    }
+    setVoiceText("");
   };
 
   return (
@@ -365,11 +365,11 @@ export default function DoctorSmartNoteCapture({
         </button>
         <button
           type="button"
-          className={mode === "ocr" ? "active" : ""}
-          onClick={() => setMode("ocr")}
+          className={mode === "photo" ? "active" : ""}
+          onClick={() => setMode("photo")}
         >
           <FiCamera />
-          <span>Snap Note (OCR)</span>
+          <span>Snap Note Photo</span>
         </button>
         <button
           type="button"
@@ -383,17 +383,15 @@ export default function DoctorSmartNoteCapture({
 
       {statusNote && <p className="doctor-capture-status">{statusNote}</p>}
 
-      {mode === "ocr" && (
+      {mode === "photo" && (
         <div className="doctor-capture-panel">
           <div className="doctor-capture-head">
             <div>
-              <strong>Snap &amp; Upload Doctor&apos;s Paper Note</strong>
+              <strong>Snap &amp; Save Doctor&apos;s Note Photo</strong>
               <small>
-                Take a photo of handwritten or printed notes for {patientName}. Text is extracted
-                automatically (works offline too).
+                Take a photo of handwritten consultation notes for {patientName}. Saved directly as an image you can view anytime.
               </small>
             </div>
-            {ocrEngine && <span className="doctor-engine-pill">{ocrEngine}</span>}
           </div>
 
           <div className="doctor-ocr-actions">
@@ -405,57 +403,48 @@ export default function DoctorSmartNoteCapture({
                 accept="image/*"
                 capture="environment"
                 onChange={handleImageSelected}
-                disabled={ocrLoading}
+                disabled={photoLoading || photoUploading}
               />
             </label>
             <label className="doctor-upload-btn">
               <FiUpload />
-              <span>Upload Note Image</span>
+              <span>Upload Note Photo</span>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelected}
-                disabled={ocrLoading}
+                disabled={photoLoading || photoUploading}
               />
             </label>
           </div>
 
-          {ocrLoading && (
-            <div className="doctor-ocr-progress">
-              <div className="doctor-ocr-progress-bar" style={{ width: `${ocrProgress}%` }} />
-              <span>Reading note text... {ocrProgress}%</span>
-            </div>
-          )}
+          {photoError && <p className="registration-error">{photoError}</p>}
 
-          {ocrError && <p className="registration-error">{ocrError}</p>}
-
-          {(notePreview || ocrText) && (
+          {notePreview && (
             <div className="doctor-ocr-result-grid">
-              {notePreview && (
-                <div className="doctor-ocr-preview">
-                  <img src={notePreview} alt="Snapped doctor note" />
-                  <button
-                    type="button"
-                    className="icon-text-btn"
-                    onClick={() => {
-                      setNotePreview(null);
-                      setOcrText("");
-                    }}
-                  >
-                    <FiTrash2 />
-                    Remove Photo
-                  </button>
-                </div>
-              )}
+              <div className="doctor-ocr-preview">
+                <img src={notePreview} alt="Snapped doctor note" />
+                <button
+                  type="button"
+                  className="icon-text-btn"
+                  onClick={() => {
+                    setNotePreview(null);
+                    setPhotoCaption("");
+                  }}
+                >
+                  <FiTrash2 />
+                  Remove Photo
+                </button>
+              </div>
 
               <div className="doctor-ocr-editor">
                 <label>
-                  Extracted Text (editable)
+                  Optional Note Title / Summary
                   <textarea
-                    rows={6}
-                    value={ocrText}
-                    onChange={(e) => setOcrText(e.target.value)}
-                    placeholder="Extracted clinical note text will appear here..."
+                    rows={3}
+                    value={photoCaption}
+                    onChange={(e) => setPhotoCaption(e.target.value)}
+                    placeholder="Optional quick summary (e.g. Malaria follow-up review)..."
                   />
                 </label>
 
@@ -463,20 +452,20 @@ export default function DoctorSmartNoteCapture({
                   <button
                     type="button"
                     className="icon-text-btn"
-                    onClick={() => applyToForm(ocrText)}
-                    disabled={!ocrText.trim() || saving}
+                    onClick={() => void handleAttachPhotoToForm()}
+                    disabled={photoUploading || saving}
                   >
                     <FiFileText />
-                    Fill Form Fields
+                    Attach Photo to Form
                   </button>
                   <button
                     type="button"
                     className="icon-text-btn primary"
-                    onClick={() => void saveDirectly(ocrText)}
-                    disabled={(!ocrText.trim() && !notePreview) || saving}
+                    onClick={() => void handleSavePhotoDirectly()}
+                    disabled={photoUploading || saving}
                   >
                     <FiSave />
-                    {saving ? "Saving..." : "Save Note Directly"}
+                    {photoUploading || saving ? "Saving..." : "Save Photo as Doctor's Note"}
                   </button>
                 </div>
               </div>

@@ -1,4 +1,7 @@
 import { NextFunction, Response } from "express";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 import { BaseController } from "../../core/BaseController";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import {
@@ -185,6 +188,42 @@ export class ClinicalController extends BaseController {
       const { audioDataUrl, mimeType } = transcribeNoteSchema.parse(req.body);
       const result = await transcribeClinicalAudio(audioDataUrl, mimeType);
       this.ok(res, "Audio transcription completed", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  uploadNotePhoto = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { imageDataUrl } = req.body as { imageDataUrl?: string };
+      if (!imageDataUrl || typeof imageDataUrl !== "string") {
+        res.status(400).json({ status: "error", message: "imageDataUrl is required" });
+        return;
+      }
+
+      const match = imageDataUrl.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
+      if (!match) {
+        res.status(400).json({ status: "error", message: "Invalid image format. Use JPEG, PNG, or WEBP." });
+        return;
+      }
+
+      const ext = match[1].toLowerCase() === "jpeg" ? "jpg" : match[1].toLowerCase();
+      const buffer = Buffer.from(match[2], "base64");
+      if (buffer.length > 5 * 1024 * 1024) {
+        res.status(400).json({ status: "error", message: "Image exceeds 5MB limit." });
+        return;
+      }
+
+      const uploadsRoot = path.resolve(process.cwd(), process.env.UPLOAD_PATH || "uploads");
+      const notesDir = path.join(uploadsRoot, "clinical-notes");
+      await fs.mkdir(notesDir, { recursive: true });
+
+      const fileName = `note-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${ext}`;
+      await fs.writeFile(path.join(notesDir, fileName), buffer);
+
+      this.created(res, "Doctor note photo saved successfully", {
+        photoUrl: `/uploads/clinical-notes/${fileName}`,
+      });
     } catch (error) {
       next(error);
     }

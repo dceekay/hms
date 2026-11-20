@@ -17,6 +17,7 @@
  */
 
 import express from "express";
+import path from "path";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -101,12 +102,22 @@ app.use(cookieParser());
 /**
  * Parse JSON Body
  */
-app.use(express.json());
+app.use(express.json({ limit: "6mb" }));
 
 /**
  * Parse Form Data
  */
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "6mb" }));
+
+const uploadsDir = path.resolve(process.cwd(), process.env.UPLOAD_PATH || "uploads");
+app.use(
+  "/uploads",
+  (_req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static(uploadsDir)
+);
 
 /**
  * Register Version 1 API

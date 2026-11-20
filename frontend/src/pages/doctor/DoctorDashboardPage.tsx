@@ -33,6 +33,8 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import DoctorSmartNoteCapture, {
   FieldMicButton,
 } from "../../components/doctor/DoctorSmartNoteCapture";
+import NotePhotoGallery from "../../components/clinical/NotePhotoGallery";
+import { extractNotePhotos } from "../../utils/clinicalNoteParser";
 import { CARE_BUNDLES, type CareBundle } from "../../utils/careBundles";
 import {
   FaFlask,
@@ -3904,6 +3906,10 @@ export default function DoctorDashboardPage() {
                           {enc.chiefComplaint && <div><strong>Complaint:</strong> {enc.chiefComplaint}</div>}
                           {enc.diagnosis && <div><strong>Diagnosis:</strong> {enc.diagnosis}</div>}
                           {enc.plan && <div><strong>Plan:</strong> {enc.plan}</div>}
+                          {extractNotePhotos(enc.remarks).cleanText && (
+                            <div><strong>Remarks:</strong> {extractNotePhotos(enc.remarks).cleanText}</div>
+                          )}
+                          <NotePhotoGallery text={enc.remarks} />
                         </div>
                       </div>
                     ))}

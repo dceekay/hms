@@ -518,6 +518,27 @@ export type ClinicalAiCaptureResponse = {
   } | null;
 };
 
+import { storeLocalNotePhoto } from "../utils/clinicalNoteParser";
+
+export async function uploadClinicalNotePhoto(
+  imageDataUrl: string,
+  patientId?: string
+): Promise<string> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return storeLocalNotePhoto(imageDataUrl);
+  }
+
+  try {
+    const response = await api.post<{ data: { photoUrl: string } }>(
+      "/clinical/note-photo",
+      { imageDataUrl, patientId }
+    );
+    return response.data?.data?.photoUrl || storeLocalNotePhoto(imageDataUrl);
+  } catch {
+    return storeLocalNotePhoto(imageDataUrl);
+  }
+}
+
 export async function runClinicalNoteOcr(
   imageDataUrl: string,
   mimeType = "image/webp"
