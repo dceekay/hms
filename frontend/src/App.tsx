@@ -1,6 +1,7 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Loader from "./components/common/Loader";
+import { lazyWithRetry as lazy } from "./utils/lazyWithRetry";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));

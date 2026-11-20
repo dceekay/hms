@@ -38,6 +38,19 @@ export default class AuthenticatedRouteBoundary extends Component<
     window.location.assign("/login");
   };
 
+  private retryHard = async () => {
+    try {
+      sessionStorage.removeItem("hms_chunk_retry_at");
+      if ("caches" in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((k) => window.caches.delete(k)));
+      }
+    } catch {
+      // ignore cache cleanup errors
+    }
+    window.location.reload();
+  };
+
   render() {
     if (!this.state.error) return this.props.children;
 
@@ -52,8 +65,13 @@ export default class AuthenticatedRouteBoundary extends Component<
           <p>
             Your session is still secure. Retry the page, return to your role home, or sign out safely.
           </p>
+          {this.state.error?.message && (
+            <p style={{ fontSize: "0.75rem", opacity: 0.72, wordBreak: "break-word", marginTop: "-4px" }}>
+              {this.state.error.message}
+            </p>
+          )}
           <div className="route-error-actions">
-            <button type="button" onClick={() => window.location.reload()}>
+            <button type="button" onClick={() => void this.retryHard()}>
               <FiRefreshCw /> Retry page
             </button>
             <button type="button" onClick={() => window.location.assign(this.props.homePath)}>

@@ -1,4 +1,4 @@
-self.HMS_CACHE_NAME = "mds-hms-app-shell-v2";
+self.HMS_CACHE_NAME = "mds-hms-app-shell-v3";
 self.HMS_APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -44,10 +44,12 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      fetch(new Request(request, { cache: "no-store" }))
         .then((response) => {
-          const copy = response.clone();
-          caches.open(self.HMS_CACHE_NAME).then((cache) => cache.put("/", copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(self.HMS_CACHE_NAME).then((cache) => cache.put("/", copy));
+          }
           return response;
         })
         .catch(() => caches.match("/").then((cached) => cached || caches.match(request)))
@@ -56,11 +58,30 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.origin === self.location.origin) {
+    // Never serve stale /assets/ from cache-first if network has a fresh build,
+    // and never cache HTML fallback responses under /assets/*.js
+    if (url.pathname.startsWith("/assets/")) {
+      event.respondWith(
+        fetch(request)
+          .then((response) => {
+            const contentType = response.headers.get("content-type") || "";
+            if (response.ok && !contentType.includes("text/html")) {
+              const copy = response.clone();
+              caches.open(self.HMS_CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => caches.match(request))
+      );
+      return;
+    }
+
     event.respondWith(
       caches.match(request).then((cached) => {
         const network = fetch(request)
           .then((response) => {
-            if (response.ok) {
+            const contentType = response.headers.get("content-type") || "";
+            if (response.ok && !contentType.includes("text/html")) {
               const copy = response.clone();
               caches.open(self.HMS_CACHE_NAME).then((cache) => cache.put(request, copy));
             }

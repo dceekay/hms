@@ -91,13 +91,19 @@ function formatNumber(value?: number | string | null) {
 
 function formatDate(value?: string | null) {
   if (!value) return "Not recorded";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Not recorded";
 
-  return new Intl.DateTimeFormat("en-NG", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+  try {
+    return new Intl.DateTimeFormat("en-NG", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(parsed);
+  } catch {
+    return parsed.toLocaleString();
+  }
 }
 
 function formatCategory(value: string) {

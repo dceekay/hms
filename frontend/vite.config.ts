@@ -7,6 +7,7 @@ export default defineConfig({
     port: 4173,
   },
   build: {
+    target: ["es2019", "safari13", "chrome80"],
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
